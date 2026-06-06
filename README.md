@@ -87,12 +87,18 @@ VeloSpot/
 
 ## 📊 Data Sources
 
-VeloSpot retrieves bike parking data from public WFS/WMS services:
+VeloSpot retrieves bike parking data from public WFS/WMS services and displays it on OpenStreetMap tiles:
 
-- **Provider**: Trier Geoportal
+- **Bike Parking Data Provider**: Trier Geoportal
 - **Data format**: GeoJSON, GML-based WFS
 - **Update frequency**: Real-time from server
-- **License**: Public data (check local source terms)
+- **Map Tiles**: OpenStreetMap contributors
+- **Map License**: Open Data Commons Open Database License (ODbL 1.0)
+- **Attribution**: © OpenStreetMap contributors
+
+For more information about OpenStreetMap and ODbL, visit:
+- OpenStreetMap: https://www.openstreetmap.org/copyright
+- ODbL License: https://opendatacommons.org/licenses/odbl/
 
 ## 🎨 UI Components
 
@@ -182,6 +188,8 @@ Contributions are welcome! Please follow these steps:
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Important**: The MIT License applies to the VeloSpot source code only. Map data from OpenStreetMap is licensed under the **Open Data Commons Open Database License (ODbL)** - see [ATTRIBUTIONS.md](ATTRIBUTIONS.md) for full attribution details.
 
 ## 👨‍💻 Author
 
