@@ -18,6 +18,8 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - **Multilingual support** with 8 languages: German 🇩🇪, English 🇬🇧, French 🇫🇷, Italian 🇮🇹, Portuguese 🇵🇹, Luxembourgish 🇱🇺, Dutch 🇳🇱, Spanish 🇪🇸
 - Flag-based in-app language picker accessible from the top-right menu
 - Persistent language preference — the selected language is saved and restored on every app start
+- GitHub Actions CI workflow with dedicated `ci-build` and `ci-test` checks for pull requests and main branch pushes
+- Repository branch protection ruleset for `main` with required PR approval, review-thread resolution, linear history, and required status checks
 
 ### Changed
 - Project documentation expanded with updated setup, feature, and troubleshooting guidance
@@ -28,6 +30,8 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - `BikeParkingGmlParser` switched to JVM-testable DOM parsing (`DocumentBuilderFactory`)
 - `MainMapScreen` split into smaller composables for status overlay, menu card, and location FAB
 - `MainActivity` migrated to `AppCompatActivity` for full AppCompat locale support
+- Release automation hardened to avoid duplicate release creation when security auto-release tags are pushed by workflows
+- Renovate configuration tightened: global automerge disabled; only security-related updates are automerged
 
 ## [2026-06-06]
 
