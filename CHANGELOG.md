@@ -41,6 +41,16 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - Migrated annotation processing from KAPT to KSP for Hilt and Room
 - Removed temporary AGP 9 compatibility flags (`android.newDsl=false`, `android.disallowKotlinSourceSets=false`) now that Hilt 2.59.2 fully supports the AGP 9 New DSL
 - Force-resolved `kotlin-metadata-jvm:2.4.0` to allow Hilt to process Kotlin 2.4 class metadata
+- Renovate PR `renovate/accompanistpermissions`: `accompanist-permissions` von `0.13.0` auf `0.37.3`
+- Renovate PR `renovate/androidx`: AndroidX-Updates (`core-ktx` `1.16.0 -> 1.19.0`, `appcompat` `1.7.0 -> 1.7.1`, `lifecycle-runtime-ktx` `2.9.1 -> 2.10.0`, `activity-compose` `1.10.1 -> 1.13.0`, `navigation-compose` `2.9.0 -> 2.9.8`, Testlibs) und `compileSdk` auf `37` angehoben
+- Renovate PR `renovate/gradle-wrapper`: Gradle Wrapper von `9.4.1` auf `9.5.1` (inkl. neue Wrapper-Property-Defaults)
+- Renovate PR `renovate/hilt-and-dagger`: `androidx.hilt:hilt-navigation-compose` von `1.2.0` auf `1.3.0`
+- Renovate PR `renovate/major-androidx`: Compose BOM von `2024.09.00` auf `2026.05.01`
+- Renovate PR `renovate/major-networking`: `retrofit` `2.11.0 -> 3.0.0` und `okhttp` `4.12.0 -> 5.3.2`
+- Renovate PR `renovate/room`: Room von `2.8.1` auf `2.8.4`
+- Renovate PR `renovate/major-github-actions`: Workflow Actions aktualisiert (`actions/checkout` `v5 -> v6`, `actions/upload-artifact` `v4 -> v7`)
+- Renovate PR `renovate/major-agp`: AGP-9-Migrationsstand dokumentiert (KSP-Migration, Gradle-Wrapper- und Build-Config-Anpassungen im Branch)
+- README aktualisiert: Anforderungen auf Android SDK 37+ und Target API 37 angehoben
 
 ## [2026-06-06]
 

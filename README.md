@@ -51,7 +51,7 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 ## 📱 Target Platform
 
 - **Android 8.0 (API 26)** and above
-- Minimum: API 26 | Target: API 35
+- Minimum: API 26 | Target: API 37
 
 ## 🛠 Tech Stack
 
@@ -104,7 +104,7 @@ New releases are built automatically by GitHub Actions whenever a version tag is
 
 - Android Studio (Jellyfish or newer)
 - Java Development Kit (JDK 17+)
-- Android SDK 35+
+- Android SDK 37+
 - Git
 
 ### Installation
@@ -196,6 +196,8 @@ The repository uses GitHub Actions and GitHub Rulesets to enforce safe merges on
 - Linear history is enforced
 
 Renovate is configured so that only security-related dependency updates can be automerged.
+
+Recent Renovate dependency and tooling updates are documented in [`CHANGELOG.md`](./CHANGELOG.md) under `Unreleased`.
 
 ## 🔧 Configuration
 
