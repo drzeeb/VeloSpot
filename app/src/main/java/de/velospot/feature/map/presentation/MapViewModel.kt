@@ -17,7 +17,8 @@ import javax.inject.Inject
 data class MapCameraTarget(
     val latitude: Double,
     val longitude: Double,
-    val zoom: Double
+    val zoom: Double,
+    val verticalOffsetFraction: Double = 0.0
 )
 
 @HiltViewModel
@@ -65,6 +66,16 @@ class MapViewModel @Inject constructor(
 
     fun selectSpace(space: BikeParkingSpace?) {
         _selectedSpace.update { space }
+        // Keep the selected marker visible above the bottom sheet and zoom in for details.
+        if (space != null) {
+            _mapCameraTarget.value = MapCameraTarget(
+                latitude = space.latitude,
+                longitude = space.longitude,
+                zoom = 16.5,
+                // Place marker at 1/3 screen height: center (1/2) minus 1/6 offset.
+                verticalOffsetFraction = 1.0 / 6.0
+            )
+        }
     }
 
     /**

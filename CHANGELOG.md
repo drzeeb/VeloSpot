@@ -12,6 +12,9 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - Current-location support with map recenter action and location marker
 - Dark mode toggle integrated into the in-app menu
 - Favorite-aware map markers with a red visual state
+- **Smooth map camera animations** with easing functions for natural zoom and pan transitions (~120-180ms)
+- **Selected marker highlighting** with orange pin color to distinguish currently selected parking spaces
+- **Vertical offset support** for better map positioning with bottom sheets
 - GitHub Pages and README updates describing the latest app features
 - Unit tests for `MapViewModel` (loading, favorites, camera target, permission flow)
 - Unit tests for the GML parser including coordinate and HTML entity edge cases
