@@ -1,0 +1,76 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag (e.g. v1.0.0)"
+        required: true
+        default: "v1.0.0"
+
+jobs:
+  build:
+    name: Build debug APK and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK with version tag
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          fi
+          mv app/build/outputs/apk/debug/app-debug.apk \
+             app/build/outputs/apk/debug/VeloSpot-${TAG}-debug.apk
+
+      - name: Determine release tag
+        id: release_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release and upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: "VeloSpot ${{ steps.release_tag.outputs.tag }}"
+          body: |
+            ## VeloSpot ${{ steps.release_tag.outputs.tag }}
+
+            ### Installation
+            1. Download the APK below.
+            2. On your Android device go to **Settings → Install unknown apps** and allow installs from your browser or file manager.
+            3. Open the downloaded APK and tap **Install**.
+
+            > **Note:** This is a debug build. Release signing is not yet configured.
+
+            ### What's new
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full list of changes.
+          files: app/build/outputs/apk/debug/VeloSpot-${{ steps.release_tag.outputs.tag }}-debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
