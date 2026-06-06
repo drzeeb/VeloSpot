@@ -1,0 +1,113 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "security:openssf-scorecard"
+  ],
+
+  "timezone": "Europe/Berlin",
+
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"],
+    "automerge": true,
+    "automergeType": "pr",
+    "automergeStrategy": "squash",
+    "schedule": ["at any time"]
+  },
+
+  "osvVulnerabilityAlerts": true,
+
+  "packageRules": [
+    {
+      "description": "Security fixes — automerge immediately, no schedule restriction",
+      "matchCategories": ["security"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "schedule": ["at any time"],
+      "labels": ["security", "dependencies"]
+    },
+    {
+      "description": "Kotlin & Android Gradle Plugin — weekly, grouped",
+      "matchPackageNames": [
+        "org.jetbrains.kotlin:kotlin-gradle-plugin",
+        "com.android.tools.build:gradle"
+      ],
+      "groupName": "Kotlin & AGP",
+      "schedule": ["every monday"],
+      "labels": ["dependencies", "toolchain"]
+    },
+    {
+      "description": "AndroidX libraries — weekly, grouped",
+      "matchPackagePrefixes": ["androidx."],
+      "groupName": "AndroidX",
+      "schedule": ["every monday"],
+      "labels": ["dependencies", "android"]
+    },
+    {
+      "description": "Hilt / Dagger — grouped",
+      "matchPackagePrefixes": [
+        "com.google.dagger",
+        "androidx.hilt"
+      ],
+      "groupName": "Hilt & Dagger",
+      "schedule": ["every monday"],
+      "labels": ["dependencies"]
+    },
+    {
+      "description": "Networking (Retrofit, OkHttp, Moshi) — grouped",
+      "matchPackageNames": [
+        "com.squareup.retrofit2:retrofit",
+        "com.squareup.retrofit2:converter-moshi",
+        "com.squareup.moshi:moshi-kotlin",
+        "com.squareup.okhttp3:logging-interceptor"
+      ],
+      "groupName": "Networking",
+      "schedule": ["every monday"],
+      "labels": ["dependencies"]
+    },
+    {
+      "description": "Room database — grouped",
+      "matchPackagePrefixes": ["androidx.room"],
+      "groupName": "Room",
+      "schedule": ["every monday"],
+      "labels": ["dependencies"]
+    },
+    {
+      "description": "OSMDroid map library",
+      "matchPackageNames": ["org.osmdroid:osmdroid-android"],
+      "groupName": "OSMDroid",
+      "schedule": ["every monday"],
+      "labels": ["dependencies"]
+    },
+    {
+      "description": "Gradle wrapper updates",
+      "matchManagers": ["gradle-wrapper"],
+      "groupName": "Gradle wrapper",
+      "schedule": ["every monday"],
+      "labels": ["dependencies", "toolchain"]
+    },
+    {
+      "description": "GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "schedule": ["every monday"],
+      "labels": ["dependencies", "ci"]
+    }
+  ],
+
+  "labels": ["renovate"],
+  "automerge": false,
+  "prCreation": "immediate",
+  "prConcurrentLimit": 10,
+  "branchConcurrentLimit": 10,
+  "rebaseWhen": "conflicted",
+  "commitMessagePrefix": "deps:",
+  "ignorePaths": [
+    "**/build/**",
+    "**/.gradle/**"
+  ]
+}
