@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -36,7 +36,7 @@ jobs:
         run: ./gradlew :app:assembleDebug --no-daemon
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
@@ -48,7 +48,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
