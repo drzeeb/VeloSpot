@@ -78,7 +78,7 @@ jobs:
 
       # ── Create GitHub Release ────────────────────────────────────────────────
       - name: Create GitHub Release with APK
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.tag.outputs.new_tag }}
           name: "VeloSpot ${{ steps.tag.outputs.new_tag }} — security patch"
