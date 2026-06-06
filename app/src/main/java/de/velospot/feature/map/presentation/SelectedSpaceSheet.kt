@@ -1,5 +1,6 @@
 package de.velospot.feature.map.presentation
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,8 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import de.velospot.R
 import de.velospot.core.map.NavigationHandler
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeParkingType
@@ -80,6 +84,7 @@ private fun SheetContent(
     onToggleFavorite: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -100,11 +105,11 @@ private fun SheetContent(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = space.name ?: space.type.label(),
+                    text = space.name ?: space.type.label(context),
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = space.type.label(),
+                    text = space.type.label(context),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.secondary
                 )
@@ -116,7 +121,11 @@ private fun SheetContent(
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                    contentDescription = if (isFavorite) {
+                        stringResource(id = R.string.favorites_remove)
+                    } else {
+                        stringResource(id = R.string.favorites_add)
+                    },
                     tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.size(24.dp)
                 )
@@ -126,15 +135,15 @@ private fun SheetContent(
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
         // ── Detailzeilen ───────────────────────────────────────────────────────
-        space.address?.let { DetailRow(label = "Adresse", value = it) }
-        space.capacity?.let { DetailRow(label = "Stellplätze", value = it.toString()) }
-        space.operator?.let { DetailRow(label = "Betreiber", value = it) }
+        space.address?.let { DetailRow(label = stringResource(id = R.string.detail_address), value = it) }
+        space.capacity?.let { DetailRow(label = stringResource(id = R.string.detail_capacity), value = it.toString()) }
+        space.operator?.let { DetailRow(label = stringResource(id = R.string.detail_operator), value = it) }
         DetailRow(
-            label = "Überdacht",
+            label = stringResource(id = R.string.detail_covered),
             value = when (space.isCovered) {
-                true  -> "Ja"
-                false -> "Nein"
-                null  -> "Unbekannt"
+                true  -> stringResource(id = R.string.common_yes)
+                false -> stringResource(id = R.string.common_no)
+                null  -> stringResource(id = R.string.common_unknown)
             }
         )
 
@@ -142,8 +151,10 @@ private fun SheetContent(
 
         // ── Chip-Zeile ─────────────────────────────────────────────────────────
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            space.capacity?.let { InfoChip(label = "$it Stellplätze") }
-            if (space.isCovered == true) InfoChip(label = "Überdacht")
+            space.capacity?.let {
+                InfoChip(label = stringResource(id = R.string.favorites_spaces_format, it))
+            }
+            if (space.isCovered == true) InfoChip(label = stringResource(id = R.string.common_covered))
             InfoChip(label = space.sourceLayer)
         }
 
@@ -163,7 +174,10 @@ private fun SheetContent(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Navigation starten", style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = stringResource(id = R.string.navigation_start),
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
 }
@@ -205,10 +219,10 @@ private fun InfoChip(label: String) {
     }
 }
 
-internal fun BikeParkingType.label(): String = when (this) {
-    BikeParkingType.GARAGE    -> "Fahrradgarage"
-    BikeParkingType.BIKE_RACK -> "Fahrradbügel"
-    BikeParkingType.UNKNOWN   -> "Abstellanlage"
+internal fun BikeParkingType.label(context: Context): String = when (this) {
+    BikeParkingType.GARAGE -> context.getString(R.string.type_garage)
+    BikeParkingType.BIKE_RACK -> context.getString(R.string.type_bike_rack)
+    BikeParkingType.UNKNOWN -> context.getString(R.string.type_unknown)
 }
 
 private fun BikeParkingType.icon(): ImageVector = when (this) {

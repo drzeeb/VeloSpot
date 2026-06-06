@@ -13,17 +13,21 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - Dark mode toggle integrated into the in-app menu
 - Favorite-aware map markers with a red visual state
 - GitHub Pages and README updates describing the latest app features
-- Unit-Tests für `MapViewModel` (Laden, Favoriten, Kamera-Target, Permission-Flow)
-- Unit-Tests für den GML-Parser inklusive Koordinaten-/Entity-Fälle
+- Unit tests for `MapViewModel` (loading, favorites, camera target, permission flow)
+- Unit tests for the GML parser including coordinate and HTML entity edge cases
+- **Multilingual support** with 8 languages: German 🇩🇪, English 🇬🇧, French 🇫🇷, Italian 🇮🇹, Portuguese 🇵🇹, Luxembourgish 🇱🇺, Dutch 🇳🇱, Spanish 🇪🇸
+- Flag-based in-app language picker accessible from the top-right menu
+- Persistent language preference — the selected language is saved and restored on every app start
 
 ### Changed
 - Project documentation expanded with updated setup, feature, and troubleshooting guidance
 - GitHub Pages landing page updated to better reflect the current Android app experience
 - Local bike parking storage moved to SQLite / Room instead of temporary XML-based project-root files
-- Datenzugriff über neues Local-Data-Source-Interface entkoppelt (`BikeParkingLocalDataSource`)
-- `MapViewModel` von direkter `MapView`-Steuerung auf `MapCameraTarget`-State umgestellt
-- `BikeParkingGmlParser` auf JVM-testbare DOM-Verarbeitung (`DocumentBuilderFactory`) umgestellt
-- `MainMapScreen` in kleinere Composables für Status-Overlay, Menü und Location-FAB aufgeteilt
+- Data access decoupled via new `BikeParkingLocalDataSource` interface
+- `MapViewModel` refactored from direct `MapView` manipulation to a `MapCameraTarget` state approach
+- `BikeParkingGmlParser` switched to JVM-testable DOM parsing (`DocumentBuilderFactory`)
+- `MainMapScreen` split into smaller composables for status overlay, menu card, and location FAB
+- `MainActivity` migrated to `AppCompatActivity` for full AppCompat locale support
 
 ## [2026-06-06]
 

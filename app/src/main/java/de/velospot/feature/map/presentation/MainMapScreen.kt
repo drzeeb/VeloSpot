@@ -1,6 +1,7 @@
 package de.velospot.feature.map.presentation
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -47,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -59,13 +61,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import de.velospot.R
+import de.velospot.core.locale.LanguagePreferences
 import de.velospot.core.map.NavigationHandler
 import de.velospot.core.map.externalNavigationHandler
 import de.velospot.domain.model.BikeParkingSpace
@@ -99,6 +107,7 @@ fun MainMapScreen(
     var zoomBucket by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
     var isMenuExpanded by remember { mutableStateOf(false) }
     var isFavoritesSheetVisible by remember { mutableStateOf(false) }
+    var isLanguageSheetVisible by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -160,6 +169,20 @@ fun MainMapScreen(
         createLocationMarkerIcon(context)
     }
     val navigationHandler = remember(context) { externalNavigationHandler(context) }
+    val myLocationTitle = stringResource(id = R.string.map_my_location)
+    val snippetSpacesFormat = stringResource(id = R.string.map_snippet_spaces_format)
+    val snippetCovered = stringResource(id = R.string.map_snippet_covered)
+    val configuration = LocalConfiguration.current
+    val currentLanguageCode = remember(configuration) {
+        val appLocaleLanguage = AppCompatDelegate.getApplicationLocales()[0]?.language.orEmpty()
+        if (appLocaleLanguage.isNotBlank()) {
+            appLocaleLanguage
+        } else {
+            LanguagePreferences.getSavedLanguageCode(context)
+                ?: configuration.locales.get(0)?.language.orEmpty().ifBlank { "en" }
+        }
+    }
+    val currentLanguageFlag = languageFlagForCode(currentLanguageCode)
 
     LaunchedEffect(mapCameraTarget) {
         val cameraTarget = mapCameraTarget ?: return@LaunchedEffect
@@ -185,6 +208,10 @@ fun MainMapScreen(
                         locationMarkerIcon = locationMarkerIcon,
                         favoriteIds = favorites,
                         userLocation = userLocation,
+                        context = context,
+                        myLocationTitle = myLocationTitle,
+                        snippetSpacesFormat = snippetSpacesFormat,
+                        snippetCovered = snippetCovered,
                         onMarkerClick = viewModel::selectSpace
                     )
                 }
@@ -196,11 +223,16 @@ fun MainMapScreen(
         MapMenuCard(
             favoritesCount = favorites.size,
             isDarkTheme = isDarkTheme,
+            currentLanguageFlag = currentLanguageFlag,
             isExpanded = isMenuExpanded,
             onExpand = { isMenuExpanded = true },
             onDismiss = { isMenuExpanded = false },
             onOpenFavorites = {
                 isFavoritesSheetVisible = true
+                isMenuExpanded = false
+            },
+            onOpenLanguage = {
+                isLanguageSheetVisible = true
                 isMenuExpanded = false
             },
             onToggleDarkMode = {
@@ -219,6 +251,21 @@ fun MainMapScreen(
             onDismiss = { isFavoritesSheetVisible = false },
             onNavigate = navigationHandler,
             onToggleFavorite = viewModel::toggleFavorite
+        )
+    }
+
+    if (isLanguageSheetVisible) {
+        LanguageSheet(
+            currentLanguageCode = currentLanguageCode,
+            onDismiss = { isLanguageSheetVisible = false },
+            onSelectLanguage = { languageCode ->
+                LanguagePreferences.saveLanguageCode(context, languageCode)
+                AppCompatDelegate.setApplicationLocales(
+                    LocaleListCompat.forLanguageTags(languageCode)
+                )
+                (context as? Activity)?.recreate()
+                isLanguageSheetVisible = false
+            }
         )
     }
 
@@ -262,10 +309,12 @@ private fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
 private fun BoxScope.MapMenuCard(
     favoritesCount: Int,
     isDarkTheme: Boolean,
+    currentLanguageFlag: String,
     isExpanded: Boolean,
     onExpand: () -> Unit,
     onDismiss: () -> Unit,
     onOpenFavorites: () -> Unit,
+    onOpenLanguage: () -> Unit,
     onToggleDarkMode: () -> Unit
 ) {
     Card(
@@ -281,7 +330,7 @@ private fun BoxScope.MapMenuCard(
             IconButton(onClick = onExpand) {
                 Icon(
                     imageVector = Icons.Default.Menu,
-                    contentDescription = "Open menu",
+                    contentDescription = stringResource(id = R.string.menu_open),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -291,7 +340,14 @@ private fun BoxScope.MapMenuCard(
                 onDismissRequest = onDismiss
             ) {
                 DropdownMenuItem(
-                    text = { Text("Favorites ($favoritesCount)") },
+                    text = {
+                        Text(
+                            text = stringResource(
+                                id = R.string.menu_favorites_count,
+                                favoritesCount
+                            )
+                        )
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Favorite,
@@ -301,7 +357,29 @@ private fun BoxScope.MapMenuCard(
                     onClick = onOpenFavorites
                 )
                 DropdownMenuItem(
-                    text = { Text(if (isDarkTheme) "Disable dark mode" else "Enable dark mode") },
+                    text = {
+                        Text(
+                            text = stringResource(
+                                id = R.string.menu_language_with_flag,
+                                currentLanguageFlag
+                            )
+                        )
+                    },
+                    leadingIcon = {
+                        Text(text = currentLanguageFlag)
+                    },
+                    onClick = onOpenLanguage
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = if (isDarkTheme) {
+                                stringResource(id = R.string.menu_disable_dark_mode)
+                            } else {
+                                stringResource(id = R.string.menu_enable_dark_mode)
+                            }
+                        )
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.DarkMode,
@@ -310,6 +388,65 @@ private fun BoxScope.MapMenuCard(
                     },
                     onClick = onToggleDarkMode
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LanguageSheet(
+    currentLanguageCode: String,
+    onDismiss: () -> Unit,
+    onSelectLanguage: (String) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.language_sheet_title),
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SUPPORTED_LANGUAGES.chunked(4).forEach { row ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    row.forEach { language ->
+                        val isSelected = language.code == currentLanguageCode
+                        if (isSelected) {
+                            Button(
+                                onClick = { onSelectLanguage(language.code) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(text = language.flag)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = { onSelectLanguage(language.code) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(text = language.flag)
+                            }
+                        }
+                    }
+                    repeat(4 - row.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
     }
@@ -326,7 +463,7 @@ private fun BoxScope.MyLocationFab(onClick: () -> Unit) {
     ) {
         Icon(
             imageVector = Icons.Default.MyLocation,
-            contentDescription = "Center map on my location",
+            contentDescription = stringResource(id = R.string.map_center_on_my_location),
             tint = MaterialTheme.colorScheme.onPrimary
         )
     }
@@ -342,9 +479,10 @@ private fun FavoritesSheet(
     onNavigate: NavigationHandler,
     onToggleFavorite: (String) -> Unit
 ) {
+    val context = LocalContext.current
     val favoriteSpaces = remember(spaces, favoriteIds) {
         spaces.filter { favoriteIds.contains(it.id) }
-            .sortedBy { it.name ?: it.type.label() }
+            .sortedBy { it.name ?: it.type.label(context) }
     }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -359,15 +497,15 @@ private fun FavoritesSheet(
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Text(
-                text = "Favorites",
+                text = stringResource(id = R.string.favorites_title),
                 style = MaterialTheme.typography.headlineSmall
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = if (favoriteSpaces.isEmpty()) {
-                    "You have not saved any favorites yet."
+                    stringResource(id = R.string.favorites_empty_text)
                 } else {
-                    "Start navigation directly from your saved parking spots."
+                    stringResource(id = R.string.favorites_hint_text)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -382,7 +520,7 @@ private fun FavoritesSheet(
                     )
                 ) {
                     Text(
-                        text = "Tap the heart icon in a parking detail sheet to add a favorite.",
+                        text = stringResource(id = R.string.favorites_empty_card_text),
                         modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -410,6 +548,7 @@ private fun FavoriteSpaceCard(
     onNavigate: NavigationHandler,
     onToggleFavorite: (String) -> Unit
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -433,14 +572,14 @@ private fun FavoriteSpaceCard(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = space.name ?: space.type.label(),
+                        text = space.name ?: space.type.label(context),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
                 IconButton(onClick = { onToggleFavorite(space.id) }) {
                     Icon(
                         imageVector = Icons.Default.Favorite,
-                        contentDescription = "Remove from favorites",
+                        contentDescription = stringResource(id = R.string.favorites_remove),
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
@@ -456,10 +595,12 @@ private fun FavoriteSpaceCard(
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 space.capacity?.let { cap ->
-                    FavoriteMetaChip(label = "$cap spaces")
+                    FavoriteMetaChip(
+                        label = stringResource(id = R.string.favorites_spaces_format, cap)
+                    )
                 }
                 if (space.isCovered == true) {
-                    FavoriteMetaChip(label = "Covered")
+                    FavoriteMetaChip(label = stringResource(id = R.string.common_covered))
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -470,7 +611,7 @@ private fun FavoriteSpaceCard(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Start navigation")
+                Text(stringResource(id = R.string.navigation_start))
             }
         }
     }
@@ -500,6 +641,10 @@ private fun updateMarkers(
     locationMarkerIcon: Drawable,
     favoriteIds: List<String>,
     userLocation: Pair<Double, Double>?,
+    context: Context,
+    myLocationTitle: String,
+    snippetSpacesFormat: String,
+    snippetCovered: String,
     onMarkerClick: (BikeParkingSpace) -> Unit
 ) {
     map.overlays.clear()
@@ -513,8 +658,8 @@ private fun updateMarkers(
             } else {
                 normalMarkerIcon.constantState?.newDrawable()?.mutate() ?: normalMarkerIcon
             }
-            title = space.name ?: space.type.label()
-            snippet = buildSnippet(space)
+            title = space.name ?: space.type.label(context)
+            snippet = buildSnippet(space, snippetSpacesFormat, snippetCovered)
             setOnMarkerClickListener { _, _ ->
                 onMarkerClick(space)
                 true
@@ -528,7 +673,7 @@ private fun updateMarkers(
             position = GeoPoint(latitude, longitude)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
             icon = locationMarkerIcon.constantState?.newDrawable()?.mutate() ?: locationMarkerIcon
-            title = "My location"
+            title = myLocationTitle
         }
         map.overlays.add(locationMarker)
     }
@@ -625,14 +770,38 @@ private fun locationPermissions(): Array<String> = arrayOf(
     Manifest.permission.ACCESS_COARSE_LOCATION
 )
 
-private fun buildSnippet(space: BikeParkingSpace): String = buildString {
+private data class SupportedLanguage(
+    val code: String,
+    val flag: String
+)
+
+private val SUPPORTED_LANGUAGES = listOf(
+    SupportedLanguage(code = "de", flag = "🇩🇪"),
+    SupportedLanguage(code = "en", flag = "🇬🇧"),
+    SupportedLanguage(code = "fr", flag = "🇫🇷"),
+    SupportedLanguage(code = "it", flag = "🇮🇹"),
+    SupportedLanguage(code = "pt", flag = "🇵🇹"),
+    SupportedLanguage(code = "lb", flag = "🇱🇺"),
+    SupportedLanguage(code = "nl", flag = "🇳🇱"),
+    SupportedLanguage(code = "es", flag = "🇪🇸")
+)
+
+private fun languageFlagForCode(languageCode: String): String {
+    return SUPPORTED_LANGUAGES.firstOrNull { it.code == languageCode }?.flag ?: "🏳️"
+}
+
+private fun buildSnippet(
+    space: BikeParkingSpace,
+    snippetSpacesFormat: String,
+    snippetCovered: String
+): String = buildString {
     space.address?.let { append(it) }
     space.capacity?.let { cap ->
         if (isNotEmpty()) append(" · ")
-        append("$cap Stellplätze")
+        append(String.format(snippetSpacesFormat, cap))
     }
     if (space.isCovered == true) {
         if (isNotEmpty()) append(" · ")
-        append("überdacht")
+        append(snippetCovered)
     }
 }

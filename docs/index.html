@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces in Trier with favorites, live location tools, and a clean Android UI.">
-    <meta name="keywords" content="bike parking, Trier, cycling, map, Android, favorites, dark mode, osmdroid, room">
+    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces in Trier with favorites, live location tools, multilingual support, and a clean Android UI.">
+    <meta name="keywords" content="bike parking, Trier, cycling, map, Android, favorites, dark mode, osmdroid, room, multilingual">
     <title>VeloSpot - Smart Bike Parking for Trier</title>
     <style>
         * {
@@ -470,7 +470,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1>Smart Bike Parking for Trier</h1>
-            <p>Discover bike parking spaces, save favorites, switch themes, and jump to your current position with a fast, modern Android map experience.</p>
+            <p>Discover bike parking spaces, save favorites, switch themes, choose your language, and jump to your current position with a fast, modern Android map experience.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">View on GitHub</a>
                 <a href="#download" class="btn btn-secondary">Get Started</a>
@@ -497,6 +497,11 @@
                     <div class="feature-icon">📍</div>
                     <h3>My Location</h3>
                     <p>Center the map on your current position and keep your location visible while exploring nearby parking options.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>8 Languages</h3>
+                    <p>Switch between German, English, French, Italian, Portuguese, Luxembourgish, Dutch, and Spanish via a flag-based picker — the choice is remembered across app restarts.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🌙</div>
@@ -530,6 +535,7 @@
                 <div class="tech-badge">OSMDroid</div>
                 <div class="tech-badge">Room / SQLite</div>
                 <div class="tech-badge">Play Services Location</div>
+                <div class="tech-badge">AppCompat Locales</div>
                 <div class="tech-badge">MVVM Pattern</div>
                 <div class="tech-badge">Material Design 3</div>
             </div>
@@ -548,6 +554,7 @@
                         <li>Dedicated favorites sheet with direct navigation</li>
                         <li>Location recenter button and current-position marker</li>
                         <li>Dark mode toggle directly in the map menu</li>
+                        <li>8-language picker with persistent flag-based selection</li>
                         <li>Detailed parking metadata including capacity and coverage</li>
                         <li>Room-powered local caching for fast reloads</li>
                     </ul>
@@ -612,7 +619,7 @@
     <section class="cta-section" id="download">
         <div class="cta-content">
             <h2>Ready to Explore Trier by Bike?</h2>
-            <p>Clone the project, build the Android app, and try favorites, dark mode, and current-location tools for yourself.</p>
+            <p>Clone the project, build the Android app, and try favorites, multilingual support, dark mode, and current-location tools for yourself.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">Clone Repository</a>
                 <a href="https://github.com/drzeeb/VeloSpot#getting-started" class="btn btn-secondary">View Documentation</a>

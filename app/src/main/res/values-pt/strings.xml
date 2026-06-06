@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">VeloSpot</string>
+    <string name="menu_open">Abrir menu</string>
+    <string name="menu_favorites_count">Favoritos (%1$d)</string>
+    <string name="menu_language_with_flag">Idioma: %1$s</string>
+    <string name="menu_enable_dark_mode">Ativar modo escuro</string>
+    <string name="menu_disable_dark_mode">Desativar modo escuro</string>
+
+    <string name="language_sheet_title">Escolher idioma</string>
+
+    <string name="map_center_on_my_location">Centrar o mapa na minha localização</string>
+    <string name="map_my_location">A minha localização</string>
+    <string name="map_snippet_spaces_format">%1$d lugares</string>
+    <string name="map_snippet_covered">coberto</string>
+
+    <string name="favorites_title">Favoritos</string>
+    <string name="favorites_empty_text">Ainda não guardaste favoritos.</string>
+    <string name="favorites_hint_text">Inicia a navegação diretamente a partir dos teus locais guardados.</string>
+    <string name="favorites_empty_card_text">Toca no ícone de coração nos detalhes do estacionamento para adicionar um favorito.</string>
+    <string name="favorites_add">Adicionar aos favoritos</string>
+    <string name="favorites_remove">Remover dos favoritos</string>
+    <string name="favorites_spaces_format">%1$d lugares</string>
+
+    <string name="navigation_start">Iniciar navegação</string>
+
+    <string name="detail_address">Endereço</string>
+    <string name="detail_capacity">Capacidade</string>
+    <string name="detail_operator">Operador</string>
+    <string name="detail_covered">Coberto</string>
+
+    <string name="common_yes">Sim</string>
+    <string name="common_no">Não</string>
+    <string name="common_unknown">Desconhecido</string>
+    <string name="common_covered">Coberto</string>
+
+    <string name="type_garage">Garagem para bicicletas</string>
+    <string name="type_bike_rack">Suporte para bicicletas</string>
+    <string name="type_unknown">Instalação de estacionamento</string>
+</resources>
+

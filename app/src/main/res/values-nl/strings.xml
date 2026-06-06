@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">VeloSpot</string>
+    <string name="menu_open">Menu openen</string>
+    <string name="menu_favorites_count">Favorieten (%1$d)</string>
+    <string name="menu_language_with_flag">Taal: %1$s</string>
+    <string name="menu_enable_dark_mode">Donkere modus inschakelen</string>
+    <string name="menu_disable_dark_mode">Donkere modus uitschakelen</string>
+
+    <string name="language_sheet_title">Taal kiezen</string>
+
+    <string name="map_center_on_my_location">Kaart op mijn locatie centreren</string>
+    <string name="map_my_location">Mijn locatie</string>
+    <string name="map_snippet_spaces_format">%1$d plaatsen</string>
+    <string name="map_snippet_covered">overdekt</string>
+
+    <string name="favorites_title">Favorieten</string>
+    <string name="favorites_empty_text">Je hebt nog geen favorieten opgeslagen.</string>
+    <string name="favorites_hint_text">Start navigatie direct vanaf je opgeslagen locaties.</string>
+    <string name="favorites_empty_card_text">Tik op het hartpictogram in de detailweergave om een favoriet toe te voegen.</string>
+    <string name="favorites_add">Toevoegen aan favorieten</string>
+    <string name="favorites_remove">Verwijderen uit favorieten</string>
+    <string name="favorites_spaces_format">%1$d plaatsen</string>
+
+    <string name="navigation_start">Navigatie starten</string>
+
+    <string name="detail_address">Adres</string>
+    <string name="detail_capacity">Capaciteit</string>
+    <string name="detail_operator">Beheerder</string>
+    <string name="detail_covered">Overdekt</string>
+
+    <string name="common_yes">Ja</string>
+    <string name="common_no">Nee</string>
+    <string name="common_unknown">Onbekend</string>
+    <string name="common_covered">Overdekt</string>
+
+    <string name="type_garage">Fietsgarage</string>
+    <string name="type_bike_rack">Fietsbeugel</string>
+    <string name="type_unknown">Stallingsvoorziening</string>
+</resources>
+

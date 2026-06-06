@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">VeloSpot</string>
+    <string name="menu_open">Ouvrir le menu</string>
+    <string name="menu_favorites_count">Favoris (%1$d)</string>
+    <string name="menu_language_with_flag">Langue : %1$s</string>
+    <string name="menu_enable_dark_mode">Activer le mode sombre</string>
+    <string name="menu_disable_dark_mode">Désactiver le mode sombre</string>
+
+    <string name="language_sheet_title">Choisir la langue</string>
+
+    <string name="map_center_on_my_location">Centrer la carte sur ma position</string>
+    <string name="map_my_location">Ma position</string>
+    <string name="map_snippet_spaces_format">%1$d places</string>
+    <string name="map_snippet_covered">couverte</string>
+
+    <string name="favorites_title">Favoris</string>
+    <string name="favorites_empty_text">Vous n\'avez pas encore enregistré de favoris.</string>
+    <string name="favorites_hint_text">Démarrez la navigation directement depuis vos emplacements enregistrés.</string>
+    <string name="favorites_empty_card_text">Touchez l\'icône cœur dans la fiche d\'un stationnement pour ajouter un favori.</string>
+    <string name="favorites_add">Ajouter aux favoris</string>
+    <string name="favorites_remove">Retirer des favoris</string>
+    <string name="favorites_spaces_format">%1$d places</string>
+
+    <string name="navigation_start">Démarrer la navigation</string>
+
+    <string name="detail_address">Adresse</string>
+    <string name="detail_capacity">Capacité</string>
+    <string name="detail_operator">Opérateur</string>
+    <string name="detail_covered">Couvert</string>
+
+    <string name="common_yes">Oui</string>
+    <string name="common_no">Non</string>
+    <string name="common_unknown">Inconnu</string>
+    <string name="common_covered">Couvert</string>
+
+    <string name="type_garage">Garage à vélos</string>
+    <string name="type_bike_rack">Arceau vélo</string>
+    <string name="type_unknown">Installation de stationnement</string>
+</resources>
+

@@ -25,6 +25,7 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - Current-location recentering and location marker support
 - In-app dark mode toggle from the top-right menu
 - Room / SQLite local cache for faster reloads
+- **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
 
 ## 🌟 Features
 
@@ -32,6 +33,7 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - 🧭 **My Location** - Center the map on your current position and display a live location marker
 - ❤️ **Favorites** - Save frequently used bike parking spots and launch navigation from a dedicated favorites list
 - 🌙 **Dark Mode Toggle** - Switch the app theme directly from the in-app menu
+- 🌐 **8 Languages** - Choose from German, English, French, Italian, Portuguese, Luxembourgish, Dutch, and Spanish; the selection is remembered across restarts
 - 🚲 **Real-time Data** - Access current bike parking information via WFS/WMS services
 - 💾 **SQLite Offline Cache** - Store downloaded bike parking data locally with Room for fast reloads
 - 🎯 **Quick Navigation** - Open parking locations directly in your navigation app (Google Maps, OsmAnd, etc.)
@@ -134,7 +136,7 @@ For more information about OpenStreetMap and ODbL, visit:
 - Zoom-responsive marker scaling
 - Favorite-aware marker colors
 - Current location marker and recenter action
-- Top-right quick menu with favorites and dark mode toggle
+- Top-right quick menu with favorites, language picker, and dark mode toggle
 - Error handling and loading states
 
 ### Parking Details Sheet
@@ -147,6 +149,10 @@ For more information about OpenStreetMap and ODbL, visit:
 - Dedicated list of saved bike parking spots
 - Direct navigation shortcut for each saved location
 - Empty-state guidance for first-time use
+
+### Language Picker
+- Flag-based selection for 8 supported languages
+- Selection persists across app restarts and cold starts
 
 ## 🧪 Testing
 

@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">VeloSpot</string>
+    <string name="menu_open">Apri menu</string>
+    <string name="menu_favorites_count">Preferiti (%1$d)</string>
+    <string name="menu_language_with_flag">Lingua: %1$s</string>
+    <string name="menu_enable_dark_mode">Attiva modalità scura</string>
+    <string name="menu_disable_dark_mode">Disattiva modalità scura</string>
+
+    <string name="language_sheet_title">Scegli lingua</string>
+
+    <string name="map_center_on_my_location">Centra la mappa sulla mia posizione</string>
+    <string name="map_my_location">La mia posizione</string>
+    <string name="map_snippet_spaces_format">%1$d posti</string>
+    <string name="map_snippet_covered">coperto</string>
+
+    <string name="favorites_title">Preferiti</string>
+    <string name="favorites_empty_text">Non hai ancora salvato preferiti.</string>
+    <string name="favorites_hint_text">Avvia la navigazione direttamente dai tuoi parcheggi salvati.</string>
+    <string name="favorites_empty_card_text">Tocca l\'icona a cuore nella scheda del parcheggio per aggiungere un preferito.</string>
+    <string name="favorites_add">Aggiungi ai preferiti</string>
+    <string name="favorites_remove">Rimuovi dai preferiti</string>
+    <string name="favorites_spaces_format">%1$d posti</string>
+
+    <string name="navigation_start">Avvia navigazione</string>
+
+    <string name="detail_address">Indirizzo</string>
+    <string name="detail_capacity">Capacità</string>
+    <string name="detail_operator">Operatore</string>
+    <string name="detail_covered">Coperto</string>
+
+    <string name="common_yes">Sì</string>
+    <string name="common_no">No</string>
+    <string name="common_unknown">Sconosciuto</string>
+    <string name="common_covered">Coperto</string>
+
+    <string name="type_garage">Garage per biciclette</string>
+    <string name="type_bike_rack">Rastrelliera per biciclette</string>
+    <string name="type_unknown">Area di sosta</string>
+</resources>
+

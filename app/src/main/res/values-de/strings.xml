@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">VeloSpot</string>
+    <string name="menu_open">Menü öffnen</string>
+    <string name="menu_favorites_count">Favoriten (%1$d)</string>
+    <string name="menu_language_with_flag">Sprache: %1$s</string>
+    <string name="menu_enable_dark_mode">Dunklen Modus aktivieren</string>
+    <string name="menu_disable_dark_mode">Dunklen Modus deaktivieren</string>
+
+    <string name="language_sheet_title">Sprache auswählen</string>
+
+    <string name="map_center_on_my_location">Karte auf meinen Standort zentrieren</string>
+    <string name="map_my_location">Mein Standort</string>
+    <string name="map_snippet_spaces_format">%1$d Stellplätze</string>
+    <string name="map_snippet_covered">überdacht</string>
+
+    <string name="favorites_title">Favoriten</string>
+    <string name="favorites_empty_text">Du hast noch keine Favoriten gespeichert.</string>
+    <string name="favorites_hint_text">Starte die Navigation direkt von deinen gespeicherten Stellplätzen.</string>
+    <string name="favorites_empty_card_text">Tippe im Detail-Sheet auf das Herzsymbol, um einen Favoriten hinzuzufügen.</string>
+    <string name="favorites_add">Zu Favoriten hinzufügen</string>
+    <string name="favorites_remove">Aus Favoriten entfernen</string>
+    <string name="favorites_spaces_format">%1$d Stellplätze</string>
+
+    <string name="navigation_start">Navigation starten</string>
+
+    <string name="detail_address">Adresse</string>
+    <string name="detail_capacity">Stellplätze</string>
+    <string name="detail_operator">Betreiber</string>
+    <string name="detail_covered">Überdacht</string>
+
+    <string name="common_yes">Ja</string>
+    <string name="common_no">Nein</string>
+    <string name="common_unknown">Unbekannt</string>
+    <string name="common_covered">Überdacht</string>
+
+    <string name="type_garage">Fahrradgarage</string>
+    <string name="type_bike_rack">Fahrradbügel</string>
+    <string name="type_unknown">Abstellanlage</string>
+</resources>
+

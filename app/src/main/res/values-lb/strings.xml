@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">VeloSpot</string>
+    <string name="menu_open">Menü opmaachen</string>
+    <string name="menu_favorites_count">Favoritten (%1$d)</string>
+    <string name="menu_language_with_flag">Sprooch: %1$s</string>
+    <string name="menu_enable_dark_mode">Donkel Modus aktivéieren</string>
+    <string name="menu_disable_dark_mode">Donkel Modus desaktivéieren</string>
+
+    <string name="language_sheet_title">Sprooch auswielen</string>
+
+    <string name="map_center_on_my_location">Kaart op mäi Standuert zentréieren</string>
+    <string name="map_my_location">Mäi Standuert</string>
+    <string name="map_snippet_spaces_format">%1$d Stellplazen</string>
+    <string name="map_snippet_covered">iwwerdeckt</string>
+
+    <string name="favorites_title">Favoritten</string>
+    <string name="favorites_empty_text">Du hues nach keng Favoritte gespäichert.</string>
+    <string name="favorites_hint_text">Start d\'Navigatioun direkt vun dengen gespäicherte Plazen.</string>
+    <string name="favorites_empty_card_text">Tip op d\'Häerz-Ikon an den Detailer, fir e Favorit dobäizesetzen.</string>
+    <string name="favorites_add">Bei Favoritten dobäisetzen</string>
+    <string name="favorites_remove">Aus Favoritten ewechhuelen</string>
+    <string name="favorites_spaces_format">%1$d Stellplazen</string>
+
+    <string name="navigation_start">Navigatioun starten</string>
+
+    <string name="detail_address">Adress</string>
+    <string name="detail_capacity">Stellplazen</string>
+    <string name="detail_operator">Bedreiwer</string>
+    <string name="detail_covered">Iwwerdeckt</string>
+
+    <string name="common_yes">Jo</string>
+    <string name="common_no">Nee</string>
+    <string name="common_unknown">Onbekannt</string>
+    <string name="common_covered">Iwwerdeckt</string>
+
+    <string name="type_garage">Vëlosgarage</string>
+    <string name="type_bike_rack">Vëlosbügel</string>
+    <string name="type_unknown">Ofstellanlag</string>
+</resources>
+

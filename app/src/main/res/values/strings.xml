@@ -1,3 +1,39 @@
 <resources>
     <string name="app_name">VeloSpot</string>
+    <string name="menu_open">Open menu</string>
+    <string name="menu_favorites_count">Favorites (%1$d)</string>
+    <string name="menu_language_with_flag">Language: %1$s</string>
+    <string name="menu_enable_dark_mode">Enable dark mode</string>
+    <string name="menu_disable_dark_mode">Disable dark mode</string>
+
+    <string name="language_sheet_title">Choose language</string>
+
+    <string name="map_center_on_my_location">Center map on my location</string>
+    <string name="map_my_location">My location</string>
+    <string name="map_snippet_spaces_format">%1$d spaces</string>
+    <string name="map_snippet_covered">covered</string>
+
+    <string name="favorites_title">Favorites</string>
+    <string name="favorites_empty_text">You have not saved any favorites yet.</string>
+    <string name="favorites_hint_text">Start navigation directly from your saved parking spots.</string>
+    <string name="favorites_empty_card_text">Tap the heart icon in a parking detail sheet to add a favorite.</string>
+    <string name="favorites_add">Add to favorites</string>
+    <string name="favorites_remove">Remove from favorites</string>
+    <string name="favorites_spaces_format">%1$d spaces</string>
+
+    <string name="navigation_start">Start navigation</string>
+
+    <string name="detail_address">Address</string>
+    <string name="detail_capacity">Capacity</string>
+    <string name="detail_operator">Operator</string>
+    <string name="detail_covered">Covered</string>
+
+    <string name="common_yes">Yes</string>
+    <string name="common_no">No</string>
+    <string name="common_unknown">Unknown</string>
+    <string name="common_covered">Covered</string>
+
+    <string name="type_garage">Bike garage</string>
+    <string name="type_bike_rack">Bike rack</string>
+    <string name="type_unknown">Parking facility</string>
 </resources>
