@@ -1,0 +1,537 @@
+﻿<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.1">
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>Parken in Trier</Title>
+  <Abstract>Standorte der Parkplätze (POIs) im Stadtgebiet Trier unterteilt nach Parkautomaten, Parkplatz, Parkhaus, Park and Ride, Behindertenparkplatz, Wohnmobilstellplatz, Busparkplatz,sowie Fahrradgaragen und Fahrradabstellanlagen.</Abstract>
+  <KeywordList>
+      <Keyword>Parkplatz</Keyword>
+      <Keyword> Parkhaus</Keyword>
+      <Keyword> Park and Ride</Keyword>
+      <Keyword> Behindertenparkplatz</Keyword>
+      <Keyword> Wohnmobilstellplatz</Keyword>
+      <Keyword> Busparkplatz</Keyword>
+      <Keyword> Stellplatz</Keyword>
+      <Keyword> Parken</Keyword>
+      <Keyword> Fahrradparkplatz</Keyword>
+      <Keyword> Fahrradabstellanlagen</Keyword>
+      <Keyword>Parkautomaten</Keyword>
+      <Keyword> Parken</Keyword>
+      <Keyword>Auto</Keyword>
+      <Keyword> Fahrrad</Keyword>
+  </KeywordList>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/>
+  <ContactInformation>
+    <ContactPersonPrimary>
+      <ContactPerson>Administrator Geoportal / Geodatendienste</ContactPerson>
+      <ContactOrganization>Stadt Trier</ContactOrganization>
+    </ContactPersonPrimary>
+      <ContactPosition>Amt für Bodenmanagement und Geoinformation</ContactPosition>
+    <ContactAddress>
+        <AddressType>postal</AddressType>
+        <Address>Hindenburgstraße 2</Address>
+        <City>Trier</City>
+        <StateOrProvince>RP</StateOrProvince>
+        <PostCode>54290</PostCode>
+        <Country>DE</Country>
+    </ContactAddress>
+      <ContactVoiceTelephone>+49(0)651/718-3690</ContactVoiceTelephone>
+      <ContactFacsimileTelephone>+49(0)651/718-3690</ContactFacsimileTelephone>
+  <ContactElectronicMailAddress>Bodenmanagement@trier.de</ContactElectronicMailAddress>
+  </ContactInformation>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/png</Format>
+      <Format>image/gif</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/tiff</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <Format>application/x-pdf</Format>
+      <Format>image/svg+xml</Format>
+      <Format>application/vnd.google-earth.kml+xml</Format>
+      <Format>application/vnd.google-earth.kmz</Format>
+      <Format>application/vnd.mapbox-vector-tile</Format>
+      <Format>application/x-protobuf</Format>
+      <Format>application/json</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/html</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <Format>text/plain</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+    <DescribeLayer>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeLayer>
+    <GetLegendGraphic>
+      <Format>image/png</Format>
+      <Format>image/gif</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetLegendGraphic>
+    <GetStyles>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetStyles>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
+  <Layer queryable="1">
+    <Name>mywmsfile</Name>
+    <Title>Parken in Trier</Title>
+    <Abstract>Standorte der Parkplätze (POIs) im Stadtgebiet Trier unterteilt nach Parkautomaten, Parkplatz, Parkhaus, Park and Ride, Behindertenparkplatz, Wohnmobilstellplatz, Busparkplatz,sowie Fahrradgaragen und Fahrradabstellanlagen.</Abstract>
+    <KeywordList>
+        <Keyword>Parkplatz</Keyword>
+        <Keyword> Parkhaus</Keyword>
+        <Keyword> Park and Ride</Keyword>
+        <Keyword> Behindertenparkplatz</Keyword>
+        <Keyword> Wohnmobilstellplatz</Keyword>
+        <Keyword> Busparkplatz</Keyword>
+        <Keyword> Stellplatz</Keyword>
+        <Keyword> Parken</Keyword>
+        <Keyword> Fahrradparkplatz</Keyword>
+        <Keyword> Fahrradabstellanlagen</Keyword>
+        <Keyword>Parkautomaten</Keyword>
+        <Keyword> Parken</Keyword>
+        <Keyword>Auto</Keyword>
+        <Keyword> Fahrrad</Keyword>
+    </KeywordList>
+    <SRS>EPSG:25832</SRS>
+    <SRS>EPSG:31466</SRS>
+    <SRS>EPSG:31467</SRS>
+    <SRS>EPSG:4326</SRS>
+    <SRS>EPSG:900913</SRS>
+    <SRS>EPSG:3857</SRS>
+    <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+    <BoundingBox SRS="EPSG:25832"
+                minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>parken_behindert</Name>
+        <Title>Behindertenparkplätze Trier</Title>
+        <Abstract>Standorte der Behindertenparkplätze als POIs mit Informationen zur Stellplatz-Anzahl</Abstract>
+        <KeywordList>
+            <Keyword>Behindertenparkplatz</Keyword>
+            <Keyword> Parkplatz</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=156"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="193" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=parken_behindert&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>parken_bus</Name>
+        <Title>Busparkplätze Trier</Title>
+        <Abstract>Standorte der Busparkplätze im Stadtgebiet Trier als POIs.</Abstract>
+        <KeywordList>
+            <Keyword>Busparkplatz</Keyword>
+            <Keyword> Bus</Keyword>
+            <Keyword> Omnibus</Keyword>
+            <Keyword> Parkplatz</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=160"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="149" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=parken_bus&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>fahrradabstellanlagen</Name>
+        <Title>Fahrradabstellanlagen</Title>
+        <Abstract>POIs der Fahrradabstellanlagen-Standorte im Stadtgebiet Trier</Abstract>
+        <KeywordList>
+            <Keyword>Fahrrad</Keyword>
+            <Keyword> Zweirad</Keyword>
+            <Keyword> Parkplatz</Keyword>
+            <Keyword> Abstellmöglichkeit</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=166"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="164" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=fahrradabstellanlagen&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>fahrradgaragen</Name>
+        <Title>Fahrradgaragen</Title>
+        <Abstract>POIs der Trierer Fahrradgaragen</Abstract>
+        <KeywordList>
+            <Keyword>Fahrradgarage</Keyword>
+            <Keyword> Fahrrad</Keyword>
+            <Keyword> Parken</Keyword>
+            <Keyword> Abstellmöglichkeit</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=157"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="130" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=fahrradgaragen&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>parken_motorrad</Name>
+        <Title>Motorradstellplätze Trier</Title>
+        <Abstract>Standorte der öffentlichen Motorradstellplätze im Stadtgebiet Trier als POIs</Abstract>
+        <KeywordList>
+            <Keyword>Parkplatz</Keyword>
+            <Keyword> Parken</Keyword>
+            <Keyword> Stellplatz</Keyword>
+            <Keyword> Motorrad</Keyword>
+            <Keyword> Zweirad</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=158"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="174" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=parken_motorrad&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>parkride</Name>
+        <Title>Park and Ride Trier</Title>
+        <Abstract>POIs der Park and Ride Parkplätze im Stadtgebiet Trier</Abstract>
+        <KeywordList>
+            <Keyword>Parkplatz</Keyword>
+            <Keyword> Stellplatz</Keyword>
+            <Keyword> Parken</Keyword>
+            <Keyword> Park und Ride</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=155"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="149" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=parkride&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>parkautomaten</Name>
+        <Title>Parkautomaten Trier</Title>
+        <Abstract>Parkautomaten und Parkuhren im Stadtgebiet von Trier (Punktdaten).</Abstract>
+        <KeywordList>
+            <Keyword>Parkmöglichkeit</Keyword>
+            <Keyword>Parkplatz</Keyword>
+            <Keyword>Parkrandgebiet</Keyword>
+            <Keyword>Parkautomat</Keyword>
+            <Keyword> Parkuhr</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=418"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="126" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=parkautomaten&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>parkhaus</Name>
+        <Title>Parkhäuser und Tiefgaragen Trier</Title>
+        <Abstract>POIs der Parkhäuser und Tiefgaragen im Stadtgebiet Trier</Abstract>
+        <KeywordList>
+            <Keyword>Parkhaus</Keyword>
+            <Keyword> Parkplatz</Keyword>
+            <Keyword> Tiefgarage</Keyword>
+            <Keyword> Parken</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=154"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="225" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=parkhaus&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>parken</Name>
+        <Title>Parkplätze Trier</Title>
+        <Abstract>Standorte der öffentlichen Parkplätze im Stadtgebiet Trier als POIs</Abstract>
+        <KeywordList>
+            <Keyword>Parkplatz</Keyword>
+            <Keyword> Parken</Keyword>
+            <Keyword> Stellplatz</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=153"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="130" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=parken&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>verkehrsleitsystem_kim_led</Name>
+        <Title>Verkehrs- und Parkleitsystem (KIM)</Title>
+        <Abstract>Die Daten enthalten die Standorte der Verkehrsschilder des Verkehrs- und Parkleitsystems (KIM) im Stadtgebiet Trier. KIM („KI-optimierte Verkehrssteuerung im urbanen Raum für nachhaltige Mobilitätsangebote“) ist ein Projekt der Stadtwerke Trier (SWT), das Künstliche Intelligenz nutzt, um den Verkehrsfluss zu verbessern, Parksuchverkehr zu reduzieren und Umweltbelastungen zu verringern.</Abstract>
+        <KeywordList>
+            <Keyword>Parkplatz</Keyword>
+            <Keyword>Informationssystem</Keyword>
+            <Keyword>Steuersystem</Keyword>
+            <Keyword>Verweisinformationssystem</Keyword>
+            <Keyword>Straßenverkehr</Keyword>
+            <Keyword>Verkehrstechnik</Keyword>
+            <Keyword>Straßenverkehrstechnik</Keyword>
+            <Keyword>Stadtverkehr</Keyword>
+            <Keyword>Verkehrsinfrastruktur</Keyword>
+            <Keyword>Verkehrsüberwachung</Keyword>
+            <Keyword>Verkehrsstau</Keyword>
+            <Keyword>Straßennetz</Keyword>
+            <Keyword>Straßenverkehrssicherheit</Keyword>
+            <Keyword>Touristenbesuch</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=806"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="234" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=verkehrsleitsystem_kim_led&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>wohnmobilstellplatz</Name>
+        <Title>Wohnmobilstellplätze Trier</Title>
+        <Abstract>POIs der Wohnmobilstellplätze in Trier und Umgebung als POIs.</Abstract>
+        <KeywordList>
+            <Keyword>Wohnmobil</Keyword>
+            <Keyword> Wohnmobilstellplatz</Keyword>
+            <Keyword> Parken</Keyword>
+            <Keyword> Stellplatz</Keyword>
+            <Keyword> Parkplatz</Keyword>
+            <Keyword> Übernachtung</Keyword>
+            <Keyword> Trier</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:31466</SRS>
+        <SRS>EPSG:31467</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:900913</SRS>
+        <SRS>EPSG:3857</SRS>
+        <LatLonBoundingBox minx="6.541518" miny="49.691966" maxx="6.755924" maxy="49.861523" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="323296" miny="5.50726e+06" maxx="338169" maxy="5.52567e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_metadata/ajax/getxml.php?id=159"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="186" height="30">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geoportal.trier.de/trier/mod_ogc/wms_getmap.php?mapfile=parken_gesamt&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=wohnmobilstellplatz&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>
+ 
+

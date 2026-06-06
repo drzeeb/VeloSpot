@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ows:ExceptionReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows" version="2.0.0" language="en-US" xsi:schemaLocation="http://www.opengis.net/ows http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd">
+  <ows:Exception exceptionCode="NoApplicableCode" locator="mapserv">
+    <ows:ExceptionText>msWFSGetCapabilities20(): WFS server error. Server URL not found
+msOWSGetOnlineResource(): CGI error. Please set "wfs_onlineresource" or "ows_onlineresource" metadata.
+msBuildOnlineResource(): CGI error. Impossible to establish server URL.</ows:ExceptionText>
+  </ows:Exception>
+</ows:ExceptionReport>
+ 

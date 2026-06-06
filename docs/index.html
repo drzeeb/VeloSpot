@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VeloSpot - Find bike parking spaces effortlessly in Trier">
+    <meta name="keywords" content="bike parking, Trier, cycling, map, Android">
+    <title>VeloSpot - Find Your Perfect Bike Parking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0A2A66;
+            --secondary-color: #7DB3FF;
+            --text-dark: #1a1a1a;
+            --text-light: #555;
+            --bg-light: #f5f5f5;
+            --accent: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: #ffffff;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%);
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%);
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            transform: translate(100px, -100px);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: white;
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #6aa2ff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 2rem;
+            background-color: var(--bg-light);
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--primary-color);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+        }
+
+        /* Tech Stack Section */
+        .tech-stack {
+            padding: 4rem 2rem;
+            background: white;
+        }
+
+        .tech-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Screenshots/Info Section */
+        .details {
+            padding: 4rem 2rem;
+            background-color: var(--bg-light);
+        }
+
+        .details-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .details-content h2 {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .details-content p {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .details-list {
+            list-style: none;
+            margin-top: 1.5rem;
+        }
+
+        .details-list li {
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: var(--text-light);
+        }
+
+        .details-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .details-image {
+            text-align: center;
+        }
+
+        .details-image img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* Call to Action Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .cta-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-content p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        footer p {
+            margin-bottom: 0.5rem;
+        }
+
+        .social-links {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .social-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <nav>
+            <div class="logo">🚲 VeloSpot</div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#tech">Tech Stack</a></li>
+                <li><a href="#download">Download</a></li>
+                <li><a href="https://github.com/drzeeb/VeloSpot" target="_blank">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Find Your Perfect Bike Parking</h1>
+            <p>VeloSpot makes discovering bike parking spaces in Trier effortless. Navigate, explore, and park with confidence.</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">View on GitHub</a>
+                <a href="#download" class="btn btn-secondary">Get Started</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-container">
+            <h2 class="section-title">Why VeloSpot?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h3>Interactive Map</h3>
+                    <p>Browse bike parking spaces on an intuitive OSM-based map with real-time marker updates.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚲</div>
+                    <h3>Real-time Data</h3>
+                    <p>Access current bike parking information from official Trier geoportal services.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Quick Navigation</h3>
+                    <p>Open any parking location directly in Google Maps, OsmAnd, or your favorite navigation app.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Detailed Info</h3>
+                    <p>View capacity, address, and coverage information for every bike parking facility.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Auto-refresh</h3>
+                    <p>Data automatically updates as you navigate around the map for the latest information.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Modern UI</h3>
+                    <p>Beautiful, clean interface built with Jetpack Compose for a smooth user experience.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section class="tech-stack" id="tech">
+        <div class="tech-container">
+            <h2 class="section-title">Built With Modern Tech</h2>
+            <div class="tech-grid">
+                <div class="tech-badge">Kotlin</div>
+                <div class="tech-badge">Jetpack Compose</div>
+                <div class="tech-badge">Clean Architecture</div>
+                <div class="tech-badge">Hilt DI</div>
+                <div class="tech-badge">Retrofit</div>
+                <div class="tech-badge">OSMDroid</div>
+                <div class="tech-badge">MVVM Pattern</div>
+                <div class="tech-badge">Material Design 3</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Details Section -->
+    <section class="details">
+        <div class="details-container">
+            <div class="details-grid">
+                <div class="details-content">
+                    <h2>Smart Parking Discovery</h2>
+                    <p>VeloSpot combines real-time data from official sources with smart mapping technology to help cyclists find bike parking spaces quickly and efficiently.</p>
+                    <ul class="details-list">
+                        <li>Real-time capacity updates</li>
+                        <li>Multiple navigation options</li>
+                        <li>Coverage information</li>
+                        <li>Address and location details</li>
+                        <li>Zoom-responsive interface</li>
+                        <li>Offline-ready map caching</li>
+                    </ul>
+                </div>
+                <div class="details-image">
+                    <div style="background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%); border-radius: 10px; color: white; padding: 40px; text-align: center;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">🗺️</div>
+                        <p style="font-size: 18px; margin-bottom: 10px;"><strong>Interactive Map Interface</strong></p>
+                        <p>Powered by OpenStreetMap</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="download">
+        <div class="cta-content">
+            <h2>Ready to Find Your Bike Parking?</h2>
+            <p>Start using VeloSpot today and never worry about finding a safe parking spot for your bike again.</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">Clone Repository</a>
+                <a href="https://github.com/drzeeb/VeloSpot#getting-started" class="btn btn-secondary">View Documentation</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 VeloSpot. All rights reserved.</p>
+        <p>Built with ❤️ for the cycling community in Trier</p>
+        <div class="social-links">
+            <a href="https://github.com/drzeeb/VeloSpot" target="_blank">GitHub Repository</a>
+            <a href="https://github.com/drzeeb/VeloSpot/issues" target="_blank">Report Issues</a>
+            <a href="https://github.com/drzeeb/VeloSpot/discussions" target="_blank">Discussions</a>
+        </div>
+    </footer>
+</body>
+</html>
+
