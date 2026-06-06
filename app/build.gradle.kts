@@ -73,6 +73,10 @@ dependencies {
     implementation(libs.roomKtx)
     kapt(libs.roomCompiler)
 
+    // Location Services
+    implementation(libs.playServicesLocation)
+    implementation(libs.accompanistPermissions)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

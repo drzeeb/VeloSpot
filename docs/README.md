@@ -16,6 +16,7 @@ This directory contains the GitHub Pages website for VeloSpot. The site is autom
 - Hero banner with project introduction
 - Features overview with icons
 - Technology stack showcase
+- Product highlights for favorites, my location, dark mode, and SQLite caching
 - Getting started guide
 - Footer with social links
 
@@ -44,6 +45,13 @@ Update the CSS variables at the top of the `<style>` section:
 
 ### Content
 Update section titles, descriptions, and links as needed.
+
+Current website copy highlights:
+- Favorites and direct navigation shortcuts
+- Current-location tools and live location marker
+- Dark mode toggle in the app menu
+- Room / SQLite local caching
+- OpenStreetMap attribution in the footer
 
 ## Deployment
 

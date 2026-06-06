@@ -7,7 +7,11 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 ## 🌟 Features
 
 - 📍 **Interactive Map** - Browse bike parking spaces on an interactive OSM map
+- 🧭 **My Location** - Center the map on your current position and display a live location marker
+- ❤️ **Favorites** - Save frequently used bike parking spots and launch navigation from a dedicated favorites list
+- 🌙 **Dark Mode Toggle** - Switch the app theme directly from the in-app menu
 - 🚲 **Real-time Data** - Access current bike parking information via WFS/WMS services
+- 💾 **SQLite Offline Cache** - Store downloaded bike parking data locally with Room for fast reloads
 - 🎯 **Quick Navigation** - Open parking locations directly in your navigation app (Google Maps, OsmAnd, etc.)
 - 📊 **Detailed Information** - View capacity, address, and coverage information for each location
 - 🔄 **Auto-refresh** - Data updates automatically as you navigate
@@ -16,7 +20,7 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 ## 📱 Target Platform
 
 - **Android 8.0 (API 26)** and above
-- Minimum: API 26 | Target: API 34
+- Minimum: API 26 | Target: API 35
 
 ## 🛠 Tech Stack
 
@@ -24,7 +28,8 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - **UI Framework**: Jetpack Compose
 - **Architecture**: Clean Architecture with MVVM
 - **Dependency Injection**: Hilt
-- **Data**: Retrofit, Moshi, OSMDroid
+- **Data**: Retrofit, Moshi, Room (SQLite), OSMDroid
+- **Location**: Android runtime permissions, Google Play Services location APIs
 - **Build System**: Gradle
 
 ## 🗂 Project Structure
@@ -58,7 +63,7 @@ VeloSpot/
 
 - Android Studio (Jellyfish or newer)
 - Java Development Kit (JDK 17+)
-- Android SDK 34+
+- Android SDK 35+
 - Git
 
 ### Installation
@@ -105,13 +110,21 @@ For more information about OpenStreetMap and ODbL, visit:
 ### Map Screen
 - Centered map view with bike parking markers
 - Zoom-responsive marker scaling
-- Marker clustering at lower zoom levels
+- Favorite-aware marker colors
+- Current location marker and recenter action
+- Top-right quick menu with favorites and dark mode toggle
 - Error handling and loading states
 
 ### Parking Details Sheet
 - Bottom sheet with parking information
+- Favorite toggle for quick saving
 - Quick-access navigation button
 - Capacity and coverage indicators
+
+### Favorites Sheet
+- Dedicated list of saved bike parking spots
+- Direct navigation shortcut for each saved location
+- Empty-state guidance for first-time use
 
 ## 🧪 Testing
 
@@ -164,10 +177,16 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 - Ensure location permissions are granted
 - Check internet connectivity
 - Verify WFS/WMS service is accessible
+- If you denied location once, use the map without recentering or grant permission when Android prompts again
 
 ### Map shows blank
 - Ensure OSM tiles are loading (check network tab)
 - Verify `userAgentValue` is set in `BaseApplication.kt`
+
+### My Location does not work
+- Confirm location permission is granted for the app
+- Make sure location services are enabled on the device
+- Try tapping the floating action button again after Android shows the permission dialog
 
 ## 🤝 Contributing
 
@@ -207,6 +226,6 @@ Navigate with confidence and never miss a parking spot again!
 
 ---
 
-**Last Updated**: 2026  
+**Last Updated**: 2026-06-06  
 **Status**: Active Development
 

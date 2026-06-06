@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VeloSpot - Find bike parking spaces effortlessly in Trier">
-    <meta name="keywords" content="bike parking, Trier, cycling, map, Android">
-    <title>VeloSpot - Find Your Perfect Bike Parking</title>
+    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces in Trier with favorites, live location tools, and a clean Android UI.">
+    <meta name="keywords" content="bike parking, Trier, cycling, map, Android, favorites, dark mode, osmdroid, room">
+    <title>VeloSpot - Smart Bike Parking for Trier</title>
     <style>
         * {
             margin: 0;
@@ -393,8 +393,8 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Find Your Perfect Bike Parking</h1>
-            <p>VeloSpot makes discovering bike parking spaces in Trier effortless. Navigate, explore, and park with confidence.</p>
+            <h1>Smart Bike Parking for Trier</h1>
+            <p>Discover bike parking spaces, save favorites, switch themes, and jump to your current position with a fast, modern Android map experience.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">View on GitHub</a>
                 <a href="#download" class="btn btn-secondary">Get Started</a>
@@ -410,32 +410,32 @@
                 <div class="feature-card">
                     <div class="feature-icon">📍</div>
                     <h3>Interactive Map</h3>
-                    <p>Browse bike parking spaces on an intuitive OSM-based map with real-time marker updates.</p>
+                    <p>Browse bike parking spaces on an intuitive OSM-based map with clear markers and quick detail access.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🚲</div>
-                    <h3>Real-time Data</h3>
-                    <p>Access current bike parking information from official Trier geoportal services.</p>
+                    <div class="feature-icon">❤️</div>
+                    <h3>Favorites</h3>
+                    <p>Save the parking spots you use most often and launch navigation directly from the favorites list.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h3>My Location</h3>
+                    <p>Center the map on your current position and keep your location visible while exploring nearby parking options.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <h3>Theme Toggle</h3>
+                    <p>Switch between light and dark mode from the in-app menu whenever you need better contrast.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>SQLite Cache</h3>
+                    <p>Room-backed local storage keeps downloaded bike parking data ready for fast reloads and smoother browsing.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
                     <h3>Quick Navigation</h3>
-                    <p>Open any parking location directly in Google Maps, OsmAnd, or your favorite navigation app.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Detailed Info</h3>
-                    <p>View capacity, address, and coverage information for every bike parking facility.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
-                    <h3>Auto-refresh</h3>
-                    <p>Data automatically updates as you navigate around the map for the latest information.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Modern UI</h3>
-                    <p>Beautiful, clean interface built with Jetpack Compose for a smooth user experience.</p>
+                    <p>Open any parking location directly in Google Maps, OsmAnd, or your preferred navigation app.</p>
                 </div>
             </div>
         </div>
@@ -452,6 +452,8 @@
                 <div class="tech-badge">Hilt DI</div>
                 <div class="tech-badge">Retrofit</div>
                 <div class="tech-badge">OSMDroid</div>
+                <div class="tech-badge">Room / SQLite</div>
+                <div class="tech-badge">Play Services Location</div>
                 <div class="tech-badge">MVVM Pattern</div>
                 <div class="tech-badge">Material Design 3</div>
             </div>
@@ -463,22 +465,22 @@
         <div class="details-container">
             <div class="details-grid">
                 <div class="details-content">
-                    <h2>Smart Parking Discovery</h2>
-                    <p>VeloSpot combines real-time data from official sources with smart mapping technology to help cyclists find bike parking spaces quickly and efficiently.</p>
+                    <h2>Built for Everyday City Cycling</h2>
+                    <p>VeloSpot combines official Trier geoportal data, local SQLite caching, and a practical Android UI to help cyclists find the right bike parking spot in seconds.</p>
                     <ul class="details-list">
-                        <li>Real-time capacity updates</li>
-                        <li>Multiple navigation options</li>
-                        <li>Coverage information</li>
-                        <li>Address and location details</li>
-                        <li>Zoom-responsive interface</li>
-                        <li>Offline-ready map caching</li>
+                        <li>Favorite spots highlighted with red map markers</li>
+                        <li>Dedicated favorites sheet with direct navigation</li>
+                        <li>Location recenter button and current-position marker</li>
+                        <li>Dark mode toggle directly in the map menu</li>
+                        <li>Detailed parking metadata including capacity and coverage</li>
+                        <li>Room-powered local caching for fast reloads</li>
                     </ul>
                 </div>
                 <div class="details-image">
                     <div style="background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%); border-radius: 10px; color: white; padding: 40px; text-align: center;">
-                        <div style="font-size: 60px; margin-bottom: 20px;">🗺️</div>
-                        <p style="font-size: 18px; margin-bottom: 10px;"><strong>Interactive Map Interface</strong></p>
-                        <p>Powered by OpenStreetMap</p>
+                        <div style="font-size: 60px; margin-bottom: 20px;">📱</div>
+                        <p style="font-size: 18px; margin-bottom: 10px;"><strong>Favorites, Navigation, and Live Position</strong></p>
+                        <p>Powered by OpenStreetMap, Room, and modern Android APIs</p>
                     </div>
                 </div>
             </div>
@@ -488,8 +490,8 @@
     <!-- CTA Section -->
     <section class="cta-section" id="download">
         <div class="cta-content">
-            <h2>Ready to Find Your Bike Parking?</h2>
-            <p>Start using VeloSpot today and never worry about finding a safe parking spot for your bike again.</p>
+            <h2>Ready to Explore Trier by Bike?</h2>
+            <p>Clone the project, build the Android app, and try favorites, dark mode, and current-location tools for yourself.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">Clone Repository</a>
                 <a href="https://github.com/drzeeb/VeloSpot#getting-started" class="btn btn-secondary">View Documentation</a>
@@ -499,8 +501,8 @@
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2026 VeloSpot. All rights reserved.</p>
-        <p>Built with ❤️ for the cycling community in Trier</p>
+        <p>&copy; 2026 VeloSpot.</p>
+        <p>Built with ❤️ for the cycling community in Trier · Map data © OpenStreetMap contributors</p>
         <div class="social-links">
             <a href="https://github.com/drzeeb/VeloSpot" target="_blank">GitHub Repository</a>
             <a href="https://github.com/drzeeb/VeloSpot/issues" target="_blank">Report Issues</a>
