@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "de.velospot"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "de.velospot"
