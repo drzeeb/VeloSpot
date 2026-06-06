@@ -19,35 +19,35 @@ data class GeoJsonGeometryDto(
 )
 
 data class BikeParkingPropertiesDto(
-    @Json(name = "id")
+    @param:Json(name = "id")
     val id: String? = null,
-    @Json(name = "fid")
+    @param:Json(name = "fid")
     val featureId: String? = null,
-    @Json(name = "name")
+    @param:Json(name = "name")
     val name: String? = null,
-    @Json(name = "bezeichnung")
+    @param:Json(name = "bezeichnung")
     val designation: String? = null,
-    @Json(name = "adresse")
+    @param:Json(name = "adresse")
     val address: String? = null,
-    @Json(name = "strasse")
+    @param:Json(name = "strasse")
     val street: String? = null,
-    @Json(name = "hausnummer")
+    @param:Json(name = "hausnummer")
     val houseNumber: String? = null,
-    @Json(name = "typ")
+    @param:Json(name = "typ")
     val type: String? = null,
-    @Json(name = "art")
+    @param:Json(name = "art")
     val kind: String? = null,
-    @Json(name = "kapazitaet")
+    @param:Json(name = "kapazitaet")
     val capacity: Int? = null,
-    @Json(name = "anzahl")
+    @param:Json(name = "anzahl")
     val amount: Int? = null,
-    @Json(name = "stellplaetze")
+    @param:Json(name = "stellplaetze")
     val parkingSlots: Int? = null,
-    @Json(name = "ueberdacht")
+    @param:Json(name = "ueberdacht")
     val covered: String? = null,
-    @Json(name = "betreiber")
+    @param:Json(name = "betreiber")
     val operator: String? = null,
-    @Json(name = "layer")
+    @param:Json(name = "layer")
     val layer: String? = null
 )
 
