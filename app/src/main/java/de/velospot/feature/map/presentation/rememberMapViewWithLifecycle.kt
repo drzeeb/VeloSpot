@@ -10,9 +10,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.osmdroid.views.MapView
 
 /**
- * Erzeugt eine [MapView], die automatisch mit dem Compose-Lifecycle synchronisiert wird.
- * onResume/onPause werden korrekt weitergeleitet; beim Verlassen der Composition wird
- * onDetach() aufgerufen, um Memory Leaks zu verhindern.
+ * Creates a [MapView] that stays in sync with the Compose lifecycle.
+ *
+ * `onResume()` and `onPause()` are forwarded automatically, and `onDetach()` is called
+ * when the composable leaves the composition to avoid memory leaks.
  */
 @Composable
 fun rememberMapViewWithLifecycle(): MapView {

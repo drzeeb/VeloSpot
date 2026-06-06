@@ -13,7 +13,6 @@ import android.graphics.drawable.Drawable
 import android.text.TextPaint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Place
@@ -44,7 +42,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +62,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.core.map.NavigationHandler
@@ -94,6 +92,7 @@ fun MainMapScreen(
     val selectedSpace by viewModel.selectedSpace.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
+    val mapCameraTarget by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
 
     val mapView = rememberMapViewWithLifecycle()
     var zoomBucket by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
@@ -142,15 +141,24 @@ fun MainMapScreen(
     }
 
     val normalMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = Color.parseColor("#0A2A66"))
+        createBikeMarkerIcon(context, zoomBucket, pinColor = "#0A2A66".toColorInt())
     }
     val favoriteMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = Color.parseColor("#D32F2F"))
+        createBikeMarkerIcon(context, zoomBucket, pinColor = "#D32F2F".toColorInt())
     }
     val locationMarkerIcon = remember(context) {
         createLocationMarkerIcon(context)
     }
     val navigationHandler = remember(context) { externalNavigationHandler(context) }
+
+    LaunchedEffect(mapCameraTarget) {
+        val cameraTarget = mapCameraTarget ?: return@LaunchedEffect
+        mapView.controller.apply {
+            setCenter(GeoPoint(cameraTarget.latitude, cameraTarget.longitude))
+            setZoom(cameraTarget.zoom)
+        }
+        viewModel.onMapCameraTargetHandled()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
@@ -252,7 +260,7 @@ fun MainMapScreen(
             onClick = {
                 if (hasLocationPermission(context)) {
                     viewModel.onLocationPermissionGranted()
-                    viewModel.centerMapOnUserLocation(mapView)
+                    viewModel.centerMapOnUserLocation()
                 } else {
                     permissionLauncher.launch(locationPermissions())
                 }
@@ -552,7 +560,7 @@ private fun createLocationMarkerIcon(context: Context): Drawable {
     val canvas = Canvas(bitmap)
 
     val outerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#2196F3")
+        color = "#2196F3".toColorInt()
         style = Paint.Style.FILL
     }
     canvas.drawCircle(size / 2f, size / 2f, 15f, outerPaint)

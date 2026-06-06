@@ -29,19 +29,10 @@ class LocationRepositoryImpl @Inject constructor(
     private val _locationFlow = MutableStateFlow<Pair<Double, Double>?>(null)
     private var locationCallback: LocationCallback? = null
 
-    override suspend fun isLocationPermissionGranted(): Boolean {
-        return checkPermissionSync()
-    }
-
     override fun getCurrentLocationFlow(): Flow<Pair<Double, Double>?> {
         return _locationFlow.asStateFlow()
     }
 
-    override suspend fun requestLocationPermission(): Boolean {
-        // Permission request logic is handled by Activity/Composable (RequestMultiplePermissions)
-        // This just checks the current state
-        return checkPermissionSync()
-    }
 
     /**
      * Check if location permission is granted (synchronous).
@@ -58,7 +49,7 @@ class LocationRepositoryImpl @Inject constructor(
      * Start receiving location updates.
      * Must be called after permissions are granted.
      */
-    fun startLocationUpdates() {
+    override fun startLocationUpdates() {
         if (!checkPermissionSync()) return
 
         locationCallback?.let {

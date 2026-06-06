@@ -75,9 +75,9 @@ dependencies {
 
     // Location Services
     implementation(libs.playServicesLocation)
-    implementation(libs.accompanistPermissions)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinxCoroutinesTest)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

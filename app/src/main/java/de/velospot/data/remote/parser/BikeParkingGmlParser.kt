@@ -1,10 +1,11 @@
 package de.velospot.data.remote.parser
 
-import android.util.Xml
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeParkingType
-import org.xmlpull.v1.XmlPullParser
+import org.w3c.dom.Element
+import org.xml.sax.InputSource
 import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
 import javax.inject.Inject
 
 class BikeParkingGmlParser @Inject constructor() {
@@ -14,59 +15,42 @@ class BikeParkingGmlParser @Inject constructor() {
         sourceLayer: String,
         type: BikeParkingType
     ): List<BikeParkingSpace> {
-        val parser = Xml.newPullParser().apply {
-            setInput(StringReader(xml))
-        }
+        val document = DocumentBuilderFactory.newInstance().apply {
+            isNamespaceAware = true
+        }.newDocumentBuilder().parse(InputSource(StringReader(xml)))
 
-        val result = mutableListOf<BikeParkingSpace>()
-        var eventType = parser.eventType
-        while (eventType != XmlPullParser.END_DOCUMENT) {
-            if (eventType == XmlPullParser.START_TAG && parser.localNameSafe().startsWith("fahrrad")) {
-                parseFeature(parser, sourceLayer, type)?.let(result::add)
-            }
-            eventType = parser.next()
-        }
-        return result
+        return document
+            .getElementsByTagName("*")
+            .asElementSequence()
+            .filter { element -> element.localNameSafe().startsWith("fahrrad") }
+            .mapNotNull { feature -> parseFeature(feature, sourceLayer, type) }
+            .toList()
     }
 
     private fun parseFeature(
-        parser: XmlPullParser,
+        feature: Element,
         sourceLayer: String,
         type: BikeParkingType
     ): BikeParkingSpace? {
-        val featureTag = parser.localNameSafe()
-        val gmlId = parser.getAttributeValue(null, "id") ?: parser.getAttributeValue("http://www.opengis.net/gml/3.2", "id")
-
-        var gid: String? = null
-        var name: String? = null
-        var streetAndNo: String? = null
-        var cityAndZip: String? = null
-        var description: String? = null
-        var latitude: Double? = null
-        var longitude: Double? = null
-
-        var eventType = parser.next()
-        while (!(eventType == XmlPullParser.END_TAG && parser.localNameSafe() == featureTag)) {
-            if (eventType == XmlPullParser.START_TAG) {
-                when (parser.localNameSafe()) {
-                    "gid" -> gid = parser.readTextValue()
-                    "bez" -> name = parser.readTextValue()
-                    "str_hsnr" -> streetAndNo = parser.readTextValue()
-                    "plz_ort" -> cityAndZip = parser.readTextValue()
-                    "beschr" -> description = parser.readTextValue()
-                    "pos" -> {
-                        val parts = parser.readTextValue().split(' ').filter { it.isNotBlank() }
-                        if (parts.size >= 2) {
-                            // WFS liefert hier EPSG:4326 in der Reihenfolge lat lon.
-                            latitude = parts[0].toDoubleOrNull()
-                            longitude = parts[1].toDoubleOrNull()
-                        }
-                    }
-                }
+        val gmlId = feature.getAttribute("gml:id")
+            .ifBlank { feature.getAttribute("id") }
+            .ifBlank {
+                feature.getAttributeNS("http://www.opengis.net/gml/3.2", "id")
             }
-            eventType = parser.next()
-        }
+            .ifBlank { null }
 
+        val gid = feature.findText("gid")
+        val name = feature.findText("bez")
+        val streetAndNo = feature.findText("str_hsnr")
+        val cityAndZip = feature.findText("plz_ort")
+        val description = feature.findText("beschr")
+        val position = feature.findText("pos")
+            ?.split(' ')
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
+
+        val latitude = position.getOrNull(0)?.toDoubleOrNull()
+        val longitude = position.getOrNull(1)?.toDoubleOrNull()
         val lat = latitude ?: return null
         val lon = longitude ?: return null
         val address = listOfNotNull(streetAndNo, cityAndZip).joinToString(", ").ifBlank { null }
@@ -86,13 +70,26 @@ class BikeParkingGmlParser @Inject constructor() {
         )
     }
 
-    private fun XmlPullParser.localNameSafe(): String {
-        return (name ?: "").substringAfter(':')
+    private fun org.w3c.dom.NodeList.asElementSequence(): Sequence<Element> = sequence {
+        for (index in 0 until length) {
+            val node = item(index)
+            if (node is Element) {
+                yield(node)
+            }
+        }
     }
 
-    private fun XmlPullParser.readTextValue(): String {
-        val text = nextText()
-        return text.trim()
+    private fun Element.localNameSafe(): String {
+        return localName ?: tagName.substringAfter(':')
+    }
+
+    private fun Element.findText(localName: String): String? {
+        return getElementsByTagNameNS("*", localName)
+            .asElementSequence()
+            .firstOrNull()
+            ?.textContent
+            ?.trim()
+            ?.ifBlank { null }
     }
 
     private fun String.extractCapacity(): Int? {

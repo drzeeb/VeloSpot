@@ -3,7 +3,6 @@ package de.velospot.feature.map.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import de.velospot.data.location.LocationRepositoryImpl
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
@@ -13,9 +12,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
 import javax.inject.Inject
+
+data class MapCameraTarget(
+    val latitude: Double,
+    val longitude: Double,
+    val zoom: Double
+)
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -35,6 +38,9 @@ class MapViewModel @Inject constructor(
 
     private val _userLocation = MutableStateFlow<Pair<Double, Double>?>(null)
     val userLocation: StateFlow<Pair<Double, Double>?> = _userLocation.asStateFlow()
+
+    private val _mapCameraTarget = MutableStateFlow<MapCameraTarget?>(null)
+    val mapCameraTarget: StateFlow<MapCameraTarget?> = _mapCameraTarget.asStateFlow()
 
     init {
         loadParkingSpaces()
@@ -74,12 +80,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Check if a specific parking space is marked as favorite.
-     */
-    suspend fun isFavorite(parkingSpaceId: String): Boolean {
-        return favoritesRepository.isFavorite(parkingSpaceId)
-    }
 
     /**
      * Start listening to favorite parking spaces.
@@ -96,9 +96,7 @@ class MapViewModel @Inject constructor(
      * Start listening to user location updates.
      */
     private fun observeUserLocation() {
-        if (locationRepository is LocationRepositoryImpl) {
-            locationRepository.startLocationUpdates()
-        }
+        locationRepository.startLocationUpdates()
         viewModelScope.launch {
             locationRepository.getCurrentLocationFlow().collect { location ->
                 _userLocation.value = location
@@ -110,29 +108,30 @@ class MapViewModel @Inject constructor(
      * Restart location updates after the user granted runtime permissions.
      */
     fun onLocationPermissionGranted() {
-        if (locationRepository is LocationRepositoryImpl) {
-            locationRepository.startLocationUpdates()
-        }
+        locationRepository.startLocationUpdates()
     }
 
     /**
-     * Center the map on the user's current location.
+     * Emit a camera target that the UI can apply to the map.
      */
-    fun centerMapOnUserLocation(mapView: MapView) {
+    fun centerMapOnUserLocation() {
         val location = _userLocation.value
         if (location != null) {
-            mapView.controller.apply {
-                setCenter(GeoPoint(location.first, location.second))
-                setZoom(16.0)
-            }
+            _mapCameraTarget.value = MapCameraTarget(
+                latitude = location.first,
+                longitude = location.second,
+                zoom = 16.0
+            )
         }
+    }
+
+    fun onMapCameraTargetHandled() {
+        _mapCameraTarget.value = null
     }
 
     override fun onCleared() {
         super.onCleared()
-        if (locationRepository is LocationRepositoryImpl) {
-            locationRepository.stopLocationUpdates()
-        }
+        locationRepository.stopLocationUpdates()
     }
 }
 

@@ -1,7 +1,7 @@
 package de.velospot.data.repository
 
 import android.util.Log
-import de.velospot.data.local.BikeParkingCacheDataSource
+import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.remote.api.TrierGeoportalApi
 import de.velospot.data.remote.parser.BikeParkingGmlParser
 import de.velospot.domain.model.BikeParkingSpace
@@ -14,7 +14,7 @@ private const val TAG = "BikeParkingRepo"
 
 class BikeParkingRepositoryImpl @Inject constructor(
     private val geoportalApi: TrierGeoportalApi,
-    private val cache: BikeParkingCacheDataSource,
+    private val cache: BikeParkingLocalDataSource,
     private val gmlParser: BikeParkingGmlParser
 ) : BikeParkingRepository {
 

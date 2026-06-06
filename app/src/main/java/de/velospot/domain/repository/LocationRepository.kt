@@ -8,13 +8,6 @@ import kotlinx.coroutines.flow.Flow
 interface LocationRepository {
 
     /**
-     * Check if location permission is granted.
-     *
-     * @return True if location permission is granted, false otherwise
-     */
-    suspend fun isLocationPermissionGranted(): Boolean
-
-    /**
      * Get current user location as a Flow.
      * Emits GeoPoint data when location updates are available.
      *
@@ -22,13 +15,11 @@ interface LocationRepository {
      */
     fun getCurrentLocationFlow(): Flow<Pair<Double, Double>?>
 
+
     /**
-     * Request location permission from the user.
-     * Should be called from a composable with proper context.
-     *
-     * @return True if permission was granted, false otherwise
+     * Start listening to location updates.
      */
-    suspend fun requestLocationPermission(): Boolean
+    fun startLocationUpdates()
 
     /**
      * Stop listening to location updates.

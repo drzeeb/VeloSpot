@@ -8,9 +8,9 @@ import retrofit2.http.Query
 interface TrierGeoportalApi {
 
     /**
-     * WFS GetFeature gegen dedizierte mapfiles im Geoportal Trier.
-     * Der Dienst liefert nur GML-Formate, deshalb wird der Response als Raw-Body
-     * zurückgegeben und im Data-Layer geparst.
+     * WFS GetFeature request against dedicated map files in the Trier Geoportal.
+     * The service returns GML only, so the response is exposed as a raw body and
+     * parsed inside the data layer.
      */
     @GET("trier/mod_ogc/wfs_getmap.php")
     suspend fun getBikeParkingLayerGml(
