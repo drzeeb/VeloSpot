@@ -175,7 +175,6 @@ fun MainMapScreen(
     val navigationHandler = remember(context) { externalNavigationHandler(context) }
     val myLocationTitle = stringResource(id = R.string.map_my_location)
     val snippetSpacesFormat = stringResource(id = R.string.map_snippet_spaces_format)
-    val snippetCovered = stringResource(id = R.string.map_snippet_covered)
     val configuration = LocalConfiguration.current
     val currentLanguageCode = remember(configuration) {
         val appLocaleLanguage = AppCompatDelegate.getApplicationLocales()[0]?.language.orEmpty()
@@ -283,7 +282,6 @@ fun MainMapScreen(
                         context = context,
                         myLocationTitle = myLocationTitle,
                         snippetSpacesFormat = snippetSpacesFormat,
-                        snippetCovered = snippetCovered,
                         onMarkerClick = viewModel::selectSpace
                     )
                 }
@@ -671,9 +669,6 @@ private fun FavoriteSpaceCard(
                         label = stringResource(id = R.string.favorites_spaces_format, cap)
                     )
                 }
-                if (space.isCovered == true) {
-                    FavoriteMetaChip(label = stringResource(id = R.string.common_covered))
-                }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Button(onClick = { onNavigate(space) }) {
@@ -718,7 +713,6 @@ private fun updateMarkers(
     context: Context,
     myLocationTitle: String,
     snippetSpacesFormat: String,
-    snippetCovered: String,
     onMarkerClick: (BikeParkingSpace) -> Unit
 ) {
     map.overlays.clear()
@@ -737,7 +731,7 @@ private fun updateMarkers(
                 normalMarkerIcon.constantState?.newDrawable()?.mutate() ?: normalMarkerIcon
             }
             title = space.name ?: space.type.label(context)
-            snippet = buildSnippet(space, snippetSpacesFormat, snippetCovered)
+            snippet = buildSnippet(space, snippetSpacesFormat)
             setOnMarkerClickListener { _, _ ->
                 onMarkerClick(space)
                 true
@@ -870,16 +864,11 @@ private fun languageFlagForCode(languageCode: String): String {
 
 private fun buildSnippet(
     space: BikeParkingSpace,
-    snippetSpacesFormat: String,
-    snippetCovered: String
+    snippetSpacesFormat: String
 ): String = buildString {
     space.address?.let { append(it) }
     space.capacity?.let { cap ->
         if (isNotEmpty()) append(" · ")
         append(String.format(snippetSpacesFormat, cap))
-    }
-    if (space.isCovered == true) {
-        if (isNotEmpty()) append(" · ")
-        append(snippetCovered)
     }
 }

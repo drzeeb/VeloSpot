@@ -2,7 +2,6 @@ package de.velospot.data.remote.parser
 
 import de.velospot.domain.model.BikeParkingType
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,7 +11,7 @@ class BikeParkingGmlParserTest {
     private val parser = BikeParkingGmlParser()
 
     @Test
-    fun `parse extracts name address coordinates capacity and covered flag`() {
+    fun `parse extracts name address coordinates and capacity`() {
         val xml = """
             <wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0"
                                    xmlns:gml="http://www.opengis.net/gml/3.2"
@@ -23,7 +22,7 @@ class BikeParkingGmlParserTest {
                         <ms:bez>City Center Rack</ms:bez>
                         <ms:str_hsnr>Main Street 5</ms:str_hsnr>
                         <ms:plz_ort>54290 Trier</ms:plz_ort>
-                        <ms:beschr>12 Fahrradstellplätze, überdacht</ms:beschr>
+                        <ms:beschr>12 Fahrradstellplätze</ms:beschr>
                         <gml:pos>49.756 6.641</gml:pos>
                     </ms:fahrradabstellanlagen>
                 </wfs:member>
@@ -44,7 +43,8 @@ class BikeParkingGmlParserTest {
         assertEquals(49.756, space.latitude, 0.0)
         assertEquals(6.641, space.longitude, 0.0)
         assertEquals(12, space.capacity)
-        assertEquals(true, space.isCovered)
+        assertEquals(null, space.isCovered)
+        assertEquals(null, space.imageUrl)
         assertEquals(BikeParkingType.BIKE_RACK, space.type)
     }
 
@@ -71,14 +71,14 @@ class BikeParkingGmlParserTest {
     }
 
     @Test
-    fun `parse decodes simple html entities in description`() {
+    fun `parse decodes simple html entities in description and extracts image URL`() {
         val xml = """
             <wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0"
                                    xmlns:gml="http://www.opengis.net/gml/3.2"
                                    xmlns:ms="http://mapserver.gis.umn.edu/mapserver">
                 <wfs:member>
                     <ms:fahrradgaragen gml:id="garage-1">
-                        <ms:beschr>8 Fahrradstellpl&amp;auml;tze &amp;uuml;berdacht</ms:beschr>
+                        <ms:beschr>&lt;img src=&quot;https://geoportal.trier.de/images/fahrradabstellanlagen/Pfuetzenstra&amp;szlig;e_2.jpg&quot; /&gt;&lt;br /&gt;8 Fahrradstellpl&amp;auml;tze</ms:beschr>
                         <gml:pos>49.750 6.640</gml:pos>
                     </ms:fahrradgaragen>
                 </wfs:member>
@@ -94,8 +94,11 @@ class BikeParkingGmlParserTest {
         val space = result.firstOrNull()
         assertNotNull(space)
         assertEquals(8, space?.capacity)
-        assertFalse(space?.isCovered == false)
-        assertEquals(true, space?.isCovered)
+        assertEquals(null, space?.isCovered)
+        assertEquals(
+            "https://geoportal.trier.de/images/fahrradabstellanlagen/Pfuetzenstraße_2.jpg",
+            space?.imageUrl
+        )
     }
 }
 
