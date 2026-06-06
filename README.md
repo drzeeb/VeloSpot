@@ -2,7 +2,29 @@
 
 **Find bike parking spaces effortlessly**
 
+![Platform](https://img.shields.io/badge/platform-Android%208.0%2B-0A2A66)
+![Language](https://img.shields.io/badge/language-Kotlin-7F52FF)
+![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 VeloSpot is an Android application that helps cyclists discover and locate bike parking facilities in Trier and surrounding areas. With real-time data from local services and an intuitive map interface, finding a safe place to park your bike has never been easier.
+
+## 🔗 Quick Links
+
+- **GitHub Repository**: https://github.com/drzeeb/VeloSpot
+- **GitHub Pages**: https://drzeeb.github.io/VeloSpot/
+- **Changelog**: [`CHANGELOG.md`](./CHANGELOG.md)
+- **Licensing & Attribution**: [ATTRIBUTIONS.md](ATTRIBUTIONS.md)
+
+## ✨ Highlights
+
+- Official bike parking data from the Trier geoportal
+- OpenStreetMap-based map browsing with custom bike markers
+- Red marker highlighting for favorite parking spots
+- Dedicated favorites sheet with direct navigation shortcuts
+- Current-location recentering and location marker support
+- In-app dark mode toggle from the top-right menu
+- Room / SQLite local cache for faster reloads
 
 ## 🌟 Features
 
@@ -164,6 +186,10 @@ private const val DEFAULT_ZOOM = 14.0
 ```
 
 Generated APK location: `app/build/outputs/apk/`
+
+## 🗒 Changelog
+
+Project history and notable milestones are documented in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## 🐛 Troubleshooting
 

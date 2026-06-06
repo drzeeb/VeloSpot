@@ -291,6 +291,81 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
+        .preview {
+            padding: 4rem 2rem;
+            background: white;
+        }
+
+        .preview-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .preview-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+            border: 1px solid rgba(10, 42, 102, 0.08);
+            border-radius: 18px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        .phone-frame {
+            background: #0f172a;
+            border-radius: 28px;
+            padding: 12px;
+            max-width: 220px;
+            margin: 0 auto 1rem;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
+        }
+
+        .phone-screen {
+            background: linear-gradient(180deg, #0A2A66 0%, #123f93 100%);
+            border-radius: 20px;
+            min-height: 380px;
+            padding: 1rem;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .phone-screen img {
+            width: 96px;
+            height: 96px;
+            border-radius: 24px;
+            background: white;
+            padding: 8px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+        }
+
+        .phone-chip {
+            display: inline-block;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .preview-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-card p {
+            color: var(--text-light);
+        }
+
         /* Call to Action Section */
         .cta-section {
             background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%);
@@ -384,6 +459,7 @@
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#tech">Tech Stack</a></li>
+                <li><a href="#preview">Preview</a></li>
                 <li><a href="#download">Download</a></li>
                 <li><a href="https://github.com/drzeeb/VeloSpot" target="_blank">GitHub</a></li>
             </ul>
@@ -482,6 +558,51 @@
                         <p style="font-size: 18px; margin-bottom: 10px;"><strong>Favorites, Navigation, and Live Position</strong></p>
                         <p>Powered by OpenStreetMap, Room, and modern Android APIs</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Preview Section -->
+    <section class="preview" id="preview">
+        <div class="preview-container">
+            <h2 class="section-title">App Preview</h2>
+            <div class="preview-grid">
+                <div class="preview-card">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <span class="phone-chip">Interactive map</span>
+                            <img src="../app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="VeloSpot app icon preview">
+                            <strong>Bike parking map</strong>
+                            <p style="color: rgba(255,255,255,0.9);">Browse official Trier bike parking data with a fast map-based workflow.</p>
+                        </div>
+                    </div>
+                    <h3>Map-first workflow</h3>
+                    <p>Open the map, inspect parking details, and move quickly between locations without leaving the main screen.</p>
+                </div>
+                <div class="preview-card">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <span class="phone-chip">Favorites</span>
+                            <img src="../app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="Favorites preview">
+                            <strong>Saved parking spots</strong>
+                            <p style="color: rgba(255,255,255,0.9);">Favorite spots are highlighted on the map and available through a dedicated favorites list.</p>
+                        </div>
+                    </div>
+                    <h3>Quick access to favorites</h3>
+                    <p>Save your most-used parking spots and start navigation straight from the favorites sheet.</p>
+                </div>
+                <div class="preview-card">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <span class="phone-chip">Live location</span>
+                            <img src="../app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="Location preview">
+                            <strong>Current position tools</strong>
+                            <p style="color: rgba(255,255,255,0.9);">Use the recenter button, live location marker, and dark mode toggle for a practical on-the-go experience.</p>
+                        </div>
+                    </div>
+                    <h3>Built for daily cycling</h3>
+                    <p>The app focuses on fast access, practical navigation, and a clean UI for everyday use in the city.</p>
                 </div>
             </div>
         </div>

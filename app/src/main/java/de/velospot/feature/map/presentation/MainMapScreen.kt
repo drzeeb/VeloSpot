@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Place
@@ -274,7 +275,8 @@ fun MainMapScreen(
             spaces = (uiState as? MapUiState.Success)?.spaces.orEmpty(),
             favoriteIds = favorites,
             onDismiss = { isFavoritesSheetVisible = false },
-            onNavigate = navigationHandler
+            onNavigate = navigationHandler,
+            onToggleFavorite = viewModel::toggleFavorite
         )
     }
 
@@ -295,7 +297,8 @@ private fun FavoritesSheet(
     spaces: List<BikeParkingSpace>,
     favoriteIds: List<String>,
     onDismiss: () -> Unit,
-    onNavigate: NavigationHandler
+    onNavigate: NavigationHandler,
+    onToggleFavorite: (String) -> Unit
 ) {
     val favoriteSpaces = remember(spaces, favoriteIds) {
         spaces.filter { favoriteIds.contains(it.id) }
@@ -349,7 +352,8 @@ private fun FavoritesSheet(
                     items(favoriteSpaces, key = { it.id }) { space ->
                         FavoriteSpaceCard(
                             space = space,
-                            onNavigate = onNavigate
+                            onNavigate = onNavigate,
+                            onToggleFavorite = onToggleFavorite
                         )
                     }
                 }
@@ -361,7 +365,8 @@ private fun FavoritesSheet(
 @Composable
 private fun FavoriteSpaceCard(
     space: BikeParkingSpace,
-    onNavigate: NavigationHandler
+    onNavigate: NavigationHandler,
+    onToggleFavorite: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -372,17 +377,31 @@ private fun FavoriteSpaceCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = Icons.Default.Place,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = space.name ?: space.type.label(),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Place,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = space.name ?: space.type.label(),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                IconButton(onClick = { onToggleFavorite(space.id) }) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Remove from favorites",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
             space.address?.let {
                 Spacer(modifier = Modifier.height(6.dp))
@@ -391,6 +410,15 @@ private fun FavoriteSpaceCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                space.capacity?.let { cap ->
+                    FavoriteMetaChip(label = "$cap spaces")
+                }
+                if (space.isCovered == true) {
+                    FavoriteMetaChip(label = "Covered")
+                }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Button(onClick = { onNavigate(space) }) {
@@ -403,6 +431,22 @@ private fun FavoriteSpaceCard(
                 Text("Start navigation")
             }
         }
+    }
+}
+
+@Composable
+private fun FavoriteMetaChip(label: String) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     }
 }
 
