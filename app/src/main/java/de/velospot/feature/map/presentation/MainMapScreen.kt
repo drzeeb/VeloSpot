@@ -15,6 +15,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -107,6 +108,15 @@ fun MainMapScreen(
         }
     }
 
+    val requestOrUseLocation: () -> Unit = {
+        if (hasLocationPermission(context)) {
+            viewModel.onLocationPermissionGranted()
+            viewModel.centerMapOnUserLocation()
+        } else {
+            permissionLauncher.launch(locationPermissions())
+        }
+    }
+
     LaunchedEffect(Unit) {
         if (hasLocationPermission(context)) {
             viewModel.onLocationPermissionGranted()
@@ -181,101 +191,25 @@ fun MainMapScreen(
             }
         )
 
-        if (uiState is MapUiState.Loading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        }
+        MapStatusOverlay(uiState = uiState)
 
-        if (uiState is MapUiState.Error) {
-            val message = (uiState as MapUiState.Error).message
-            Card(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Text(
-                    text = message,
-                    modifier = Modifier.padding(12.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-
-        Card(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Box {
-                IconButton(onClick = { isMenuExpanded = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Open menu",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = isMenuExpanded,
-                    onDismissRequest = { isMenuExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Favorites (${favorites.size})") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Favorite,
-                                contentDescription = null
-                            )
-                        },
-                        onClick = {
-                            isFavoritesSheetVisible = true
-                            isMenuExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(if (isDarkTheme) "Disable dark mode" else "Enable dark mode") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.DarkMode,
-                                contentDescription = null
-                            )
-                        },
-                        onClick = {
-                            onDarkThemeToggle()
-                            isMenuExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        FloatingActionButton(
-            onClick = {
-                if (hasLocationPermission(context)) {
-                    viewModel.onLocationPermissionGranted()
-                    viewModel.centerMapOnUserLocation()
-                } else {
-                    permissionLauncher.launch(locationPermissions())
-                }
+        MapMenuCard(
+            favoritesCount = favorites.size,
+            isDarkTheme = isDarkTheme,
+            isExpanded = isMenuExpanded,
+            onExpand = { isMenuExpanded = true },
+            onDismiss = { isMenuExpanded = false },
+            onOpenFavorites = {
+                isFavoritesSheetVisible = true
+                isMenuExpanded = false
             },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary
-        ) {
-            Icon(
-                imageVector = Icons.Default.MyLocation,
-                contentDescription = "Center map on my location",
-                tint = MaterialTheme.colorScheme.onPrimary
-            )
-        }
+            onToggleDarkMode = {
+                onDarkThemeToggle()
+                isMenuExpanded = false
+            }
+        )
+
+        MyLocationFab(onClick = requestOrUseLocation)
     }
 
     if (isFavoritesSheetVisible) {
@@ -298,6 +232,106 @@ fun MainMapScreen(
         )
     }
 }
+
+@Composable
+private fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
+    if (uiState is MapUiState.Loading) {
+        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    }
+
+    if (uiState is MapUiState.Error) {
+        Card(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp)
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
+        ) {
+            Text(
+                text = uiState.message,
+                modifier = Modifier.padding(12.dp),
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.MapMenuCard(
+    favoritesCount: Int,
+    isDarkTheme: Boolean,
+    isExpanded: Boolean,
+    onExpand: () -> Unit,
+    onDismiss: () -> Unit,
+    onOpenFavorites: () -> Unit,
+    onToggleDarkMode: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Box {
+            IconButton(onClick = onExpand) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Open menu",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            DropdownMenu(
+                expanded = isExpanded,
+                onDismissRequest = onDismiss
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Favorites ($favoritesCount)") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = onOpenFavorites
+                )
+                DropdownMenuItem(
+                    text = { Text(if (isDarkTheme) "Disable dark mode" else "Enable dark mode") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.DarkMode,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = onToggleDarkMode
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.MyLocationFab(onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(16.dp),
+        containerColor = MaterialTheme.colorScheme.primary
+    ) {
+        Icon(
+            imageVector = Icons.Default.MyLocation,
+            contentDescription = "Center map on my location",
+            tint = MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

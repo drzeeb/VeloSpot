@@ -13,11 +13,17 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - Dark mode toggle integrated into the in-app menu
 - Favorite-aware map markers with a red visual state
 - GitHub Pages and README updates describing the latest app features
+- Unit-Tests für `MapViewModel` (Laden, Favoriten, Kamera-Target, Permission-Flow)
+- Unit-Tests für den GML-Parser inklusive Koordinaten-/Entity-Fälle
 
 ### Changed
 - Project documentation expanded with updated setup, feature, and troubleshooting guidance
 - GitHub Pages landing page updated to better reflect the current Android app experience
 - Local bike parking storage moved to SQLite / Room instead of temporary XML-based project-root files
+- Datenzugriff über neues Local-Data-Source-Interface entkoppelt (`BikeParkingLocalDataSource`)
+- `MapViewModel` von direkter `MapView`-Steuerung auf `MapCameraTarget`-State umgestellt
+- `BikeParkingGmlParser` auf JVM-testbare DOM-Verarbeitung (`DocumentBuilderFactory`) umgestellt
+- `MainMapScreen` in kleinere Composables für Status-Overlay, Menü und Location-FAB aufgeteilt
 
 ## [2026-06-06]
 
