@@ -15,6 +15,7 @@ data class BikeParkingSpace(
     val name: String?,
     val address: String?,
     val isCovered: Boolean?,
+    val imageUrl: String?,
     val operator: String?,
     val sourceLayer: String
 )
