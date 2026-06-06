@@ -6,6 +6,8 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
 jobs:
   ci-build:
     name: ci-build
