@@ -18,6 +18,7 @@ data class BikeParkingSpaceEntity(
     val address: String?,
     val capacity: Int?,
     val isCovered: Boolean?,
+    val imageUrl: String?,
     val operator: String?,
     val type: String,  // Stored as string, converted from BikeParkingType enum
     val sourceLayer: String,

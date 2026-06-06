@@ -20,6 +20,7 @@ fun BikeParkingSpaceEntity.toDomainModel(): BikeParkingSpace {
         address = address,
         capacity = capacity,
         isCovered = isCovered,
+        imageUrl = imageUrl,
         operator = operator,
         type = BikeParkingType.valueOf(type),
         sourceLayer = sourceLayer
@@ -38,6 +39,7 @@ fun BikeParkingSpace.toEntity(): BikeParkingSpaceEntity {
         address = address,
         capacity = capacity,
         isCovered = isCovered,
+        imageUrl = imageUrl,
         operator = operator,
         type = type.name,
         sourceLayer = sourceLayer
