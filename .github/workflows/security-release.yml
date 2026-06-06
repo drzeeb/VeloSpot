@@ -7,6 +7,9 @@ on:
     types: [closed]
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   security-release:
     name: Bump patch version and publish security APK
@@ -20,8 +23,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write   # needed to push the tag and create the release
 
     steps:
       - name: Checkout repository (full history for tag detection)
