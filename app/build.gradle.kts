@@ -68,6 +68,11 @@ dependencies {
 
     implementation(libs.osmdroidAndroid)
 
+    // Room Database
+    implementation(libs.roomRuntime)
+    implementation(libs.roomKtx)
+    kapt(libs.roomCompiler)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -12,6 +12,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import de.velospot.data.local.BikeParkingCacheDataSource
+import de.velospot.data.local.database.BikeParkingDatabase
 import de.velospot.data.remote.api.TrierGeoportalApi
 import de.velospot.data.remote.parser.BikeParkingGmlParser
 import de.velospot.data.repository.BikeParkingRepositoryImpl
@@ -34,7 +35,7 @@ object NetworkModule {
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            // BODY-Level → voller Response-Body im Logcat sichtbar (hilft bei WFS-Debugging)
+            // BODY level → full response body visible in logcat (helps with WFS debugging)
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
@@ -54,7 +55,7 @@ object NetworkModule {
     @Singleton
     fun provideMoshi(): Moshi {
         return Moshi.Builder()
-            // Lenient-Factory als erste Schicht: toleriert kleine JSON-Quirks des WFS-Servers
+            // Lenient factory as first layer: tolerates minor JSON quirks from WFS server
             .addLast(LenientJsonAdapterFactory)
             .addLast(KotlinJsonAdapterFactory())
             .build()
@@ -78,23 +79,30 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideBikeParkingDatabase(
+        @ApplicationContext context: Context
+    ): BikeParkingDatabase {
+        return BikeParkingDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideBikeParkingRepository(
         geoportalApi: TrierGeoportalApi,
-        @ApplicationContext context: Context,
-        moshi: Moshi
+        @ApplicationContext context: Context
     ): BikeParkingRepository {
-        val cache = BikeParkingCacheDataSource(context, moshi)
+        val cache = BikeParkingCacheDataSource(context)
         val gmlParser = BikeParkingGmlParser()
         return BikeParkingRepositoryImpl(geoportalApi, cache, gmlParser)
     }
 }
 
 /**
- * Setzt [JsonReader.isLenient] = true auf allen Adaptern.
- * Erlaubt z.B. führende BOM-Bytes, einfache Anführungszeichen oder
- * leicht fehlerhafte Zahlenformate, die manche GeoServer-Instanzen liefern.
- * Schlägt die Antwort jedoch komplett fehl (XML/HTML statt JSON), wird die
- * Exception mit dem HTTP-Body aus dem Repository geworfen, nicht hier.
+ * Sets [JsonReader.isLenient] = true on all adapters.
+ * Allows e.g. leading BOM bytes, single quotes, or slightly incorrect number formats
+ * that some GeoServer instances return.
+ * If the response completely fails (XML/HTML instead of JSON), the exception is thrown
+ * from the repository with the HTTP body, not here.
  */
 private object LenientJsonAdapterFactory : JsonAdapter.Factory {
     override fun create(type: Type, annotations: MutableSet<out Annotation>, moshi: Moshi): JsonAdapter<*>? {

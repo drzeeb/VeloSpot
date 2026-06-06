@@ -31,7 +31,7 @@ class BikeParkingRepositoryImpl @Inject constructor(
         val isCacheFresh = cached.isNotEmpty() && cacheAgeMs in 1 until syncIntervalMs
 
         if (isCacheFresh) {
-            Log.d(TAG, "Nutze lokalen Cache (${cached.size} Einträge, Alter ${cacheAgeMs / 1000}s)")
+            Log.d(TAG, "Using local SQLite cache (${cached.size} entries, age ${cacheAgeMs / 1000}s)")
             return cached
         }
 
@@ -39,11 +39,11 @@ class BikeParkingRepositoryImpl @Inject constructor(
         return remoteResult
             .onSuccess { spaces ->
                 cache.writeSpaces(spaces)
-                Log.d(TAG, "Remote-Sync erfolgreich (${spaces.size} Einträge) und lokal gespeichert")
+                Log.d(TAG, "Remote sync successful (${spaces.size} entries) and saved locally")
             }
             .getOrElse { error ->
                 if (cached.isNotEmpty()) {
-                    Log.w(TAG, "Remote-Sync fehlgeschlagen, nutze Cache-Fallback: ${error.message}")
+                    Log.w(TAG, "Remote sync failed, using SQLite cache fallback: ${error.message}")
                     cached
                 } else {
                     throw error
@@ -68,14 +68,14 @@ class BikeParkingRepositoryImpl @Inject constructor(
                 ?.string()
                 ?.take(300)
                 ?.trimIndent()
-                ?: "(kein Body)"
-            throw IllegalStateException("HTTP ${response.code()} für '${layer.mapFile}': $errorSnippet")
+                ?: "(no body)"
+            throw IllegalStateException("HTTP ${response.code()} for '${layer.mapFile}': $errorSnippet")
         }
 
         val body = response.body()
             ?.string()
             ?.takeIf { it.isNotBlank() }
-            ?: throw IllegalStateException("Leere Antwort für '${layer.mapFile}'")
+            ?: throw IllegalStateException("Empty response for '${layer.mapFile}'")
 
         return gmlParser.parse(
             xml = body,

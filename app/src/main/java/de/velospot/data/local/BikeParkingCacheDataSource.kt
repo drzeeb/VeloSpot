@@ -1,40 +1,59 @@
 package de.velospot.data.local
 
-import android.content.Context
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import dagger.hilt.android.qualifiers.ApplicationContext
+import de.velospot.data.local.database.BikeParkingDatabase
+import de.velospot.data.local.mapper.toDomainModels
+import de.velospot.data.local.mapper.toEntities
 import de.velospot.domain.model.BikeParkingSpace
+import android.content.Context
 import javax.inject.Inject
 
+/**
+ * Local cache data source using Room SQLite database.
+ * Handles all local storage operations for bike parking spaces.
+ */
 class BikeParkingCacheDataSource @Inject constructor(
-    @ApplicationContext private val context: Context,
-    moshi: Moshi
+    @ApplicationContext private val context: Context
 ) {
 
-    private val prefs = context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE)
-    private val listType = Types.newParameterizedType(List::class.java, BikeParkingSpace::class.java)
-    private val adapter = moshi.adapter<List<BikeParkingSpace>>(listType)
+    private val database by lazy { BikeParkingDatabase.getInstance(context) }
+    private val dao by lazy { database.bikeParkingSpaceDao() }
 
-    fun readSpaces(): List<BikeParkingSpace> {
-        val json = prefs.getString(KEY_SPACES_JSON, null) ?: return emptyList()
-        return runCatching { adapter.fromJson(json).orEmpty() }.getOrDefault(emptyList())
+    /**
+     * Retrieve all cached bike parking spaces from the database.
+     *
+     * @return List of cached parking spaces, or empty list if none exist
+     */
+    suspend fun readSpaces(): List<BikeParkingSpace> {
+        return runCatching {
+            dao.getAllSpaces().toDomainModels()
+        }.getOrDefault(emptyList())
     }
 
-    fun writeSpaces(spaces: List<BikeParkingSpace>) {
-        val json = adapter.toJson(spaces)
-        prefs.edit()
-            .putString(KEY_SPACES_JSON, json)
-            .putLong(KEY_LAST_SYNC_EPOCH_MS, System.currentTimeMillis())
-            .apply()
+    /**
+     * Write (or update) bike parking spaces to the database.
+     * Clears existing data and inserts new entries.
+     *
+     * @param spaces List of parking spaces to cache
+     */
+    suspend fun writeSpaces(spaces: List<BikeParkingSpace>) {
+        runCatching {
+            dao.deleteAllSpaces()
+            dao.insertSpaces(spaces.toEntities())
+        }
     }
 
-    fun lastSyncEpochMs(): Long = prefs.getLong(KEY_LAST_SYNC_EPOCH_MS, 0L)
-
-    private companion object {
-        const val PREF_FILE = "bike_parking_cache"
-        const val KEY_SPACES_JSON = "spaces_json"
-        const val KEY_LAST_SYNC_EPOCH_MS = "last_sync_epoch_ms"
+    /**
+     * Get the timestamp of the last successful cache update.
+     *
+     * @return Epoch milliseconds of last update, or 0 if never updated
+     */
+    suspend fun lastSyncEpochMs(): Long {
+        return runCatching {
+            dao.getLastUpdateTimestamp() ?: 0L
+        }.getOrDefault(0L)
     }
 }
+
+
 
