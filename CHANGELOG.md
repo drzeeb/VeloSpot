@@ -32,6 +32,10 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - `MainActivity` migrated to `AppCompatActivity` for full AppCompat locale support
 - Release automation hardened to avoid duplicate release creation when security auto-release tags are pushed by workflows
 - Renovate configuration tightened: global automerge disabled; only security-related updates are automerged
+- Build toolchain modernised: Kotlin 2.4.0, AGP 9.2.1 (Gradle 9.4.1), Hilt 2.59.2, KSP 2.3.9
+- Migrated annotation processing from KAPT to KSP for Hilt and Room
+- Removed temporary AGP 9 compatibility flags (`android.newDsl=false`, `android.disallowKotlinSourceSets=false`) now that Hilt 2.59.2 fully supports the AGP 9 New DSL
+- Force-resolved `kotlin-metadata-jvm:2.4.0` to allow Hilt to process Kotlin 2.4 class metadata
 
 ## [2026-06-06]
 
