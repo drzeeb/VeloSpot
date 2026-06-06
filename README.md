@@ -191,6 +191,17 @@ The repository uses GitHub Actions and GitHub Rulesets to enforce safe merges on
 
 Renovate is configured so that only security-related dependency updates can be automerged.
 
+### AGP 9 Migration Note (temporary)
+
+The AGP 9 branch currently keeps two temporary compatibility flags in `gradle.properties`:
+
+- `android.newDsl=false`
+- `android.disallowKotlinSourceSets=false`
+
+Reason: current Hilt Gradle plugin usage still touches legacy variant APIs (`applicationVariants`/`testVariants`/`unitTestVariants`) and triggers deprecation warnings on AGP 9.
+
+Planned cleanup: remove both flags once Hilt/plugin updates fully support the new AGP 9+ APIs.
+
 ## 🔧 Configuration
 
 ### Network Timeout

@@ -32,6 +32,7 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - `MainActivity` migrated to `AppCompatActivity` for full AppCompat locale support
 - Release automation hardened to avoid duplicate release creation when security auto-release tags are pushed by workflows
 - Renovate configuration tightened: global automerge disabled; only security-related updates are automerged
+- AGP 9 migration in progress: switched from KAPT to KSP and documented temporary compatibility flags (`android.newDsl=false`, `android.disallowKotlinSourceSets=false`) until Hilt/plugin support fully catches up
 
 ## [2026-06-06]
 
