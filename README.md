@@ -177,6 +177,20 @@ Run instrumented tests:
 ./gradlew connectedAndroidTest
 ```
 
+## 🔐 CI & Branch Protection
+
+The repository uses GitHub Actions and GitHub Rulesets to enforce safe merges on `main`:
+
+- Required CI checks: `ci-build` and `ci-test`
+- Pull requests are required for `main`
+- At least one approval is required
+- Stale reviews are dismissed on new commits
+- Review threads must be resolved
+- Non-fast-forward updates and branch deletion are blocked
+- Linear history is enforced
+
+Renovate is configured so that only security-related dependency updates can be automerged.
+
 ## 🔧 Configuration
 
 ### Network Timeout
@@ -271,4 +285,3 @@ Navigate with confidence and never miss a parking spot again!
 
 **Last Updated**: 2026-06-06  
 **Status**: Active Development
-
