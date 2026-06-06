@@ -326,26 +326,18 @@
         }
 
         .phone-screen {
-            background: linear-gradient(180deg, #0A2A66 0%, #123f93 100%);
+            background: #111827;
             border-radius: 20px;
             min-height: 380px;
-            padding: 1rem;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            text-align: center;
+            overflow: hidden;
         }
 
         .phone-screen img {
-            width: 96px;
-            height: 96px;
-            border-radius: 24px;
-            background: white;
-            padding: 8px;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+            width: 100%;
+            height: 100%;
+            min-height: 380px;
+            object-fit: cover;
+            display: block;
         }
 
         .phone-chip {
@@ -578,10 +570,7 @@
                 <div class="preview-card">
                     <div class="phone-frame">
                         <div class="phone-screen">
-                            <span class="phone-chip">Interactive map</span>
-                            <img src="../app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="VeloSpot app icon preview">
-                            <strong>Bike parking map</strong>
-                            <p style="color: rgba(255,255,255,0.9);">Browse official Trier bike parking data with a fast map-based workflow.</p>
+                            <img src="./screenshots/map-overview.jpeg" alt="VeloSpot Kartenansicht mit vielen Fahrradparkplaetzen in Trier">
                         </div>
                     </div>
                     <h3>Map-first workflow</h3>
@@ -590,10 +579,16 @@
                 <div class="preview-card">
                     <div class="phone-frame">
                         <div class="phone-screen">
-                            <span class="phone-chip">Favorites</span>
-                            <img src="../app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="Favorites preview">
-                            <strong>Saved parking spots</strong>
-                            <p style="color: rgba(255,255,255,0.9);">Favorite spots are highlighted on the map and available through a dedicated favorites list.</p>
+                            <img src="./screenshots/parking-details.jpeg" alt="Detailansicht eines Fahrradparkplatzes mit Navigation und Favoriten-Button">
+                        </div>
+                    </div>
+                    <h3>Parking details at a glance</h3>
+                    <p>View capacity, address, roof coverage, and jump straight to turn-by-turn navigation.</p>
+                </div>
+                <div class="preview-card">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <img src="./screenshots/favorites-sheet.jpeg" alt="Favoritenliste mit gespeicherten Fahrradparkplaetzen">
                         </div>
                     </div>
                     <h3>Quick access to favorites</h3>
@@ -602,14 +597,11 @@
                 <div class="preview-card">
                     <div class="phone-frame">
                         <div class="phone-screen">
-                            <span class="phone-chip">Live location</span>
-                            <img src="../app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="Location preview">
-                            <strong>Current position tools</strong>
-                            <p style="color: rgba(255,255,255,0.9);">Use the recenter button, live location marker, and dark mode toggle for a practical on-the-go experience.</p>
+                            <img src="./screenshots/language-picker.jpeg" alt="Sprachauswahl mit Flaggen in VeloSpot">
                         </div>
                     </div>
-                    <h3>Built for daily cycling</h3>
-                    <p>The app focuses on fast access, practical navigation, and a clean UI for everyday use in the city.</p>
+                    <h3>Multilingual UI</h3>
+                    <p>Switch between 8 languages using the flag-based picker directly from the map menu.</p>
                 </div>
             </div>
         </div>
