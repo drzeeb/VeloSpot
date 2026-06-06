@@ -5,3 +5,11 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hiltAndroid) apply false
 }
+
+// Force kotlin-metadata-jvm to the version that matches the Kotlin compiler,
+// so Hilt's bundled copy does not reject Kotlin 2.4+ class metadata.
+allprojects {
+    configurations.all {
+        resolutionStrategy.force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.0")
+    }
+}
