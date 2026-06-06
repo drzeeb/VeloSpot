@@ -44,6 +44,7 @@ class BikeParkingGmlParser @Inject constructor() {
         val streetAndNo = feature.findText("str_hsnr")
         val cityAndZip = feature.findText("plz_ort")
         val description = feature.findText("beschr")
+        val imageUrl = description.extractImageUrlFromEncodedDescription()
         val position = feature.findText("pos")
             ?.split(' ')
             ?.filter { it.isNotBlank() }
@@ -64,7 +65,8 @@ class BikeParkingGmlParser @Inject constructor() {
             capacity = decodedDescription.extractCapacity(),
             name = name,
             address = address,
-            isCovered = decodedDescription.toCoveredFlag(),
+            isCovered = null,
+            imageUrl = imageUrl,
             operator = null,
             sourceLayer = sourceLayer
         )
@@ -102,13 +104,30 @@ class BikeParkingGmlParser @Inject constructor() {
         }
     }
 
-    private fun String.toCoveredFlag(): Boolean? {
-        val normalized = lowercase()
-        return when {
-            "überdacht" in normalized || "ueberdacht" in normalized -> true
-            "nicht überdacht" in normalized || "nicht ueberdacht" in normalized -> false
-            else -> null
-        }
+    private fun String?.extractImageUrlFromEncodedDescription(): String? {
+        val raw = this ?: return null
+        val encodedMatch = Regex("""src=&quot;(.+?)&quot;""", RegexOption.IGNORE_CASE)
+            .find(raw)
+            ?.groupValues
+            ?.getOrNull(1)
+        val plainMatch = Regex("src=\"(.+?)\"", RegexOption.IGNORE_CASE)
+            .find(raw)
+            ?.groupValues
+            ?.getOrNull(1)
+
+        val candidate = (encodedMatch ?: plainMatch)
+            ?.replace("&amp;", "&")
+            ?.replace("&quot;", "\"")
+            ?.replace("&auml;", "ä")
+            ?.replace("&ouml;", "ö")
+            ?.replace("&uuml;", "ü")
+            ?.replace("&Auml;", "Ä")
+            ?.replace("&Ouml;", "Ö")
+            ?.replace("&Uuml;", "Ü")
+            ?.replace("&szlig;", "ß")
+            ?.trim()
+
+        return candidate?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
     }
 
     private fun String.decodeHtmlEntities(): String {

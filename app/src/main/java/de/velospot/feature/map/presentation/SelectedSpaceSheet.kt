@@ -35,12 +35,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import de.velospot.R
 import de.velospot.core.map.NavigationHandler
 import de.velospot.domain.model.BikeParkingSpace
@@ -134,18 +136,27 @@ private fun SheetContent(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
+        space.imageUrl?.let { imageUrl ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = space.name ?: stringResource(id = R.string.type_bike_rack),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // ── Detailzeilen ───────────────────────────────────────────────────────
         space.address?.let { DetailRow(label = stringResource(id = R.string.detail_address), value = it) }
         space.capacity?.let { DetailRow(label = stringResource(id = R.string.detail_capacity), value = it.toString()) }
         space.operator?.let { DetailRow(label = stringResource(id = R.string.detail_operator), value = it) }
-        DetailRow(
-            label = stringResource(id = R.string.detail_covered),
-            value = when (space.isCovered) {
-                true  -> stringResource(id = R.string.common_yes)
-                false -> stringResource(id = R.string.common_no)
-                null  -> stringResource(id = R.string.common_unknown)
-            }
-        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -154,7 +165,6 @@ private fun SheetContent(
             space.capacity?.let {
                 InfoChip(label = stringResource(id = R.string.favorites_spaces_format, it))
             }
-            if (space.isCovered == true) InfoChip(label = stringResource(id = R.string.common_covered))
             InfoChip(label = space.sourceLayer)
         }
 

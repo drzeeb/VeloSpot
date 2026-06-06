@@ -30,7 +30,8 @@ class BikeParkingMappersTest {
         assertEquals(6.641, domain?.longitude)
         assertEquals(20, domain?.capacity)
         assertEquals(BikeParkingType.GARAGE, domain?.type)
-        assertEquals(true, domain?.isCovered)
+        assertEquals(null, domain?.isCovered)
+        assertEquals(null, domain?.imageUrl)
     }
 }
 
