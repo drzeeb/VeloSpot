@@ -19,7 +19,8 @@ fun GeoJsonFeatureDto.toDomain(defaultLayer: String): BikeParkingSpace? {
         capacity = resolveCapacity(),
         name = firstNonBlank(properties?.name, properties?.designation),
         address = resolveAddress(),
-        isCovered = properties?.covered.toBooleanValue(),
+        isCovered = null,
+        imageUrl = null,
         operator = properties?.operator,
         sourceLayer = sourceLayer
     )
@@ -62,11 +63,4 @@ private fun firstNonBlank(vararg values: String?): String? {
     return values.firstOrNull { !it.isNullOrBlank() }
 }
 
-private fun String?.toBooleanValue(): Boolean? {
-    return when (this?.trim()?.lowercase()) {
-        "true", "1", "ja", "yes" -> true
-        "false", "0", "nein", "no" -> false
-        else -> null
-    }
-}
 
