@@ -117,6 +117,7 @@ class MapViewModelTest {
         name = "Sample $id",
         address = "Test Street 1",
         isCovered = true,
+        imageUrl = null,
         operator = null,
         sourceLayer = "fahrradabstellanlagen"
     )
