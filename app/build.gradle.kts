@@ -1,8 +1,9 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlinKapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hiltAndroid)
 }
 
@@ -33,11 +34,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
@@ -59,7 +63,7 @@ dependencies {
     implementation(libs.androidxComposeIconsExtended)
 
     implementation(libs.hiltAndroid)
-    kapt(libs.hiltAndroidCompiler)
+    ksp(libs.hiltAndroidCompiler)
     implementation(libs.androidxHiltNavigationCompose)
 
     implementation(libs.retrofitCore)
@@ -72,7 +76,7 @@ dependencies {
     // Room Database
     implementation(libs.roomRuntime)
     implementation(libs.roomKtx)
-    kapt(libs.roomCompiler)
+    ksp(libs.roomCompiler)
 
     // Location Services
     implementation(libs.playServicesLocation)
@@ -87,7 +91,4 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 }
 
-kapt {
-    correctErrorTypes = true
-}
 
