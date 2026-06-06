@@ -77,6 +77,7 @@ import de.velospot.core.locale.LanguagePreferences
 import de.velospot.core.map.NavigationHandler
 import de.velospot.core.map.externalNavigationHandler
 import de.velospot.domain.model.BikeParkingSpace
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
@@ -165,6 +166,9 @@ fun MainMapScreen(
     val favoriteMarkerIcon = remember(context, zoomBucket) {
         createBikeMarkerIcon(context, zoomBucket, pinColor = "#D32F2F".toColorInt())
     }
+    val selectedMarkerIcon = remember(context, zoomBucket) {
+        createBikeMarkerIcon(context, zoomBucket, pinColor = "#FF8F00".toColorInt())
+    }
     val locationMarkerIcon = remember(context) {
         createLocationMarkerIcon(context)
     }
@@ -186,10 +190,76 @@ fun MainMapScreen(
 
     LaunchedEffect(mapCameraTarget) {
         val cameraTarget = mapCameraTarget ?: return@LaunchedEffect
-        mapView.controller.apply {
-            setCenter(GeoPoint(cameraTarget.latitude, cameraTarget.longitude))
-            setZoom(cameraTarget.zoom)
+        val startZoom = mapView.zoomLevelDouble
+        val targetZoom = cameraTarget.zoom
+        val baseCenter = GeoPoint(cameraTarget.latitude, cameraTarget.longitude)
+        val hasZoomChange = kotlin.math.abs(targetZoom - startZoom) > 0.01
+        val startCenter = mapView.mapCenter
+        val startLat = startCenter.latitude
+        val startLon = startCenter.longitude
+        val startLatitudeSpan = mapView.boundingBox?.latitudeSpan ?: 0.0
+
+        if (!hasZoomChange) {
+            val latitudeSpan = mapView.boundingBox?.latitudeSpan ?: 0.0
+            val adjustedCenter = if (cameraTarget.verticalOffsetFraction > 0.0) {
+                GeoPoint(
+                    baseCenter.latitude - (latitudeSpan * cameraTarget.verticalOffsetFraction),
+                    baseCenter.longitude
+                )
+            } else {
+                baseCenter
+            }
+            // Fast smooth shift (~120 ms) when zoom already matches target.
+            val steps = 8
+            repeat(steps) { index ->
+                val t = (index + 1).toDouble() / steps
+                val eased = t * t * (3 - 2 * t)
+                mapView.controller.setCenter(
+                    GeoPoint(
+                        startLat + (adjustedCenter.latitude - startLat) * eased,
+                        startLon + (adjustedCenter.longitude - startLon) * eased
+                    )
+                )
+                delay(15)
+            }
+            mapView.controller.setCenter(adjustedCenter)
+            viewModel.onMapCameraTargetHandled()
+            return@LaunchedEffect
         }
+
+        // Estimate final latitude span for target zoom to compute the final vertical offset first.
+        val zoomDelta = targetZoom - startZoom
+        val targetLatitudeSpan = if (startLatitudeSpan > 0.0) {
+            startLatitudeSpan / Math.pow(2.0, zoomDelta)
+        } else {
+            0.0
+        }
+        val adjustedCenter = if (cameraTarget.verticalOffsetFraction > 0.0) {
+            GeoPoint(
+                baseCenter.latitude - (targetLatitudeSpan * cameraTarget.verticalOffsetFraction),
+                baseCenter.longitude
+            )
+        } else {
+            baseCenter
+        }
+
+        // Single fast smooth animation: zoom + center together (~180 ms).
+        val steps = 12
+        repeat(steps) { index ->
+            val t = (index + 1).toDouble() / steps
+            val eased = t * t * (3 - 2 * t)
+            mapView.controller.setZoom(startZoom + (targetZoom - startZoom) * eased)
+            mapView.controller.setCenter(
+                GeoPoint(
+                    startLat + (adjustedCenter.latitude - startLat) * eased,
+                    startLon + (adjustedCenter.longitude - startLon) * eased
+                )
+            )
+            delay(15)
+        }
+
+        mapView.controller.setZoom(targetZoom)
+        mapView.controller.setCenter(adjustedCenter)
         viewModel.onMapCameraTargetHandled()
     }
 
@@ -205,8 +275,10 @@ fun MainMapScreen(
                         spaces = spaces,
                         normalMarkerIcon = normalMarkerIcon,
                         favoriteMarkerIcon = favoriteMarkerIcon,
+                        selectedMarkerIcon = selectedMarkerIcon,
                         locationMarkerIcon = locationMarkerIcon,
                         favoriteIds = favorites,
+                        selectedSpaceId = selectedSpace?.id,
                         userLocation = userLocation,
                         context = context,
                         myLocationTitle = myLocationTitle,
@@ -638,8 +710,10 @@ private fun updateMarkers(
     spaces: List<BikeParkingSpace>,
     normalMarkerIcon: Drawable,
     favoriteMarkerIcon: Drawable,
+    selectedMarkerIcon: Drawable,
     locationMarkerIcon: Drawable,
     favoriteIds: List<String>,
+    selectedSpaceId: String?,
     userLocation: Pair<Double, Double>?,
     context: Context,
     myLocationTitle: String,
@@ -649,11 +723,15 @@ private fun updateMarkers(
 ) {
     map.overlays.clear()
 
-    spaces.forEach { space ->
+    // Draw selected space last so it stays visible when markers overlap.
+    val (otherSpaces, selectedSpaces) = spaces.partition { it.id != selectedSpaceId }
+    (otherSpaces + selectedSpaces).forEach { space ->
         val marker = Marker(map).apply {
             position = GeoPoint(space.latitude, space.longitude)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            icon = if (favoriteIds.contains(space.id)) {
+            icon = if (space.id == selectedSpaceId) {
+                selectedMarkerIcon.constantState?.newDrawable()?.mutate() ?: selectedMarkerIcon
+            } else if (favoriteIds.contains(space.id)) {
                 favoriteMarkerIcon.constantState?.newDrawable()?.mutate() ?: favoriteMarkerIcon
             } else {
                 normalMarkerIcon.constantState?.newDrawable()?.mutate() ?: normalMarkerIcon

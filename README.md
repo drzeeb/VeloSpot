@@ -22,7 +22,9 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - Official bike parking data from the Trier geoportal
 - OpenStreetMap-based map browsing with custom bike markers
 - Red marker highlighting for favorite parking spots
+- Orange marker highlighting for currently selected parking space
 - Dedicated favorites sheet with direct navigation shortcuts
+- Smooth animated map camera transitions with easing functions
 - Current-location recentering and location marker support
 - In-app dark mode toggle from the top-right menu
 - Room / SQLite local cache for faster reloads
@@ -31,8 +33,10 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 ## 🌟 Features
 
 - 📍 **Interactive Map** - Browse bike parking spaces on an interactive OSM map
+- 🎬 **Smooth Animations** - Fluid zoom and pan transitions with easing for a polished user experience
 - 🧭 **My Location** - Center the map on your current position and display a live location marker
 - ❤️ **Favorites** - Save frequently used bike parking spots and launch navigation from a dedicated favorites list
+- ⭐ **Selected Highlight** - See your current selection highlighted with an orange marker
 - 🌙 **Dark Mode Toggle** - Switch the app theme directly from the in-app menu
 - 🌐 **8 Languages** - Choose from German, English, French, Italian, Portuguese, Luxembourgish, Dutch, and Spanish; the selection is remembered across restarts
 - 🚲 **Real-time Data** - Access current bike parking information via WFS/WMS services
