@@ -23,6 +23,8 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - Persistent language preference — the selected language is saved and restored on every app start
 - GitHub Actions CI workflow with dedicated `ci-build` and `ci-test` checks for pull requests and main branch pushes
 - Repository branch protection ruleset for `main` with required PR approval, review-thread resolution, linear history, and required status checks
+- **Parking space image display** in bottom sheet details with photo preview from available sources
+- **Automatic image caching** with Coil for fast loading and offline access
 
 ### Changed
 - Project documentation expanded with updated setup, feature, and troubleshooting guidance
