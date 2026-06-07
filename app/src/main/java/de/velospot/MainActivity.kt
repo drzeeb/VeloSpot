@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.core.locale.LanguagePreferences
+import de.velospot.core.theme.DarkModePreferences
 import de.velospot.feature.map.presentation.MainMapScreen
 import de.velospot.ui.theme.VeloSpotTheme
 
@@ -28,13 +29,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var darkThemeEnabled by remember { mutableStateOf(false) }
+            var darkThemeEnabled by remember {
+                mutableStateOf(DarkModePreferences.isDarkModeEnabled(this))
+            }
 
             VeloSpotTheme(darkTheme = darkThemeEnabled) {
                 Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
                     MainMapScreen(
                         isDarkTheme = darkThemeEnabled,
-                        onDarkThemeToggle = { darkThemeEnabled = !darkThemeEnabled }
+                        onDarkThemeToggle = {
+                            darkThemeEnabled = !darkThemeEnabled
+                            DarkModePreferences.setDarkModeEnabled(this, darkThemeEnabled)
+                        }
                     )
                 }
             }
