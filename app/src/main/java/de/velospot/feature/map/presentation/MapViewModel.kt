@@ -3,10 +3,12 @@ package de.velospot.feature.map.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
+import de.velospot.domain.repository.RoutingRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,11 +23,22 @@ data class MapCameraTarget(
     val verticalOffsetFraction: Double = 0.0
 )
 
+sealed class NavigationUiState {
+    data object Idle : NavigationUiState()
+    data object Loading : NavigationUiState()
+    data class Active(
+        val destination: BikeParkingSpace,
+        val route: BikeRoute
+    ) : NavigationUiState()
+    data class Error(val message: String) : NavigationUiState()
+}
+
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val bikeParkingRepository: BikeParkingRepository,
     private val favoritesRepository: FavoritesRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val routingRepository: RoutingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
@@ -42,6 +55,9 @@ class MapViewModel @Inject constructor(
 
     private val _mapCameraTarget = MutableStateFlow<MapCameraTarget?>(null)
     val mapCameraTarget: StateFlow<MapCameraTarget?> = _mapCameraTarget.asStateFlow()
+
+    private val _navigationUiState = MutableStateFlow<NavigationUiState>(NavigationUiState.Idle)
+    val navigationUiState: StateFlow<NavigationUiState> = _navigationUiState.asStateFlow()
 
     init {
         loadParkingSpaces()
@@ -138,6 +154,48 @@ class MapViewModel @Inject constructor(
 
     fun onMapCameraTargetHandled() {
         _mapCameraTarget.value = null
+    }
+
+    fun startInAppNavigation(space: BikeParkingSpace) {
+        val location = _userLocation.value
+        if (location == null) {
+            _navigationUiState.value = NavigationUiState.Error(
+                "Standort nicht verfuegbar. Bitte Standortfreigabe aktivieren."
+            )
+            return
+        }
+
+        _navigationUiState.value = NavigationUiState.Loading
+
+        viewModelScope.launch {
+            runCatching {
+                routingRepository.getBikeRoute(
+                    startLatitude = location.first,
+                    startLongitude = location.second,
+                    endLatitude = space.latitude,
+                    endLongitude = space.longitude
+                )
+            }.onSuccess { route ->
+                _navigationUiState.value = NavigationUiState.Active(
+                    destination = space,
+                    route = route
+                )
+            }.onFailure { throwable ->
+                _navigationUiState.value = NavigationUiState.Error(
+                    throwable.message ?: "Route konnte nicht berechnet werden."
+                )
+            }
+        }
+    }
+
+    fun stopInAppNavigation() {
+        _navigationUiState.value = NavigationUiState.Idle
+    }
+
+    fun clearNavigationError() {
+        if (_navigationUiState.value is NavigationUiState.Error) {
+            _navigationUiState.value = NavigationUiState.Idle
+        }
     }
 
     override fun onCleared() {

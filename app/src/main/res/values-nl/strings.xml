@@ -20,8 +20,12 @@
     <string name="favorites_add">Toevoegen aan favorieten</string>
     <string name="favorites_remove">Verwijderen uit favorieten</string>
     <string name="favorites_spaces_format">%1$d plaatsen</string>
+    <string name="favorites_show_spot">Toon plek</string>
 
     <string name="navigation_start">Navigatie starten</string>
+    <string name="navigation_stop">Navigatie stoppen</string>
+    <string name="navigation_route_loading">Fietsroute wordt berekend...</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
 
     <string name="detail_address">Adres</string>
     <string name="detail_capacity">Capaciteit</string>
@@ -30,6 +34,7 @@
 
     <string name="common_yes">Ja</string>
     <string name="common_no">Nee</string>
+    <string name="common_ok">OK</string>
     <string name="common_unknown">Onbekend</string>
     <string name="common_covered">Overdekt</string>
 

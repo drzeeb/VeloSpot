@@ -20,8 +20,12 @@
     <string name="favorites_add">Añadir a favoritos</string>
     <string name="favorites_remove">Quitar de favoritos</string>
     <string name="favorites_spaces_format">%1$d plazas</string>
+    <string name="favorites_show_spot">Mostrar lugar</string>
 
     <string name="navigation_start">Iniciar navegación</string>
+    <string name="navigation_stop">Detener navegación</string>
+    <string name="navigation_route_loading">Calculando ruta en bicicleta...</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
 
     <string name="detail_address">Dirección</string>
     <string name="detail_capacity">Capacidad</string>
@@ -30,6 +34,7 @@
 
     <string name="common_yes">Sí</string>
     <string name="common_no">No</string>
+    <string name="common_ok">OK</string>
     <string name="common_unknown">Desconocido</string>
     <string name="common_covered">Cubierto</string>
 
