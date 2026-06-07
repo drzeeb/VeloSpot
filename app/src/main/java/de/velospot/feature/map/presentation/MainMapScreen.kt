@@ -64,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -75,8 +76,8 @@ import androidx.core.os.LocaleListCompat
 import de.velospot.R
 import de.velospot.core.locale.LanguagePreferences
 import de.velospot.core.map.NavigationHandler
-import de.velospot.core.map.externalNavigationHandler
 import de.velospot.domain.model.BikeParkingSpace
+import de.velospot.domain.model.RoutePoint
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import org.osmdroid.events.MapListener
@@ -85,6 +86,7 @@ import org.osmdroid.events.ZoomEvent
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
 
 private const val TRIER_LAT = 49.7596
 private const val TRIER_LON = 6.6441
@@ -103,6 +105,8 @@ fun MainMapScreen(
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
     val mapCameraTarget by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
+    val navigationUiState by viewModel.navigationUiState.collectAsStateWithLifecycle()
+    val activeNavigation = navigationUiState as? NavigationUiState.Active
 
     val mapView = rememberMapViewWithLifecycle()
     var zoomBucket by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
@@ -169,10 +173,25 @@ fun MainMapScreen(
     val selectedMarkerIcon = remember(context, zoomBucket) {
         createBikeMarkerIcon(context, zoomBucket, pinColor = "#FF8F00".toColorInt())
     }
-    val locationMarkerIcon = remember(context) {
-        createLocationMarkerIcon(context)
+    val activeNavigationMarkerIcon = remember(context, zoomBucket) {
+        createBikeMarkerIcon(context, zoomBucket, pinColor = "#FF8F00".toColorInt())
     }
-    val navigationHandler = remember(context) { externalNavigationHandler(context) }
+    val locationMarkerIcon = remember(context, activeNavigation != null) {
+        createLocationMarkerIcon(context, isNavigationActive = activeNavigation != null)
+    }
+    val startNavigationHandler: NavigationHandler = remember(viewModel) {
+        { space ->
+            isFavoritesSheetVisible = false
+            viewModel.selectSpace(null)
+            viewModel.startInAppNavigation(space)
+        }
+    }
+    val showDetailsHandler: NavigationHandler = remember(viewModel) {
+        { space ->
+            isFavoritesSheetVisible = false
+            viewModel.selectSpace(space)
+        }
+    }
     val myLocationTitle = stringResource(id = R.string.map_my_location)
     val snippetSpacesFormat = stringResource(id = R.string.map_snippet_spaces_format)
     val configuration = LocalConfiguration.current
@@ -275,13 +294,16 @@ fun MainMapScreen(
                         normalMarkerIcon = normalMarkerIcon,
                         favoriteMarkerIcon = favoriteMarkerIcon,
                         selectedMarkerIcon = selectedMarkerIcon,
+                        activeNavigationMarkerIcon = activeNavigationMarkerIcon,
                         locationMarkerIcon = locationMarkerIcon,
                         favoriteIds = favorites,
                         selectedSpaceId = selectedSpace?.id,
+                        activeNavigationSpaceId = activeNavigation?.destination?.id,
                         userLocation = userLocation,
                         context = context,
                         myLocationTitle = myLocationTitle,
                         snippetSpacesFormat = snippetSpacesFormat,
+                        routePoints = activeNavigation?.route?.points.orEmpty(),
                         onMarkerClick = viewModel::selectSpace
                     )
                 }
@@ -289,6 +311,11 @@ fun MainMapScreen(
         )
 
         MapStatusOverlay(uiState = uiState)
+        MapNavigationOverlay(
+            navigationUiState = navigationUiState,
+            onStopNavigation = viewModel::stopInAppNavigation,
+            onDismissError = viewModel::clearNavigationError
+        )
 
         MapMenuCard(
             favoritesCount = favorites.size,
@@ -319,7 +346,8 @@ fun MainMapScreen(
             spaces = (uiState as? MapUiState.Success)?.spaces.orEmpty(),
             favoriteIds = favorites,
             onDismiss = { isFavoritesSheetVisible = false },
-            onNavigate = navigationHandler,
+            onStartNavigation = startNavigationHandler,
+            onShowDetails = showDetailsHandler,
             onToggleFavorite = viewModel::toggleFavorite
         )
     }
@@ -343,7 +371,7 @@ fun MainMapScreen(
         SelectedSpaceSheet(
             space = space,
             onDismiss = { viewModel.selectSpace(null) },
-            onNavigate = navigationHandler,
+            onNavigate = startNavigationHandler,
             isFavorite = favorites.contains(space.id),
             onToggleFavorite = viewModel::toggleFavorite
         )
@@ -371,6 +399,101 @@ private fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
                 modifier = Modifier.padding(12.dp),
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.MapNavigationOverlay(
+    navigationUiState: NavigationUiState,
+    onStopNavigation: () -> Unit,
+    onDismissError: () -> Unit
+) {
+    when (navigationUiState) {
+        is NavigationUiState.Idle -> Unit
+        is NavigationUiState.Loading -> {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text(text = stringResource(id = R.string.navigation_route_loading))
+                }
+            }
+        }
+
+        is NavigationUiState.Error -> {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = navigationUiState.message,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onDismissError) {
+                        Text(text = stringResource(id = R.string.common_ok))
+                    }
+                }
+            }
+        }
+
+        is NavigationUiState.Active -> {
+            val distanceKm = navigationUiState.route.distanceMeters / 1000.0
+            val durationMin = (navigationUiState.route.durationSeconds / 60.0).roundToInt()
+            val context = LocalContext.current
+
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = navigationUiState.destination.name
+                            ?: navigationUiState.destination.type.label(context),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(
+                            id = R.string.navigation_route_summary,
+                            distanceKm,
+                            durationMin
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(onClick = onStopNavigation) {
+                        Text(text = stringResource(id = R.string.navigation_stop))
+                    }
+                }
+            }
         }
     }
 }
@@ -546,7 +669,8 @@ private fun FavoritesSheet(
     spaces: List<BikeParkingSpace>,
     favoriteIds: List<String>,
     onDismiss: () -> Unit,
-    onNavigate: NavigationHandler,
+    onStartNavigation: NavigationHandler,
+    onShowDetails: NavigationHandler,
     onToggleFavorite: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -602,7 +726,8 @@ private fun FavoritesSheet(
                     items(favoriteSpaces, key = { it.id }) { space ->
                         FavoriteSpaceCard(
                             space = space,
-                            onNavigate = onNavigate,
+                            onStartNavigation = onStartNavigation,
+                            onShowDetails = onShowDetails,
                             onToggleFavorite = onToggleFavorite
                         )
                     }
@@ -615,7 +740,8 @@ private fun FavoritesSheet(
 @Composable
 private fun FavoriteSpaceCard(
     space: BikeParkingSpace,
-    onNavigate: NavigationHandler,
+    onStartNavigation: NavigationHandler,
+    onShowDetails: NavigationHandler,
     onToggleFavorite: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -671,14 +797,30 @@ private fun FavoriteSpaceCard(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Button(onClick = { onNavigate(space) }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(id = R.string.navigation_start))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = { onStartNavigation(space) }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(id = R.string.navigation_start),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                OutlinedButton(onClick = { onShowDetails(space) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(id = R.string.favorites_show_spot),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
@@ -706,24 +848,40 @@ private fun updateMarkers(
     normalMarkerIcon: Drawable,
     favoriteMarkerIcon: Drawable,
     selectedMarkerIcon: Drawable,
+    activeNavigationMarkerIcon: Drawable,
     locationMarkerIcon: Drawable,
     favoriteIds: List<String>,
     selectedSpaceId: String?,
+    activeNavigationSpaceId: String?,
     userLocation: Pair<Double, Double>?,
     context: Context,
     myLocationTitle: String,
     snippetSpacesFormat: String,
+    routePoints: List<RoutePoint>,
     onMarkerClick: (BikeParkingSpace) -> Unit
 ) {
     map.overlays.clear()
 
-    // Draw selected space last so it stays visible when markers overlap.
-    val (otherSpaces, selectedSpaces) = spaces.partition { it.id != selectedSpaceId }
-    (otherSpaces + selectedSpaces).forEach { space ->
+    if (routePoints.size > 1) {
+        val routePolyline = Polyline().apply {
+            outlinePaint.color = "#1976D2".toColorInt()
+            outlinePaint.strokeWidth = 10f
+            setPoints(routePoints.map { GeoPoint(it.latitude, it.longitude) })
+        }
+        map.overlays.add(routePolyline)
+    }
+
+    // Draw selected or active destination space last so it stays visible when markers overlap.
+    val highlightedSpaceId = activeNavigationSpaceId ?: selectedSpaceId
+    val (otherSpaces, highlightedSpaces) = spaces.partition { it.id != highlightedSpaceId }
+    (otherSpaces + highlightedSpaces).forEach { space ->
         val marker = Marker(map).apply {
             position = GeoPoint(space.latitude, space.longitude)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            icon = if (space.id == selectedSpaceId) {
+            icon = if (space.id == activeNavigationSpaceId) {
+                activeNavigationMarkerIcon.constantState?.newDrawable()?.mutate()
+                    ?: activeNavigationMarkerIcon
+            } else if (space.id == selectedSpaceId) {
                 selectedMarkerIcon.constantState?.newDrawable()?.mutate() ?: selectedMarkerIcon
             } else if (favoriteIds.contains(space.id)) {
                 favoriteMarkerIcon.constantState?.newDrawable()?.mutate() ?: favoriteMarkerIcon
@@ -805,22 +963,32 @@ private fun createBikeMarkerIcon(
     return BitmapDrawable(context.resources, bitmap)
 }
 
-private fun createLocationMarkerIcon(context: Context): Drawable {
-    val size = 34
+private fun createLocationMarkerIcon(context: Context, isNavigationActive: Boolean): Drawable {
+    val size = if (isNavigationActive) 46 else 34
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
     val outerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = "#2196F3".toColorInt()
+        color = if (isNavigationActive) "#00695C".toColorInt() else "#2196F3".toColorInt()
         style = Paint.Style.FILL
     }
-    canvas.drawCircle(size / 2f, size / 2f, 15f, outerPaint)
+    val outerRadius = if (isNavigationActive) 21f else 15f
+    canvas.drawCircle(size / 2f, size / 2f, outerRadius, outerPaint)
+
+    if (isNavigationActive) {
+        val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = "#A7FFEB".toColorInt()
+            style = Paint.Style.STROKE
+            strokeWidth = 4f
+        }
+        canvas.drawCircle(size / 2f, size / 2f, 15f, ringPaint)
+    }
 
     val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         style = Paint.Style.FILL
     }
-    canvas.drawCircle(size / 2f, size / 2f, 7f, innerPaint)
+    canvas.drawCircle(size / 2f, size / 2f, if (isNavigationActive) 8.5f else 7f, innerPaint)
 
     return BitmapDrawable(context.resources, bitmap)
 }
