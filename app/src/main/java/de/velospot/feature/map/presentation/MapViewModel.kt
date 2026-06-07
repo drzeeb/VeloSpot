@@ -5,6 +5,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
+import de.velospot.domain.model.EmptyRouteGeometryException
+import de.velospot.domain.model.GeoCoordinate
+import de.velospot.domain.model.MapError
+import de.velospot.domain.model.NoRouteFoundException
+import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
@@ -30,7 +35,7 @@ sealed class NavigationUiState {
         val destination: BikeParkingSpace,
         val route: BikeRoute
     ) : NavigationUiState()
-    data class Error(val message: String) : NavigationUiState()
+    data class Error(val error: MapError) : NavigationUiState()
 }
 
 @HiltViewModel
@@ -41,12 +46,6 @@ class MapViewModel @Inject constructor(
     private val routingRepository: RoutingRepository
 ) : ViewModel() {
 
-    private companion object {
-        const val LOAD_PARKING_SPACES_ERROR = "Bike parking spaces could not be loaded."
-        const val LOCATION_UNAVAILABLE_ERROR = "Location unavailable. Please enable location access."
-        const val ROUTE_CALCULATION_ERROR = "Route could not be calculated."
-    }
-
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
@@ -56,8 +55,8 @@ class MapViewModel @Inject constructor(
     private val _favorites = MutableStateFlow<List<String>>(emptyList())
     val favorites: StateFlow<List<String>> = _favorites.asStateFlow()
 
-    private val _userLocation = MutableStateFlow<Pair<Double, Double>?>(null)
-    val userLocation: StateFlow<Pair<Double, Double>?> = _userLocation.asStateFlow()
+    private val _userLocation = MutableStateFlow<GeoCoordinate?>(null)
+    val userLocation: StateFlow<GeoCoordinate?> = _userLocation.asStateFlow()
 
     private val _mapCameraTarget = MutableStateFlow<MapCameraTarget?>(null)
     val mapCameraTarget: StateFlow<MapCameraTarget?> = _mapCameraTarget.asStateFlow()
@@ -79,9 +78,12 @@ class MapViewModel @Inject constructor(
             }.onSuccess { spaces ->
                 _uiState.value = MapUiState.Success(spaces)
             }.onFailure { throwable ->
-                _uiState.value = MapUiState.Error(
-                    throwable.message ?: LOAD_PARKING_SPACES_ERROR
-                )
+                val error = when (throwable) {
+                    is java.net.UnknownHostException,
+                    is java.net.ConnectException -> MapError.NetworkUnavailable
+                    else -> MapError.Unknown(throwable.message)
+                }
+                _uiState.value = MapUiState.Error(error)
             }
         }
     }
@@ -112,7 +114,6 @@ class MapViewModel @Inject constructor(
             }
         }
     }
-
 
     /**
      * Start listening to favorite parking spaces.
@@ -151,8 +152,8 @@ class MapViewModel @Inject constructor(
         val location = _userLocation.value
         if (location != null) {
             _mapCameraTarget.value = MapCameraTarget(
-                latitude = location.first,
-                longitude = location.second,
+                latitude = location.latitude,
+                longitude = location.longitude,
                 zoom = 16.0
             )
         }
@@ -165,9 +166,7 @@ class MapViewModel @Inject constructor(
     fun startInAppNavigation(space: BikeParkingSpace) {
         val location = _userLocation.value
         if (location == null) {
-            _navigationUiState.value = NavigationUiState.Error(
-                LOCATION_UNAVAILABLE_ERROR
-            )
+            _navigationUiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
             return
         }
 
@@ -176,10 +175,8 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 routingRepository.getBikeRoute(
-                    startLatitude = location.first,
-                    startLongitude = location.second,
-                    endLatitude = space.latitude,
-                    endLongitude = space.longitude
+                    from = GeoCoordinate(location.latitude, location.longitude),
+                    to = GeoCoordinate(space.latitude, space.longitude)
                 )
             }.onSuccess { route ->
                 _navigationUiState.value = NavigationUiState.Active(
@@ -187,9 +184,13 @@ class MapViewModel @Inject constructor(
                     route = route
                 )
             }.onFailure { throwable ->
-                _navigationUiState.value = NavigationUiState.Error(
-                    throwable.message ?: ROUTE_CALCULATION_ERROR
-                )
+                val error = when (throwable) {
+                    is RoutingFailedException -> MapError.RoutingFailed(throwable.code)
+                    is NoRouteFoundException -> MapError.NoRouteFound
+                    is EmptyRouteGeometryException -> MapError.EmptyRouteGeometry
+                    else -> MapError.Unknown(throwable.message)
+                }
+                _navigationUiState.value = NavigationUiState.Error(error)
             }
         }
     }
@@ -209,4 +210,3 @@ class MapViewModel @Inject constructor(
         locationRepository.stopLocationUpdates()
     }
 }
-

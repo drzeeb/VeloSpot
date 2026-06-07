@@ -41,5 +41,12 @@
     <string name="type_garage">Garage à vélos</string>
     <string name="type_bike_rack">Arceau vélo</string>
     <string name="type_unknown">Installation de stationnement</string>
+
+    <string name="error_network_unavailable">Impossible de charger les places de vélo. Vérifiez votre connexion.</string>
+    <string name="error_location_unavailable">Localisation indisponible. Veuillez activer l\'accès à la localisation.</string>
+    <string name="error_routing_failed">Calcul de l\'itinéraire échoué. Veuillez réessayer.</string>
+    <string name="error_no_route_found">Aucun itinéraire vélo trouvé vers cette destination.</string>
+    <string name="error_route_geometry_empty">Données d\'itinéraire incomplètes. Veuillez réessayer.</string>
+    <string name="error_unknown">Une erreur inattendue s\'est produite. Veuillez réessayer.</string>
 </resources>
 

@@ -41,5 +41,12 @@
     <string name="type_garage">Vëlosgarage</string>
     <string name="type_bike_rack">Vëlosbügel</string>
     <string name="type_unknown">Ofstellanlag</string>
+
+    <string name="error_network_unavailable">Vëlosstellplaze konnten net geluede ginn. Prüf deng Verbindung.</string>
+    <string name="error_location_unavailable">Standuert net verfügbar. Aktivéier de Standuert-Zougang.</string>
+    <string name="error_routing_failed">Routeberechnung fehlgeschloen. Probéier et nach eng Kéier.</string>
+    <string name="error_no_route_found">Keen Vëloswee zur Destinatioun fonnt.</string>
+    <string name="error_route_geometry_empty">Routedaten onfëlleg. Probéier et nach eng Kéier.</string>
+    <string name="error_unknown">E onerwaareden Feeler ass opgetrueden. Probéier et nach eng Kéier.</string>
 </resources>
 

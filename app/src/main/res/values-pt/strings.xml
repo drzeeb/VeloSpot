@@ -41,5 +41,12 @@
     <string name="type_garage">Garagem para bicicletas</string>
     <string name="type_bike_rack">Suporte para bicicletas</string>
     <string name="type_unknown">Instalação de estacionamento</string>
+
+    <string name="error_network_unavailable">Não foi possível carregar os estacionamentos. Verifique a sua ligação.</string>
+    <string name="error_location_unavailable">Localização indisponível. Ative o acesso à localização.</string>
+    <string name="error_routing_failed">Cálculo de rota falhou. Tente novamente.</string>
+    <string name="error_no_route_found">Nenhuma rota de bicicleta encontrada para este destino.</string>
+    <string name="error_route_geometry_empty">Dados de rota incompletos. Tente novamente.</string>
+    <string name="error_unknown">Ocorreu um erro inesperado. Tente novamente.</string>
 </resources>
 

@@ -33,7 +33,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import de.velospot.R
+import de.velospot.domain.model.MapError
 import kotlin.math.roundToInt
+
+@Composable
+private fun MapError.toUserMessage(): String = when (this) {
+    is MapError.NetworkUnavailable -> stringResource(id = R.string.error_network_unavailable)
+    is MapError.LocationUnavailable -> stringResource(id = R.string.error_location_unavailable)
+    is MapError.RoutingFailed -> stringResource(id = R.string.error_routing_failed)
+    is MapError.NoRouteFound -> stringResource(id = R.string.error_no_route_found)
+    is MapError.EmptyRouteGeometry -> stringResource(id = R.string.error_route_geometry_empty)
+    is MapError.Unknown -> stringResource(id = R.string.error_unknown)
+}
 
 @Composable
 internal fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
@@ -52,7 +63,7 @@ internal fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
             )
         ) {
             Text(
-                text = uiState.message,
+                text = uiState.error.toUserMessage(),
                 modifier = Modifier.padding(12.dp),
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -103,7 +114,7 @@ internal fun BoxScope.MapNavigationOverlay(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = navigationUiState.message,
+                        text = navigationUiState.error.toUserMessage(),
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Spacer(modifier = Modifier.height(8.dp))

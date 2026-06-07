@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable
 import android.text.TextPaint
 import androidx.core.graphics.toColorInt
 import de.velospot.domain.model.BikeParkingSpace
+import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
 import kotlin.math.roundToInt
 import org.osmdroid.util.GeoPoint
@@ -35,7 +36,7 @@ internal fun updateMarkers(
     favoriteIds: List<String>,
     selectedSpaceId: String?,
     activeNavigationSpaceId: String?,
-    userLocation: Pair<Double, Double>?,
+    userLocation: GeoCoordinate?,
     context: Context,
     myLocationTitle: String,
     snippetSpacesFormat: String,
@@ -86,9 +87,9 @@ internal fun updateMarkers(
         map.overlays.add(marker)
     }
 
-    userLocation?.let { (latitude, longitude) ->
+    userLocation?.let { location ->
         val locationMarker = Marker(map).apply {
-            position = GeoPoint(latitude, longitude)
+            position = GeoPoint(location.latitude, location.longitude)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
             icon = locationMarkerIcon.constantState?.newDrawable()?.mutate() ?: locationMarkerIcon
             title = myLocationTitle

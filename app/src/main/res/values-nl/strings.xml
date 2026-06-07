@@ -41,5 +41,12 @@
     <string name="type_garage">Fietsgarage</string>
     <string name="type_bike_rack">Fietsbeugel</string>
     <string name="type_unknown">Stallingsvoorziening</string>
+
+    <string name="error_network_unavailable">Fietsparkeervakken konden niet worden geladen. Controleer je verbinding.</string>
+    <string name="error_location_unavailable">Locatie niet beschikbaar. Schakel locatietoegang in.</string>
+    <string name="error_routing_failed">Routeberekening mislukt. Probeer het opnieuw.</string>
+    <string name="error_no_route_found">Geen fietsroute gevonden naar deze bestemming.</string>
+    <string name="error_route_geometry_empty">Routegegevens onvolledig. Probeer het opnieuw.</string>
+    <string name="error_unknown">Er is een onverwachte fout opgetreden. Probeer het opnieuw.</string>
 </resources>
 
