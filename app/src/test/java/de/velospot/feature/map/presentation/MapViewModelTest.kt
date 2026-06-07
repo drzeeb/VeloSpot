@@ -276,6 +276,47 @@ class MapViewModelTest {
         )
     }
 
+    @Test
+    fun `stopInAppNavigation resets state to idle from active`() = runTest {
+        val destination = sampleSpace(id = "target")
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
+            routingRepository = FakeRoutingRepository()
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Active)
+
+        viewModel.stopInAppNavigation()
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
+    }
+
+    @Test
+    fun `clearNavigationError clears error state only`() = runTest {
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(initialLocation = null),
+            routingRepository = FakeRoutingRepository()
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(sampleSpace(id = "target"))
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Error)
+
+        viewModel.clearNavigationError()
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
+
+        viewModel.clearNavigationError()
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
+    }
+
     private fun sampleSpace(id: String) = BikeParkingSpace(
         id = id,
         latitude = 49.75,

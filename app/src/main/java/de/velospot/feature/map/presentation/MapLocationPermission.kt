@@ -14,6 +14,10 @@ internal fun hasLocationPermission(context: Context): Boolean {
         context,
         Manifest.permission.ACCESS_COARSE_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
+    return hasLocationPermission(fineGranted = fineGranted, coarseGranted = coarseGranted)
+}
+
+internal fun hasLocationPermission(fineGranted: Boolean, coarseGranted: Boolean): Boolean {
     return fineGranted || coarseGranted
 }
 
@@ -27,10 +31,24 @@ internal fun requestLocationAccessIfNeeded(
     onPermissionGranted: () -> Unit,
     requestPermissions: (Array<String>) -> Unit
 ) {
-    if (hasLocationPermission(context)) {
+    requestLocationAccessIfNeeded(
+        hasPermission = hasLocationPermission(context),
+        onPermissionGranted = onPermissionGranted,
+        requestPermissions = requestPermissions,
+        permissions = locationPermissions()
+    )
+}
+
+internal fun requestLocationAccessIfNeeded(
+    hasPermission: Boolean,
+    onPermissionGranted: () -> Unit,
+    requestPermissions: (Array<String>) -> Unit,
+    permissions: Array<String>
+) {
+    if (hasPermission) {
         onPermissionGranted()
     } else {
-        requestPermissions(locationPermissions())
+        requestPermissions(permissions)
     }
 }
 
