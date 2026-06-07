@@ -1,8 +1,5 @@
 package de.velospot.feature.map.presentation
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -13,24 +10,18 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
 import de.velospot.core.map.NavigationHandler
-import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.milliseconds
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
@@ -57,10 +48,9 @@ fun MainMapScreen(
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
     val mapView = rememberMapViewWithLifecycle()
+    val screenUiState = rememberMapScreenUiState()
     var zoomBucket by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
-    var isMenuExpanded by remember { mutableStateOf(false) }
-    var isFavoritesSheetVisible by remember { mutableStateOf(false) }
-    var isLanguageSheetVisible by remember { mutableStateOf(false) }
+    val markerStyleConfig = remember { defaultMarkerStyleConfig() }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -71,20 +61,22 @@ fun MainMapScreen(
     }
 
     val requestOrUseLocation: () -> Unit = {
-        if (hasLocationPermission(context)) {
-            viewModel.onLocationPermissionGranted()
-            viewModel.centerMapOnUserLocation()
-        } else {
-            permissionLauncher.launch(locationPermissions())
-        }
+        requestLocationAccessIfNeeded(
+            context = context,
+            onPermissionGranted = {
+                viewModel.onLocationPermissionGranted()
+                viewModel.centerMapOnUserLocation()
+            },
+            requestPermissions = permissionLauncher::launch
+        )
     }
 
     LaunchedEffect(Unit) {
-        if (hasLocationPermission(context)) {
-            viewModel.onLocationPermissionGranted()
-        } else {
-            permissionLauncher.launch(locationPermissions())
-        }
+        requestLocationAccessIfNeeded(
+            context = context,
+            onPermissionGranted = viewModel::onLocationPermissionGranted,
+            requestPermissions = permissionLauncher::launch
+        )
     }
 
     DisposableEffect(mapView) {
@@ -113,39 +105,57 @@ fun MainMapScreen(
     }
 
     val normalMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = "#0A2A66".toColorInt())
+        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.normalPinColor)
     }
     val favoriteMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = "#D32F2F".toColorInt())
+        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.favoritePinColor)
     }
     val selectedMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = "#FF8F00".toColorInt())
+        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.selectedPinColor)
     }
     val activeNavigationMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = "#FF8F00".toColorInt())
+        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.selectedPinColor)
     }
     val mutedNormalMarkerIcon = remember(context, zoomBucket) {
-        createMutedMarkerIcon(context, normalMarkerIcon)
+        createMutedMarkerIcon(
+            context = context,
+            source = normalMarkerIcon,
+            scale = markerStyleConfig.mutedScale,
+            alpha = markerStyleConfig.mutedAlpha,
+            brightenOffset = markerStyleConfig.mutedBrightenOffset
+        )
     }
     val mutedFavoriteMarkerIcon = remember(context, zoomBucket) {
-        createMutedMarkerIcon(context, favoriteMarkerIcon)
+        createMutedMarkerIcon(
+            context = context,
+            source = favoriteMarkerIcon,
+            scale = markerStyleConfig.mutedScale,
+            alpha = markerStyleConfig.mutedAlpha,
+            brightenOffset = markerStyleConfig.mutedBrightenOffset
+        )
     }
     val mutedSelectedMarkerIcon = remember(context, zoomBucket) {
-        createMutedMarkerIcon(context, selectedMarkerIcon)
+        createMutedMarkerIcon(
+            context = context,
+            source = selectedMarkerIcon,
+            scale = markerStyleConfig.mutedScale,
+            alpha = markerStyleConfig.mutedAlpha,
+            brightenOffset = markerStyleConfig.mutedBrightenOffset
+        )
     }
     val locationMarkerIcon = remember(context, activeNavigation != null) {
         createLocationMarkerIcon(context, isNavigationActive = activeNavigation != null)
     }
     val startNavigationHandler: NavigationHandler = remember(viewModel) {
         { space ->
-            isFavoritesSheetVisible = false
+            screenUiState.closeFavorites()
             viewModel.selectSpace(null)
             viewModel.startInAppNavigation(space)
         }
     }
     val showDetailsHandler: NavigationHandler = remember(viewModel) {
         { space ->
-            isFavoritesSheetVisible = false
+            screenUiState.closeFavorites()
             viewModel.selectSpace(space)
         }
     }
@@ -162,76 +172,7 @@ fun MainMapScreen(
 
     LaunchedEffect(mapCameraTarget) {
         val cameraTarget = mapCameraTarget ?: return@LaunchedEffect
-        val startZoom = mapView.zoomLevelDouble
-        val targetZoom = cameraTarget.zoom
-        val baseCenter = GeoPoint(cameraTarget.latitude, cameraTarget.longitude)
-        val hasZoomChange = kotlin.math.abs(targetZoom - startZoom) > 0.01
-        val startCenter = mapView.mapCenter
-        val startLat = startCenter.latitude
-        val startLon = startCenter.longitude
-        val startLatitudeSpan = mapView.boundingBox?.latitudeSpan ?: 0.0
-
-        if (!hasZoomChange) {
-            val latitudeSpan = mapView.boundingBox?.latitudeSpan ?: 0.0
-            val adjustedCenter = if (cameraTarget.verticalOffsetFraction > 0.0) {
-                GeoPoint(
-                    baseCenter.latitude - (latitudeSpan * cameraTarget.verticalOffsetFraction),
-                    baseCenter.longitude
-                )
-            } else {
-                baseCenter
-            }
-            // Fast smooth shift (~120 ms) when zoom already matches target.
-            val steps = 8
-            repeat(steps) { index ->
-                val t = (index + 1).toDouble() / steps
-                val eased = t * t * (3 - 2 * t)
-                mapView.controller.setCenter(
-                    GeoPoint(
-                        startLat + (adjustedCenter.latitude - startLat) * eased,
-                        startLon + (adjustedCenter.longitude - startLon) * eased
-                    )
-                )
-                delay(15.milliseconds)
-            }
-            mapView.controller.setCenter(adjustedCenter)
-            viewModel.onMapCameraTargetHandled()
-            return@LaunchedEffect
-        }
-
-        // Estimate final latitude span for target zoom to compute the final vertical offset first.
-        val zoomDelta = targetZoom - startZoom
-        val targetLatitudeSpan = if (startLatitudeSpan > 0.0) {
-            startLatitudeSpan / Math.pow(2.0, zoomDelta)
-        } else {
-            0.0
-        }
-        val adjustedCenter = if (cameraTarget.verticalOffsetFraction > 0.0) {
-            GeoPoint(
-                baseCenter.latitude - (targetLatitudeSpan * cameraTarget.verticalOffsetFraction),
-                baseCenter.longitude
-            )
-        } else {
-            baseCenter
-        }
-
-        // Single fast smooth animation: zoom + center together (~180 ms).
-        val steps = 12
-        repeat(steps) { index ->
-            val t = (index + 1).toDouble() / steps
-            val eased = t * t * (3 - 2 * t)
-            mapView.controller.setZoom(startZoom + (targetZoom - startZoom) * eased)
-            mapView.controller.setCenter(
-                GeoPoint(
-                    startLat + (adjustedCenter.latitude - startLat) * eased,
-                    startLon + (adjustedCenter.longitude - startLon) * eased
-                )
-            )
-            delay(15.milliseconds)
-        }
-
-        mapView.controller.setZoom(targetZoom)
-        mapView.controller.setCenter(adjustedCenter)
+        animateMapCameraToTarget(mapView = mapView, cameraTarget = cameraTarget)
         viewModel.onMapCameraTargetHandled()
     }
 
@@ -260,6 +201,7 @@ fun MainMapScreen(
                         context = context,
                         myLocationTitle = myLocationTitle,
                         snippetSpacesFormat = snippetSpacesFormat,
+                        routeColor = markerStyleConfig.routeColor,
                         routePoints = activeNavigation?.route?.points.orEmpty(),
                         onMarkerClick = viewModel::selectSpace
                     )
@@ -278,44 +220,38 @@ fun MainMapScreen(
             favoritesCount = favorites.size,
             isDarkTheme = isDarkTheme,
             currentLanguageFlag = currentLanguageFlag,
-            isExpanded = isMenuExpanded,
-            onExpand = { isMenuExpanded = true },
-            onDismiss = { isMenuExpanded = false },
-            onOpenFavorites = {
-                isFavoritesSheetVisible = true
-                isMenuExpanded = false
-            },
-            onOpenLanguage = {
-                isLanguageSheetVisible = true
-                isMenuExpanded = false
-            },
+            isExpanded = screenUiState.isMenuExpanded,
+            onExpand = screenUiState::expandMenu,
+            onDismiss = screenUiState::dismissMenu,
+            onOpenFavorites = screenUiState::openFavorites,
+            onOpenLanguage = screenUiState::openLanguage,
             onToggleDarkMode = {
                 onDarkThemeToggle()
-                isMenuExpanded = false
+                screenUiState.dismissMenu()
             }
         )
 
         MyLocationFab(onClick = requestOrUseLocation)
     }
 
-    if (isFavoritesSheetVisible) {
+    if (screenUiState.isFavoritesSheetVisible) {
         FavoritesSheet(
             spaces = (uiState as? MapUiState.Success)?.spaces.orEmpty(),
             favoriteIds = favorites,
-            onDismiss = { isFavoritesSheetVisible = false },
+            onDismiss = screenUiState::closeFavorites,
             onStartNavigation = startNavigationHandler,
             onShowDetails = showDetailsHandler,
             onToggleFavorite = viewModel::toggleFavorite
         )
     }
 
-    if (isLanguageSheetVisible) {
+    if (screenUiState.isLanguageSheetVisible) {
         LanguageSheet(
             currentLanguageCode = currentLanguageCode,
-            onDismiss = { isLanguageSheetVisible = false },
+            onDismiss = screenUiState::closeLanguage,
             onSelectLanguage = { languageCode ->
                 applyLanguageSelection(context, languageCode)
-                isLanguageSheetVisible = false
+                screenUiState.closeLanguage()
             }
         )
     }
@@ -331,20 +267,4 @@ fun MainMapScreen(
     }
 }
 
-private fun hasLocationPermission(context: Context): Boolean {
-    val fineGranted = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED
-    val coarseGranted = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED
-    return fineGranted || coarseGranted
-}
-
-private fun locationPermissions(): Array<String> = arrayOf(
-    Manifest.permission.ACCESS_FINE_LOCATION,
-    Manifest.permission.ACCESS_COARSE_LOCATION
-)
 

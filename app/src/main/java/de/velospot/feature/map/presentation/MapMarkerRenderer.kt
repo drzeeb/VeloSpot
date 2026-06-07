@@ -39,6 +39,7 @@ internal fun updateMarkers(
     context: Context,
     myLocationTitle: String,
     snippetSpacesFormat: String,
+    routeColor: Int,
     routePoints: List<RoutePoint>,
     onMarkerClick: (BikeParkingSpace) -> Unit
 ) {
@@ -46,7 +47,7 @@ internal fun updateMarkers(
 
     if (routePoints.size > 1) {
         val routePolyline = Polyline().apply {
-            outlinePaint.color = "#1976D2".toColorInt()
+            outlinePaint.color = routeColor
             outlinePaint.strokeWidth = 10f
             setPoints(routePoints.map { GeoPoint(it.latitude, it.longitude) })
         }
@@ -184,7 +185,8 @@ internal fun createMutedMarkerIcon(
     context: Context,
     source: Drawable,
     scale: Float = 0.84f,
-    alpha: Int = 130
+    alpha: Int = 130,
+    brightenOffset: Float = 34f
 ): Drawable {
     val sourceWidth = source.intrinsicWidth.coerceAtLeast(1)
     val sourceHeight = source.intrinsicHeight.coerceAtLeast(1)
@@ -203,9 +205,9 @@ internal fun createMutedMarkerIcon(
         postConcat(
             ColorMatrix(
                 floatArrayOf(
-                    1f, 0f, 0f, 0f, 34f,
-                    0f, 1f, 0f, 0f, 34f,
-                    0f, 0f, 1f, 0f, 34f,
+                    1f, 0f, 0f, 0f, brightenOffset,
+                    0f, 1f, 0f, 0f, brightenOffset,
+                    0f, 0f, 1f, 0f, brightenOffset,
                     0f, 0f, 0f, 1f, 0f
                 )
             )
