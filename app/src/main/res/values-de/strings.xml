@@ -41,5 +41,12 @@
     <string name="type_garage">Fahrradgarage</string>
     <string name="type_bike_rack">Fahrradbügel</string>
     <string name="type_unknown">Abstellanlage</string>
+
+    <string name="error_network_unavailable">Abstellplätze konnten nicht geladen werden. Bitte prüfe deine Verbindung.</string>
+    <string name="error_location_unavailable">Standort nicht verfügbar. Bitte aktiviere den Standortzugriff.</string>
+    <string name="error_routing_failed">Routenberechnung fehlgeschlagen. Bitte versuche es erneut.</string>
+    <string name="error_no_route_found">Keine Fahrradroute zum Ziel gefunden.</string>
+    <string name="error_route_geometry_empty">Routendaten unvollständig. Bitte versuche es erneut.</string>
+    <string name="error_unknown">Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.</string>
 </resources>
 

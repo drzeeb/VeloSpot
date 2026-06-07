@@ -41,4 +41,11 @@
     <string name="type_garage">Bike garage</string>
     <string name="type_bike_rack">Bike rack</string>
     <string name="type_unknown">Parking facility</string>
+
+    <string name="error_network_unavailable">Parking spots could not be loaded. Please check your connection.</string>
+    <string name="error_location_unavailable">Location unavailable. Please enable location access.</string>
+    <string name="error_routing_failed">Route calculation failed. Please try again.</string>
+    <string name="error_no_route_found">No bike route found to this destination.</string>
+    <string name="error_route_geometry_empty">Route data is incomplete. Please try again.</string>
+    <string name="error_unknown">An unexpected error occurred. Please try again.</string>
 </resources>

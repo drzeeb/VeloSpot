@@ -1,5 +1,6 @@
 package de.velospot.domain.repository
 
+import de.velospot.domain.model.GeoCoordinate
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -9,11 +10,11 @@ interface LocationRepository {
 
     /**
      * Get current user location as a Flow.
-     * Emits GeoPoint data when location updates are available.
+     * Emits a [GeoCoordinate] whenever a new location fix is available.
      *
-     * @return Flow of location coordinates (latitude, longitude)
+     * @return Flow of [GeoCoordinate], or null if location is not yet known.
      */
-    fun getCurrentLocationFlow(): Flow<Pair<Double, Double>?>
+    fun getCurrentLocationFlow(): Flow<GeoCoordinate?>
 
 
     /**

@@ -9,6 +9,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
+import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.repository.LocationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,10 +27,10 @@ class LocationRepositoryImpl @Inject constructor(
     private val fusedLocationClient: FusedLocationProviderClient
 ) : LocationRepository {
 
-    private val _locationFlow = MutableStateFlow<Pair<Double, Double>?>(null)
+    private val _locationFlow = MutableStateFlow<GeoCoordinate?>(null)
     private var locationCallback: LocationCallback? = null
 
-    override fun getCurrentLocationFlow(): Flow<Pair<Double, Double>?> {
+    override fun getCurrentLocationFlow(): Flow<GeoCoordinate?> {
         return _locationFlow.asStateFlow()
     }
 
@@ -59,7 +60,7 @@ class LocationRepositoryImpl @Inject constructor(
         try {
             fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
                 if (lastLocation != null) {
-                    _locationFlow.value = Pair(lastLocation.latitude, lastLocation.longitude)
+                    _locationFlow.value = GeoCoordinate(lastLocation.latitude, lastLocation.longitude)
                 }
             }
         } catch (e: SecurityException) {
@@ -75,7 +76,7 @@ class LocationRepositoryImpl @Inject constructor(
             override fun onLocationResult(locationResult: LocationResult) {
                 val lastLocation = locationResult.lastLocation
                 if (lastLocation != null) {
-                    _locationFlow.value = Pair(lastLocation.latitude, lastLocation.longitude)
+                    _locationFlow.value = GeoCoordinate(lastLocation.latitude, lastLocation.longitude)
                 }
             }
         }
