@@ -37,25 +37,27 @@
         "com.android.tools.build:gradle"
       ],
       "groupName": "Kotlin & AGP",
-      "schedule": ["every monday"],
+      "schedule": ["on monday"],
       "labels": ["dependencies", "toolchain"]
     },
     {
       "description": "AndroidX libraries — weekly, grouped",
-      "matchPackagePrefixes": ["androidx."],
       "groupName": "AndroidX",
-      "schedule": ["every monday"],
-      "labels": ["dependencies", "android"]
+      "schedule": ["on monday"],
+      "labels": ["dependencies", "android"],
+      "matchPackageNames": [
+        "androidx.{/,}**"
+      ]
     },
     {
       "description": "Hilt / Dagger — grouped",
-      "matchPackagePrefixes": [
-        "com.google.dagger",
-        "androidx.hilt"
-      ],
       "groupName": "Hilt & Dagger",
-      "schedule": ["every monday"],
-      "labels": ["dependencies"]
+      "schedule": ["on monday"],
+      "labels": ["dependencies"],
+      "matchPackageNames": [
+        "com.google.dagger{/,}**",
+        "androidx.hilt{/,}**"
+      ]
     },
     {
       "description": "Networking (Retrofit, OkHttp, Moshi) — grouped",
@@ -66,35 +68,37 @@
         "com.squareup.okhttp3:logging-interceptor"
       ],
       "groupName": "Networking",
-      "schedule": ["every monday"],
+      "schedule": ["on monday"],
       "labels": ["dependencies"]
     },
     {
       "description": "Room database — grouped",
-      "matchPackagePrefixes": ["androidx.room"],
       "groupName": "Room",
-      "schedule": ["every monday"],
-      "labels": ["dependencies"]
+      "schedule": ["on monday"],
+      "labels": ["dependencies"],
+      "matchPackageNames": [
+        "androidx.room{/,}**"
+      ]
     },
     {
       "description": "OSMDroid map library",
       "matchPackageNames": ["org.osmdroid:osmdroid-android"],
       "groupName": "OSMDroid",
-      "schedule": ["every monday"],
+      "schedule": ["on monday"],
       "labels": ["dependencies"]
     },
     {
       "description": "Gradle wrapper updates",
       "matchManagers": ["gradle-wrapper"],
       "groupName": "Gradle wrapper",
-      "schedule": ["every monday"],
+      "schedule": ["on monday"],
       "labels": ["dependencies", "toolchain"]
     },
     {
       "description": "GitHub Actions",
       "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions",
-      "schedule": ["every monday"],
+      "schedule": ["on monday"],
       "labels": ["dependencies", "ci"]
     }
   ],
