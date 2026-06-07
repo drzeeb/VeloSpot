@@ -22,63 +22,71 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 
+internal data class MarkerIconSet(
+    val normal: Drawable,
+    val favorite: Drawable,
+    val selected: Drawable,
+    val activeNavigation: Drawable,
+    val mutedNormal: Drawable,
+    val mutedFavorite: Drawable,
+    val mutedSelected: Drawable,
+    val location: Drawable
+)
+
+internal data class MarkerRenderState(
+    val favoriteIds: List<String>,
+    val selectedSpaceId: String?,
+    val activeNavigationSpaceId: String?,
+    val userLocation: GeoCoordinate?
+)
+
+internal data class MarkerRenderLabels(
+    val myLocationTitle: String,
+    val snippetSpacesFormat: String
+)
+
+internal data class MarkerDisplayConfig(
+    val context: Context,
+    val labels: MarkerRenderLabels
+)
+
+internal data class RouteRenderData(
+    val color: Int,
+    val points: List<RoutePoint>
+)
+
 internal fun updateMarkers(
     map: MapView,
     spaces: List<BikeParkingSpace>,
-    normalMarkerIcon: Drawable,
-    favoriteMarkerIcon: Drawable,
-    selectedMarkerIcon: Drawable,
-    activeNavigationMarkerIcon: Drawable,
-    mutedNormalMarkerIcon: Drawable,
-    mutedFavoriteMarkerIcon: Drawable,
-    mutedSelectedMarkerIcon: Drawable,
-    locationMarkerIcon: Drawable,
-    favoriteIds: List<String>,
-    selectedSpaceId: String?,
-    activeNavigationSpaceId: String?,
-    userLocation: GeoCoordinate?,
-    context: Context,
-    myLocationTitle: String,
-    snippetSpacesFormat: String,
-    routeColor: Int,
-    routePoints: List<RoutePoint>,
+    icons: MarkerIconSet,
+    state: MarkerRenderState,
+    display: MarkerDisplayConfig,
+    route: RouteRenderData,
     onMarkerClick: (BikeParkingSpace) -> Unit
 ) {
     map.overlays.clear()
 
-    if (routePoints.size > 1) {
+    if (route.points.size > 1) {
         val routePolyline = Polyline().apply {
-            outlinePaint.color = routeColor
+            outlinePaint.color = route.color
             outlinePaint.strokeWidth = 10f
-            setPoints(routePoints.map { GeoPoint(it.latitude, it.longitude) })
+            setPoints(route.points.map { GeoPoint(it.latitude, it.longitude) })
         }
         map.overlays.add(routePolyline)
     }
 
     // Draw selected/active destination last so it stays visible on overlaps.
-    val highlightedSpaceId = activeNavigationSpaceId ?: selectedSpaceId
+    val highlightedSpaceId = state.activeNavigationSpaceId ?: state.selectedSpaceId
     val (otherSpaces, highlightedSpaces) = spaces.partition { it.id != highlightedSpaceId }
     (otherSpaces + highlightedSpaces).forEach { space ->
-        val isNavigationDestination = space.id == activeNavigationSpaceId
-        val showMutedStyle = activeNavigationSpaceId != null && !isNavigationDestination
+        val isNavigationDestination = space.id == state.activeNavigationSpaceId
+        val showMutedStyle = state.activeNavigationSpaceId != null && !isNavigationDestination
         val marker = Marker(map).apply {
             position = GeoPoint(space.latitude, space.longitude)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            icon = if (space.id == activeNavigationSpaceId) {
-                activeNavigationMarkerIcon.constantState?.newDrawable()?.mutate()
-                    ?: activeNavigationMarkerIcon
-            } else if (space.id == selectedSpaceId) {
-                val selectedIcon = if (showMutedStyle) mutedSelectedMarkerIcon else selectedMarkerIcon
-                selectedIcon.constantState?.newDrawable()?.mutate() ?: selectedIcon
-            } else if (favoriteIds.contains(space.id)) {
-                val favoriteIcon = if (showMutedStyle) mutedFavoriteMarkerIcon else favoriteMarkerIcon
-                favoriteIcon.constantState?.newDrawable()?.mutate() ?: favoriteIcon
-            } else {
-                val defaultIcon = if (showMutedStyle) mutedNormalMarkerIcon else normalMarkerIcon
-                defaultIcon.constantState?.newDrawable()?.mutate() ?: defaultIcon
-            }
-            title = space.name ?: space.type.label(context)
-            snippet = buildSnippet(space, snippetSpacesFormat)
+            icon = resolveMarkerIcon(space = space, icons = icons, state = state, showMutedStyle = showMutedStyle)
+            title = space.name ?: space.type.label(display.context)
+            snippet = buildSnippet(space, display.labels.snippetSpacesFormat)
             setOnMarkerClickListener { _, _ ->
                 onMarkerClick(space)
                 true
@@ -87,17 +95,32 @@ internal fun updateMarkers(
         map.overlays.add(marker)
     }
 
-    userLocation?.let { location ->
+    state.userLocation?.let { location ->
         val locationMarker = Marker(map).apply {
             position = GeoPoint(location.latitude, location.longitude)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-            icon = locationMarkerIcon.constantState?.newDrawable()?.mutate() ?: locationMarkerIcon
-            title = myLocationTitle
+            icon = icons.location.constantState?.newDrawable()?.mutate() ?: icons.location
+            title = display.labels.myLocationTitle
         }
         map.overlays.add(locationMarker)
     }
 
     map.invalidate()
+}
+
+private fun resolveMarkerIcon(
+    space: BikeParkingSpace,
+    icons: MarkerIconSet,
+    state: MarkerRenderState,
+    showMutedStyle: Boolean
+): Drawable {
+    val baseIcon = when {
+        space.id == state.activeNavigationSpaceId -> icons.activeNavigation
+        space.id == state.selectedSpaceId -> if (showMutedStyle) icons.mutedSelected else icons.selected
+        state.favoriteIds.contains(space.id) -> if (showMutedStyle) icons.mutedFavorite else icons.favorite
+        else -> if (showMutedStyle) icons.mutedNormal else icons.normal
+    }
+    return baseIcon.constantState?.newDrawable()?.mutate() ?: baseIcon
 }
 
 internal fun createBikeMarkerIcon(

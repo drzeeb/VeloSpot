@@ -60,7 +60,15 @@ class BikeParkingRepositoryImpl @Inject constructor(
     private suspend fun fetchLayer(layer: LayerConfig): List<BikeParkingSpace> {
         val response = geoportalApi.getBikeParkingLayerGml(
             mapFile = layer.mapFile,
-            typeNames = layer.typeName
+            options = mapOf(
+                "service" to "WFS",
+                "version" to "2.0.0",
+                "request" to "GetFeature",
+                "typeNames" to layer.typeName,
+                "srsName" to "urn:ogc:def:crs:EPSG::4326",
+                "count" to "1000",
+                "outputFormat" to "text/xml; subtype=gml/3.2.1"
+            )
         )
 
         if (!response.isSuccessful) {
