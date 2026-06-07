@@ -3,8 +3,12 @@ package de.velospot.feature.map.presentation
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingType
+import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
+import de.velospot.domain.model.MapError
+import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutePoint
+import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
@@ -22,6 +26,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.UnknownHostException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
@@ -165,6 +170,151 @@ class MapViewModelTest {
 
         val state = viewModel.navigationUiState.value
         assertTrue(state is NavigationUiState.Error)
+        assertEquals(MapError.LocationUnavailable, (state as NavigationUiState.Error).error)
+    }
+
+    @Test
+    fun `loadParkingSpaces maps network failures to NetworkUnavailable`() = runTest {
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(error = UnknownHostException("offline")),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(),
+            routingRepository = FakeRoutingRepository()
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is MapUiState.Error)
+        assertEquals(MapError.NetworkUnavailable, (state as MapUiState.Error).error)
+    }
+
+    @Test
+    fun `startInAppNavigation maps RoutingFailedException to RoutingFailed error`() = runTest {
+        val destination = sampleSpace(id = "target")
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
+            routingRepository = FakeRoutingRepository(error = RoutingFailedException("NoRoute"))
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.navigationUiState.value
+        assertTrue(state is NavigationUiState.Error)
+        assertEquals(MapError.RoutingFailed("NoRoute"), (state as NavigationUiState.Error).error)
+    }
+
+    @Test
+    fun `startInAppNavigation maps NoRouteFoundException to NoRouteFound error`() = runTest {
+        val destination = sampleSpace(id = "target")
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
+            routingRepository = FakeRoutingRepository(error = NoRouteFoundException())
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.navigationUiState.value
+        assertTrue(state is NavigationUiState.Error)
+        assertEquals(MapError.NoRouteFound, (state as NavigationUiState.Error).error)
+    }
+
+    @Test
+    fun `startInAppNavigation maps EmptyRouteGeometryException to EmptyRouteGeometry error`() = runTest {
+        val destination = sampleSpace(id = "target")
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
+            routingRepository = FakeRoutingRepository(error = EmptyRouteGeometryException())
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.navigationUiState.value
+        assertTrue(state is NavigationUiState.Error)
+        assertEquals(MapError.EmptyRouteGeometry, (state as NavigationUiState.Error).error)
+    }
+
+    @Test
+    fun `startInAppNavigation forwards correct from and to coordinates to routing repository`() = runTest {
+        val destination = sampleSpace(id = "target")
+        val routingRepository = FakeRoutingRepository()
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
+            routingRepository = routingRepository
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(GeoCoordinate(latitude = 49.75, longitude = 6.64), routingRepository.lastFrom)
+        assertEquals(
+            GeoCoordinate(latitude = destination.latitude, longitude = destination.longitude),
+            routingRepository.lastTo
+        )
+    }
+
+    @Test
+    fun `stopInAppNavigation resets state to idle from active`() = runTest {
+        val destination = sampleSpace(id = "target")
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
+            routingRepository = FakeRoutingRepository()
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Active)
+
+        viewModel.stopInAppNavigation()
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
+    }
+
+    @Test
+    fun `clearNavigationError clears error state only`() = runTest {
+        val viewModel = MapViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
+            favoritesRepository = FakeFavoritesRepository(),
+            locationRepository = FakeLocationRepository(initialLocation = null),
+            routingRepository = FakeRoutingRepository()
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(sampleSpace(id = "target"))
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Error)
+
+        viewModel.clearNavigationError()
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
+
+        viewModel.clearNavigationError()
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
     }
 
     private fun sampleSpace(id: String) = BikeParkingSpace(
@@ -183,9 +333,13 @@ class MapViewModelTest {
 }
 
 private class FakeBikeParkingRepository(
-    private val spaces: List<BikeParkingSpace>
+    private val spaces: List<BikeParkingSpace> = emptyList(),
+    private val error: Throwable? = null
 ) : BikeParkingRepository {
-    override suspend fun getBikeParkingSpaces(): List<BikeParkingSpace> = spaces
+    override suspend fun getBikeParkingSpaces(): List<BikeParkingSpace> {
+        error?.let { throw it }
+        return spaces
+    }
 }
 
 private class FakeFavoritesRepository : FavoritesRepository {
@@ -233,8 +387,19 @@ private class FakeRoutingRepository(
         ),
         distanceMeters = 1000.0,
         durationSeconds = 360.0
-    )
+    ),
+    private val error: Throwable? = null
 ) : RoutingRepository {
-    override suspend fun getBikeRoute(from: GeoCoordinate, to: GeoCoordinate): BikeRoute = route
+    var lastFrom: GeoCoordinate? = null
+        private set
+    var lastTo: GeoCoordinate? = null
+        private set
+
+    override suspend fun getBikeRoute(from: GeoCoordinate, to: GeoCoordinate): BikeRoute {
+        lastFrom = from
+        lastTo = to
+        error?.let { throw it }
+        return route
+    }
 }
 

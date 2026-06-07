@@ -5,6 +5,36 @@ import kotlin.time.Duration.Companion.milliseconds
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 
+internal fun hasZoomChange(startZoom: Double, targetZoom: Double): Boolean {
+    return kotlin.math.abs(targetZoom - startZoom) > 0.01
+}
+
+internal fun calculateAdjustedCenter(
+    startZoom: Double,
+    targetZoom: Double,
+    baseCenter: GeoPoint,
+    verticalOffsetFraction: Double,
+    currentLatitudeSpan: Double,
+    startLatitudeSpan: Double
+): GeoPoint {
+    if (verticalOffsetFraction <= 0.0) return baseCenter
+
+    val hasZoomDelta = hasZoomChange(startZoom = startZoom, targetZoom = targetZoom)
+    val latitudeSpan = if (!hasZoomDelta) {
+        currentLatitudeSpan
+    } else if (startLatitudeSpan > 0.0) {
+        val zoomDelta = targetZoom - startZoom
+        startLatitudeSpan / Math.pow(2.0, zoomDelta)
+    } else {
+        0.0
+    }
+
+    return GeoPoint(
+        baseCenter.latitude - (latitudeSpan * verticalOffsetFraction),
+        baseCenter.longitude
+    )
+}
+
 internal suspend fun animateMapCameraToTarget(
     mapView: MapView,
     cameraTarget: MapCameraTarget
@@ -12,7 +42,7 @@ internal suspend fun animateMapCameraToTarget(
     val startZoom = mapView.zoomLevelDouble
     val targetZoom = cameraTarget.zoom
     val baseCenter = GeoPoint(cameraTarget.latitude, cameraTarget.longitude)
-    val hasZoomChange = kotlin.math.abs(targetZoom - startZoom) > 0.01
+    val hasZoomChange = hasZoomChange(startZoom = startZoom, targetZoom = targetZoom)
     val startCenter = mapView.mapCenter
     val startLat = startCenter.latitude
     val startLon = startCenter.longitude
@@ -20,14 +50,14 @@ internal suspend fun animateMapCameraToTarget(
 
     if (!hasZoomChange) {
         val latitudeSpan = mapView.boundingBox?.latitudeSpan ?: 0.0
-        val adjustedCenter = if (cameraTarget.verticalOffsetFraction > 0.0) {
-            GeoPoint(
-                baseCenter.latitude - (latitudeSpan * cameraTarget.verticalOffsetFraction),
-                baseCenter.longitude
-            )
-        } else {
-            baseCenter
-        }
+        val adjustedCenter = calculateAdjustedCenter(
+            startZoom = startZoom,
+            targetZoom = targetZoom,
+            baseCenter = baseCenter,
+            verticalOffsetFraction = cameraTarget.verticalOffsetFraction,
+            currentLatitudeSpan = latitudeSpan,
+            startLatitudeSpan = startLatitudeSpan
+        )
         // Fast smooth shift (~120 ms) when zoom already matches target.
         val steps = 8
         repeat(steps) { index ->
@@ -45,21 +75,14 @@ internal suspend fun animateMapCameraToTarget(
         return
     }
 
-    // Estimate final latitude span for target zoom to compute the final vertical offset first.
-    val zoomDelta = targetZoom - startZoom
-    val targetLatitudeSpan = if (startLatitudeSpan > 0.0) {
-        startLatitudeSpan / Math.pow(2.0, zoomDelta)
-    } else {
-        0.0
-    }
-    val adjustedCenter = if (cameraTarget.verticalOffsetFraction > 0.0) {
-        GeoPoint(
-            baseCenter.latitude - (targetLatitudeSpan * cameraTarget.verticalOffsetFraction),
-            baseCenter.longitude
-        )
-    } else {
-        baseCenter
-    }
+    val adjustedCenter = calculateAdjustedCenter(
+        startZoom = startZoom,
+        targetZoom = targetZoom,
+        baseCenter = baseCenter,
+        verticalOffsetFraction = cameraTarget.verticalOffsetFraction,
+        currentLatitudeSpan = mapView.boundingBox?.latitudeSpan ?: 0.0,
+        startLatitudeSpan = startLatitudeSpan
+    )
 
     // Single fast smooth animation: zoom + center together (~180 ms).
     val steps = 12
