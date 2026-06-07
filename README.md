@@ -30,6 +30,7 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - Room / SQLite local cache for faster reloads
 - **Parking space photos** with automatic caching via Coil for fast loading
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
+- **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
 - **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
 
 ## 🌟 Features
@@ -45,6 +46,7 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - 🚲 **Real-time Data** - Access current bike parking information via WFS/WMS services
 - 💾 **SQLite Offline Cache** - Store downloaded bike parking data locally with Room for fast reloads
 - 🎯 **In-App Navigation** - Calculate bike routes directly inside the app and render the route path on the map
+- 👁️ **Navigation Focus** - During active navigation, non-target markers are dimmed to keep the destination visually prominent
 - 📊 **Detailed Information** - View capacity, address, coverage information, and photos for each location
 - 🔄 **Auto-refresh** - Data updates automatically as you navigate
 - 🎨 **Modern UI** - Clean and intuitive Jetpack Compose-based interface
@@ -156,6 +158,7 @@ For more information about OpenStreetMap and ODbL, visit:
 - Current location marker and recenter action
 - Top-right quick menu with favorites, language picker, and dark mode toggle
 - In-app routing polyline, destination highlight, and route status card (distance/time)
+- Navigation focus styling that dims non-target markers (smaller, lighter gray, and more transparent)
 - Error handling and loading states
 
 ### Parking Details Sheet

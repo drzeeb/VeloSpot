@@ -7,6 +7,7 @@ The format is based on Keep a Changelog and this project currently follows a sim
 ## [Unreleased]
 
 ### Added
+- Navigation-focused marker dimming: while in-app navigation is active, non-destination parking markers are shown smaller, lighter gray, and more transparent
 - Favorites system backed by Room / SQLite
 - Favorites sheet with direct navigation shortcuts
 - Current-location support with map recenter action and location marker
@@ -34,6 +35,7 @@ The format is based on Keep a Changelog and this project currently follows a sim
 ### Changed
 - Project documentation expanded with updated setup, feature, and troubleshooting guidance
 - GitHub Pages landing page updated to better reflect the current Android app experience
+- README and GitHub Pages content now explicitly highlight in-app bike navigation flows
 - Local bike parking storage moved to SQLite / Room instead of temporary XML-based project-root files
 - Data access decoupled via new `BikeParkingLocalDataSource` interface
 - `MapViewModel` refactored from direct `MapView` manipulation to a `MapCameraTarget` state approach
