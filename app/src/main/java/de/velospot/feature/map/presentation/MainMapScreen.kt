@@ -7,8 +7,11 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.text.TextPaint
@@ -176,6 +179,15 @@ fun MainMapScreen(
     val activeNavigationMarkerIcon = remember(context, zoomBucket) {
         createBikeMarkerIcon(context, zoomBucket, pinColor = "#FF8F00".toColorInt())
     }
+    val mutedNormalMarkerIcon = remember(context, zoomBucket) {
+        createMutedMarkerIcon(context, normalMarkerIcon)
+    }
+    val mutedFavoriteMarkerIcon = remember(context, zoomBucket) {
+        createMutedMarkerIcon(context, favoriteMarkerIcon)
+    }
+    val mutedSelectedMarkerIcon = remember(context, zoomBucket) {
+        createMutedMarkerIcon(context, selectedMarkerIcon)
+    }
     val locationMarkerIcon = remember(context, activeNavigation != null) {
         createLocationMarkerIcon(context, isNavigationActive = activeNavigation != null)
     }
@@ -295,6 +307,9 @@ fun MainMapScreen(
                         favoriteMarkerIcon = favoriteMarkerIcon,
                         selectedMarkerIcon = selectedMarkerIcon,
                         activeNavigationMarkerIcon = activeNavigationMarkerIcon,
+                        mutedNormalMarkerIcon = mutedNormalMarkerIcon,
+                        mutedFavoriteMarkerIcon = mutedFavoriteMarkerIcon,
+                        mutedSelectedMarkerIcon = mutedSelectedMarkerIcon,
                         locationMarkerIcon = locationMarkerIcon,
                         favoriteIds = favorites,
                         selectedSpaceId = selectedSpace?.id,
@@ -849,6 +864,9 @@ private fun updateMarkers(
     favoriteMarkerIcon: Drawable,
     selectedMarkerIcon: Drawable,
     activeNavigationMarkerIcon: Drawable,
+    mutedNormalMarkerIcon: Drawable,
+    mutedFavoriteMarkerIcon: Drawable,
+    mutedSelectedMarkerIcon: Drawable,
     locationMarkerIcon: Drawable,
     favoriteIds: List<String>,
     selectedSpaceId: String?,
@@ -875,6 +893,8 @@ private fun updateMarkers(
     val highlightedSpaceId = activeNavigationSpaceId ?: selectedSpaceId
     val (otherSpaces, highlightedSpaces) = spaces.partition { it.id != highlightedSpaceId }
     (otherSpaces + highlightedSpaces).forEach { space ->
+        val isNavigationDestination = space.id == activeNavigationSpaceId
+        val showMutedStyle = activeNavigationSpaceId != null && !isNavigationDestination
         val marker = Marker(map).apply {
             position = GeoPoint(space.latitude, space.longitude)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
@@ -882,11 +902,14 @@ private fun updateMarkers(
                 activeNavigationMarkerIcon.constantState?.newDrawable()?.mutate()
                     ?: activeNavigationMarkerIcon
             } else if (space.id == selectedSpaceId) {
-                selectedMarkerIcon.constantState?.newDrawable()?.mutate() ?: selectedMarkerIcon
+                val selectedIcon = if (showMutedStyle) mutedSelectedMarkerIcon else selectedMarkerIcon
+                selectedIcon.constantState?.newDrawable()?.mutate() ?: selectedIcon
             } else if (favoriteIds.contains(space.id)) {
-                favoriteMarkerIcon.constantState?.newDrawable()?.mutate() ?: favoriteMarkerIcon
+                val favoriteIcon = if (showMutedStyle) mutedFavoriteMarkerIcon else favoriteMarkerIcon
+                favoriteIcon.constantState?.newDrawable()?.mutate() ?: favoriteIcon
             } else {
-                normalMarkerIcon.constantState?.newDrawable()?.mutate() ?: normalMarkerIcon
+                val defaultIcon = if (showMutedStyle) mutedNormalMarkerIcon else normalMarkerIcon
+                defaultIcon.constantState?.newDrawable()?.mutate() ?: defaultIcon
             }
             title = space.name ?: space.type.label(context)
             snippet = buildSnippet(space, snippetSpacesFormat)
@@ -991,6 +1014,52 @@ private fun createLocationMarkerIcon(context: Context, isNavigationActive: Boole
     canvas.drawCircle(size / 2f, size / 2f, if (isNavigationActive) 8.5f else 7f, innerPaint)
 
     return BitmapDrawable(context.resources, bitmap)
+}
+
+private fun createMutedMarkerIcon(
+    context: Context,
+    source: Drawable,
+    scale: Float = 0.84f,
+    alpha: Int = 130
+): Drawable {
+    val sourceWidth = source.intrinsicWidth.coerceAtLeast(1)
+    val sourceHeight = source.intrinsicHeight.coerceAtLeast(1)
+    val sourceBitmap = Bitmap.createBitmap(sourceWidth, sourceHeight, Bitmap.Config.ARGB_8888)
+    val sourceCanvas = Canvas(sourceBitmap)
+    val drawable = source.constantState?.newDrawable()?.mutate() ?: source.mutate()
+    drawable.setBounds(0, 0, sourceWidth, sourceHeight)
+    drawable.draw(sourceCanvas)
+
+    val targetWidth = (sourceWidth * scale).roundToInt().coerceAtLeast(1)
+    val targetHeight = (sourceHeight * scale).roundToInt().coerceAtLeast(1)
+    val targetBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+    val targetCanvas = Canvas(targetBitmap)
+    val grayscaleAndBrightenMatrix = ColorMatrix().apply {
+        setSaturation(0f)
+        postConcat(
+            ColorMatrix(
+                floatArrayOf(
+                    1f, 0f, 0f, 0f, 34f,
+                    0f, 1f, 0f, 0f, 34f,
+                    0f, 0f, 1f, 0f, 34f,
+                    0f, 0f, 0f, 1f, 0f
+                )
+            )
+        )
+    }
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        colorFilter = ColorMatrixColorFilter(grayscaleAndBrightenMatrix)
+        this.alpha = alpha
+    }
+
+    targetCanvas.drawBitmap(
+        sourceBitmap,
+        Rect(0, 0, sourceWidth, sourceHeight),
+        Rect(0, 0, targetWidth, targetHeight),
+        paint
+    )
+
+    return BitmapDrawable(context.resources, targetBitmap)
 }
 
 private fun hasLocationPermission(context: Context): Boolean {

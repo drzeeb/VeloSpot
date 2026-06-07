@@ -153,14 +153,14 @@ private fun SheetContent(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // ── Detailzeilen ───────────────────────────────────────────────────────
+        // --- Detail rows -------------------------------------------------------
         space.address?.let { DetailRow(label = stringResource(id = R.string.detail_address), value = it) }
         space.capacity?.let { DetailRow(label = stringResource(id = R.string.detail_capacity), value = it.toString()) }
         space.operator?.let { DetailRow(label = stringResource(id = R.string.detail_operator), value = it) }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ── Chip-Zeile ─────────────────────────────────────────────────────────
+        // --- Chip row ----------------------------------------------------------
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             space.capacity?.let {
                 InfoChip(label = stringResource(id = R.string.favorites_spaces_format, it))
@@ -170,7 +170,7 @@ private fun SheetContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ── Navigations-Button ─────────────────────────────────────────────────
+        // --- Navigation button -------------------------------------------------
         Button(
             onClick = { onNavigate(space) },
             modifier = Modifier
