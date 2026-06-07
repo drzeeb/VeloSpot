@@ -3,6 +3,7 @@ package de.velospot.feature.map.presentation
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingType
+import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
@@ -77,7 +78,9 @@ class MapViewModelTest {
 
     @Test
     fun `centerMapOnUserLocation emits camera target when location is available`() = runTest {
-        val locationRepository = FakeLocationRepository(initialLocation = 49.75 to 6.64)
+        val locationRepository = FakeLocationRepository(
+            initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+        )
         val viewModel = MapViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
             favoritesRepository = FakeFavoritesRepository(),
@@ -129,7 +132,9 @@ class MapViewModelTest {
         val viewModel = MapViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
             favoritesRepository = FakeFavoritesRepository(),
-            locationRepository = FakeLocationRepository(initialLocation = 49.75 to 6.64),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
             routingRepository = FakeRoutingRepository(route = expectedRoute)
         )
 
@@ -204,13 +209,13 @@ private class FakeFavoritesRepository : FavoritesRepository {
 }
 
 private class FakeLocationRepository(
-    initialLocation: Pair<Double, Double>? = null
+    initialLocation: GeoCoordinate? = null
 ) : LocationRepository {
     private val locationFlow = MutableStateFlow(initialLocation)
     var startUpdatesCallCount: Int = 0
         private set
 
-    override fun getCurrentLocationFlow(): Flow<Pair<Double, Double>?> = locationFlow
+    override fun getCurrentLocationFlow(): Flow<GeoCoordinate?> = locationFlow
 
 
     override fun startLocationUpdates() {
@@ -230,11 +235,6 @@ private class FakeRoutingRepository(
         durationSeconds = 360.0
     )
 ) : RoutingRepository {
-    override suspend fun getBikeRoute(
-        startLatitude: Double,
-        startLongitude: Double,
-        endLatitude: Double,
-        endLongitude: Double
-    ): BikeRoute = route
+    override suspend fun getBikeRoute(from: GeoCoordinate, to: GeoCoordinate): BikeRoute = route
 }
 
