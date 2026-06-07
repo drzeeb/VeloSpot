@@ -18,10 +18,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Garage
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,16 +27,12 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import de.velospot.R
@@ -105,18 +97,11 @@ private fun SheetContent(
                 modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = space.name ?: space.type.label(context),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = space.type.label(context),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-            // Favorite button
+            SheetHeader(
+                title = space.name ?: space.type.label(context),
+                subtitle = space.type.label(context),
+                modifier = Modifier.weight(1f)
+            )
             IconButton(
                 onClick = { onToggleFavorite(space.id) },
                 modifier = Modifier.size(40.dp)
@@ -137,10 +122,7 @@ private fun SheetContent(
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
         space.imageUrl?.let { imageUrl ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
+            SpotInfoCard {
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = space.name ?: stringResource(id = R.string.type_bike_rack),
@@ -163,71 +145,25 @@ private fun SheetContent(
         // --- Chip row ----------------------------------------------------------
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             space.capacity?.let {
-                InfoChip(label = stringResource(id = R.string.favorites_spaces_format, it))
+                MetaInfoChip(label = stringResource(id = R.string.favorites_spaces_format, it))
             }
-            InfoChip(label = space.sourceLayer)
+            MetaInfoChip(label = space.sourceLayer)
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // --- Navigation button -------------------------------------------------
-        Button(
+        PrimaryActionButton(
+            text = stringResource(id = R.string.navigation_start),
             onClick = { onNavigate(space) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(id = R.string.navigation_start),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-    }
-}
-
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
+            icon = Icons.AutoMirrored.Filled.ArrowForward
         )
     }
 }
 
-@Composable
-private fun InfoChip(label: String) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    }
-}
 
 internal fun BikeParkingType.label(context: Context): String = when (this) {
     BikeParkingType.GARAGE -> context.getString(R.string.type_garage)
