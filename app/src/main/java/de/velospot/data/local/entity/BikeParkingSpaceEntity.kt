@@ -2,7 +2,6 @@ package de.velospot.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import de.velospot.domain.model.BikeParkingType
 
 /**
  * Room database entity for storing bike parking spaces locally.

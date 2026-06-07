@@ -186,23 +186,33 @@ fun MainMapScreen(
                     updateMarkers(
                         map = map,
                         spaces = spaces,
-                        normalMarkerIcon = normalMarkerIcon,
-                        favoriteMarkerIcon = favoriteMarkerIcon,
-                        selectedMarkerIcon = selectedMarkerIcon,
-                        activeNavigationMarkerIcon = activeNavigationMarkerIcon,
-                        mutedNormalMarkerIcon = mutedNormalMarkerIcon,
-                        mutedFavoriteMarkerIcon = mutedFavoriteMarkerIcon,
-                        mutedSelectedMarkerIcon = mutedSelectedMarkerIcon,
-                        locationMarkerIcon = locationMarkerIcon,
-                        favoriteIds = favorites,
-                        selectedSpaceId = selectedSpace?.id,
-                        activeNavigationSpaceId = activeNavigation?.destination?.id,
-                        userLocation = userLocation,
-                        context = context,
-                        myLocationTitle = myLocationTitle,
-                        snippetSpacesFormat = snippetSpacesFormat,
-                        routeColor = markerStyleConfig.routeColor,
-                        routePoints = activeNavigation?.route?.points.orEmpty(),
+                        icons = MarkerIconSet(
+                            normal = normalMarkerIcon,
+                            favorite = favoriteMarkerIcon,
+                            selected = selectedMarkerIcon,
+                            activeNavigation = activeNavigationMarkerIcon,
+                            mutedNormal = mutedNormalMarkerIcon,
+                            mutedFavorite = mutedFavoriteMarkerIcon,
+                            mutedSelected = mutedSelectedMarkerIcon,
+                            location = locationMarkerIcon
+                        ),
+                        state = MarkerRenderState(
+                            favoriteIds = favorites,
+                            selectedSpaceId = selectedSpace?.id,
+                            activeNavigationSpaceId = activeNavigation?.destination?.id,
+                            userLocation = userLocation
+                        ),
+                        display = MarkerDisplayConfig(
+                            context = context,
+                            labels = MarkerRenderLabels(
+                                myLocationTitle = myLocationTitle,
+                                snippetSpacesFormat = snippetSpacesFormat
+                            )
+                        ),
+                        route = RouteRenderData(
+                            color = markerStyleConfig.routeColor,
+                            points = activeNavigation?.route?.points.orEmpty()
+                        ),
                         onMarkerClick = viewModel::selectSpace
                     )
                 }
@@ -217,18 +227,22 @@ fun MainMapScreen(
         )
 
         MapMenuCard(
-            favoritesCount = favorites.size,
-            isDarkTheme = isDarkTheme,
-            currentLanguageFlag = currentLanguageFlag,
-            isExpanded = screenUiState.isMenuExpanded,
-            onExpand = screenUiState::expandMenu,
-            onDismiss = screenUiState::dismissMenu,
-            onOpenFavorites = screenUiState::openFavorites,
-            onOpenLanguage = screenUiState::openLanguage,
-            onToggleDarkMode = {
-                onDarkThemeToggle()
-                screenUiState.dismissMenu()
-            }
+            state = MapMenuCardState(
+                favoritesCount = favorites.size,
+                isDarkTheme = isDarkTheme,
+                currentLanguageFlag = currentLanguageFlag,
+                isExpanded = screenUiState.isMenuExpanded
+            ),
+            actions = MapMenuCardActions(
+                onExpand = screenUiState::expandMenu,
+                onDismiss = screenUiState::dismissMenu,
+                onOpenFavorites = screenUiState::openFavorites,
+                onOpenLanguage = screenUiState::openLanguage,
+                onToggleDarkMode = {
+                    onDarkThemeToggle()
+                    screenUiState.dismissMenu()
+                }
+            )
         )
 
         MyLocationFab(onClick = requestOrUseLocation)

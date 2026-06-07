@@ -36,6 +36,21 @@ import de.velospot.R
 import de.velospot.domain.model.MapError
 import kotlin.math.roundToInt
 
+internal data class MapMenuCardState(
+    val favoritesCount: Int,
+    val isDarkTheme: Boolean,
+    val currentLanguageFlag: String,
+    val isExpanded: Boolean
+)
+
+internal data class MapMenuCardActions(
+    val onExpand: () -> Unit,
+    val onDismiss: () -> Unit,
+    val onOpenFavorites: () -> Unit,
+    val onOpenLanguage: () -> Unit,
+    val onToggleDarkMode: () -> Unit
+)
+
 @Composable
 private fun MapError.toUserMessage(): String = when (this) {
     is MapError.NetworkUnavailable -> stringResource(id = R.string.error_network_unavailable)
@@ -171,15 +186,8 @@ internal fun BoxScope.MapNavigationOverlay(
 
 @Composable
 internal fun BoxScope.MapMenuCard(
-    favoritesCount: Int,
-    isDarkTheme: Boolean,
-    currentLanguageFlag: String,
-    isExpanded: Boolean,
-    onExpand: () -> Unit,
-    onDismiss: () -> Unit,
-    onOpenFavorites: () -> Unit,
-    onOpenLanguage: () -> Unit,
-    onToggleDarkMode: () -> Unit
+    state: MapMenuCardState,
+    actions: MapMenuCardActions
 ) {
     Card(
         modifier = Modifier
@@ -191,7 +199,7 @@ internal fun BoxScope.MapMenuCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box {
-            IconButton(onClick = onExpand) {
+            IconButton(onClick = actions.onExpand) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = stringResource(id = R.string.menu_open),
@@ -200,15 +208,15 @@ internal fun BoxScope.MapMenuCard(
             }
 
             DropdownMenu(
-                expanded = isExpanded,
-                onDismissRequest = onDismiss
+                expanded = state.isExpanded,
+                onDismissRequest = actions.onDismiss
             ) {
                 DropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(
                                 id = R.string.menu_favorites_count,
-                                favoritesCount
+                                state.favoritesCount
                             )
                         )
                     },
@@ -218,26 +226,26 @@ internal fun BoxScope.MapMenuCard(
                             contentDescription = null
                         )
                     },
-                    onClick = onOpenFavorites
+                    onClick = actions.onOpenFavorites
                 )
                 DropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(
                                 id = R.string.menu_language_with_flag,
-                                currentLanguageFlag
+                                state.currentLanguageFlag
                             )
                         )
                     },
                     leadingIcon = {
-                        Text(text = currentLanguageFlag)
+                        Text(text = state.currentLanguageFlag)
                     },
-                    onClick = onOpenLanguage
+                    onClick = actions.onOpenLanguage
                 )
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = if (isDarkTheme) {
+                            text = if (state.isDarkTheme) {
                                 stringResource(id = R.string.menu_disable_dark_mode)
                             } else {
                                 stringResource(id = R.string.menu_enable_dark_mode)
@@ -250,7 +258,7 @@ internal fun BoxScope.MapMenuCard(
                             contentDescription = null
                         )
                     },
-                    onClick = onToggleDarkMode
+                    onClick = actions.onToggleDarkMode
                 )
             }
         }

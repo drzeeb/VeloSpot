@@ -3,7 +3,7 @@ package de.velospot.domain.repository
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.GeoCoordinate
 
-interface RoutingRepository {
+fun interface RoutingRepository {
     /**
      * Calculate a bike route between two geographic coordinates.
      *
