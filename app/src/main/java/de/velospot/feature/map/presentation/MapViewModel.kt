@@ -41,6 +41,12 @@ class MapViewModel @Inject constructor(
     private val routingRepository: RoutingRepository
 ) : ViewModel() {
 
+    private companion object {
+        const val LOAD_PARKING_SPACES_ERROR = "Bike parking spaces could not be loaded."
+        const val LOCATION_UNAVAILABLE_ERROR = "Location unavailable. Please enable location access."
+        const val ROUTE_CALCULATION_ERROR = "Route could not be calculated."
+    }
+
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
@@ -74,7 +80,7 @@ class MapViewModel @Inject constructor(
                 _uiState.value = MapUiState.Success(spaces)
             }.onFailure { throwable ->
                 _uiState.value = MapUiState.Error(
-                    throwable.message ?: "Fahrradstellplaetze konnten nicht geladen werden."
+                    throwable.message ?: LOAD_PARKING_SPACES_ERROR
                 )
             }
         }
@@ -160,7 +166,7 @@ class MapViewModel @Inject constructor(
         val location = _userLocation.value
         if (location == null) {
             _navigationUiState.value = NavigationUiState.Error(
-                "Standort nicht verfuegbar. Bitte Standortfreigabe aktivieren."
+                LOCATION_UNAVAILABLE_ERROR
             )
             return
         }
@@ -182,7 +188,7 @@ class MapViewModel @Inject constructor(
                 )
             }.onFailure { throwable ->
                 _navigationUiState.value = NavigationUiState.Error(
-                    throwable.message ?: "Route konnte nicht berechnet werden."
+                    throwable.message ?: ROUTE_CALCULATION_ERROR
                 )
             }
         }

@@ -24,12 +24,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.hilt.navigation.compose.hiltViewModel
 import de.velospot.R
 import de.velospot.core.map.NavigationHandler
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
@@ -191,7 +192,7 @@ fun MainMapScreen(
                         startLon + (adjustedCenter.longitude - startLon) * eased
                     )
                 )
-                delay(15)
+                delay(15.milliseconds)
             }
             mapView.controller.setCenter(adjustedCenter)
             viewModel.onMapCameraTargetHandled()
@@ -226,7 +227,7 @@ fun MainMapScreen(
                     startLon + (adjustedCenter.longitude - startLon) * eased
                 )
             )
-            delay(15)
+            delay(15.milliseconds)
         }
 
         mapView.controller.setZoom(targetZoom)
