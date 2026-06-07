@@ -20,8 +20,12 @@
     <string name="favorites_add">Bei Favoritten dobäisetzen</string>
     <string name="favorites_remove">Aus Favoritten ewechhuelen</string>
     <string name="favorites_spaces_format">%1$d Stellplazen</string>
+    <string name="favorites_show_spot">Spot weisen</string>
 
     <string name="navigation_start">Navigatioun starten</string>
+    <string name="navigation_stop">Navigatioun stoppen</string>
+    <string name="navigation_route_loading">Vëlosroute gëtt berechent...</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
 
     <string name="detail_address">Adress</string>
     <string name="detail_capacity">Stellplazen</string>
@@ -30,6 +34,7 @@
 
     <string name="common_yes">Jo</string>
     <string name="common_no">Nee</string>
+    <string name="common_ok">OK</string>
     <string name="common_unknown">Onbekannt</string>
     <string name="common_covered">Iwwerdeckt</string>
 

@@ -17,13 +17,16 @@ import de.velospot.data.local.dao.BikeParkingSpaceDao
 import de.velospot.data.local.dao.FavoriteParkingSpaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
 import de.velospot.data.location.LocationRepositoryImpl
+import de.velospot.data.remote.api.OsrmApi
 import de.velospot.data.remote.api.TrierGeoportalApi
 import de.velospot.data.remote.parser.BikeParkingGmlParser
 import de.velospot.data.repository.BikeParkingRepositoryImpl
 import de.velospot.data.repository.FavoritesRepositoryImpl
+import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
+import de.velospot.domain.repository.RoutingRepository
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import okhttp3.OkHttpClient
@@ -88,6 +91,12 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideOsrmApi(retrofit: Retrofit): OsrmApi {
+        return retrofit.create(OsrmApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideBikeParkingDatabase(
         @ApplicationContext context: Context
     ): BikeParkingDatabase {
@@ -122,6 +131,12 @@ object NetworkModule {
         gmlParser: BikeParkingGmlParser
     ): BikeParkingRepository {
         return BikeParkingRepositoryImpl(geoportalApi, cache, gmlParser)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRoutingRepository(osrmApi: OsrmApi): RoutingRepository {
+        return RoutingRepositoryImpl(osrmApi)
     }
 
     @Provides

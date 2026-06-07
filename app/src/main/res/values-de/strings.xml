@@ -20,8 +20,12 @@
     <string name="favorites_add">Zu Favoriten hinzufügen</string>
     <string name="favorites_remove">Aus Favoriten entfernen</string>
     <string name="favorites_spaces_format">%1$d Stellplätze</string>
+    <string name="favorites_show_spot">Spot anzeigen</string>
 
     <string name="navigation_start">Navigation starten</string>
+    <string name="navigation_stop">Navigation beenden</string>
+    <string name="navigation_route_loading">Fahrradroute wird berechnet...</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
 
     <string name="detail_address">Adresse</string>
     <string name="detail_capacity">Stellplätze</string>
@@ -30,6 +34,7 @@
 
     <string name="common_yes">Ja</string>
     <string name="common_no">Nein</string>
+    <string name="common_ok">OK</string>
     <string name="common_unknown">Unbekannt</string>
     <string name="common_covered">Überdacht</string>
 

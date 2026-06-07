@@ -25,6 +25,11 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - Repository branch protection ruleset for `main` with required PR approval, review-thread resolution, linear history, and required status checks
 - **Parking space image display** in bottom sheet details with photo preview from available sources
 - **Automatic image caching** with Coil for fast loading and offline access
+- **In-app bike navigation** with OSRM route calculation and route polyline overlay on the map
+- Navigation status card with route loading, distance/time summary, and stop action
+- Favorites now provide two explicit actions: start navigation and show spot details
+- Localized navigation/favorites labels for all supported app languages
+- Additional `MapViewModel` unit tests for in-app navigation states (loading/active/error)
 
 ### Changed
 - Project documentation expanded with updated setup, feature, and troubleshooting guidance
@@ -51,6 +56,9 @@ The format is based on Keep a Changelog and this project currently follows a sim
 - Renovate PR `renovate/major-github-actions`: Workflow Actions aktualisiert (`actions/checkout` `v5 -> v6`, `actions/upload-artifact` `v4 -> v7`)
 - Renovate PR `renovate/major-agp`: AGP-9-Migrationsstand dokumentiert (KSP-Migration, Gradle-Wrapper- und Build-Config-Anpassungen im Branch)
 - README aktualisiert: Anforderungen auf Android SDK 37+ und Target API 37 angehoben
+- External Google Maps intent flow removed from primary navigation action; routing now stays in-app
+- Active destination marker color aligned with selected marker highlight (orange)
+- Favorites action layout adjusted to avoid compressed button text on smaller widths
 
 ## [2026-06-06]
 
