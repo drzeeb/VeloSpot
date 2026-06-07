@@ -21,12 +21,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -109,9 +107,10 @@ internal fun BoxScope.MapNavigationOverlay(
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(onClick = onDismissError) {
-                        Text(text = stringResource(id = R.string.common_ok))
-                    }
+                    SecondaryActionButton(
+                        text = stringResource(id = R.string.common_ok),
+                        onClick = onDismissError
+                    )
                 }
             }
         }
@@ -149,9 +148,10 @@ internal fun BoxScope.MapNavigationOverlay(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    Button(onClick = onStopNavigation) {
-                        Text(text = stringResource(id = R.string.navigation_stop))
-                    }
+                    PrimaryActionButton(
+                        text = stringResource(id = R.string.navigation_stop),
+                        onClick = onStopNavigation
+                    )
                 }
             }
         }
