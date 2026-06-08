@@ -1,6 +1,6 @@
 # 🚲 VeloSpot
 
-**Find bike parking spaces effortlessly**
+**Find bike parking spaces across all of Germany**
 
 ![Platform](https://img.shields.io/badge/platform-Android%208.0%2B-0A2A66)
 ![Language](https://img.shields.io/badge/language-Kotlin-7F52FF)
@@ -8,7 +8,18 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![Release](https://img.shields.io/github/v/release/drzeeb/VeloSpot?label=latest%20release)](https://github.com/drzeeb/VeloSpot/releases/latest)
 
-VeloSpot is an Android application that helps cyclists discover and locate bike parking facilities in Trier and surrounding areas. With real-time data from local services and an intuitive map interface, finding a safe place to park your bike has never been easier.
+VeloSpot is an Android application that helps cyclists discover and navigate to bike parking facilities **anywhere in Germany**. Powered by a pre-bundled OpenStreetMap dataset with over **100 000 locations**, the app works fully offline from the very first launch — no network required to find parking.
+
+## 🇩🇪 Germany-Wide Coverage — Now Live!
+
+> **This release replaces the previous Trier-only WFS/WMS data source with a pre-bundled OpenStreetMap extract covering all of Germany.**
+
+- **~100 000+ bicycle parking locations** extracted from the OSM Germany dataset
+- **Fully offline** — all data is bundled inside the APK as a Room/SQLite asset
+- **Instant startup** — no network call needed to see parking spots
+- **Viewport-based loading** — only the markers visible in the current map area are queried, keeping memory usage low even with 100 000 entries
+- **Lazy reverse geocoding** — when you tap a marker without a stored address, Nominatim is queried once, the result is cached locally and shown immediately in the details sheet
+- **Extraction script included** (`scripts/extract_osm_parking.py`) — regenerate the bundled database from a fresh Geofabrik PBF at any time
 
 ## 🔗 Quick Links
 
@@ -19,15 +30,17 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 
 ## ✨ Highlights
 
-- Official bike parking data from the Trier geoportal
+- **Germany-wide** bike parking data from OpenStreetMap (~100 000+ locations)
+- **Fully offline** after install — no WFS/WMS network calls required
 - OpenStreetMap-based map browsing with custom bike markers
+- Viewport-based marker loading — smooth performance even across the entire country
+- Lazy address resolution via Nominatim (cached permanently to local DB)
 - Red marker highlighting for favorite parking spots
 - Orange marker highlighting for currently selected parking space
 - Dedicated favorites sheet with direct navigation shortcuts
 - Smooth animated map camera transitions with easing functions
 - Current-location recentering and location marker support
 - In-app dark mode toggle from the top-right menu
-- Room / SQLite local cache for faster reloads
 - **Parking space photos** with automatic caching via Coil for fast loading
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
@@ -35,7 +48,11 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 
 ## 🌟 Features
 
+- 🇩🇪 **All of Germany** - 100 000+ bike parking spots from OpenStreetMap, bundled offline
 - 📍 **Interactive Map** - Browse bike parking spaces on an interactive OSM map
+- ⚡ **Viewport Loading** - Only the visible map area is queried; scroll anywhere in Germany without slowdowns
+- 🏠 **Offline-First** - All parking data is available instantly, even without a network connection
+- 📬 **Address Lookup** - Missing addresses are resolved via Nominatim and cached locally on first tap
 - 🎬 **Smooth Animations** - Fluid zoom and pan transitions with easing for a polished user experience
 - 🧭 **My Location** - Center the map on your current position and display a live location marker
 - ❤️ **Favorites** - Save frequently used bike parking spots and use dedicated actions for navigation or spot details
@@ -43,12 +60,10 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - 📸 **Parking Photos** - View parking space photos with automatic smart caching for fast loading
 - 🌙 **Dark Mode Toggle** - Switch the app theme directly from the in-app menu
 - 🌐 **8 Languages** - Choose from German, English, French, Italian, Portuguese, Luxembourgish, Dutch, and Spanish; the selection is remembered across restarts
-- 🚲 **Real-time Data** - Access current bike parking information via WFS/WMS services
-- 💾 **SQLite Offline Cache** - Store downloaded bike parking data locally with Room for fast reloads
+- 💾 **SQLite Offline Database** - All ~100 000 parking locations are bundled as a Room asset; no sync required
 - 🎯 **In-App Navigation** - Calculate bike routes directly inside the app and render the route path on the map
 - 👁️ **Navigation Focus** - During active navigation, non-target markers are dimmed to keep the destination visually prominent
 - 📊 **Detailed Information** - View capacity, address, coverage information, and photos for each location
-- 🔄 **Auto-refresh** - Data updates automatically as you navigate
 - 🎨 **Modern UI** - Clean and intuitive Jetpack Compose-based interface
 
 ## 📱 Target Platform
@@ -62,9 +77,11 @@ VeloSpot is an Android application that helps cyclists discover and locate bike 
 - **UI Framework**: Jetpack Compose
 - **Architecture**: Clean Architecture with MVVM
 - **Dependency Injection**: Hilt
-- **Data**: Retrofit, Moshi, Room (SQLite), OSMDroid
+- **Data**: Retrofit, Moshi, Room (SQLite asset DB), OSMDroid
+- **Geocoding**: Nominatim REST API (lazy, on-demand, cached)
 - **Location**: Android runtime permissions, Google Play Services location APIs
 - **Build System**: Gradle
+- **Data Pipeline**: Python + pyosmium (`scripts/extract_osm_parking.py`)
 
 ## 🗂 Project Structure
 
@@ -73,18 +90,24 @@ VeloSpot/
 ├── app/
 │   ├── src/
 │   │   ├── main/
+│   │   │   ├── assets/
+│   │   │   │   └── bike_parking_germany.db   # Pre-bundled OSM dataset (~20 MB)
 │   │   │   ├── java/de/velospot/
 │   │   │   │   ├── feature/          # Feature modules
 │   │   │   │   ├── domain/           # Business logic
-│   │   │   │   ├── data/             # Data layer
+│   │   │   │   ├── data/             # Data layer (local DB + geocoding)
 │   │   │   │   ├── core/             # Shared utilities
 │   │   │   │   └── MainActivity.kt
 │   │   │   ├── res/                  # Resources
 │   │   │   └── AndroidManifest.xml
 │   │   ├── test/                     # Unit tests
 │   │   └── androidTest/              # Instrumented tests
+│   ├── schemas/                      # Room schema exports (v3)
 │   ├── build.gradle.kts
 │   └── proguard-rules.pro
+├── scripts/
+│   ├── extract_osm_parking.py        # PBF → SQLite pipeline
+│   └── README.md
 ├── gradle/
 ├── build.gradle.kts
 ├── settings.gradle.kts
@@ -134,13 +157,27 @@ New releases are built automatically by GitHub Actions whenever a version tag is
    adb shell am start -n de.velospot/de.velospot.MainActivity
    ```
 
+### Regenerating the Bundled Database
+
+The parking database is pre-generated and committed to `app/src/main/assets/`. To regenerate it from a fresh OSM extract:
+
+```bash
+pip install osmium requests
+cd scripts/
+python extract_osm_parking.py --pbf germany-latest.osm.pbf
+# → writes ../app/src/main/assets/bike_parking_germany.db
+```
+
+See [`scripts/README.md`](scripts/README.md) for full details on the extraction pipeline, including how to download the PBF from Geofabrik.
+
 ## 📊 Data Sources
 
-VeloSpot retrieves bike parking data from public WFS/WMS services and displays it on OpenStreetMap tiles:
+VeloSpot bundles bike parking data extracted from OpenStreetMap and displays it on OpenStreetMap tiles:
 
-- **Bike Parking Data Provider**: Trier Geoportal
-- **Data format**: GeoJSON, GML-based WFS
-- **Update frequency**: Real-time from server
+- **Bike Parking Data**: OpenStreetMap contributors (Germany extract via [Geofabrik](https://download.geofabrik.de/europe/germany.html))
+- **Data format**: Pre-processed SQLite asset (Room-compatible)
+- **Update frequency**: Bundled at build time; regenerate with `extract_osm_parking.py` for fresh data
+- **Reverse Geocoding**: [Nominatim](https://nominatim.openstreetmap.org/) (on-demand, cached, OSM-based)
 - **Map Tiles**: OpenStreetMap contributors
 - **Map License**: Open Data Commons Open Database License (ODbL 1.0)
 - **Attribution**: © OpenStreetMap contributors
@@ -163,6 +200,7 @@ For more information about OpenStreetMap and ODbL, visit:
 
 ### Parking Details Sheet
 - Bottom sheet with parking information
+- Address auto-resolved via Nominatim if not present in OSM data
 - Favorite toggle for quick saving
 - Quick-access navigation button
 - Capacity and coverage indicators
@@ -245,9 +283,11 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 
 ### App crashes on startup
 - Ensure location permissions are granted
-- Check internet connectivity
-- Verify WFS/WMS service is accessible
-- If you denied location once, use the map without recentering or grant permission when Android prompts again
+- Check that the asset database `bike_parking_germany.db` is present under `app/src/main/assets/`
+
+### No parking markers visible after fresh install
+- On the very first launch Room copies the ~20 MB asset database — this takes a second or two; wait briefly and the markers will appear
+- If upgrading from a previous version: uninstall the old app first so Room copies the fresh asset (or use `adb shell run-as de.velospot rm databases/velospot_database.db` on debug builds)
 
 ### Map shows blank
 - Ensure OSM tiles are loading (check network tab)
@@ -257,6 +297,10 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 - Confirm location permission is granted for the app
 - Make sure location services are enabled on the device
 - Try tapping the floating action button again after Android shows the permission dialog
+
+### Address shows "—" for a parking spot
+- Address resolution happens the first time you tap a marker; it requires a brief network call to Nominatim
+- After the first tap the address is cached permanently in the local database
 
 ## 🤝 Contributing
 
@@ -278,7 +322,7 @@ Contributions are welcome! Please follow these steps:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Important**: The MIT License applies to the VeloSpot source code only. Map data from OpenStreetMap is licensed under the **Open Data Commons Open Database License (ODbL)** - see [ATTRIBUTIONS.md](ATTRIBUTIONS.md) for full attribution details.
+**Important**: The MIT License applies to the VeloSpot source code only. Map data from OpenStreetMap is licensed under the **Open Data Commons Open Database License (ODbL)** — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md) for full attribution details.
 
 ## 👨‍💻 Author
 
@@ -292,9 +336,9 @@ For issues, suggestions, or questions:
 
 ## 🚴 Happy Cycling! 🚲
 
-Navigate with confidence and never miss a parking spot again!
+Navigate with confidence and never miss a parking spot again — anywhere in Germany!
 
 ---
 
-**Last Updated**: 2026-06-07  
+**Last Updated**: 2026-06-08  
 **Status**: Active Development

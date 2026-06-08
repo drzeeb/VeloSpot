@@ -21,6 +21,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
 import de.velospot.core.map.NavigationHandler
+import de.velospot.domain.model.BoundingBox
 import kotlin.math.roundToInt
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
@@ -43,8 +44,10 @@ fun MainMapScreen(
     val selectedSpace by viewModel.selectedSpace.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
+    val favoriteSpaces by viewModel.favoriteSpaces.collectAsStateWithLifecycle()
     val mapCameraTarget by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
     val navigationUiState by viewModel.navigationUiState.collectAsStateWithLifecycle()
+
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
     val mapView = rememberMapViewWithLifecycle()
@@ -81,13 +84,35 @@ fun MainMapScreen(
 
     DisposableEffect(mapView) {
         val listener = object : MapListener {
-            override fun onScroll(event: ScrollEvent?): Boolean = false
+            override fun onScroll(event: ScrollEvent?): Boolean {
+                // Report the new visible bounding box so the ViewModel can load nearby spots.
+                val bbox = mapView.boundingBox
+                viewModel.onViewportChanged(
+                    BoundingBox(
+                        minLat = bbox.latSouth,
+                        minLon = bbox.lonWest,
+                        maxLat = bbox.latNorth,
+                        maxLon = bbox.lonEast
+                    )
+                )
+                return false
+            }
 
             override fun onZoom(event: ZoomEvent?): Boolean {
                 val nextZoomBucket = (event?.zoomLevel ?: mapView.zoomLevelDouble).roundToInt()
                 if (nextZoomBucket != zoomBucket) {
                     zoomBucket = nextZoomBucket
                 }
+                // Also reload for the new viewport after zooming.
+                val bbox = mapView.boundingBox
+                viewModel.onViewportChanged(
+                    BoundingBox(
+                        minLat = bbox.latSouth,
+                        minLon = bbox.lonWest,
+                        maxLat = bbox.latNorth,
+                        maxLon = bbox.lonEast
+                    )
+                )
                 return false
             }
         }
@@ -247,7 +272,9 @@ fun MainMapScreen(
 
     if (screenUiState.isFavoritesSheetVisible) {
         FavoritesSheet(
-            spaces = (uiState as? MapUiState.Success)?.spaces.orEmpty(),
+            // Use dedicated favoriteSpaces so the sheet always shows all favorites,
+            // even if they currently lie outside the visible map viewport.
+            spaces = favoriteSpaces,
             favoriteIds = favorites,
             onDismiss = screenUiState::closeFavorites,
             onStartNavigation = startNavigationHandler,

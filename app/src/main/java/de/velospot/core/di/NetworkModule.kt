@@ -13,15 +13,15 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.data.local.BikeParkingCacheDataSource
 import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.local.dao.BikeParkingSpaceDao
 import de.velospot.data.local.dao.FavoriteParkingSpaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
 import de.velospot.data.location.LocationRepositoryImpl
+import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.api.OsrmApi
-import de.velospot.data.remote.api.TrierGeoportalApi
-import de.velospot.data.remote.parser.BikeParkingGmlParser
 import de.velospot.data.repository.BikeParkingRepositoryImpl
 import de.velospot.data.repository.FavoritesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
@@ -35,20 +35,21 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "https://geoportal.trier.de/"
+    private const val OSRM_BASE_URL = "https://router.project-osrm.org/"
+    private const val NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/"
 
     @Provides
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            // BODY level → full response body visible in logcat (helps with WFS debugging)
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.BASIC
         }
     }
 
@@ -67,7 +68,6 @@ object NetworkModule {
     @Singleton
     fun provideMoshi(): Moshi {
         return Moshi.Builder()
-            // Lenient factory as first layer: tolerates minor JSON quirks from WFS server
             .addLast(LenientJsonAdapterFactory)
             .addLast(KotlinJsonAdapterFactory())
             .build()
@@ -75,9 +75,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("osrm")
     fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(OSRM_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
@@ -85,14 +86,25 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideTrierGeoportalApi(retrofit: Retrofit): TrierGeoportalApi {
-        return retrofit.create(TrierGeoportalApi::class.java)
+    @Named("nominatim")
+    fun provideNominatimRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(NOMINATIM_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
     }
 
     @Provides
     @Singleton
-    fun provideOsrmApi(retrofit: Retrofit): OsrmApi {
+    fun provideOsrmApi(@Named("osrm") retrofit: Retrofit): OsrmApi {
         return retrofit.create(OsrmApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNominatimApi(@Named("nominatim") retrofit: Retrofit): NominatimApi {
+        return retrofit.create(NominatimApi::class.java)
     }
 
     @Provides
@@ -126,12 +138,12 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideBikeParkingRepository(
-        geoportalApi: TrierGeoportalApi,
-        cache: BikeParkingLocalDataSource,
-        gmlParser: BikeParkingGmlParser
+        localDataSource: BikeParkingLocalDataSource,
+        nominatimGeocoder: NominatimGeocoder
     ): BikeParkingRepository {
-        return BikeParkingRepositoryImpl(geoportalApi, cache, gmlParser)
+        return BikeParkingRepositoryImpl(localDataSource, nominatimGeocoder)
     }
+
 
     @Provides
     @Singleton
@@ -167,10 +179,6 @@ object NetworkModule {
 
 /**
  * Sets [JsonReader.isLenient] = true on all adapters.
- * Allows e.g. leading BOM bytes, single quotes, or slightly incorrect number formats
- * that some GeoServer instances return.
- * If the response completely fails (XML/HTML instead of JSON), the exception is thrown
- * from the repository with the HTTP body, not here.
  */
 private object LenientJsonAdapterFactory : JsonAdapter.Factory {
     override fun create(type: Type, annotations: MutableSet<out Annotation>, moshi: Moshi): JsonAdapter<*> {

@@ -16,7 +16,7 @@ import de.velospot.data.local.entity.FavoriteParkingSpaceEntity
 @Database(
     entities = [BikeParkingSpaceEntity::class, FavoriteParkingSpaceEntity::class],
     version = 3,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class BikeParkingDatabase : RoomDatabase() {
 
@@ -57,11 +57,15 @@ abstract class BikeParkingDatabase : RoomDatabase() {
             return Room.databaseBuilder(
                 context.applicationContext,
                 BikeParkingDatabase::class.java,
-                "velospot_database.db"
+                // New name intentionally differs from the legacy "velospot_database.db" used
+                // by the Trier-WFS era (up to v1.0.5).  Using a fresh name guarantees that
+                // every device — whether a clean install or an upgrade — gets a new database
+                // file which Room will seed from the OSM asset on first open.
+                // The old file is simply ignored; old favorites (which referenced Trier WFS IDs
+                // that no longer exist) are not migrated.
+                "velospot_osm.db"
             )
-                // Development: Allow destructive migration for version updates
-                // Destroys all tables if schema changes occur (safe for development)
-                // Remove this in production and use proper migrations instead
+                .createFromAsset("bike_parking_germany.db")
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
         }

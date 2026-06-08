@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
+import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
@@ -14,12 +15,21 @@ import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RoutingRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+// Minimum bounding-box span (degrees) below which we still load.
+// At roughly 1° ≈ 111 km this keeps queries fast even at low zoom.
+private const val MAX_VIEWPORT_SPAN_DEG = 1.5
+
+// Debounce delay in milliseconds – avoids a DB query on every scroll frame.
+private const val VIEWPORT_DEBOUNCE_MS = 300L
 
 data class MapCameraTarget(
     val latitude: Double,
@@ -55,6 +65,10 @@ class MapViewModel @Inject constructor(
     private val _favorites = MutableStateFlow<List<String>>(emptyList())
     val favorites: StateFlow<List<String>> = _favorites.asStateFlow()
 
+    /** Full BikeParkingSpace objects for the current favorites (may lie outside the viewport). */
+    private val _favoriteSpaces = MutableStateFlow<List<BikeParkingSpace>>(emptyList())
+    val favoriteSpaces: StateFlow<List<BikeParkingSpace>> = _favoriteSpaces.asStateFlow()
+
     private val _userLocation = MutableStateFlow<GeoCoordinate?>(null)
     val userLocation: StateFlow<GeoCoordinate?> = _userLocation.asStateFlow()
 
@@ -64,47 +78,87 @@ class MapViewModel @Inject constructor(
     private val _navigationUiState = MutableStateFlow<NavigationUiState>(NavigationUiState.Idle)
     val navigationUiState: StateFlow<NavigationUiState> = _navigationUiState.asStateFlow()
 
+    private var viewportJob: Job? = null
+
     init {
-        loadParkingSpaces()
+        // Kick off with the default viewport (Trier area) so the map isn't empty
+        // until the user moves the camera for the first time.
+        loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
         observeUserLocation()
     }
 
-    fun loadParkingSpaces() {
-        _uiState.value = MapUiState.Loading
+    /**
+     * Called by the map UI whenever the visible viewport changes (scroll or zoom).
+     * Debounces rapid camera movements to avoid a DB query on every frame.
+     */
+    fun onViewportChanged(bbox: BoundingBox) {
+        // Skip tiny viewports (extreme zoom-out) – the query result would be huge.
+        val latSpan = bbox.maxLat - bbox.minLat
+        val lonSpan = bbox.maxLon - bbox.minLon
+        if (latSpan > MAX_VIEWPORT_SPAN_DEG || lonSpan > MAX_VIEWPORT_SPAN_DEG) return
+
+        viewportJob?.cancel()
+        viewportJob = viewModelScope.launch {
+            delay(VIEWPORT_DEBOUNCE_MS)
+            loadSpacesForViewport(bbox)
+        }
+    }
+
+    private fun loadSpacesForViewport(bbox: BoundingBox) {
         viewModelScope.launch {
+            // Keep the loading state only if we have no data yet.
+            if (_uiState.value !is MapUiState.Success) {
+                _uiState.value = MapUiState.Loading
+            }
             runCatching {
-                bikeParkingRepository.getBikeParkingSpaces()
+                bikeParkingRepository.getSpacesInBoundingBox(bbox)
             }.onSuccess { spaces ->
                 _uiState.value = MapUiState.Success(spaces)
             }.onFailure { throwable ->
-                val error = when (throwable) {
-                    is java.net.UnknownHostException,
-                    is java.net.ConnectException -> MapError.NetworkUnavailable
-                    else -> MapError.Unknown(throwable.message)
+                // Don't overwrite valid visible data with an error.
+                if (_uiState.value !is MapUiState.Success) {
+                    _uiState.value = MapUiState.Error(MapError.Unknown(throwable.message))
                 }
-                _uiState.value = MapUiState.Error(error)
             }
         }
     }
 
     fun selectSpace(space: BikeParkingSpace?) {
         _selectedSpace.update { space }
-        // Keep the selected marker visible above the bottom sheet and zoom in for details.
         if (space != null) {
             _mapCameraTarget.value = MapCameraTarget(
                 latitude = space.latitude,
                 longitude = space.longitude,
                 zoom = 16.5,
-                // Place marker at 1/3 screen height: center (1/2) minus 1/6 offset.
                 verticalOffsetFraction = 1.0 / 6.0
             )
+            // If no address is known yet, resolve it lazily via Nominatim.
+            // The coroutine updates _selectedSpace once the address arrives so the
+            // bottom sheet refreshes without requiring any user interaction.
+            if (space.address == null) {
+                resolveAddressForSelectedSpace(space)
+            }
         }
     }
 
     /**
-     * Toggle favorite status of a parking space.
+     * Calls Nominatim in the background. If the address is found and the user
+     * still has the same space selected, the state is updated so the UI reacts.
      */
+    private fun resolveAddressForSelectedSpace(space: BikeParkingSpace) {
+        viewModelScope.launch {
+            val resolved = runCatching {
+                bikeParkingRepository.resolveAddress(space)
+            }.getOrElse { space }
+
+            // Only update if the user hasn't already navigated to another space.
+            if (_selectedSpace.value?.id == space.id && resolved.address != null) {
+                _selectedSpace.value = resolved
+            }
+        }
+    }
+
     fun toggleFavorite(parkingSpaceId: String) {
         viewModelScope.launch {
             if (favoritesRepository.isFavorite(parkingSpaceId)) {
@@ -115,20 +169,22 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Start listening to favorite parking spaces.
-     */
     private fun observeFavorites() {
         viewModelScope.launch {
-            favoritesRepository.getFavoritesFlow().collect { favorites ->
-                _favorites.value = favorites
+            favoritesRepository.getFavoritesFlow().collect { favoriteIds ->
+                _favorites.value = favoriteIds
+                // Resolve full space objects so the FavoritesSheet has all details
+                // even for spaces that are currently outside the map viewport.
+                // Swallow errors silently — a failed lookup just means the sheet
+                // shows no details for that favorite until the next successful query.
+                val spaces = runCatching {
+                    bikeParkingRepository.getSpacesByIds(favoriteIds)
+                }.getOrDefault(emptyList())
+                _favoriteSpaces.value = spaces
             }
         }
     }
 
-    /**
-     * Start listening to user location updates.
-     */
     private fun observeUserLocation() {
         locationRepository.startLocationUpdates()
         viewModelScope.launch {
@@ -138,16 +194,10 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Restart location updates after the user granted runtime permissions.
-     */
     fun onLocationPermissionGranted() {
         locationRepository.startLocationUpdates()
     }
 
-    /**
-     * Emit a camera target that the UI can apply to the map.
-     */
     fun centerMapOnUserLocation() {
         val location = _userLocation.value
         if (location != null) {

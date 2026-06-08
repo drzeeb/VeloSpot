@@ -1,4 +1,4 @@
-# VeloSpot - Bike Parking Finder for Trier
+# VeloSpot - Bike Parking Finder for Germany
 
 ## Overview
 
@@ -48,11 +48,14 @@ Update the CSS variables at the top of the `<style>` section:
 Update section titles, descriptions, and links as needed.
 
 Current website copy highlights:
+- Germany-wide coverage (100 000+ locations from OpenStreetMap, fully offline)
+- Viewport-based loading for smooth performance across the whole country
+- Lazy Nominatim reverse geocoding with permanent local cache
 - Favorites and direct navigation shortcuts
 - In-app bike navigation with route overlay and destination-focused marker styling
 - Current-location tools and live location marker
 - Dark mode toggle in the app menu
-- Room / SQLite local caching
+- Room / SQLite pre-populated asset database
 - OpenStreetMap attribution in the footer
 
 ## Deployment

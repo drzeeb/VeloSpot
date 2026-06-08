@@ -6,6 +6,43 @@ The format is based on Keep a Changelog and this project currently follows a sim
 
 ## [Unreleased]
 
+## [2026-06-08] 🇩🇪 Germany-Wide Coverage
+
+### ✨ Highlight
+
+VeloSpot now covers **all of Germany** with over **100 000 bicycle parking locations** from OpenStreetMap — replacing the previous Trier-only WFS/WMS data source. The app is fully offline-capable: all parking data is bundled as a pre-populated Room/SQLite asset and available instantly from first launch.
+
+### Added
+- **Germany-wide OSM dataset** bundled as `app/src/main/assets/bike_parking_germany.db` (~20 MB, ~100 000 nodes)
+- **`scripts/extract_osm_parking.py`** — Python pipeline (pyosmium + sqlite3) to regenerate the database from a Geofabrik PBF at any time; uses a C++-level `TagFilter` for fast extraction (seconds instead of minutes)
+- **`scripts/README.md`** — full documentation for the extraction pipeline including install instructions, runtime estimates, and OSM tag mapping table
+- **Viewport-based marker loading** — `BikeParkingRepository.getSpacesInBoundingBox()` queries only the visible map area; the ViewModel debounces scroll/zoom events (300 ms) so performance stays smooth anywhere in Germany
+- **`BikeParkingSpaceDao.getSpacesInBoundingBox()`** — spatial SQL query backed by a `(latitude, longitude)` index in the bundled SQLite database
+- **`BikeParkingSpaceDao.getSpacesByIds()`** — used to resolve full `BikeParkingSpace` objects for favorited spots regardless of the current viewport
+- **Lazy Nominatim reverse geocoding** — `BikeParkingRepository.resolveAddress()` is triggered automatically when a marker without an address is tapped; the resolved address is written back to the local database and shown immediately in the details sheet
+- **`NominatimApi`** (Retrofit) and **`NominatimReverseDto`** (Moshi) — typed REST client for `nominatim.openstreetmap.org/reverse`
+- **`NominatimGeocoder`** — coroutine-safe wrapper that parses Nominatim JSON into a compact `"Straße HNr, PLZ Stadt"` string
+- **`BikeParkingLocalDataSource.updateAddress()`** and **`BikeParkingSpaceDao.updateAddress()`** — persist geocoded addresses back to the local DB
+- **`MapViewModel.favoriteSpaces`** state — full `BikeParkingSpace` objects for all favorited locations, resolved independently of the visible viewport so the Favorites sheet always shows complete data
+- Room schema exported to `app/schemas/` (`exportSchema = true`)
+- `ksp { arg("room.schemaLocation", ...) }` added to `app/build.gradle.kts`
+
+### Changed
+- **Data source replaced**: Trier Geoportal WFS/WMS → pre-bundled OpenStreetMap SQLite asset
+- **`BikeParkingRepository`** changed from `fun interface` with `getBikeParkingSpaces()` to a full interface with `getSpacesInBoundingBox()`, `getSpacesByIds()`, and `resolveAddress()`
+- **`BikeParkingRepositoryImpl`** rewritten: all WMS/GML fetching removed; delegates entirely to `BikeParkingLocalDataSource` and `NominatimGeocoder`
+- **`BikeParkingDatabase`** now uses `Room.databaseBuilder().createFromAsset("bike_parking_germany.db")` for first-launch seeding
+- **`NetworkModule`** split Retrofit into two named instances (`@Named("osrm")` and `@Named("nominatim")`); removed `TrierGeoportalApi`, `BikeParkingGmlParser`, and `GeocoderNominatim` providers
+- **`MapViewModel`** init now loads the default Trier viewport from local DB; `selectSpace()` triggers address resolution for markers without an address
+- **`MainMapScreen`** MapListener now reports bounding-box changes on both scroll and zoom events via `viewModel.onViewportChanged()`; `FavoritesSheet` uses `favoriteSpaces` instead of the viewport-filtered `uiState` spaces
+- `BoundingBox.DEFAULT` remains centred on Trier as the cold-start viewport
+
+### Removed
+- `TrierGeoportalApi` — WFS endpoint no longer used
+- `BikeParkingGmlParser` — GML parsing no longer needed
+- `BikeParkingRepositoryImpl` dependency on `geoportalApi` and `gmlParser`
+- Sync-interval logic (`syncIntervalMs`, `lastSyncEpochMs`) — data is now static/bundled
+
 ### Added
 - Navigation-focused marker dimming: while in-app navigation is active, non-destination parking markers are shown smaller, lighter gray, and more transparent
 - Favorites system backed by Room / SQLite

@@ -1,100 +1,45 @@
 package de.velospot.data.repository
 
-import android.util.Log
+import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.data.local.BikeParkingLocalDataSource
-import de.velospot.data.remote.api.TrierGeoportalApi
-import de.velospot.data.remote.parser.BikeParkingGmlParser
 import de.velospot.domain.model.BikeParkingSpace
-import de.velospot.domain.model.BikeParkingType
+import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.repository.BikeParkingRepository
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-private const val TAG = "BikeParkingRepo"
-
+/**
+ * Implementation of [BikeParkingRepository] backed by a pre-populated local Room database.
+ *
+ * The database is seeded from an OpenStreetMap PBF extract covering all of Germany
+ * and is shipped as an Android asset (bike_parking_germany.db).
+ * No network calls are made for data loading; addresses are lazily resolved via
+ * Nominatim reverse geocoding the first time a user selects a space without one.
+ */
 class BikeParkingRepositoryImpl @Inject constructor(
-    private val geoportalApi: TrierGeoportalApi,
-    private val cache: BikeParkingLocalDataSource,
-    private val gmlParser: BikeParkingGmlParser
+    private val localDataSource: BikeParkingLocalDataSource,
+    private val nominatimGeocoder: NominatimGeocoder
 ) : BikeParkingRepository {
 
-    private val syncIntervalMs = TimeUnit.DAYS.toMillis(14)
-
-    private val layers = listOf(
-        LayerConfig(mapFile = "fahrradgaragen", typeName = "ms:fahrradgaragen", type = BikeParkingType.GARAGE),
-        LayerConfig(mapFile = "fahrradabstellanlagen", typeName = "ms:fahrradabstellanlagen", type = BikeParkingType.BIKE_RACK)
-    )
-
-    override suspend fun getBikeParkingSpaces(): List<BikeParkingSpace> {
-        val cached = cache.readSpaces()
-        val cacheAgeMs = System.currentTimeMillis() - cache.lastSyncEpochMs()
-        val isCacheFresh = cached.isNotEmpty() && cacheAgeMs in 1 until syncIntervalMs
-
-        if (isCacheFresh) {
-            Log.d(TAG, "Using local SQLite cache (${cached.size} entries, age ${cacheAgeMs / 1000}s)")
-            return cached
-        }
-
-        val remoteResult = runCatching { fetchRemoteSpaces() }
-        return remoteResult
-            .onSuccess { spaces ->
-                cache.writeSpaces(spaces)
-                Log.d(TAG, "Remote sync successful (${spaces.size} entries) and saved locally")
-            }
-            .getOrElse { error ->
-                if (cached.isNotEmpty()) {
-                    Log.w(TAG, "Remote sync failed, using SQLite cache fallback: ${error.message}")
-                    cached
-                } else {
-                    throw error
-                }
-            }
+    override suspend fun getSpacesInBoundingBox(bbox: BoundingBox): List<BikeParkingSpace> {
+        return localDataSource.readSpacesInBoundingBox(bbox)
     }
 
-    private suspend fun fetchRemoteSpaces(): List<BikeParkingSpace> {
-        return layers
-            .flatMap { layer -> fetchLayer(layer) }
-            .distinctBy { it.id }
+    override suspend fun getSpacesByIds(ids: List<String>): List<BikeParkingSpace> {
+        return localDataSource.readSpacesByIds(ids)
     }
 
-    private suspend fun fetchLayer(layer: LayerConfig): List<BikeParkingSpace> {
-        val response = geoportalApi.getBikeParkingLayerGml(
-            mapFile = layer.mapFile,
-            options = mapOf(
-                "service" to "WFS",
-                "version" to "2.0.0",
-                "request" to "GetFeature",
-                "typeNames" to layer.typeName,
-                "srsName" to "urn:ogc:def:crs:EPSG::4326",
-                "count" to "1000",
-                "outputFormat" to "text/xml; subtype=gml/3.2.1"
-            )
-        )
+    /**
+     * If [space] already has an address, it is returned as-is immediately.
+     * Otherwise Nominatim is queried, the result is cached to the local DB,
+     * and a copy of [space] with the resolved address is returned.
+     */
+    override suspend fun resolveAddress(space: BikeParkingSpace): BikeParkingSpace {
+        if (space.address != null) return space
 
-        if (!response.isSuccessful) {
-            val errorSnippet = response.errorBody()
-                ?.string()
-                ?.take(300)
-                ?.trimIndent()
-                ?: "(no body)"
-            throw IllegalStateException("HTTP ${response.code()} for '${layer.mapFile}': $errorSnippet")
-        }
+        val resolved = nominatimGeocoder.reverseGeocode(space.latitude, space.longitude)
+            ?: return space
 
-        val body = response.body()
-            ?.string()
-            ?.takeIf { it.isNotBlank() }
-            ?: throw IllegalStateException("Empty response for '${layer.mapFile}'")
-
-        return gmlParser.parse(
-            xml = body,
-            sourceLayer = layer.mapFile,
-            type = layer.type
-        )
+        localDataSource.updateAddress(space.id, resolved)
+        return space.copy(address = resolved)
     }
-
-    private data class LayerConfig(
-        val mapFile: String,
-        val typeName: String,
-        val type: BikeParkingType
-    )
 }
