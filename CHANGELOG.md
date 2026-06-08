@@ -4,7 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project currently follows a simple chronological structure.
 
-## [Unreleased]
+## [Unreleased] — BRouter Offline Routing
+
+### Added
+- **BRouter offline routing engine** embedded as a local JAR (`app/libs/brouter.jar`) — routes are calculated entirely on-device, no internet required after the one-time segment download
+- **`BRouterEngine`** — Kotlin wrapper around the BRouter Java API; reads `.brf` profile files from app assets and `.rd5` segment files from external storage; accesses private coordinate fields via reflection for JAR-version compatibility
+- **`BRouterSegmentManager`** — manages download and local caching of BRouter `.rd5` map segment files; downloads the single 5°×5° tile covering the user's position (~200–250 MB, one-time); throws `NoInternetConnectionException` on network failure
+- **`BRouterProfile` enum** — five routing profiles with localised name and description string resources: Trekking *(recommended default)*, Schnell, Kürzeste Strecke, Mountainbike, Gravel
+- **`OfflineRoutingPreferences`** — SharedPreferences-backed storage for the opt-in flag and selected profile
+- **Offline routing activation flow**: "Offline Navigation aktivieren" menu item → info sheet with benefits + download size hint (~200–250 MB) → Wi-Fi check → optional warning dialog → segment download with live progress overlay → 2.5 s success card
+- **`OfflineRoutingUiState`** sealed class — `Disabled`, `Downloading` (with file index, total files, per-file byte counter), `DownloadComplete`, `Enabled`
+- **Download progress overlay** — shows "Datei X von Y", per-file MB / total MB counter, filename, and `LinearProgressIndicator`
+- **Success overlay** — brief green card after download completes ("Offline Navigation bereit!")
+- **Wi-Fi warning dialog** — `AlertDialog` shown before download starts when device is not on Wi-Fi; user can proceed on mobile data or cancel
+- **`WifiWarningDialog`** composable + `isWifiConnected()` utility function
+- **`RoutingProfileSheet`** — bottom sheet to switch between the five profiles (with localised names and descriptions) or deactivate offline routing; wipes all `.rd5` segment files on deactivation
+- **`NoInternetConnectionException`** domain exception — thrown by `BRouterSegmentManager.downloadSegment()` when DNS resolution, connection, or socket errors occur; mapped to new `MapError.NoInternetConnection`
+- **`MapError.NoInternetConnection`** — dedicated error state with localised message in all 8 languages
+- **`MapError.BRouterProfilesMissing`** — shown when `.brf`/`lookups.dat` assets are absent, with clear instructions
+- **Localised profile names and descriptions** in all 8 languages (`profile_*_name`, `profile_*_desc`)
+- **Duration formatting** — `MapNavigationOverlay` now shows "X Std. Y Min." / "X h Y min" instead of raw minutes (e.g. "2 Std. 14 Min." instead of "134 min"); `duration_minutes`, `duration_hours`, `duration_hours_minutes` string resources added in all 8 languages
+
+### Changed
+- **`RoutingRepositoryImpl`** — respects `OfflineRoutingPreferences.isOfflineRoutingEnabled`; routes via BRouter when enabled and segments are present, falls back to OSRM online when disabled or when destination is outside the downloaded tile
+- **`RoutingRepositoryImpl.osrmFallbackRoute()`** — OSRM duration replaced with distance ÷ 15 km/h for realistic cycling travel time (OSRM's raw `duration` was calibrated on road speeds)
+- **`MapViewModel`** — injected `@ApplicationContext context` and `BRouterSegmentManager`; `startInAppNavigation()` simplified (no longer triggers segment downloads inline); new offline routing methods: `requestOfflineRoutingSetup()`, `confirmOfflineRoutingSetup()`, `confirmDownloadOnMobileData()`, `startSegmentDownload()`, `selectRoutingProfile()`, `disableOfflineRouting()`
+- **`MapMenuCardState`** — new `offlineRoutingUiState: OfflineRoutingUiState` field
+- **`MapMenuCardActions`** — new `onActivateOfflineRouting` and `onOpenProfileSheet` callbacks
+- **`MapOverlays.kt`** — offline routing menu entries added to dropdown (Disabled / Downloading / DownloadComplete / Enabled states); `OfflineSetupProgressOverlay` and `OfflineSetupSuccessOverlay` composables added; `formatMb()` helper
+- **`MainMapScreen`** — collects `offlineRoutingUiState`, `showOfflineSetupSheet`, `showProfileSheet`, `showWifiWarning` states; renders `OfflineRoutingSetupSheet`, `WifiWarningDialog`, `RoutingProfileSheet`
+- **`BRouterProfile`** enum fields changed from hardcoded `String` to `@StringRes Int` (`displayNameRes`, `descriptionRes`) — all UI uses `stringResource(profile.displayNameRes)` for full localisation
+- **`BRouterSegmentManager.downloadSegmentsForLocation()`** — reduced from 3×3 tile grid (~1.1 GB) to **single primary tile** (~200–250 MB); progress callback extended with `fileIndex` and `totalFiles` parameters
+- **`app/build.gradle.kts`** — `fileTree("libs/*.jar")` dependency added for BRouter JAR; `buildConfig = true` enabled
+- Download size hints updated from "100–150 MB" to **"200–250 MB"** in all 8 language files
 
 ## [2026-06-08] 🇩🇪 Germany-Wide Coverage
 
