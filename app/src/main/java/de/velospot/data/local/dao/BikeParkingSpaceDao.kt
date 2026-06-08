@@ -62,11 +62,54 @@ interface BikeParkingSpaceDao {
     suspend fun getSpaceCount(): Int
 
     /**
+     * Retrieve parking spaces whose coordinates fall within the given bounding box.
+     * Used for viewport-based loading to avoid fetching the entire Germany dataset at once.
+     *
+     * @param minLat Southern latitude bound (WGS-84)
+     * @param maxLat Northern latitude bound (WGS-84)
+     * @param minLon Western longitude bound (WGS-84)
+     * @param maxLon Eastern longitude bound (WGS-84)
+     * @return List of parking spaces inside the bounding box
+     */
+    @Query(
+        "SELECT * FROM bike_parking_spaces " +
+        "WHERE latitude BETWEEN :minLat AND :maxLat " +
+        "AND longitude BETWEEN :minLon AND :maxLon"
+    )
+    suspend fun getSpacesInBoundingBox(
+        minLat: Double,
+        maxLat: Double,
+        minLon: Double,
+        maxLon: Double
+    ): List<BikeParkingSpaceEntity>
+
+    /**
+     * Retrieve a specific set of parking spaces by their IDs.
+     * Used to load full details of favorited spaces regardless of the current viewport.
+     *
+     * @param ids List of parking space IDs to fetch
+     * @return List of matching parking space entities
+     */
+    @Query("SELECT * FROM bike_parking_spaces WHERE id IN (:ids)")
+    suspend fun getSpacesByIds(ids: List<String>): List<BikeParkingSpaceEntity>
+
+    /**
      * Get the timestamp of the most recent database update.
      *
      * @return Maximum lastUpdated timestamp, or 0 if table is empty
      */
     @Query("SELECT MAX(lastUpdated) FROM bike_parking_spaces")
     suspend fun getLastUpdateTimestamp(): Long?
+
+    /**
+     * Persist a resolved address for a single parking space.
+     * Called after a successful Nominatim reverse geocoding to cache the result
+     * and avoid redundant network requests in the future.
+     *
+     * @param id The unique ID of the parking space
+     * @param address The human-readable address string to store
+     */
+    @Query("UPDATE bike_parking_spaces SET address = :address WHERE id = :id")
+    suspend fun updateAddress(id: String, address: String)
 }
 
