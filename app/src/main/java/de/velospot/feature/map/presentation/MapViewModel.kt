@@ -175,7 +175,11 @@ class MapViewModel @Inject constructor(
                 _favorites.value = favoriteIds
                 // Resolve full space objects so the FavoritesSheet has all details
                 // even for spaces that are currently outside the map viewport.
-                val spaces = bikeParkingRepository.getSpacesByIds(favoriteIds)
+                // Swallow errors silently — a failed lookup just means the sheet
+                // shows no details for that favorite until the next successful query.
+                val spaces = runCatching {
+                    bikeParkingRepository.getSpacesByIds(favoriteIds)
+                }.getOrDefault(emptyList())
                 _favoriteSpaces.value = spaces
             }
         }

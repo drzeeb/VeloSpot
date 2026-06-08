@@ -3,6 +3,7 @@ package de.velospot.feature.map.presentation
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingType
+import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
@@ -26,7 +27,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.net.UnknownHostException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
@@ -174,9 +174,9 @@ class MapViewModelTest {
     }
 
     @Test
-    fun `loadParkingSpaces maps network failures to NetworkUnavailable`() = runTest {
+    fun `loadParkingSpaces maps database failures to Unknown error`() = runTest {
         val viewModel = MapViewModel(
-            bikeParkingRepository = FakeBikeParkingRepository(error = UnknownHostException("offline")),
+            bikeParkingRepository = FakeBikeParkingRepository(error = RuntimeException("DB read failed")),
             favoritesRepository = FakeFavoritesRepository(),
             locationRepository = FakeLocationRepository(),
             routingRepository = FakeRoutingRepository()
@@ -186,7 +186,7 @@ class MapViewModelTest {
 
         val state = viewModel.uiState.value
         assertTrue(state is MapUiState.Error)
-        assertEquals(MapError.NetworkUnavailable, (state as MapUiState.Error).error)
+        assertTrue((state as MapUiState.Error).error is MapError.Unknown)
     }
 
     @Test
@@ -336,10 +336,19 @@ private class FakeBikeParkingRepository(
     private val spaces: List<BikeParkingSpace> = emptyList(),
     private val error: Throwable? = null
 ) : BikeParkingRepository {
-    override suspend fun getBikeParkingSpaces(): List<BikeParkingSpace> {
+
+    /** Simulates a data-load error (e.g. DB corruption) — only on the primary query. */
+    override suspend fun getSpacesInBoundingBox(bbox: BoundingBox): List<BikeParkingSpace> {
         error?.let { throw it }
         return spaces
     }
+
+    /** Always succeeds in tests — used for resolving favorites by ID. */
+    override suspend fun getSpacesByIds(ids: List<String>): List<BikeParkingSpace> =
+        spaces.filter { it.id in ids }
+
+    /** Returns the space unchanged — address resolution is a no-op in tests. */
+    override suspend fun resolveAddress(space: BikeParkingSpace): BikeParkingSpace = space
 }
 
 private class FakeFavoritesRepository : FavoritesRepository {
