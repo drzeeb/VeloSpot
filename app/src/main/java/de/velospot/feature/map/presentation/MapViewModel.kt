@@ -1,14 +1,21 @@
 package de.velospot.feature.map.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import de.velospot.core.routing.OfflineRoutingPreferences
+import de.velospot.core.routing.isWifiConnected
+import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BoundingBox
+import de.velospot.domain.model.BRouterProfilesMissingException
 import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
+import de.velospot.domain.model.NoInternetConnectionException
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.repository.BikeParkingRepository
@@ -24,12 +31,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// Minimum bounding-box span (degrees) below which we still load.
-// At roughly 1° ≈ 111 km this keeps queries fast even at low zoom.
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
+private const val VIEWPORT_DEBOUNCE_MS  = 300L
 
-// Debounce delay in milliseconds – avoids a DB query on every scroll frame.
-private const val VIEWPORT_DEBOUNCE_MS = 300L
+// Default map center used when no GPS fix is available yet.
+private const val DEFAULT_LAT = 49.7596
+private const val DEFAULT_LON = 6.6441
 
 data class MapCameraTarget(
     val latitude: Double,
@@ -41,10 +48,8 @@ data class MapCameraTarget(
 sealed class NavigationUiState {
     data object Idle : NavigationUiState()
     data object Loading : NavigationUiState()
-    data class Active(
-        val destination: BikeParkingSpace,
-        val route: BikeRoute
-    ) : NavigationUiState()
+    data class DownloadingSegments(val progress: Float) : NavigationUiState()
+    data class Active(val destination: BikeParkingSpace, val route: BikeRoute) : NavigationUiState()
     data class Error(val error: MapError) : NavigationUiState()
 }
 
@@ -53,7 +58,9 @@ class MapViewModel @Inject constructor(
     private val bikeParkingRepository: BikeParkingRepository,
     private val favoritesRepository: FavoritesRepository,
     private val locationRepository: LocationRepository,
-    private val routingRepository: RoutingRepository
+    private val routingRepository: RoutingRepository,
+    private val segmentManager: BRouterSegmentManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
@@ -65,7 +72,6 @@ class MapViewModel @Inject constructor(
     private val _favorites = MutableStateFlow<List<String>>(emptyList())
     val favorites: StateFlow<List<String>> = _favorites.asStateFlow()
 
-    /** Full BikeParkingSpace objects for the current favorites (may lie outside the viewport). */
     private val _favoriteSpaces = MutableStateFlow<List<BikeParkingSpace>>(emptyList())
     val favoriteSpaces: StateFlow<List<BikeParkingSpace>> = _favoriteSpaces.asStateFlow()
 
@@ -78,26 +84,39 @@ class MapViewModel @Inject constructor(
     private val _navigationUiState = MutableStateFlow<NavigationUiState>(NavigationUiState.Idle)
     val navigationUiState: StateFlow<NavigationUiState> = _navigationUiState.asStateFlow()
 
+    // ── Offline routing ───────────────────────────────────────────────────────
+
+    private val _offlineRoutingUiState = MutableStateFlow(initialOfflineState())
+    val offlineRoutingUiState: StateFlow<OfflineRoutingUiState> = _offlineRoutingUiState.asStateFlow()
+
+    /** True while the setup bottom sheet should be visible. */
+    private val _showOfflineSetupSheet = MutableStateFlow(false)
+    val showOfflineSetupSheet: StateFlow<Boolean> = _showOfflineSetupSheet.asStateFlow()
+
+    /** True while the profile selection sheet should be visible. */
+    private val _showProfileSheet = MutableStateFlow(false)
+    val showProfileSheet: StateFlow<Boolean> = _showProfileSheet.asStateFlow()
+
+    /** True when download was requested but device is not on Wi-Fi. */
+    private val _showWifiWarning = MutableStateFlow(false)
+    val showWifiWarning: StateFlow<Boolean> = _showWifiWarning.asStateFlow()
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
     private var viewportJob: Job? = null
 
     init {
-        // Kick off with the default viewport (Trier area) so the map isn't empty
-        // until the user moves the camera for the first time.
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
         observeUserLocation()
     }
 
-    /**
-     * Called by the map UI whenever the visible viewport changes (scroll or zoom).
-     * Debounces rapid camera movements to avoid a DB query on every frame.
-     */
+    // ── Viewport / parking ────────────────────────────────────────────────────
+
     fun onViewportChanged(bbox: BoundingBox) {
-        // Skip tiny viewports (extreme zoom-out) – the query result would be huge.
         val latSpan = bbox.maxLat - bbox.minLat
         val lonSpan = bbox.maxLon - bbox.minLon
         if (latSpan > MAX_VIEWPORT_SPAN_DEG || lonSpan > MAX_VIEWPORT_SPAN_DEG) return
-
         viewportJob?.cancel()
         viewportJob = viewModelScope.launch {
             delay(VIEWPORT_DEBOUNCE_MS)
@@ -107,65 +126,39 @@ class MapViewModel @Inject constructor(
 
     private fun loadSpacesForViewport(bbox: BoundingBox) {
         viewModelScope.launch {
-            // Keep the loading state only if we have no data yet.
-            if (_uiState.value !is MapUiState.Success) {
-                _uiState.value = MapUiState.Loading
-            }
-            runCatching {
-                bikeParkingRepository.getSpacesInBoundingBox(bbox)
-            }.onSuccess { spaces ->
-                _uiState.value = MapUiState.Success(spaces)
-            }.onFailure { throwable ->
-                // Don't overwrite valid visible data with an error.
-                if (_uiState.value !is MapUiState.Success) {
-                    _uiState.value = MapUiState.Error(MapError.Unknown(throwable.message))
-                }
-            }
+            if (_uiState.value !is MapUiState.Success) _uiState.value = MapUiState.Loading
+            runCatching { bikeParkingRepository.getSpacesInBoundingBox(bbox) }
+                .onSuccess { _uiState.value = MapUiState.Success(it) }
+                .onFailure { if (_uiState.value !is MapUiState.Success) _uiState.value = MapUiState.Error(MapError.Unknown(it.message)) }
         }
     }
+
+    // ── Space selection ───────────────────────────────────────────────────────
 
     fun selectSpace(space: BikeParkingSpace?) {
         _selectedSpace.update { space }
         if (space != null) {
             _mapCameraTarget.value = MapCameraTarget(
-                latitude = space.latitude,
-                longitude = space.longitude,
-                zoom = 16.5,
-                verticalOffsetFraction = 1.0 / 6.0
+                latitude = space.latitude, longitude = space.longitude,
+                zoom = 16.5, verticalOffsetFraction = 1.0 / 6.0
             )
-            // If no address is known yet, resolve it lazily via Nominatim.
-            // The coroutine updates _selectedSpace once the address arrives so the
-            // bottom sheet refreshes without requiring any user interaction.
-            if (space.address == null) {
-                resolveAddressForSelectedSpace(space)
-            }
+            if (space.address == null) resolveAddressForSelectedSpace(space)
         }
     }
 
-    /**
-     * Calls Nominatim in the background. If the address is found and the user
-     * still has the same space selected, the state is updated so the UI reacts.
-     */
     private fun resolveAddressForSelectedSpace(space: BikeParkingSpace) {
         viewModelScope.launch {
-            val resolved = runCatching {
-                bikeParkingRepository.resolveAddress(space)
-            }.getOrElse { space }
-
-            // Only update if the user hasn't already navigated to another space.
-            if (_selectedSpace.value?.id == space.id && resolved.address != null) {
-                _selectedSpace.value = resolved
-            }
+            val resolved = runCatching { bikeParkingRepository.resolveAddress(space) }.getOrElse { space }
+            if (_selectedSpace.value?.id == space.id && resolved.address != null) _selectedSpace.value = resolved
         }
     }
+
+    // ── Favorites ─────────────────────────────────────────────────────────────
 
     fun toggleFavorite(parkingSpaceId: String) {
         viewModelScope.launch {
-            if (favoritesRepository.isFavorite(parkingSpaceId)) {
-                favoritesRepository.removeFavorite(parkingSpaceId)
-            } else {
-                favoritesRepository.addFavorite(parkingSpaceId)
-            }
+            if (favoritesRepository.isFavorite(parkingSpaceId)) favoritesRepository.removeFavorite(parkingSpaceId)
+            else favoritesRepository.addFavorite(parkingSpaceId)
         }
     }
 
@@ -173,87 +166,143 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             favoritesRepository.getFavoritesFlow().collect { favoriteIds ->
                 _favorites.value = favoriteIds
-                // Resolve full space objects so the FavoritesSheet has all details
-                // even for spaces that are currently outside the map viewport.
-                // Swallow errors silently — a failed lookup just means the sheet
-                // shows no details for that favorite until the next successful query.
-                val spaces = runCatching {
-                    bikeParkingRepository.getSpacesByIds(favoriteIds)
-                }.getOrDefault(emptyList())
+                val spaces = runCatching { bikeParkingRepository.getSpacesByIds(favoriteIds) }.getOrDefault(emptyList())
                 _favoriteSpaces.value = spaces
             }
         }
     }
 
+    // ── Location ──────────────────────────────────────────────────────────────
+
     private fun observeUserLocation() {
         locationRepository.startLocationUpdates()
         viewModelScope.launch {
-            locationRepository.getCurrentLocationFlow().collect { location ->
-                _userLocation.value = location
-            }
+            locationRepository.getCurrentLocationFlow().collect { _userLocation.value = it }
         }
     }
 
-    fun onLocationPermissionGranted() {
-        locationRepository.startLocationUpdates()
-    }
+    fun onLocationPermissionGranted() = locationRepository.startLocationUpdates()
 
     fun centerMapOnUserLocation() {
-        val location = _userLocation.value
-        if (location != null) {
-            _mapCameraTarget.value = MapCameraTarget(
-                latitude = location.latitude,
-                longitude = location.longitude,
-                zoom = 16.0
-            )
+        _userLocation.value?.let {
+            _mapCameraTarget.value = MapCameraTarget(it.latitude, it.longitude, zoom = 16.0)
         }
     }
 
-    fun onMapCameraTargetHandled() {
-        _mapCameraTarget.value = null
-    }
+    fun onMapCameraTargetHandled() { _mapCameraTarget.value = null }
+
+    // ── Navigation ────────────────────────────────────────────────────────────
 
     fun startInAppNavigation(space: BikeParkingSpace) {
-        val location = _userLocation.value
-        if (location == null) {
+        val location = _userLocation.value ?: run {
             _navigationUiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
             return
         }
-
         _navigationUiState.value = NavigationUiState.Loading
-
         viewModelScope.launch {
             runCatching {
                 routingRepository.getBikeRoute(
                     from = location,
-                    to = GeoCoordinate(space.latitude, space.longitude)
+                    to   = GeoCoordinate(space.latitude, space.longitude)
                 )
-            }.onSuccess { route ->
-                _navigationUiState.value = NavigationUiState.Active(
-                    destination = space,
-                    route = route
-                )
+            }.onSuccess {
+                _navigationUiState.value = NavigationUiState.Active(destination = space, route = it)
             }.onFailure { throwable ->
+                _navigationUiState.value = NavigationUiState.Error(when (throwable) {
+                    is BRouterProfilesMissingException -> MapError.BRouterProfilesMissing
+                    is RoutingFailedException          -> MapError.RoutingFailed(throwable.code)
+                    is NoRouteFoundException           -> MapError.NoRouteFound
+                    is EmptyRouteGeometryException     -> MapError.EmptyRouteGeometry
+                    else                               -> MapError.Unknown(throwable.message)
+                })
+            }
+        }
+    }
+
+    fun stopInAppNavigation()  { _navigationUiState.value = NavigationUiState.Idle }
+    fun clearNavigationError() { if (_navigationUiState.value is NavigationUiState.Error) _navigationUiState.value = NavigationUiState.Idle }
+
+    // ── Offline routing ───────────────────────────────────────────────────────
+
+    /** Opens the setup information sheet. */
+    fun requestOfflineRoutingSetup() { _showOfflineSetupSheet.value = true }
+    fun dismissOfflineSetupSheet()   { _showOfflineSetupSheet.value = false }
+
+    fun openProfileSheet()    { _showProfileSheet.value = true }
+    fun dismissProfileSheet() { _showProfileSheet.value = false }
+
+    fun dismissWifiWarning()          { _showWifiWarning.value = false }
+    fun confirmDownloadOnMobileData() { _showWifiWarning.value = false; startSegmentDownload() }
+
+    /**
+     * Called after the user taps "Jetzt herunterladen" in the setup sheet.
+     * Shows a Wi-Fi warning when the device is not on Wi-Fi.
+     */
+    fun confirmOfflineRoutingSetup() {
+        _showOfflineSetupSheet.value = false
+        if (!isWifiConnected(context)) {
+            _showWifiWarning.value = true
+            return
+        }
+        startSegmentDownload()
+    }
+
+    private fun startSegmentDownload() {
+        val loc = _userLocation.value ?: GeoCoordinate(DEFAULT_LAT, DEFAULT_LON)
+        _offlineRoutingUiState.value = OfflineRoutingUiState.Downloading()
+        viewModelScope.launch {
+            runCatching {
+                segmentManager.downloadSegmentsForLocation(
+                    lat = loc.latitude,
+                    lon = loc.longitude,
+                    onProgress = { downloaded, total, fileIndex, totalFiles, fileName ->
+                        val progress = if (total > 0L) downloaded / total.toFloat() else -1f
+                        _offlineRoutingUiState.value = OfflineRoutingUiState.Downloading(
+                            fileProgress      = progress,
+                            currentFileIndex  = fileIndex,
+                            totalFiles        = totalFiles,
+                            downloadedBytes   = downloaded,
+                            totalBytes        = total,
+                            currentFile       = fileName
+                        )
+                    }
+                )
+            }.onSuccess {
+                val profile = OfflineRoutingPreferences.getSelectedProfile(context)
+                OfflineRoutingPreferences.setOfflineRoutingEnabled(context, true)
+                // Show success state briefly, then switch to Enabled
+                _offlineRoutingUiState.value = OfflineRoutingUiState.DownloadComplete(profile)
+                delay(2_500L)
+                _offlineRoutingUiState.value = OfflineRoutingUiState.Enabled(profile)
+            }.onFailure { throwable ->
+                _offlineRoutingUiState.value = OfflineRoutingUiState.Disabled
                 val error = when (throwable) {
-                    is RoutingFailedException -> MapError.RoutingFailed(throwable.code)
-                    is NoRouteFoundException -> MapError.NoRouteFound
-                    is EmptyRouteGeometryException -> MapError.EmptyRouteGeometry
-                    else -> MapError.Unknown(throwable.message)
+                    is NoInternetConnectionException -> MapError.NoInternetConnection
+                    else                             -> MapError.Unknown(throwable.message)
                 }
                 _navigationUiState.value = NavigationUiState.Error(error)
             }
         }
     }
 
-    fun stopInAppNavigation() {
-        _navigationUiState.value = NavigationUiState.Idle
+    /** Switches the active routing profile without re-downloading. */
+    fun selectRoutingProfile(profile: de.velospot.data.brouter.BRouterProfile) {
+        OfflineRoutingPreferences.setSelectedProfile(context, profile)
+        _offlineRoutingUiState.value = OfflineRoutingUiState.Enabled(profile)
     }
 
-    fun clearNavigationError() {
-        if (_navigationUiState.value is NavigationUiState.Error) {
-            _navigationUiState.value = NavigationUiState.Idle
-        }
+    /** Disables offline routing and wipes all downloaded segment files. */
+    fun disableOfflineRouting() {
+        OfflineRoutingPreferences.setOfflineRoutingEnabled(context, false)
+        _offlineRoutingUiState.value = OfflineRoutingUiState.Disabled
+        viewModelScope.launch { segmentManager.deleteAllSegments() }
     }
+
+    private fun initialOfflineState(): OfflineRoutingUiState =
+        if (OfflineRoutingPreferences.isOfflineRoutingEnabled(context))
+            OfflineRoutingUiState.Enabled(OfflineRoutingPreferences.getSelectedProfile(context))
+        else
+            OfflineRoutingUiState.Disabled
 
     override fun onCleared() {
         super.onCleared()

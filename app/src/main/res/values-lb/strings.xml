@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Menü opmaachen</string>
     <string name="menu_favorites_count">Favoritten (%1$d)</string>
@@ -25,7 +25,45 @@
     <string name="navigation_start">Navigatioun starten</string>
     <string name="navigation_stop">Navigatioun stoppen</string>
     <string name="navigation_route_loading">Vëlosroute gëtt berechent...</string>
-    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
+    <string name="navigation_downloading_segments">Offline-Kaartdaten fir dës Regioun ginn erofgelueden…</string>
+    <string name="error_brouter_profiles_missing">Routing-Profiler feelen.</string>
+    <string name="error_no_internet">Keng Internetverbindung. Prüft W-Lan oder mobil Daten a probéiert nach eng Kéier.</string>
+    <string name="profile_trekking_name">Trekking</string>
+    <string name="profile_trekking_desc">Ausgläich – bevorzugt Vëlosweeër a roueg Stroossen</string>
+    <string name="profile_fastbike_name">Séier</string>
+    <string name="profile_fastbike_desc">Geschwindegkeet optiméiert – fir geüebte Vëlosfuerer</string>
+    <string name="profile_shortest_name">Küerzste Strecke</string>
+    <string name="profile_shortest_desc">Küerzsten Wee – ouni Gewichtung vu Vëlosweeër</string>
+    <string name="profile_mtb_name">Mountainbike</string>
+    <string name="profile_mtb_desc">Fir Schotterweeër a Geläindestrecken</string>
+    <string name="profile_gravel_name">Gravel</string>
+    <string name="profile_gravel_desc">Fir Gravel-Bikes op gemëschten Ënnergronnen</string>
+    <string name="menu_offline_routing_activate">Offline Navigatioun aktivéieren</string>
+    <string name="menu_offline_routing_downloading">Kaartdaten ginn erofgelueden…</string>
+    <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="offline_routing_setup_title">Offline Navigatioun</string>
+    <string name="offline_routing_setup_description">Strecken gi richteg op ärem Apparat berechent ouni Internet. Kaartdaten gi just eemol erofgelueden.</string>
+    <string name="offline_routing_benefit_1">Besser Qualitéit – bevorzugt Vëlosweeër</string>
+    <string name="offline_routing_benefit_2">Funktionéiert no der Astellung ouni Internet</string>
+    <string name="offline_routing_benefit_3">Méi séier Streckenberechnung op dem Apparat</string>
+    <string name="offline_routing_download_hint">Eemolegen Download vun ca. 200–250 MB fir deng Regioun</string>
+    <string name="offline_routing_wifi_recommendation">Empfehlung: W-Lan benotzen. De Download ass ca. 200–250 MB a kann mobill Datenkaschten verursaachen.</string>
+    <string name="wifi_warning_title">Kee W-Lan</string>
+    <string name="wifi_warning_message">Du bass net mat W-Lan verbonnen. De Download ass ca. 200–250 MB a benotzt mobill Daten. Trotzdem eroflueden?</string>
+    <string name="wifi_warning_confirm">Trotzdem eroflueden</string>
+    <string name="offline_routing_confirm">Elo eroflueden</string>
+    <string name="offline_routing_disable">Offline Navigatioun deaktivéieren</string>
+    <string name="offline_routing_downloading_title">Kaartdaten ginn erofgelueden…</string>
+    <string name="offline_routing_file_of">Fichier %1$d vun %2$d</string>
+    <string name="offline_routing_success_title">Offline Navigatioun bereet!</string>
+    <string name="offline_routing_success_subtitle">Strecken gi lo um Apparat berechent – besser Vëlosweeër, kee Internet nëideg.</string>
+    <string name="offline_routing_profile_title">Routing-Profil</string>
+    <string name="offline_routing_profile_subtitle">Tippt fir z\'änneren. Ënnen deaktivéieren fir zréck op Online ze wiesselen.</string>
+    <string name="common_cancel">Ofbriechen</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="duration_minutes">%1$d Min.</string>
+    <string name="duration_hours">%1$d Std.</string>
+    <string name="duration_hours_minutes">%1$d Std. %2$d Min.</string>
 
     <string name="detail_address">Adress</string>
     <string name="detail_capacity">Stellplazen</string>

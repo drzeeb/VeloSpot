@@ -47,6 +47,10 @@ fun MainMapScreen(
     val favoriteSpaces by viewModel.favoriteSpaces.collectAsStateWithLifecycle()
     val mapCameraTarget by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
     val navigationUiState by viewModel.navigationUiState.collectAsStateWithLifecycle()
+    val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
+    val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
+    val showProfileSheet by viewModel.showProfileSheet.collectAsStateWithLifecycle()
+    val showWifiWarning by viewModel.showWifiWarning.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -248,12 +252,20 @@ fun MainMapScreen(
             onDismissError = viewModel::clearNavigationError
         )
 
+        // Show download progress / success when activating offline routing
+        when (val offState = offlineRoutingUiState) {
+            is OfflineRoutingUiState.Downloading     -> OfflineSetupProgressOverlay(state = offState)
+            is OfflineRoutingUiState.DownloadComplete -> OfflineSetupSuccessOverlay()
+            else -> Unit
+        }
+
         MapMenuCard(
             state = MapMenuCardState(
                 favoritesCount = favorites.size,
                 isDarkTheme = isDarkTheme,
                 currentLanguageFlag = currentLanguageFlag,
-                isExpanded = screenUiState.isMenuExpanded
+                isExpanded = screenUiState.isMenuExpanded,
+                offlineRoutingUiState = offlineRoutingUiState
             ),
             actions = MapMenuCardActions(
                 onExpand = screenUiState::expandMenu,
@@ -263,7 +275,9 @@ fun MainMapScreen(
                 onToggleDarkMode = {
                     onDarkThemeToggle()
                     screenUiState.dismissMenu()
-                }
+                },
+                onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
+                onOpenProfileSheet = viewModel::openProfileSheet
             )
         )
 
@@ -291,6 +305,32 @@ fun MainMapScreen(
                 applyLanguageSelection(context, languageCode)
                 screenUiState.closeLanguage()
             }
+        )
+    }
+
+    // Offline routing sheets
+    if (showOfflineSetupSheet) {
+        OfflineRoutingSetupSheet(
+            onConfirm = viewModel::confirmOfflineRoutingSetup,
+            onDismiss = viewModel::dismissOfflineSetupSheet
+        )
+    }
+
+    if (showWifiWarning) {
+        WifiWarningDialog(
+            onConfirm = viewModel::confirmDownloadOnMobileData,
+            onDismiss = viewModel::dismissWifiWarning
+        )
+    }
+
+    if (showProfileSheet) {
+        val currentProfile = (offlineRoutingUiState as? OfflineRoutingUiState.Enabled)?.profile
+            ?: de.velospot.data.brouter.BRouterProfile.TREKKING
+        RoutingProfileSheet(
+            currentProfile = currentProfile,
+            onSelectProfile = viewModel::selectRoutingProfile,
+            onDismiss = viewModel::dismissProfileSheet,
+            onDisableOfflineRouting = viewModel::disableOfflineRouting
         )
     }
 

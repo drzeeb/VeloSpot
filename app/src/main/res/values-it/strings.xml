@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Apri menu</string>
     <string name="menu_favorites_count">Preferiti (%1$d)</string>
@@ -25,7 +25,45 @@
     <string name="navigation_start">Avvia navigazione</string>
     <string name="navigation_stop">Termina navigazione</string>
     <string name="navigation_route_loading">Calcolo percorso bici...</string>
-    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
+    <string name="navigation_downloading_segments">Download dati mappa offline per questa regione…</string>
+    <string name="error_brouter_profiles_missing">Profili di routing mancanti.</string>
+    <string name="error_no_internet">Nessuna connessione internet. Controlla Wi-Fi o dati mobili e riprova.</string>
+    <string name="profile_trekking_name">Trekking</string>
+    <string name="profile_trekking_desc">Equilibrato – preferisce piste ciclabili e strade tranquille</string>
+    <string name="profile_fastbike_name">Veloce</string>
+    <string name="profile_fastbike_desc">Ottimizzato per la velocità – per ciclisti esperti</string>
+    <string name="profile_shortest_name">Percorso più breve</string>
+    <string name="profile_shortest_desc">Distanza minima – senza ponderazione piste ciclabili</string>
+    <string name="profile_mtb_name">Mountain Bike</string>
+    <string name="profile_mtb_desc">Per piste ghiaiose e tratti fuoristrada</string>
+    <string name="profile_gravel_name">Gravel</string>
+    <string name="profile_gravel_desc">Per bici gravel su superfici miste</string>
+    <string name="menu_offline_routing_activate">Attiva navigazione offline</string>
+    <string name="menu_offline_routing_downloading">Download dati in corso…</string>
+    <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="offline_routing_setup_title">Navigazione offline</string>
+    <string name="offline_routing_setup_description">I percorsi vengono calcolati sul dispositivo senza internet. I dati cartografici vengono scaricati una sola volta.</string>
+    <string name="offline_routing_benefit_1">Qualità migliore – preferisce piste ciclabili dedicate</string>
+    <string name="offline_routing_benefit_2">Funziona senza internet dopo la configurazione</string>
+    <string name="offline_routing_benefit_3">Calcolo percorso più veloce sul dispositivo</string>
+    <string name="offline_routing_download_hint">Download unico di circa 200–250 MB per la tua regione</string>
+    <string name="offline_routing_wifi_recommendation">Consigliato: usa il Wi-Fi. Il download è di circa 200–250 MB e potrebbe comportare costi di dati mobili.</string>
+    <string name="wifi_warning_title">Nessuna connessione Wi-Fi</string>
+    <string name="wifi_warning_message">Non sei connesso al Wi-Fi. Il download è di circa 200–250 MB e utilizzerà i dati mobili. Scaricare comunque?</string>
+    <string name="wifi_warning_confirm">Scarica comunque</string>
+    <string name="offline_routing_confirm">Scarica ora</string>
+    <string name="offline_routing_disable">Disattiva navigazione offline</string>
+    <string name="offline_routing_downloading_title">Download dati cartografici…</string>
+    <string name="offline_routing_file_of">File %1$d di %2$d</string>
+    <string name="offline_routing_success_title">Navigazione offline pronta!</string>
+    <string name="offline_routing_success_subtitle">Le rotte ora vengono calcolate sul dispositivo – percorsi migliori, senza internet.</string>
+    <string name="offline_routing_profile_title">Profilo di routing</string>
+    <string name="offline_routing_profile_subtitle">Tocca per cambiare. Disattiva sotto per tornare al routing online.</string>
+    <string name="common_cancel">Annulla</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_hours">%1$d h</string>
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
 
     <string name="detail_address">Indirizzo</string>
     <string name="detail_capacity">Capacità</string>

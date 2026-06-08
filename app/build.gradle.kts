@@ -36,6 +36,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -51,6 +52,9 @@ kotlin {
 }
 
 dependencies {
+
+    // BRouter offline routing engine – place brouter.jar from https://brouter.de into app/libs/
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
