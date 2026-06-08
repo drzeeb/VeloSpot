@@ -5,6 +5,7 @@ import android.util.Log
 import btools.router.OsmNodeNamed
 import btools.router.RoutingContext
 import btools.router.RoutingEngine
+import de.velospot.BuildConfig
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BRouterProfilesMissingException
 import de.velospot.domain.model.EmptyRouteGeometryException
@@ -68,14 +69,18 @@ class BRouterEngine(
         ensureProfiles()
 
         val profilePath = File(profilesDir, "${profile.fileName}.brf").absolutePath
-        Log.d(TAG, "segmentsDir = $segmentsDir  exists=${segmentsDir.exists()}")
-        Log.d(TAG, "profilePath = $profilePath  exists=${File(profilePath).exists()}")
-        Log.d(TAG, "profiles in dir: ${profilesDir.listFiles()?.map { it.name }}")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "segmentsDir = $segmentsDir  exists=${segmentsDir.exists()}")
+            Log.d(TAG, "profilePath = $profilePath  exists=${File(profilePath).exists()}")
+            Log.d(TAG, "profiles in dir: ${profilesDir.listFiles()?.map { it.name }}")
+        }
 
         val fromPos = osmNodeNamed("from", from.longitude, from.latitude)
         val toPos   = osmNodeNamed("to",   to.longitude,   to.latitude)
-        Log.d(TAG, "from ilon=${fromPos.ilon} ilat=${fromPos.ilat}")
-        Log.d(TAG, "to   ilon=${toPos.ilon}   ilat=${toPos.ilat}")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "from ilon=${fromPos.ilon} ilat=${fromPos.ilat}")
+            Log.d(TAG, "to   ilon=${toPos.ilon}   ilat=${toPos.ilat}")
+        }
 
         val rc = RoutingContext().apply {
             localFunction = profilePath          // path to .brf WITHOUT extension
@@ -92,7 +97,7 @@ class BRouterEngine(
             engine.doRun(0L)
 
             val track = engine.foundTrack
-            Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
+            if (BuildConfig.DEBUG) Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
             if (track == null) throw NoRouteFoundException()
             if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
 
