@@ -1,12 +1,14 @@
 package de.velospot.feature.map.presentation
 
 import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.pow
 import kotlin.time.Duration.Companion.milliseconds
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 
 internal fun hasZoomChange(startZoom: Double, targetZoom: Double): Boolean {
-    return kotlin.math.abs(targetZoom - startZoom) > 0.01
+    return abs(targetZoom - startZoom) > 0.01
 }
 
 internal fun calculateAdjustedCenter(
@@ -20,12 +22,12 @@ internal fun calculateAdjustedCenter(
     if (verticalOffsetFraction <= 0.0) return baseCenter
 
     val hasZoomDelta = hasZoomChange(startZoom = startZoom, targetZoom = targetZoom)
-    val latitudeSpan = if (!hasZoomDelta) {
-        currentLatitudeSpan
-    } else if (startLatitudeSpan > 0.0) {
-        val zoomDelta = targetZoom - startZoom
-        startLatitudeSpan / Math.pow(2.0, zoomDelta)
-    } else {
+        val latitudeSpan = if (!hasZoomDelta) {
+            currentLatitudeSpan
+        } else if (startLatitudeSpan > 0.0) {
+            val zoomDelta = targetZoom - startZoom
+            startLatitudeSpan / 2.0.pow(zoomDelta)
+        } else {
         0.0
     }
 

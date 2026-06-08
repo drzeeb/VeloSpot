@@ -84,7 +84,7 @@ class LocationRepositoryImpl @Inject constructor(
         try {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
-                locationCallback!!,
+                locationCallback ?: return,
                 Looper.getMainLooper()
             )
         } catch (e: SecurityException) {

@@ -113,9 +113,6 @@ fun MainMapScreen(
     val selectedMarkerIcon = remember(context, zoomBucket) {
         createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.selectedPinColor)
     }
-    val activeNavigationMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.selectedPinColor)
-    }
     val mutedNormalMarkerIcon = remember(context, zoomBucket) {
         createMutedMarkerIcon(
             context = context,
@@ -190,7 +187,7 @@ fun MainMapScreen(
                             normal = normalMarkerIcon,
                             favorite = favoriteMarkerIcon,
                             selected = selectedMarkerIcon,
-                            activeNavigation = activeNavigationMarkerIcon,
+                            activeNavigation = selectedMarkerIcon,
                             mutedNormal = mutedNormalMarkerIcon,
                             mutedFavorite = mutedFavoriteMarkerIcon,
                             mutedSelected = mutedSelectedMarkerIcon,
