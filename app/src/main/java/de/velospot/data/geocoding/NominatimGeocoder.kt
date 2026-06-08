@@ -1,6 +1,7 @@
 package de.velospot.data.geocoding
 
 import android.util.Log
+import de.velospot.BuildConfig
 import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.dto.NominatimAddressDto
 import javax.inject.Inject
@@ -34,12 +35,16 @@ class NominatimGeocoder @Inject constructor(
         runCatching {
             val response = api.reverseGeocode(lat = latitude, lon = longitude)
             if (!response.isSuccessful) {
-                Log.w(TAG, "Nominatim returned HTTP ${response.code()} for ($latitude, $longitude)")
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "Nominatim returned HTTP ${response.code()} for ($latitude, $longitude)")
+                }
                 return@runCatching null
             }
             response.body()?.address?.toAddressString()
         }.onFailure { e ->
-            Log.w(TAG, "Reverse geocoding failed for ($latitude, $longitude): ${e.message}")
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "Reverse geocoding failed for ($latitude, $longitude): ${e.message}")
+            }
         }.getOrNull()
 
     // ---------------------------------------------------------------------------
