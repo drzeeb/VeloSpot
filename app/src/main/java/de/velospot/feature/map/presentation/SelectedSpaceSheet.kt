@@ -44,11 +44,6 @@ import de.velospot.domain.model.BikeParkingType
 fun SelectedSpaceSheet(
     space: BikeParkingSpace,
     onDismiss: () -> Unit,
-    /**
-     * Navigation handler — currently an external app redirect (geo: intent).
-     * Can be replaced with internal routing at any time:
-     *   onNavigate = { navController.navigate(Route.Navigate(it.id)) }
-     */
     onNavigate: NavigationHandler,
     isFavorite: Boolean = false,
     onToggleFavorite: (String) -> Unit = {}

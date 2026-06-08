@@ -175,7 +175,7 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 routingRepository.getBikeRoute(
-                    from = GeoCoordinate(location.latitude, location.longitude),
+                    from = location,
                     to = GeoCoordinate(space.latitude, space.longitude)
                 )
             }.onSuccess { route ->

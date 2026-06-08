@@ -36,9 +36,5 @@ class FavoritesRepositoryImpl @Inject constructor(
     override suspend fun removeFavorite(parkingSpaceId: String) {
         favoritesDao.removeFavorite(parkingSpaceId)
     }
-
-    override suspend fun getFavoritesCount(): Int {
-        return favoritesDao.getFavoritesCount()
-    }
 }
 

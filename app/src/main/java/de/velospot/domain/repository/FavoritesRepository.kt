@@ -36,12 +36,5 @@ interface FavoritesRepository {
      * @param parkingSpaceId The ID of the parking space to unfavorite
      */
     suspend fun removeFavorite(parkingSpaceId: String)
-
-    /**
-     * Get the count of favorite parking spaces.
-     *
-     * @return Number of favorited spaces
-     */
-    suspend fun getFavoritesCount(): Int
 }
 

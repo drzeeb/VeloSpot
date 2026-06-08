@@ -358,8 +358,6 @@ private class FakeFavoritesRepository : FavoritesRepository {
     override suspend fun removeFavorite(parkingSpaceId: String) {
         favorites.value = favorites.value - parkingSpaceId
     }
-
-    override suspend fun getFavoritesCount(): Int = favorites.value.size
 }
 
 private class FakeLocationRepository(

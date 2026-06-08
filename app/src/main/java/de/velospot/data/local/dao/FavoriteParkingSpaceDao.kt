@@ -1,7 +1,6 @@
 package de.velospot.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -24,21 +23,6 @@ interface FavoriteParkingSpaceDao {
     @Query("SELECT * FROM favorite_parking_spaces ORDER BY addedAt DESC")
     fun getFavoritesFlow(): Flow<List<FavoriteParkingSpaceEntity>>
 
-    /**
-     * Get all favorite parking space IDs.
-     * Useful for quick checks and filtering.
-     *
-     * @return List of favorite parking space IDs
-     */
-    @Query("SELECT parkingSpaceId FROM favorite_parking_spaces")
-    suspend fun getFavoriteIds(): List<String>
-
-    /**
-     * Check if a parking space is marked as favorite.
-     *
-     * @param parkingSpaceId The ID of the parking space to check
-     * @return True if the parking space is in favorites, false otherwise
-     */
     @Query("SELECT EXISTS(SELECT 1 FROM favorite_parking_spaces WHERE parkingSpaceId = :parkingSpaceId)")
     suspend fun isFavorite(parkingSpaceId: String): Boolean
 
@@ -57,28 +41,5 @@ interface FavoriteParkingSpaceDao {
      */
     @Query("DELETE FROM favorite_parking_spaces WHERE parkingSpaceId = :parkingSpaceId")
     suspend fun removeFavorite(parkingSpaceId: String)
-
-    /**
-     * Remove a favorite parking space entity.
-     *
-     * @param favorite The favorite entity to delete
-     */
-    @Delete
-    suspend fun deleteFavorite(favorite: FavoriteParkingSpaceEntity)
-
-    /**
-     * Get the count of favorite parking spaces.
-     *
-     * @return Number of favorited parking spaces
-     */
-    @Query("SELECT COUNT(*) FROM favorite_parking_spaces")
-    suspend fun getFavoritesCount(): Int
-
-    /**
-     * Clear all favorites.
-     * Useful for resetting user preferences.
-     */
-    @Query("DELETE FROM favorite_parking_spaces")
-    suspend fun clearAllFavorites()
 }
 

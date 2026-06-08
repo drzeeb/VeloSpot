@@ -1,11 +1,13 @@
 package de.velospot.core.di
 
+import android.content.Context
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,8 +29,6 @@ import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RoutingRepository
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -173,7 +173,7 @@ object NetworkModule {
  * from the repository with the HTTP body, not here.
  */
 private object LenientJsonAdapterFactory : JsonAdapter.Factory {
-    override fun create(type: Type, annotations: MutableSet<out Annotation>, moshi: Moshi): JsonAdapter<*>? {
+    override fun create(type: Type, annotations: MutableSet<out Annotation>, moshi: Moshi): JsonAdapter<*> {
         val delegate = moshi.nextAdapter<Any>(this, type, annotations)
         return object : JsonAdapter<Any?>() {
             override fun fromJson(reader: JsonReader): Any? {
