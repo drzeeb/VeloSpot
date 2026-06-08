@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — BRouter Offline Routing
+## [Unreleased] — v1.0.7 BRouter Offline Routing
 
 ### Added
 - **BRouter offline routing engine** embedded as a local JAR (`app/libs/brouter.jar`) — routes are calculated entirely on-device, no internet required after the one-time segment download
@@ -29,6 +29,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`RoutingRepositoryImpl.osrmFallbackRoute()`** — OSRM duration replaced with distance ÷ 15 km/h for realistic cycling travel time
 - **`BRouterSegmentManager.downloadSegmentsForLocation()`** — reduced from 3×3 tile grid (~1.1 GB) to single primary tile (~200–250 MB)
 - **`app/build.gradle.kts`** — `fileTree("libs/*.jar")` dependency added for BRouter JAR; `buildConfig = true` enabled
+
+---
+
+## [1.0.6] — 2026-06-08
+
+### Added
+- **Germany-wide coverage** via pre-bundled OSM SQLite asset — full PR #32 consolidating all Germany-wide parking data features into the release branch
+
+### Fixed / Refactored
+- Remove redundant `GeoCoordinate` wrapping in `MapViewModel.startInAppNavigation()` (location is already a `GeoCoordinate`)
+- Replace `Math.pow()` with idiomatic Kotlin `pow()` in `MapCameraAnimator`; use `kotlin.math.abs` import instead of fully qualified form
+- Remove duplicate `activeNavigationMarkerIcon` in `MainMapScreen` (identical to `selectedMarkerIcon`); pass `selectedMarkerIcon` directly for the active navigation slot
+- Remove stale KDoc comment in `SelectedSpaceSheet` describing the old geo-intent redirect
+- Fix import ordering in `NetworkModule` (android.* before third-party); narrow `LenientJsonAdapterFactory.create()` return type to non-null `JsonAdapter<*>`
+- Remove unused `getFavoritesCount()` from `FavoritesRepository` interface
 
 ---
 
