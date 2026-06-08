@@ -13,6 +13,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import de.velospot.data.brouter.BRouterEngine
+import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.data.local.BikeParkingCacheDataSource
 import de.velospot.data.local.BikeParkingLocalDataSource
@@ -147,9 +149,26 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRoutingRepository(osrmApi: OsrmApi): RoutingRepository {
-        return RoutingRepositoryImpl(osrmApi)
-    }
+    fun provideBRouterSegmentManager(
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient
+    ): BRouterSegmentManager = BRouterSegmentManager(context, okHttpClient)
+
+    @Provides
+    @Singleton
+    fun provideBRouterEngine(
+        @ApplicationContext context: Context,
+        segmentManager: BRouterSegmentManager
+    ): BRouterEngine = BRouterEngine(context, segmentManager.segmentsDir)
+
+    @Provides
+    @Singleton
+    fun provideRoutingRepository(
+        brouterEngine: BRouterEngine,
+        segmentManager: BRouterSegmentManager,
+        osrmApi: OsrmApi,
+        @ApplicationContext context: Context
+    ): RoutingRepository = RoutingRepositoryImpl(brouterEngine, segmentManager, osrmApi, context)
 
     @Provides
     @Singleton

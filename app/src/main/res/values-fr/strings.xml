@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Ouvrir le menu</string>
     <string name="menu_favorites_count">Favoris (%1$d)</string>
@@ -25,7 +25,45 @@
     <string name="navigation_start">Démarrer la navigation</string>
     <string name="navigation_stop">Arrêter la navigation</string>
     <string name="navigation_route_loading">Calcul de l\'itinéraire vélo...</string>
-    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
+    <string name="navigation_downloading_segments">Téléchargement des données cartographiques hors ligne…</string>
+    <string name="error_brouter_profiles_missing">Profils de routage manquants.</string>
+    <string name="error_no_internet">Pas de connexion internet. Vérifiez votre Wi-Fi ou données mobiles et réessayez.</string>
+    <string name="profile_trekking_name">Trekking</string>
+    <string name="profile_trekking_desc">Équilibré – préfère les pistes cyclables et routes calmes</string>
+    <string name="profile_fastbike_name">Rapide</string>
+    <string name="profile_fastbike_desc">Optimisé pour la vitesse – pour cyclistes expérimentés</string>
+    <string name="profile_shortest_name">Itinéraire le plus court</string>
+    <string name="profile_shortest_desc">Distance minimale – sans pondération des pistes</string>
+    <string name="profile_mtb_name">VTT</string>
+    <string name="profile_mtb_desc">Pour pistes de gravier et sections hors route</string>
+    <string name="profile_gravel_name">Gravel</string>
+    <string name="profile_gravel_desc">Pour vélos gravel sur surfaces mixtes</string>
+    <string name="menu_offline_routing_activate">Activer la navigation hors ligne</string>
+    <string name="menu_offline_routing_downloading">Téléchargement des données…</string>
+    <string name="menu_offline_routing_active">Hors ligne\u00a0: %1$s ▸</string>
+    <string name="offline_routing_setup_title">Navigation hors ligne</string>
+    <string name="offline_routing_setup_description">Les itinéraires sont calculés sur votre appareil, sans connexion. Les données cartographiques sont téléchargées une seule fois.</string>
+    <string name="offline_routing_benefit_1">Meilleure qualité – préfère les pistes cyclables dédiées</string>
+    <string name="offline_routing_benefit_2">Fonctionne sans internet après l\'installation</string>
+    <string name="offline_routing_benefit_3">Calcul d\'itinéraire plus rapide sur l\'appareil</string>
+    <string name="offline_routing_download_hint">Téléchargement unique d\'env. 200–250 Mo pour votre région</string>
+    <string name="offline_routing_wifi_recommendation">Recommandé\u00a0: utilisez le Wi-Fi. Le téléchargement est d\'env. 200–250 Mo et peut entraîner des frais de données mobiles.</string>
+    <string name="wifi_warning_title">Pas de connexion Wi-Fi</string>
+    <string name="wifi_warning_message">Vous n\'êtes pas connecté au Wi-Fi. Le téléchargement est d\'env. 200–250 Mo et utilisera vos données mobiles. Télécharger quand même\u00a0?</string>
+    <string name="wifi_warning_confirm">Télécharger quand même</string>
+    <string name="offline_routing_confirm">Télécharger maintenant</string>
+    <string name="offline_routing_disable">Désactiver la navigation hors ligne</string>
+    <string name="offline_routing_downloading_title">Téléchargement des données cartographiques…</string>
+    <string name="offline_routing_file_of">Fichier %1$d sur %2$d</string>
+    <string name="offline_routing_success_title">Navigation hors ligne prête\u00a0!</string>
+    <string name="offline_routing_success_subtitle">Les itinéraires sont calculés sur l\'appareil – meilleures pistes, sans internet.</string>
+    <string name="offline_routing_profile_title">Profil de routage</string>
+    <string name="offline_routing_profile_subtitle">Appuyez pour changer. Désactivez ci-dessous pour revenir au routage en ligne.</string>
+    <string name="common_cancel">Annuler</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_hours">%1$d h</string>
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
 
     <string name="detail_address">Adresse</string>
     <string name="detail_capacity">Capacité</string>

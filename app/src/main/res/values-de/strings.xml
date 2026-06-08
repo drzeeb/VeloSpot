@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Menü öffnen</string>
     <string name="menu_favorites_count">Favoriten (%1$d)</string>
@@ -25,7 +25,45 @@
     <string name="navigation_start">Navigation starten</string>
     <string name="navigation_stop">Navigation beenden</string>
     <string name="navigation_route_loading">Fahrradroute wird berechnet...</string>
-    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
+    <string name="navigation_downloading_segments">Offline-Kartendaten für diese Region werden heruntergeladen…</string>
+    <string name="error_brouter_profiles_missing">Routing-Profile fehlen. Bitte lookups.dat und *.brf Dateien nach assets/brouter/profiles/ kopieren.</string>
+    <string name="error_no_internet">Keine Internetverbindung. Bitte WLAN oder mobile Daten prüfen und erneut versuchen.</string>
+    <string name="profile_trekking_name">Trekking</string>
+    <string name="profile_trekking_desc">Ausgewogen – bevorzugt Radwege und ruhige Straßen</string>
+    <string name="profile_fastbike_name">Schnell</string>
+    <string name="profile_fastbike_desc">Geschwindigkeit optimiert – für geübte Radfahrer</string>
+    <string name="profile_shortest_name">Kürzeste Strecke</string>
+    <string name="profile_shortest_desc">Kürzester Weg – ohne Gewichtung von Radwegen</string>
+    <string name="profile_mtb_name">Mountainbike</string>
+    <string name="profile_mtb_desc">Für Schotterwege und Geländestrecken</string>
+    <string name="profile_gravel_name">Gravel</string>
+    <string name="profile_gravel_desc">Für Gravel-Bikes auf gemischten Untergründen</string>
+    <string name="menu_offline_routing_activate">Offline Navigation aktivieren</string>
+    <string name="menu_offline_routing_downloading">Kartendaten werden geladen…</string>
+    <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="offline_routing_setup_title">Offline Navigation</string>
+    <string name="offline_routing_setup_description">Routen werden direkt auf deinem Gerät berechnet – kein Internet nötig. Kartendaten für deine Region werden einmalig heruntergeladen.</string>
+    <string name="offline_routing_benefit_1">Bessere Routenqualität – bevorzugt dedizierte Radwege</string>
+    <string name="offline_routing_benefit_2">Funktioniert nach dem Setup komplett ohne Internet</string>
+    <string name="offline_routing_benefit_3">Schnellere Routenberechnung direkt auf dem Gerät</string>
+    <string name="offline_routing_download_hint">Einmaliger Download von ca. 200–250 MB für deine Region</string>
+    <string name="offline_routing_wifi_recommendation">Empfehlung: WLAN nutzen. Der Download ist ca. 200–250 MB und kann Mobilfunkkosten verursachen.</string>
+    <string name="wifi_warning_title">Keine WLAN-Verbindung</string>
+    <string name="wifi_warning_message">Du bist nicht mit WLAN verbunden. Der Download ist ca. 200–250 MB und verbraucht mobile Daten. Trotzdem herunterladen?</string>
+    <string name="wifi_warning_confirm">Trotzdem herunterladen</string>
+    <string name="offline_routing_confirm">Jetzt herunterladen</string>
+    <string name="offline_routing_disable">Offline Navigation deaktivieren</string>
+    <string name="offline_routing_downloading_title">Kartendaten werden heruntergeladen…</string>
+    <string name="offline_routing_file_of">Datei %1$d von %2$d</string>
+    <string name="offline_routing_success_title">Offline Navigation bereit!</string>
+    <string name="offline_routing_success_subtitle">Routen werden jetzt auf deinem Gerät berechnet – bessere Radwege, kein Internet nötig.</string>
+    <string name="offline_routing_profile_title">Routing-Profil</string>
+    <string name="offline_routing_profile_subtitle">Profil antippen zum Wechseln. Unten deaktivieren um zur Online-Routenführung zurückzukehren.</string>
+    <string name="common_cancel">Abbrechen</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="duration_minutes">%1$d Min.</string>
+    <string name="duration_hours">%1$d Std.</string>
+    <string name="duration_hours_minutes">%1$d Std. %2$d Min.</string>
 
     <string name="detail_address">Adresse</string>
     <string name="detail_capacity">Stellplätze</string>

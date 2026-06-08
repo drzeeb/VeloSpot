@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Abrir menú</string>
     <string name="menu_favorites_count">Favoritos (%1$d)</string>
@@ -25,7 +25,45 @@
     <string name="navigation_start">Iniciar navegación</string>
     <string name="navigation_stop">Detener navegación</string>
     <string name="navigation_route_loading">Calculando ruta en bicicleta...</string>
-    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
+    <string name="navigation_downloading_segments">Descargando datos de mapa sin conexión para esta región…</string>
+    <string name="error_brouter_profiles_missing">Faltan perfiles de enrutamiento.</string>
+    <string name="error_no_internet">Sin conexión a internet. Comprueba tu Wi-Fi o datos móviles e inténtalo de nuevo.</string>
+    <string name="profile_trekking_name">Trekking</string>
+    <string name="profile_trekking_desc">Equilibrado – prefiere carriles bici y calles tranquilas</string>
+    <string name="profile_fastbike_name">Rápido</string>
+    <string name="profile_fastbike_desc">Optimizado para velocidad – para ciclistas experimentados</string>
+    <string name="profile_shortest_name">Ruta más corta</string>
+    <string name="profile_shortest_desc">Distancia mínima – sin ponderación de carriles bici</string>
+    <string name="profile_mtb_name">Montaña</string>
+    <string name="profile_mtb_desc">Para caminos de grava y secciones todoterreno</string>
+    <string name="profile_gravel_name">Gravel</string>
+    <string name="profile_gravel_desc">Para bicicletas gravel en superficies mixtas</string>
+    <string name="menu_offline_routing_activate">Activar navegación sin conexión</string>
+    <string name="menu_offline_routing_downloading">Descargando datos…</string>
+    <string name="menu_offline_routing_active">Sin conexión: %1$s ▸</string>
+    <string name="offline_routing_setup_title">Navegación sin conexión</string>
+    <string name="offline_routing_setup_description">Las rutas se calculan en tu dispositivo sin internet. Los datos del mapa se descargan una sola vez.</string>
+    <string name="offline_routing_benefit_1">Mejor calidad – prefiere carriles bici dedicados</string>
+    <string name="offline_routing_benefit_2">Funciona sin internet tras la configuración</string>
+    <string name="offline_routing_benefit_3">Cálculo de ruta más rápido en el dispositivo</string>
+    <string name="offline_routing_download_hint">Descarga única de aprox. 200–250 MB para tu región</string>
+    <string name="offline_routing_wifi_recommendation">Recomendado: usa Wi-Fi. La descarga es de aprox. 200–250 MB y puede generar costes de datos móviles.</string>
+    <string name="wifi_warning_title">Sin conexión Wi-Fi</string>
+    <string name="wifi_warning_message">No estás conectado al Wi-Fi. La descarga es de aprox. 200–250 MB y usará datos móviles. ¿Descargar de todos modos?</string>
+    <string name="wifi_warning_confirm">Descargar de todos modos</string>
+    <string name="offline_routing_confirm">Descargar ahora</string>
+    <string name="offline_routing_disable">Desactivar navegación sin conexión</string>
+    <string name="offline_routing_downloading_title">Descargando datos del mapa…</string>
+    <string name="offline_routing_file_of">Archivo %1$d de %2$d</string>
+    <string name="offline_routing_success_title">¡Navegación offline lista!</string>
+    <string name="offline_routing_success_subtitle">Las rutas se calculan en el dispositivo – mejores carriles bici, sin internet.</string>
+    <string name="offline_routing_profile_title">Perfil de enrutamiento</string>
+    <string name="offline_routing_profile_subtitle">Toca para cambiar. Desactiva abajo para volver al enrutamiento online.</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_hours">%1$d h</string>
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
 
     <string name="detail_address">Dirección</string>
     <string name="detail_capacity">Capacidad</string>

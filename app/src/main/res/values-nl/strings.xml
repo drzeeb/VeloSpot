@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Menu openen</string>
     <string name="menu_favorites_count">Favorieten (%1$d)</string>
@@ -25,7 +25,45 @@
     <string name="navigation_start">Navigatie starten</string>
     <string name="navigation_stop">Navigatie stoppen</string>
     <string name="navigation_route_loading">Fietsroute wordt berekend...</string>
-    <string name="navigation_route_summary">%1$.1f km • %2$d min</string>
+    <string name="navigation_downloading_segments">Offline kaartgegevens voor dit gebied downloaden…</string>
+    <string name="error_brouter_profiles_missing">Routeringsprofielen ontbreken.</string>
+    <string name="error_no_internet">Geen internetverbinding. Controleer je Wi-Fi of mobiele data en probeer opnieuw.</string>
+    <string name="profile_trekking_name">Trekking</string>
+    <string name="profile_trekking_desc">Gebalanceerd – geeft voorkeur aan fietspaden en rustige wegen</string>
+    <string name="profile_fastbike_name">Snel</string>
+    <string name="profile_fastbike_desc">Snelheidsgeoptimaliseerd – voor ervaren fietsers</string>
+    <string name="profile_shortest_name">Kortste route</string>
+    <string name="profile_shortest_desc">Minimale afstand – zonder weging van fietspaden</string>
+    <string name="profile_mtb_name">Mountainbike</string>
+    <string name="profile_mtb_desc">Voor grindpaden en off-road secties</string>
+    <string name="profile_gravel_name">Gravel</string>
+    <string name="profile_gravel_desc">Voor gravelfietsen op gemengde ondergronden</string>
+    <string name="menu_offline_routing_activate">Offline navigatie activeren</string>
+    <string name="menu_offline_routing_downloading">Kaartdata downloaden…</string>
+    <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="offline_routing_setup_title">Offline navigatie</string>
+    <string name="offline_routing_setup_description">Routes worden op het apparaat berekend zonder internet. Kaartdata wordt eenmalig gedownload.</string>
+    <string name="offline_routing_benefit_1">Betere kwaliteit – geeft voorkeur aan fietspaden</string>
+    <string name="offline_routing_benefit_2">Werkt na instelling zonder internet</string>
+    <string name="offline_routing_benefit_3">Snellere routeberekening op het apparaat</string>
+    <string name="offline_routing_download_hint">Eenmalige download van ca. 200–250 MB voor jouw regio</string>
+    <string name="offline_routing_wifi_recommendation">Aanbevolen: gebruik Wi-Fi. De download is ca. 200–250 MB en kan mobiele datakosten veroorzaken.</string>
+    <string name="wifi_warning_title">Geen Wi-Fi verbinding</string>
+    <string name="wifi_warning_message">Je bent niet verbonden met Wi-Fi. De download is ca. 200–250 MB en zal mobiele data gebruiken. Toch downloaden?</string>
+    <string name="wifi_warning_confirm">Toch downloaden</string>
+    <string name="offline_routing_confirm">Nu downloaden</string>
+    <string name="offline_routing_disable">Offline navigatie deactiveren</string>
+    <string name="offline_routing_downloading_title">Kaartdata downloaden…</string>
+    <string name="offline_routing_file_of">Bestand %1$d van %2$d</string>
+    <string name="offline_routing_success_title">Offline navigatie gereed!</string>
+    <string name="offline_routing_success_subtitle">Routes worden nu op het apparaat berekend – betere fietspaden, geen internet nodig.</string>
+    <string name="offline_routing_profile_title">Routeringsprofiel</string>
+    <string name="offline_routing_profile_subtitle">Tik om te wijzigen. Deactiveer hieronder voor online routering.</string>
+    <string name="common_cancel">Annuleren</string>
+    <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_hours">%1$d u</string>
+    <string name="duration_hours_minutes">%1$d u %2$d min</string>
 
     <string name="detail_address">Adres</string>
     <string name="detail_capacity">Capaciteit</string>
