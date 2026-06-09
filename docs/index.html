@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces anywhere in Germany. 100 000+ locations from OpenStreetMap, fully offline, with BRouter on-device bike routing, 5 cycling profiles, favorites, live location tools, and multilingual support.">
-    <meta name="keywords" content="bike parking, Germany, Deutschland, cycling, map, Android, OpenStreetMap, OSM, offline, in-app navigation, BRouter, offline routing, osmdroid, favorites, dark mode, room, nominatim, multilingual">
+    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces anywhere in Germany. 100 000+ locations from OpenStreetMap, fully offline, with BRouter on-device bike routing, 5 cycling profiles, MapLibre vector tile map, favorites, live location tools, and multilingual support.">
+    <meta name="keywords" content="bike parking, Germany, Deutschland, cycling, map, Android, OpenStreetMap, OSM, offline, in-app navigation, BRouter, offline routing, MapLibre, vector tiles, OpenFreeMap, favorites, dark mode, room, nominatim, multilingual">
     <title>VeloSpot - Bike Parking Finder for Germany</title>
     <style>
         * {
@@ -462,7 +462,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1>🇩🇪 Bike Parking across All of Germany</h1>
-            <p>100 000+ parking locations from OpenStreetMap — bundled offline, available instantly, anywhere in Germany. BRouter on-device routing, 5 cycling profiles, favorites, dark mode, and 8 languages included.</p>
+            <p>100 000+ parking locations from OpenStreetMap — bundled offline, available instantly, anywhere in Germany. MapLibre vector tile map, BRouter on-device routing, 5 cycling profiles, favorites, dark mode, and 8 languages included.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">View on GitHub</a>
                 <a href="#download" class="btn btn-secondary">Get Started</a>
@@ -496,9 +496,14 @@
                     <p>Tap a marker and its address is resolved automatically via Nominatim — cached permanently so subsequent opens are instant.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">🗾</div>
+                    <h3>MapLibre Vector Map</h3>
+                    <p>Silky-smooth vector tile rendering via MapLibre and OpenFreeMap Liberty style — no API key needed, sharp at every zoom level, and ready for custom dark-mode styles.</p>
+                </div>
+                <div class="feature-card">
                     <div class="feature-icon">📍</div>
                     <h3>Interactive Map</h3>
-                    <p>Browse bike parking spaces on an intuitive OSM-based map with clear markers and quick detail access.</p>
+                    <p>Browse bike parking spaces on an intuitive vector map with clear markers and quick detail access.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">❤️</div>
@@ -544,7 +549,8 @@
                 <div class="tech-badge">Clean Architecture</div>
                 <div class="tech-badge">Hilt DI</div>
                 <div class="tech-badge">Retrofit + Moshi</div>
-                <div class="tech-badge">OSMDroid</div>
+                <div class="tech-badge">MapLibre (Vector Tiles)</div>
+                <div class="tech-badge">OpenFreeMap Liberty Style</div>
                 <div class="tech-badge">Room / SQLite Asset</div>
                 <div class="tech-badge">BRouter Offline Engine</div>
                 <div class="tech-badge">OSRM Online Fallback</div>
@@ -577,13 +583,14 @@
                         <li>Location recenter button and current-position marker</li>
                         <li>Dark mode toggle directly in the map menu</li>
                         <li>8-language picker with persistent flag-based selection</li>
+                        <li><strong>MapLibre vector tiles</strong> via OpenFreeMap — sharp at any zoom, no API key</li>
                     </ul>
                 </div>
                 <div class="details-image">
                     <div style="background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%); border-radius: 10px; color: white; padding: 40px; text-align: center;">
                         <div style="font-size: 60px; margin-bottom: 20px;">🇩🇪</div>
                         <p style="font-size: 18px; margin-bottom: 10px;"><strong>100 000+ Locations · Fully Offline</strong></p>
-                        <p>OpenStreetMap · Room Asset DB · Nominatim · BRouter Offline Routing · OSRM Fallback</p>
+                        <p>OpenStreetMap · Room Asset DB · Nominatim · MapLibre Vector Tiles · BRouter Offline Routing · OSRM Fallback</p>
                     </div>
                 </div>
             </div>
@@ -639,7 +646,7 @@
     <section class="cta-section" id="download">
         <div class="cta-content">
             <h2>Ready to Cycle Anywhere in Germany?</h2>
-            <p>Clone the project, build the Android app, and enjoy 100 000+ parking spots offline — plus BRouter on-device routing, 5 cycling profiles, favorites, multilingual support, and dark mode.</p>
+            <p>Clone the project, build the Android app, and enjoy 100 000+ parking spots offline — plus MapLibre vector tile map, BRouter on-device routing, 5 cycling profiles, favorites, multilingual support, and dark mode.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">Clone Repository</a>
                 <a href="https://github.com/drzeeb/VeloSpot#getting-started" class="btn btn-secondary">View Documentation</a>

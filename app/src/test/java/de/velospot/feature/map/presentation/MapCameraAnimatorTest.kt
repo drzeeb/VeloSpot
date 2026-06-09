@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.osmdroid.util.GeoPoint
+import org.maplibre.android.geometry.LatLng
 
 class MapCameraAnimatorTest {
 
@@ -23,7 +23,7 @@ class MapCameraAnimatorTest {
         val adjusted = calculateAdjustedCenter(
             startZoom = 15.0,
             targetZoom = 15.0,
-            baseCenter = GeoPoint(49.75, 6.64),
+            baseCenter = LatLng(49.75, 6.64),
             verticalOffsetFraction = 1.0 / 6.0,
             currentLatitudeSpan = 0.12,
             startLatitudeSpan = 0.8
@@ -39,7 +39,7 @@ class MapCameraAnimatorTest {
         val adjusted = calculateAdjustedCenter(
             startZoom = 14.0,
             targetZoom = 16.0,
-            baseCenter = GeoPoint(49.75, 6.64),
+            baseCenter = LatLng(49.75, 6.64),
             verticalOffsetFraction = 0.25,
             currentLatitudeSpan = 0.9,
             startLatitudeSpan = 0.8
@@ -52,7 +52,7 @@ class MapCameraAnimatorTest {
 
     @Test
     fun `calculateAdjustedCenter returns base center when offset is zero`() {
-        val base = GeoPoint(49.75, 6.64)
+        val base = LatLng(49.75, 6.64)
         val adjusted = calculateAdjustedCenter(
             startZoom = 14.0,
             targetZoom = 18.0,
@@ -66,4 +66,3 @@ class MapCameraAnimatorTest {
         assertEquals(base.longitude, adjusted.longitude, 1e-9)
     }
 }
-

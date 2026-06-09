@@ -17,10 +17,43 @@ import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
 import kotlin.math.roundToInt
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Polyline
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.FeatureCollection
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
+
+// ── Source / Layer IDs (internal so MainMapScreen can use them for hit-testing) ─
+
+private const val SOURCE_ROUTE    = "velospot-route-source"
+private const val SOURCE_PARKING  = "velospot-parking-source"
+private const val SOURCE_LOCATION = "velospot-location-source"
+
+internal const val LAYER_ROUTE     = "velospot-route-layer"
+internal const val LAYER_PARKING   = "velospot-parking-layer"
+internal const val LAYER_LOCATION  = "velospot-location-layer"
+
+/** Feature property key used for click-to-space lookup in the parking layer. */
+internal const val PROP_SPACE_ID = "spaceId"
+private  const val PROP_ICON     = "iconImage"
+
+private const val IMG_NORMAL         = "vs-marker-normal"
+private const val IMG_FAVORITE       = "vs-marker-favorite"
+private const val IMG_SELECTED       = "vs-marker-selected"
+private const val IMG_MUTED_NORMAL   = "vs-marker-muted-normal"
+private const val IMG_MUTED_FAVORITE = "vs-marker-muted-favorite"
+private const val IMG_MUTED_SELECTED = "vs-marker-muted-selected"
+internal const val IMG_LOCATION      = "vs-location"
+internal const val IMG_LOCATION_NAV  = "vs-location-nav"
+
+// ── Public data classes ───────────────────────────────────────────────────────
 
 internal data class MarkerIconSet(
     val normal: Drawable,
@@ -55,79 +88,163 @@ internal data class RouteRenderData(
     val points: List<RoutePoint>
 )
 
+// ── Main update function ──────────────────────────────────────────────────────
+
+/**
+ * Syncs MapLibre GeoJSON sources / layers with the current app state.
+ * Click handling is NOT managed here – set up a single [MapLibreMap.addOnMapClickListener]
+ * in [MainMapScreen] that queries [LAYER_PARKING] and reads [PROP_SPACE_ID].
+ */
 internal fun updateMarkers(
-    map: MapView,
+    map: MapLibreMap,
     spaces: List<BikeParkingSpace>,
     icons: MarkerIconSet,
     state: MarkerRenderState,
     display: MarkerDisplayConfig,
-    route: RouteRenderData,
-    onMarkerClick: (BikeParkingSpace) -> Unit
+    route: RouteRenderData
 ) {
-    map.overlays.clear()
+    val style = map.style ?: return
 
-    if (route.points.size > 1) {
-        val routePolyline = Polyline().apply {
-            outlinePaint.color = route.color
-            outlinePaint.strokeWidth = 10f
-            setPoints(route.points.map { GeoPoint(it.latitude, it.longitude) })
-        }
-        map.overlays.add(routePolyline)
+    registerIcons(style, icons, state.activeNavigationSpaceId != null)
+
+    // Route polyline
+    val routeGeoJson = if (route.points.size > 1) {
+        FeatureCollection.fromFeature(
+            Feature.fromGeometry(
+                LineString.fromLngLats(route.points.map { Point.fromLngLat(it.longitude, it.latitude) })
+            )
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
     }
+    upsertSource(style, SOURCE_ROUTE, routeGeoJson)
+    ensureRouteLayer(style, route.color)
 
-    // Draw selected/active destination last so it stays visible on overlaps.
-    val highlightedSpaceId = state.activeNavigationSpaceId ?: state.selectedSpaceId
-    val (otherSpaces, highlightedSpaces) = spaces.partition { it.id != highlightedSpaceId }
-    (otherSpaces + highlightedSpaces).forEach { space ->
-        val isNavigationDestination = space.id == state.activeNavigationSpaceId
-        val showMutedStyle = state.activeNavigationSpaceId != null && !isNavigationDestination
-        val marker = Marker(map).apply {
-            position = GeoPoint(space.latitude, space.longitude)
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            icon = resolveMarkerIcon(space = space, icons = icons, state = state, showMutedStyle = showMutedStyle)
-            title = space.name ?: space.type.label(display.context)
-            snippet = buildSnippet(space, display.labels.snippetSpacesFormat)
-            setOnMarkerClickListener { _, _ ->
-                onMarkerClick(space)
-                true
-            }
+    // Parking markers
+    upsertSource(style, SOURCE_PARKING, FeatureCollection.fromFeatures(buildParkingFeatures(spaces, state)))
+    ensureParkingLayer(style)
+
+    // Location dot
+    val locFeature = state.userLocation?.let { loc ->
+        Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude)).also {
+            it.addStringProperty(PROP_ICON, if (state.activeNavigationSpaceId != null) IMG_LOCATION_NAV else IMG_LOCATION)
         }
-        map.overlays.add(marker)
     }
-
-    state.userLocation?.let { location ->
-        val locationMarker = Marker(map).apply {
-            position = GeoPoint(location.latitude, location.longitude)
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-            icon = icons.location.constantState?.newDrawable()?.mutate() ?: icons.location
-            title = display.labels.myLocationTitle
-        }
-        map.overlays.add(locationMarker)
-    }
-
-    map.invalidate()
+    upsertSource(
+        style, SOURCE_LOCATION,
+        if (locFeature != null) FeatureCollection.fromFeature(locFeature)
+        else FeatureCollection.fromFeatures(emptyList())
+    )
+    ensureLocationLayer(style)
 }
 
-private fun resolveMarkerIcon(
-    space: BikeParkingSpace,
-    icons: MarkerIconSet,
-    state: MarkerRenderState,
-    showMutedStyle: Boolean
-): Drawable {
-    val baseIcon = when {
-        space.id == state.activeNavigationSpaceId -> icons.activeNavigation
-        space.id == state.selectedSpaceId -> if (showMutedStyle) icons.mutedSelected else icons.selected
-        state.favoriteIds.contains(space.id) -> if (showMutedStyle) icons.mutedFavorite else icons.favorite
-        else -> if (showMutedStyle) icons.mutedNormal else icons.normal
-    }
-    return baseIcon.constantState?.newDrawable()?.mutate() ?: baseIcon
+// ── GeoJSON source upsert ─────────────────────────────────────────────────────
+
+private fun upsertSource(style: Style, id: String, data: FeatureCollection) {
+    (style.getSource(id) as? GeoJsonSource)?.setGeoJson(data)
+        ?: style.addSource(GeoJsonSource(id, data))
 }
 
-internal fun createBikeMarkerIcon(
-    context: Context,
-    zoomBucket: Int,
-    pinColor: Int
-): Drawable {
+// ── Layer creation (idempotent) ───────────────────────────────────────────────
+
+private fun ensureRouteLayer(style: Style, colorInt: Int) {
+    if (style.getLayer(LAYER_ROUTE) != null) return
+    val hex = "#%06X".format(0xFFFFFF and colorInt)
+    style.addLayer(
+        LineLayer(LAYER_ROUTE, SOURCE_ROUTE).withProperties(
+            PropertyFactory.lineColor(hex),
+            PropertyFactory.lineWidth(6f),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
+        )
+    )
+}
+
+private fun ensureParkingLayer(style: Style) {
+    if (style.getLayer(LAYER_PARKING) != null) return
+    style.addLayer(
+        SymbolLayer(LAYER_PARKING, SOURCE_PARKING).withProperties(
+            PropertyFactory.iconImage(Expression.get(PROP_ICON)),
+            PropertyFactory.iconAllowOverlap(true),
+            PropertyFactory.iconIgnorePlacement(false),
+            PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
+        )
+    )
+}
+
+private fun ensureLocationLayer(style: Style) {
+    if (style.getLayer(LAYER_LOCATION) != null) return
+    style.addLayer(
+        SymbolLayer(LAYER_LOCATION, SOURCE_LOCATION).withProperties(
+            PropertyFactory.iconImage(Expression.get(PROP_ICON)),
+            PropertyFactory.iconAllowOverlap(true),
+            PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER)
+        )
+    )
+}
+
+// ── Icon registration ─────────────────────────────────────────────────────────
+
+private fun registerIcons(style: Style, icons: MarkerIconSet, navigationActive: Boolean) {
+    fun add(id: String, d: Drawable) {
+        if (style.getImage(id) == null) style.addImage(id, drawableToBitmap(d))
+    }
+    add(IMG_NORMAL,         icons.normal)
+    add(IMG_FAVORITE,       icons.favorite)
+    add(IMG_SELECTED,       icons.selected)
+    add(IMG_MUTED_NORMAL,   icons.mutedNormal)
+    add(IMG_MUTED_FAVORITE, icons.mutedFavorite)
+    add(IMG_MUTED_SELECTED, icons.mutedSelected)
+    // Location icons – re-add when navigation state changes (different drawable)
+    style.removeImage(IMG_LOCATION)
+    style.removeImage(IMG_LOCATION_NAV)
+    add(IMG_LOCATION,     icons.location)
+    add(IMG_LOCATION_NAV, icons.location)
+}
+
+private fun drawableToBitmap(drawable: Drawable): Bitmap {
+    if (drawable is BitmapDrawable) return drawable.bitmap
+    val w = drawable.intrinsicWidth.coerceAtLeast(1)
+    val h = drawable.intrinsicHeight.coerceAtLeast(1)
+    val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bmp)
+    drawable.setBounds(0, 0, w, h)
+    drawable.draw(canvas)
+    return bmp
+}
+
+// ── Feature building ──────────────────────────────────────────────────────────
+
+private fun buildParkingFeatures(spaces: List<BikeParkingSpace>, state: MarkerRenderState): List<Feature> {
+    val highlightedId = state.activeNavigationSpaceId ?: state.selectedSpaceId
+    val (others, highlighted) = spaces.partition { it.id != highlightedId }
+    return (others + highlighted).map { space ->
+        Feature.fromGeometry(Point.fromLngLat(space.longitude, space.latitude)).also {
+            it.addStringProperty(PROP_SPACE_ID, space.id)
+            it.addStringProperty(PROP_ICON, resolveIconKey(space, state))
+        }
+    }
+}
+
+private fun resolveIconKey(space: BikeParkingSpace, state: MarkerRenderState): String {
+    val isNavDest  = space.id == state.activeNavigationSpaceId
+    val showMuted  = state.activeNavigationSpaceId != null && !isNavDest
+    val isFavorite = state.favoriteIds.contains(space.id)
+    val isSelected = space.id == state.selectedSpaceId
+    return when {
+        isNavDest  -> IMG_SELECTED
+        showMuted && isSelected  -> IMG_MUTED_SELECTED
+        showMuted && isFavorite  -> IMG_MUTED_FAVORITE
+        showMuted                -> IMG_MUTED_NORMAL
+        isSelected -> IMG_SELECTED
+        isFavorite -> IMG_FAVORITE
+        else       -> IMG_NORMAL
+    }
+}
+
+// ── Icon rendering (drawing logic unchanged from osmdroid version) ─────────────
+
+internal fun createBikeMarkerIcon(context: Context, zoomBucket: Int, pinColor: Int): Drawable {
     val scale = when {
         zoomBucket <= 12 -> 0.42f
         zoomBucket == 13 -> 0.52f
@@ -135,42 +252,24 @@ internal fun createBikeMarkerIcon(
         zoomBucket == 15 -> 0.76f
         zoomBucket == 16 -> 0.90f
         zoomBucket == 17 -> 1.00f
-        else -> 1.12f
+        else             -> 1.12f
     }
-
-    val width = (120 * scale).roundToInt()
+    val width  = (120 * scale).roundToInt()
     val height = (148 * scale).roundToInt()
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
-    val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = pinColor
-        style = Paint.Style.FILL
-    }
+    val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = pinColor; style = Paint.Style.FILL }
+    canvas.drawCircle(width / 2f, 52f * scale, 44f * scale, pinPaint)
+    canvas.drawPath(Path().apply {
+        moveTo(width / 2f, 140f * scale); lineTo(30f * scale, 78f * scale); lineTo(90f * scale, 78f * scale); close()
+    }, pinPaint)
 
-    val circleCenterX = width / 2f
-    val circleCenterY = 52f * scale
-    val circleRadius = 44f * scale
-    canvas.drawCircle(circleCenterX, circleCenterY, circleRadius, pinPaint)
-
-    val tipPath = Path().apply {
-        moveTo(width / 2f, 140f * scale)
-        lineTo(30f * scale, 78f * scale)
-        lineTo(90f * scale, 78f * scale)
-        close()
-    }
-    canvas.drawPath(tipPath, pinPaint)
-
-    val emoji = "🚲"
     val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
-        textSize = 46f * scale
-        textAlign = Paint.Align.CENTER
+        color = Color.WHITE; textSize = 46f * scale; textAlign = Paint.Align.CENTER
     }
-    val baselineY = circleCenterY -
-        ((textPaint.fontMetrics.ascent + textPaint.fontMetrics.descent) / 2f) -
-        (2f * scale)
-    canvas.drawText(emoji, circleCenterX, baselineY, textPaint)
+    val baselineY = 52f * scale - ((textPaint.fontMetrics.ascent + textPaint.fontMetrics.descent) / 2f) - (2f * scale)
+    canvas.drawText("🚲", width / 2f, baselineY, textPaint)
 
     return BitmapDrawable(context.resources, bitmap)
 }
@@ -180,86 +279,46 @@ internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Bool
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
-    val outerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = if (isNavigationActive) "#00695C".toColorInt() else "#2196F3".toColorInt()
-        style = Paint.Style.FILL
-    }
-    val outerRadius = if (isNavigationActive) 21f else 15f
-    canvas.drawCircle(size / 2f, size / 2f, outerRadius, outerPaint)
-
+    canvas.drawCircle(size / 2f, size / 2f, if (isNavigationActive) 21f else 15f,
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = if (isNavigationActive) "#00695C".toColorInt() else "#2196F3".toColorInt()
+            style = Paint.Style.FILL
+        })
     if (isNavigationActive) {
-        val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = "#A7FFEB".toColorInt()
-            style = Paint.Style.STROKE
-            strokeWidth = 4f
-        }
-        canvas.drawCircle(size / 2f, size / 2f, 15f, ringPaint)
+        canvas.drawCircle(size / 2f, size / 2f, 15f,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = "#A7FFEB".toColorInt(); style = Paint.Style.STROKE; strokeWidth = 4f
+            })
     }
-
-    val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
-        style = Paint.Style.FILL
-    }
-    canvas.drawCircle(size / 2f, size / 2f, if (isNavigationActive) 8.5f else 7f, innerPaint)
+    canvas.drawCircle(size / 2f, size / 2f, if (isNavigationActive) 8.5f else 7f,
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL })
 
     return BitmapDrawable(context.resources, bitmap)
 }
 
 internal fun createMutedMarkerIcon(
-    context: Context,
-    source: Drawable,
-    scale: Float = 0.84f,
-    alpha: Int = 130,
-    brightenOffset: Float = 34f
+    context: Context, source: Drawable,
+    scale: Float = 0.84f, alpha: Int = 130, brightenOffset: Float = 34f
 ): Drawable {
-    val sourceWidth = source.intrinsicWidth.coerceAtLeast(1)
-    val sourceHeight = source.intrinsicHeight.coerceAtLeast(1)
-    val sourceBitmap = Bitmap.createBitmap(sourceWidth, sourceHeight, Bitmap.Config.ARGB_8888)
-    val sourceCanvas = Canvas(sourceBitmap)
-    val drawable = source.constantState?.newDrawable()?.mutate() ?: source.mutate()
-    drawable.setBounds(0, 0, sourceWidth, sourceHeight)
-    drawable.draw(sourceCanvas)
-
-    val targetWidth = (sourceWidth * scale).roundToInt().coerceAtLeast(1)
-    val targetHeight = (sourceHeight * scale).roundToInt().coerceAtLeast(1)
-    val targetBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-    val targetCanvas = Canvas(targetBitmap)
-    val grayscaleAndBrightenMatrix = ColorMatrix().apply {
+    val sw = source.intrinsicWidth.coerceAtLeast(1)
+    val sh = source.intrinsicHeight.coerceAtLeast(1)
+    val srcBmp = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888)
+    val srcCvs = Canvas(srcBmp)
+    (source.constantState?.newDrawable()?.mutate() ?: source.mutate()).also {
+        it.setBounds(0, 0, sw, sh); it.draw(srcCvs)
+    }
+    val tw = (sw * scale).roundToInt().coerceAtLeast(1)
+    val th = (sh * scale).roundToInt().coerceAtLeast(1)
+    val tgtBmp = Bitmap.createBitmap(tw, th, Bitmap.Config.ARGB_8888)
+    val tgtCvs = Canvas(tgtBmp)
+    val matrix = ColorMatrix().apply {
         setSaturation(0f)
-        postConcat(
-            ColorMatrix(
-                floatArrayOf(
-                    1f, 0f, 0f, 0f, brightenOffset,
-                    0f, 1f, 0f, 0f, brightenOffset,
-                    0f, 0f, 1f, 0f, brightenOffset,
-                    0f, 0f, 0f, 1f, 0f
-                )
-            )
-        )
+        postConcat(ColorMatrix(floatArrayOf(
+            1f,0f,0f,0f,brightenOffset, 0f,1f,0f,0f,brightenOffset,
+            0f,0f,1f,0f,brightenOffset, 0f,0f,0f,1f,0f
+        )))
     }
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        colorFilter = ColorMatrixColorFilter(grayscaleAndBrightenMatrix)
-        this.alpha = alpha
-    }
-
-    targetCanvas.drawBitmap(
-        sourceBitmap,
-        Rect(0, 0, sourceWidth, sourceHeight),
-        Rect(0, 0, targetWidth, targetHeight),
-        paint
-    )
-
-    return BitmapDrawable(context.resources, targetBitmap)
+    tgtCvs.drawBitmap(srcBmp, Rect(0,0,sw,sh), Rect(0,0,tw,th),
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { colorFilter = ColorMatrixColorFilter(matrix); this.alpha = alpha })
+    return BitmapDrawable(context.resources, tgtBmp)
 }
-
-private fun buildSnippet(
-    space: BikeParkingSpace,
-    snippetSpacesFormat: String
-): String = buildString {
-    space.address?.let { append(it) }
-    space.capacity?.let { cap ->
-        if (isNotEmpty()) append(" · ")
-        append(String.format(snippetSpacesFormat, cap))
-    }
-}
-
