@@ -86,5 +86,9 @@
     <string name="error_no_route_found">Nenhuma rota de bicicleta encontrada para este destino.</string>
     <string name="error_route_geometry_empty">Dados de rota incompletos. Tente novamente.</string>
     <string name="error_unknown">Ocorreu um erro inesperado. Tente novamente.</string>
+    <string name="search_placeholder">Pesquisar endereço…</string>
+    <string name="search_no_results">Nenhum resultado encontrado</string>
+    <string name="search_clear">Limpar pesquisa</string>
+    <string name="search_result_pin_title">Endereço</string>
+    <string name="search_navigate_to">Navegar aqui</string>
 </resources>
-

@@ -16,6 +16,7 @@ import androidx.core.graphics.toColorInt
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
+import de.velospot.domain.model.AddressSearchResult
 import kotlin.math.roundToInt
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
@@ -32,13 +33,17 @@ import org.maplibre.geojson.Point
 
 // ── Source / Layer IDs (internal so MainMapScreen can use them for hit-testing) ─
 
-private const val SOURCE_ROUTE    = "velospot-route-source"
-private const val SOURCE_PARKING  = "velospot-parking-source"
-private const val SOURCE_LOCATION = "velospot-location-source"
+private const val SOURCE_ROUTE      = "velospot-route-source"
+private const val SOURCE_PARKING    = "velospot-parking-source"
+private const val SOURCE_LOCATION   = "velospot-location-source"
+private const val SOURCE_SEARCH_PIN = "velospot-search-pin-source"
 
-internal const val LAYER_ROUTE     = "velospot-route-layer"
-internal const val LAYER_PARKING   = "velospot-parking-layer"
-internal const val LAYER_LOCATION  = "velospot-location-layer"
+internal const val LAYER_ROUTE      = "velospot-route-layer"
+internal const val LAYER_PARKING    = "velospot-parking-layer"
+internal const val LAYER_LOCATION   = "velospot-location-layer"
+internal const val LAYER_SEARCH_PIN = "velospot-search-pin-layer"
+
+private const val IMG_SEARCH_PIN    = "vs-search-pin"
 
 /** Feature property key used for click-to-space lookup in the parking layer. */
 internal const val PROP_SPACE_ID = "spaceId"
@@ -101,7 +106,8 @@ internal fun updateMarkers(
     icons: MarkerIconSet,
     state: MarkerRenderState,
     display: MarkerDisplayConfig,
-    route: RouteRenderData
+    route: RouteRenderData,
+    searchPin: AddressSearchResult? = null
 ) {
     val style = map.style ?: return
 
@@ -136,6 +142,20 @@ internal fun updateMarkers(
         else FeatureCollection.fromFeatures(emptyList())
     )
     ensureLocationLayer(style)
+
+    // Search pin (address result)
+    val searchPinGeoJson = if (searchPin != null) {
+        FeatureCollection.fromFeature(
+            Feature.fromGeometry(Point.fromLngLat(searchPin.longitude, searchPin.latitude))
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    if (style.getImage(IMG_SEARCH_PIN) == null) {
+        style.addImage(IMG_SEARCH_PIN, drawableToBitmap(createSearchPinIcon()))
+    }
+    upsertSource(style, SOURCE_SEARCH_PIN, searchPinGeoJson)
+    ensureSearchPinLayer(style)
 }
 
 // ── GeoJSON source upsert ─────────────────────────────────────────────────────
@@ -179,6 +199,17 @@ private fun ensureLocationLayer(style: Style) {
             PropertyFactory.iconImage(Expression.get(PROP_ICON)),
             PropertyFactory.iconAllowOverlap(true),
             PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER)
+        )
+    )
+}
+
+private fun ensureSearchPinLayer(style: Style) {
+    if (style.getLayer(LAYER_SEARCH_PIN) != null) return
+    style.addLayer(
+        SymbolLayer(LAYER_SEARCH_PIN, SOURCE_SEARCH_PIN).withProperties(
+            PropertyFactory.iconImage(IMG_SEARCH_PIN),
+            PropertyFactory.iconAllowOverlap(true),
+            PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
         )
     )
 }
@@ -322,3 +353,47 @@ internal fun createMutedMarkerIcon(
         Paint(Paint.ANTI_ALIAS_FLAG).apply { colorFilter = ColorMatrixColorFilter(matrix); this.alpha = alpha })
     return BitmapDrawable(context.resources, tgtBmp)
 }
+
+/**
+ * A bold red dropped-pin icon used for address search results.
+ * Larger and more prominent than the bike parking markers.
+ */
+internal fun createSearchPinIcon(): Drawable {
+    val width  = 72
+    val height = 96
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    // Shadow
+    val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color   = 0x33000000
+        style   = Paint.Style.FILL
+    }
+    canvas.drawCircle(width / 2f + 3f, 76f, 14f, shadowPaint)
+
+    // Pin body (red circle)
+    val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = "#E53935".toColorInt()
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(width / 2f, 32f, 28f, pinPaint)
+
+    // Pin tip
+    val tipPath = Path().apply {
+        moveTo(width / 2f, 90f)
+        lineTo(width / 2f - 16f, 50f)
+        lineTo(width / 2f + 16f, 50f)
+        close()
+    }
+    canvas.drawPath(tipPath, pinPaint)
+
+    // White inner circle
+    val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(width / 2f, 32f, 14f, innerPaint)
+
+    return BitmapDrawable(null, bitmap)
+}
+

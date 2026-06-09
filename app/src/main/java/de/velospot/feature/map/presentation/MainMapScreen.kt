@@ -3,7 +3,13 @@ package de.velospot.feature.map.presentation
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -14,6 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -24,6 +32,7 @@ import de.velospot.R
 import de.velospot.core.map.NavigationHandler
 import de.velospot.domain.model.BoundingBox
 import kotlin.math.roundToInt
+import android.view.Gravity
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -56,6 +65,10 @@ fun MainMapScreen(
     val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
     val showProfileSheet     by viewModel.showProfileSheet.collectAsStateWithLifecycle()
     val showWifiWarning      by viewModel.showWifiWarning.collectAsStateWithLifecycle()
+    val searchQuery          by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val searchResults        by viewModel.searchResults.collectAsStateWithLifecycle()
+    val isSearching          by viewModel.isSearching.collectAsStateWithLifecycle()
+    val selectedSearchPin    by viewModel.selectedSearchPin.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -131,15 +144,16 @@ fun MainMapScreen(
     LaunchedEffect(
         maplibreMap, uiState, favorites, selectedSpace,
         userLocation, activeNavigation, zoomBucket,
-        normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon
+        normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
+        selectedSearchPin
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         if (uiState is MapUiState.Success) {
             val spaces = (uiState as MapUiState.Success).spaces
             updateMarkers(
-                map     = map,
-                spaces  = spaces,
-                icons   = MarkerIconSet(
+                map       = map,
+                spaces    = spaces,
+                icons     = MarkerIconSet(
                     normal           = normalMarkerIcon,
                     favorite         = favoriteMarkerIcon,
                     selected         = selectedMarkerIcon,
@@ -149,20 +163,21 @@ fun MainMapScreen(
                     mutedSelected    = mutedSelectedMarkerIcon,
                     location         = locationMarkerIcon
                 ),
-                state   = MarkerRenderState(
+                state     = MarkerRenderState(
                     favoriteIds              = favorites,
                     selectedSpaceId          = selectedSpace?.id,
                     activeNavigationSpaceId  = activeNavigation?.destination?.id,
                     userLocation             = userLocation
                 ),
-                display = MarkerDisplayConfig(
+                display   = MarkerDisplayConfig(
                     context = context,
                     labels  = MarkerRenderLabels(myLocationTitle, snippetSpacesFormat)
                 ),
-                route   = RouteRenderData(
+                route     = RouteRenderData(
                     color  = markerStyleConfig.routeColor,
                     points = activeNavigation?.route?.points.orEmpty()
-                )
+                ),
+                searchPin = selectedSearchPin
             )
         }
     }
@@ -184,6 +199,10 @@ fun MainMapScreen(
     DisposableEffect(mapView) {
         mapView.getMapAsync { map ->
             map.setStyle(MAP_STYLE_URL) { _ ->
+                // Compass bottom-left – clear of the search bar (top) and menu card (top-right).
+                map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.START
+                map.uiSettings.setCompassMargins(16, 0, 0, 120)
+
                 // Initial camera position
                 map.moveCamera(
                     CameraUpdateFactory.newCameraPosition(
@@ -262,30 +281,50 @@ fun MainMapScreen(
             onDismissError    = viewModel::clearNavigationError
         )
 
+        // ── Search bar + Menu button – vertically centred in one Row ─────────
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(start = 12.dp, end = 12.dp, top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AddressSearchBar(
+                modifier         = Modifier.weight(1f),
+                query            = searchQuery,
+                results          = searchResults,
+                isSearching      = isSearching,
+                onQueryChange    = viewModel::onSearchQueryChanged,
+                onResultSelected = viewModel::onSearchResultSelected,
+                onClear          = viewModel::onSearchCleared
+            )
+            Spacer(Modifier.width(8.dp))
+            MapMenuCard(
+                state = MapMenuCardState(
+                    favoritesCount     = favorites.size,
+                    isDarkTheme        = isDarkTheme,
+                    currentLanguageFlag = currentLanguageFlag,
+                    isExpanded         = screenUiState.isMenuExpanded,
+                    offlineRoutingUiState = offlineRoutingUiState
+                ),
+                actions = MapMenuCardActions(
+                    onExpand              = screenUiState::expandMenu,
+                    onDismiss             = screenUiState::dismissMenu,
+                    onOpenFavorites       = screenUiState::openFavorites,
+                    onOpenLanguage        = screenUiState::openLanguage,
+                    onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
+                    onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
+                    onOpenProfileSheet    = viewModel::openProfileSheet
+                )
+            )
+        }
+
         when (val offState = offlineRoutingUiState) {
             is OfflineRoutingUiState.Downloading      -> OfflineSetupProgressOverlay(state = offState)
             is OfflineRoutingUiState.DownloadComplete -> OfflineSetupSuccessOverlay()
             else -> Unit
         }
-
-        MapMenuCard(
-            state = MapMenuCardState(
-                favoritesCount     = favorites.size,
-                isDarkTheme        = isDarkTheme,
-                currentLanguageFlag = currentLanguageFlag,
-                isExpanded         = screenUiState.isMenuExpanded,
-                offlineRoutingUiState = offlineRoutingUiState
-            ),
-            actions = MapMenuCardActions(
-                onExpand              = screenUiState::expandMenu,
-                onDismiss             = screenUiState::dismissMenu,
-                onOpenFavorites       = screenUiState::openFavorites,
-                onOpenLanguage        = screenUiState::openLanguage,
-                onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
-                onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
-                onOpenProfileSheet    = viewModel::openProfileSheet
-            )
-        )
 
         MyLocationFab(onClick = requestOrUseLocation)
     }
@@ -345,6 +384,14 @@ fun MainMapScreen(
             onNavigate      = startNavigationHandler,
             isFavorite      = favorites.contains(space.id),
             onToggleFavorite = viewModel::toggleFavorite
+        )
+    }
+
+    selectedSearchPin?.let { pin ->
+        SearchPinSheet(
+            result     = pin,
+            onDismiss  = viewModel::dismissSearchPin,
+            onNavigate = viewModel::startNavigationToAddress
         )
     }
 }

@@ -2,6 +2,7 @@ package de.velospot.feature.map.presentation
 
 import android.content.Context
 import de.velospot.data.brouter.BRouterSegmentManager
+import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingType
@@ -39,12 +40,14 @@ class MapViewModelTest {
 
     private lateinit var mockContext: Context
     private lateinit var mockSegmentManager: BRouterSegmentManager
+    private lateinit var mockNominatimGeocoder: NominatimGeocoder
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         mockContext = mock()
         mockSegmentManager = mock()
+        mockNominatimGeocoder = mock()
 
         // SharedPreferences stub so OfflineRoutingPreferences doesn't crash
         val sharedPrefs = mock<android.content.SharedPreferences>()
@@ -69,11 +72,12 @@ class MapViewModelTest {
         routingRepository: RoutingRepository = FakeRoutingRepository()
     ) = MapViewModel(
         bikeParkingRepository = bikeParkingRepository,
-        favoritesRepository = favoritesRepository,
-        locationRepository = locationRepository,
-        routingRepository = routingRepository,
-        segmentManager = mockSegmentManager,
-        context = mockContext
+        favoritesRepository   = favoritesRepository,
+        locationRepository    = locationRepository,
+        routingRepository     = routingRepository,
+        segmentManager        = mockSegmentManager,
+        nominatimGeocoder     = mockNominatimGeocoder,
+        context               = mockContext
     )
 
     @Test
