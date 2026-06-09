@@ -1,5 +1,7 @@
 package de.velospot.feature.map.presentation
 
+import android.content.Context
+import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingType
@@ -27,15 +29,32 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private lateinit var mockContext: Context
+    private lateinit var mockSegmentManager: BRouterSegmentManager
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        mockContext = mock()
+        mockSegmentManager = mock()
+
+        // SharedPreferences stub so OfflineRoutingPreferences doesn't crash
+        val sharedPrefs = mock<android.content.SharedPreferences>()
+        val editor = mock<android.content.SharedPreferences.Editor>()
+        whenever(mockContext.getSharedPreferences(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(sharedPrefs)
+        whenever(sharedPrefs.getBoolean(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(false)
+        whenever(sharedPrefs.getString(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(null)
+        whenever(sharedPrefs.edit()).thenReturn(editor)
+        whenever(editor.putBoolean(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(editor)
+        whenever(editor.putString(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(editor)
     }
 
     @After
@@ -43,14 +62,25 @@ class MapViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun makeViewModel(
+        bikeParkingRepository: BikeParkingRepository = FakeBikeParkingRepository(),
+        favoritesRepository: FavoritesRepository = FakeFavoritesRepository(),
+        locationRepository: LocationRepository = FakeLocationRepository(),
+        routingRepository: RoutingRepository = FakeRoutingRepository()
+    ) = MapViewModel(
+        bikeParkingRepository = bikeParkingRepository,
+        favoritesRepository = favoritesRepository,
+        locationRepository = locationRepository,
+        routingRepository = routingRepository,
+        segmentManager = mockSegmentManager,
+        context = mockContext
+    )
+
     @Test
     fun `loadParkingSpaces emits success when repository returns data`() = runTest {
         val expected = listOf(sampleSpace(id = "1"), sampleSpace(id = "2"))
-        val viewModel = MapViewModel(
-            bikeParkingRepository = FakeBikeParkingRepository(expected),
-            favoritesRepository = FakeFavoritesRepository(),
-            locationRepository = FakeLocationRepository(),
-            routingRepository = FakeRoutingRepository()
+        val viewModel = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(expected)
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -63,11 +93,9 @@ class MapViewModelTest {
     @Test
     fun `toggleFavorite adds then removes favorite`() = runTest {
         val favoritesRepository = FakeFavoritesRepository()
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
-            favoritesRepository = favoritesRepository,
-            locationRepository = FakeLocationRepository(),
-            routingRepository = FakeRoutingRepository()
+            favoritesRepository = favoritesRepository
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -86,11 +114,9 @@ class MapViewModelTest {
         val locationRepository = FakeLocationRepository(
             initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
         )
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
-            favoritesRepository = FakeFavoritesRepository(),
-            locationRepository = locationRepository,
-            routingRepository = FakeRoutingRepository()
+            locationRepository = locationRepository
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -108,11 +134,9 @@ class MapViewModelTest {
     @Test
     fun `onLocationPermissionGranted starts location updates`() = runTest {
         val locationRepository = FakeLocationRepository()
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
-            favoritesRepository = FakeFavoritesRepository(),
-            locationRepository = locationRepository,
-            routingRepository = FakeRoutingRepository()
+            locationRepository = locationRepository
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -134,9 +158,8 @@ class MapViewModelTest {
             distanceMeters = 1200.0,
             durationSeconds = 420.0
         )
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
-            favoritesRepository = FakeFavoritesRepository(),
             locationRepository = FakeLocationRepository(
                 initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
             ),
@@ -158,11 +181,9 @@ class MapViewModelTest {
 
     @Test
     fun `startInAppNavigation emits error when location is missing`() = runTest {
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
-            favoritesRepository = FakeFavoritesRepository(),
-            locationRepository = FakeLocationRepository(initialLocation = null),
-            routingRepository = FakeRoutingRepository()
+            locationRepository = FakeLocationRepository(initialLocation = null)
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -175,11 +196,8 @@ class MapViewModelTest {
 
     @Test
     fun `loadParkingSpaces maps database failures to Unknown error`() = runTest {
-        val viewModel = MapViewModel(
-            bikeParkingRepository = FakeBikeParkingRepository(error = RuntimeException("DB read failed")),
-            favoritesRepository = FakeFavoritesRepository(),
-            locationRepository = FakeLocationRepository(),
-            routingRepository = FakeRoutingRepository()
+        val viewModel = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(error = RuntimeException("DB read failed"))
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -192,9 +210,8 @@ class MapViewModelTest {
     @Test
     fun `startInAppNavigation maps RoutingFailedException to RoutingFailed error`() = runTest {
         val destination = sampleSpace(id = "target")
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
-            favoritesRepository = FakeFavoritesRepository(),
             locationRepository = FakeLocationRepository(
                 initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
             ),
@@ -213,9 +230,8 @@ class MapViewModelTest {
     @Test
     fun `startInAppNavigation maps NoRouteFoundException to NoRouteFound error`() = runTest {
         val destination = sampleSpace(id = "target")
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
-            favoritesRepository = FakeFavoritesRepository(),
             locationRepository = FakeLocationRepository(
                 initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
             ),
@@ -234,9 +250,8 @@ class MapViewModelTest {
     @Test
     fun `startInAppNavigation maps EmptyRouteGeometryException to EmptyRouteGeometry error`() = runTest {
         val destination = sampleSpace(id = "target")
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
-            favoritesRepository = FakeFavoritesRepository(),
             locationRepository = FakeLocationRepository(
                 initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
             ),
@@ -256,9 +271,8 @@ class MapViewModelTest {
     fun `startInAppNavigation forwards correct from and to coordinates to routing repository`() = runTest {
         val destination = sampleSpace(id = "target")
         val routingRepository = FakeRoutingRepository()
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
-            favoritesRepository = FakeFavoritesRepository(),
             locationRepository = FakeLocationRepository(
                 initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
             ),
@@ -279,13 +293,11 @@ class MapViewModelTest {
     @Test
     fun `stopInAppNavigation resets state to idle from active`() = runTest {
         val destination = sampleSpace(id = "target")
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
-            favoritesRepository = FakeFavoritesRepository(),
             locationRepository = FakeLocationRepository(
                 initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
-            ),
-            routingRepository = FakeRoutingRepository()
+            )
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -299,11 +311,9 @@ class MapViewModelTest {
 
     @Test
     fun `clearNavigationError clears error state only`() = runTest {
-        val viewModel = MapViewModel(
+        val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
-            favoritesRepository = FakeFavoritesRepository(),
-            locationRepository = FakeLocationRepository(initialLocation = null),
-            routingRepository = FakeRoutingRepository()
+            locationRepository = FakeLocationRepository(initialLocation = null)
         )
 
         testDispatcher.scheduler.advanceUntilIdle()

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces anywhere in Germany. 100 000+ locations from OpenStreetMap, fully offline, with in-app bike routing, favorites, live location tools, and multilingual support.">
-    <meta name="keywords" content="bike parking, Germany, Deutschland, cycling, map, Android, OpenStreetMap, OSM, offline, in-app navigation, osmdroid, favorites, dark mode, room, nominatim, multilingual">
+    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces anywhere in Germany. 100 000+ locations from OpenStreetMap, fully offline, with BRouter on-device bike routing, 5 cycling profiles, favorites, live location tools, and multilingual support.">
+    <meta name="keywords" content="bike parking, Germany, Deutschland, cycling, map, Android, OpenStreetMap, OSM, offline, in-app navigation, BRouter, offline routing, osmdroid, favorites, dark mode, room, nominatim, multilingual">
     <title>VeloSpot - Bike Parking Finder for Germany</title>
     <style>
         * {
@@ -462,7 +462,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1>🇩🇪 Bike Parking across All of Germany</h1>
-            <p>100 000+ parking locations from OpenStreetMap — bundled offline, available instantly, anywhere in Germany. Favorites, in-app bike navigation, dark mode, and 8 languages included.</p>
+            <p>100 000+ parking locations from OpenStreetMap — bundled offline, available instantly, anywhere in Germany. BRouter on-device routing, 5 cycling profiles, favorites, dark mode, and 8 languages included.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">View on GitHub</a>
                 <a href="#download" class="btn btn-secondary">Get Started</a>
@@ -521,6 +521,11 @@
                     <p>Calculate bike routes directly inside the app and follow a live route overlay without switching to an external map app.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>BRouter Offline Routing</h3>
+                    <p>Routes calculated entirely on-device via the embedded BRouter engine — no internet needed after the one-time ~200–250 MB segment download. Choose from 5 cycling profiles: Trekking, Fast, Shortest, MTB, and Gravel.</p>
+                </div>
+                <div class="feature-card">
                     <div class="feature-icon">👁️</div>
                     <h3>Navigation Focus</h3>
                     <p>While navigation is active, non-destination markers appear smaller, lighter gray, and more transparent so your target stands out.</p>
@@ -541,6 +546,8 @@
                 <div class="tech-badge">Retrofit + Moshi</div>
                 <div class="tech-badge">OSMDroid</div>
                 <div class="tech-badge">Room / SQLite Asset</div>
+                <div class="tech-badge">BRouter Offline Engine</div>
+                <div class="tech-badge">OSRM Online Fallback</div>
                 <div class="tech-badge">Nominatim Geocoding</div>
                 <div class="tech-badge">Play Services Location</div>
                 <div class="tech-badge">pyosmium Pipeline</div>
@@ -563,7 +570,9 @@
                         <li>Addresses resolved via Nominatim on first tap, cached permanently</li>
                         <li>Favorite spots highlighted with red map markers</li>
                         <li>Dedicated favorites sheet with direct navigation</li>
-                        <li>In-app bike route overlay with distance/time status card</li>
+                        <li>BRouter offline routing — on-device, no internet after setup</li>
+                        <li>5 cycling profiles: Trekking, Fast, Shortest, MTB, Gravel</li>
+                        <li>In-app bike route overlay with hours + minutes travel time</li>
                         <li>Navigation focus mode with dimmed non-target markers</li>
                         <li>Location recenter button and current-position marker</li>
                         <li>Dark mode toggle directly in the map menu</li>
@@ -574,7 +583,7 @@
                     <div style="background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%); border-radius: 10px; color: white; padding: 40px; text-align: center;">
                         <div style="font-size: 60px; margin-bottom: 20px;">🇩🇪</div>
                         <p style="font-size: 18px; margin-bottom: 10px;"><strong>100 000+ Locations · Fully Offline</strong></p>
-                        <p>OpenStreetMap · Room Asset DB · Nominatim · OSRM Routing</p>
+                        <p>OpenStreetMap · Room Asset DB · Nominatim · BRouter Offline Routing · OSRM Fallback</p>
                     </div>
                 </div>
             </div>
@@ -630,7 +639,7 @@
     <section class="cta-section" id="download">
         <div class="cta-content">
             <h2>Ready to Cycle Anywhere in Germany?</h2>
-            <p>Clone the project, build the Android app, and enjoy 100 000+ parking spots offline — plus in-app navigation, favorites, multilingual support, and dark mode.</p>
+            <p>Clone the project, build the Android app, and enjoy 100 000+ parking spots offline — plus BRouter on-device routing, 5 cycling profiles, favorites, multilingual support, and dark mode.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">Clone Repository</a>
                 <a href="https://github.com/drzeeb/VeloSpot#getting-started" class="btn btn-secondary">View Documentation</a>

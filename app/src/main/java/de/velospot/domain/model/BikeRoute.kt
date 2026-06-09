@@ -8,6 +8,7 @@ data class RoutePoint(
 data class BikeRoute(
     val points: List<RoutePoint>,
     val distanceMeters: Double,
-    val durationSeconds: Double
+    val durationSeconds: Double,
+    val source: RoutingSource = RoutingSource.OSRM_ONLINE
 )
 

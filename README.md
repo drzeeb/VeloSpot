@@ -45,6 +45,7 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
 - **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
+- **🆕 BRouter offline routing** — routes calculated entirely on-device with 5 cycling profiles; no internet needed after the one-time segment download
 
 ## 🌟 Features
 
