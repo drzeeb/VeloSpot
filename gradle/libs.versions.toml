@@ -16,6 +16,7 @@ retrofit = "3.0.0"
 moshi = "1.15.2"
 okhttp = "5.3.2"
 osmdroid = "6.1.20"
+maplibre = "11.5.2"
 room = "2.8.4"
 playServicesLocation = "21.3.0"
 accompanistPermissions = "0.37.3"
@@ -54,6 +55,7 @@ retrofitConverterMoshi = { group = "com.squareup.retrofit2", name = "converter-m
 moshiKotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
 okhttpLoggingInterceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 osmdroidAndroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
+maplibreAndroid = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
 roomRuntime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 roomKtx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 roomCompiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }

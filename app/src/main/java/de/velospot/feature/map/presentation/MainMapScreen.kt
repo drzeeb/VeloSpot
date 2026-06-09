@@ -10,6 +10,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -23,13 +24,17 @@ import de.velospot.R
 import de.velospot.core.map.NavigationHandler
 import de.velospot.domain.model.BoundingBox
 import kotlin.math.roundToInt
-import org.osmdroid.events.MapListener
-import org.osmdroid.events.ScrollEvent
-import org.osmdroid.events.ZoomEvent
-import org.osmdroid.util.GeoPoint
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
 
-private const val TRIER_LAT = 49.7596
-private const val TRIER_LON = 6.6441
+// Free vector tile style from OpenFreeMap – no API key required.
+// Switch to any other MapLibre-compatible style URL here.
+private const val MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
+
+private const val TRIER_LAT   = 49.7596
+private const val TRIER_LON   = 6.6441
 private const val DEFAULT_ZOOM = 14.0
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,36 +45,38 @@ fun MainMapScreen(
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val selectedSpace by viewModel.selectedSpace.collectAsStateWithLifecycle()
-    val favorites by viewModel.favorites.collectAsStateWithLifecycle()
-    val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
-    val favoriteSpaces by viewModel.favoriteSpaces.collectAsStateWithLifecycle()
-    val mapCameraTarget by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
-    val navigationUiState by viewModel.navigationUiState.collectAsStateWithLifecycle()
+    val uiState              by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedSpace        by viewModel.selectedSpace.collectAsStateWithLifecycle()
+    val favorites            by viewModel.favorites.collectAsStateWithLifecycle()
+    val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
+    val favoriteSpaces       by viewModel.favoriteSpaces.collectAsStateWithLifecycle()
+    val mapCameraTarget      by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
+    val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
     val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
-    val showProfileSheet by viewModel.showProfileSheet.collectAsStateWithLifecycle()
-    val showWifiWarning by viewModel.showWifiWarning.collectAsStateWithLifecycle()
+    val showProfileSheet     by viewModel.showProfileSheet.collectAsStateWithLifecycle()
+    val showWifiWarning      by viewModel.showWifiWarning.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
-    val mapView = rememberMapViewWithLifecycle()
+    val mapView       = rememberMapViewWithLifecycle()
     val screenUiState = rememberMapScreenUiState()
-    var zoomBucket by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
     val markerStyleConfig = remember { defaultMarkerStyleConfig() }
 
+    // The MapLibreMap is provided asynchronously via getMapAsync.
+    // Using mutableStateOf triggers recomposition so LaunchedEffects below fire.
+    var maplibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
+    var zoomBucket  by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
+
+    // ── Permission handling ───────────────────────────────────────────────────
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        if (permissions.any { it.value }) {
-            viewModel.onLocationPermissionGranted()
-        }
+        if (permissions.any { it.value }) viewModel.onLocationPermissionGranted()
     }
-
     val requestOrUseLocation: () -> Unit = {
         requestLocationAccessIfNeeded(
-            context = context,
+            context       = context,
             onPermissionGranted = {
                 viewModel.onLocationPermissionGranted()
                 viewModel.centerMapOnUserLocation()
@@ -77,101 +84,155 @@ fun MainMapScreen(
             requestPermissions = permissionLauncher::launch
         )
     }
-
     LaunchedEffect(Unit) {
         requestLocationAccessIfNeeded(
-            context = context,
+            context            = context,
             onPermissionGranted = viewModel::onLocationPermissionGranted,
-            requestPermissions = permissionLauncher::launch
+            requestPermissions  = permissionLauncher::launch
         )
     }
 
-    DisposableEffect(mapView) {
-        val listener = object : MapListener {
-            override fun onScroll(event: ScrollEvent?): Boolean {
-                // Report the new visible bounding box so the ViewModel can load nearby spots.
-                val bbox = mapView.boundingBox
-                viewModel.onViewportChanged(
-                    BoundingBox(
-                        minLat = bbox.latSouth,
-                        minLon = bbox.lonWest,
-                        maxLat = bbox.latNorth,
-                        maxLon = bbox.lonEast
-                    )
-                )
-                return false
-            }
-
-            override fun onZoom(event: ZoomEvent?): Boolean {
-                val nextZoomBucket = (event?.zoomLevel ?: mapView.zoomLevelDouble).roundToInt()
-                if (nextZoomBucket != zoomBucket) {
-                    zoomBucket = nextZoomBucket
-                }
-                // Also reload for the new viewport after zooming.
-                val bbox = mapView.boundingBox
-                viewModel.onViewportChanged(
-                    BoundingBox(
-                        minLat = bbox.latSouth,
-                        minLon = bbox.lonWest,
-                        maxLat = bbox.latNorth,
-                        maxLon = bbox.lonEast
-                    )
-                )
-                return false
-            }
-        }
-        mapView.addMapListener(listener)
-        onDispose {
-            mapView.removeMapListener(listener)
-        }
-    }
-
-    remember(mapView) {
-        mapView.controller.apply {
-            setZoom(DEFAULT_ZOOM)
-            setCenter(GeoPoint(TRIER_LAT, TRIER_LON))
-        }
-    }
-
+    // ── Pre-compute icons (zoom-dependent) ───────────────────────────────────
     val normalMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.normalPinColor)
+        createBikeMarkerIcon(context, zoomBucket, markerStyleConfig.normalPinColor)
     }
     val favoriteMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.favoritePinColor)
+        createBikeMarkerIcon(context, zoomBucket, markerStyleConfig.favoritePinColor)
     }
     val selectedMarkerIcon = remember(context, zoomBucket) {
-        createBikeMarkerIcon(context, zoomBucket, pinColor = markerStyleConfig.selectedPinColor)
+        createBikeMarkerIcon(context, zoomBucket, markerStyleConfig.selectedPinColor)
     }
     val mutedNormalMarkerIcon = remember(context, zoomBucket) {
-        createMutedMarkerIcon(
-            context = context,
-            source = normalMarkerIcon,
-            scale = markerStyleConfig.mutedScale,
-            alpha = markerStyleConfig.mutedAlpha,
-            brightenOffset = markerStyleConfig.mutedBrightenOffset
-        )
+        createMutedMarkerIcon(context, normalMarkerIcon, markerStyleConfig.mutedScale,
+            markerStyleConfig.mutedAlpha, markerStyleConfig.mutedBrightenOffset)
     }
     val mutedFavoriteMarkerIcon = remember(context, zoomBucket) {
-        createMutedMarkerIcon(
-            context = context,
-            source = favoriteMarkerIcon,
-            scale = markerStyleConfig.mutedScale,
-            alpha = markerStyleConfig.mutedAlpha,
-            brightenOffset = markerStyleConfig.mutedBrightenOffset
-        )
+        createMutedMarkerIcon(context, favoriteMarkerIcon, markerStyleConfig.mutedScale,
+            markerStyleConfig.mutedAlpha, markerStyleConfig.mutedBrightenOffset)
     }
     val mutedSelectedMarkerIcon = remember(context, zoomBucket) {
-        createMutedMarkerIcon(
-            context = context,
-            source = selectedMarkerIcon,
-            scale = markerStyleConfig.mutedScale,
-            alpha = markerStyleConfig.mutedAlpha,
-            brightenOffset = markerStyleConfig.mutedBrightenOffset
-        )
+        createMutedMarkerIcon(context, selectedMarkerIcon, markerStyleConfig.mutedScale,
+            markerStyleConfig.mutedAlpha, markerStyleConfig.mutedBrightenOffset)
     }
     val locationMarkerIcon = remember(context, activeNavigation != null) {
         createLocationMarkerIcon(context, isNavigationActive = activeNavigation != null)
     }
+
+    // ── Language helpers ──────────────────────────────────────────────────────
+    val configuration        = LocalConfiguration.current
+    val currentLanguageCode  = remember(configuration) {
+        resolveCurrentLanguageCode(context, configuration.locales.get(0)?.language.orEmpty())
+    }
+    val currentLanguageFlag  = languageFlagForCode(currentLanguageCode)
+    val myLocationTitle      = stringResource(R.string.map_my_location)
+    val snippetSpacesFormat  = stringResource(R.string.map_snippet_spaces_format)
+
+    // ── Marker update whenever relevant state changes ─────────────────────────
+    LaunchedEffect(
+        maplibreMap, uiState, favorites, selectedSpace,
+        userLocation, activeNavigation, zoomBucket,
+        normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon
+    ) {
+        val map = maplibreMap ?: return@LaunchedEffect
+        if (uiState is MapUiState.Success) {
+            val spaces = (uiState as MapUiState.Success).spaces
+            updateMarkers(
+                map     = map,
+                spaces  = spaces,
+                icons   = MarkerIconSet(
+                    normal           = normalMarkerIcon,
+                    favorite         = favoriteMarkerIcon,
+                    selected         = selectedMarkerIcon,
+                    activeNavigation = selectedMarkerIcon,
+                    mutedNormal      = mutedNormalMarkerIcon,
+                    mutedFavorite    = mutedFavoriteMarkerIcon,
+                    mutedSelected    = mutedSelectedMarkerIcon,
+                    location         = locationMarkerIcon
+                ),
+                state   = MarkerRenderState(
+                    favoriteIds              = favorites,
+                    selectedSpaceId          = selectedSpace?.id,
+                    activeNavigationSpaceId  = activeNavigation?.destination?.id,
+                    userLocation             = userLocation
+                ),
+                display = MarkerDisplayConfig(
+                    context = context,
+                    labels  = MarkerRenderLabels(myLocationTitle, snippetSpacesFormat)
+                ),
+                route   = RouteRenderData(
+                    color  = markerStyleConfig.routeColor,
+                    points = activeNavigation?.route?.points.orEmpty()
+                )
+            )
+        }
+    }
+
+    // ── Camera animation ──────────────────────────────────────────────────────
+    LaunchedEffect(mapCameraTarget, maplibreMap) {
+        val target = mapCameraTarget ?: return@LaunchedEffect
+        val map    = maplibreMap    ?: return@LaunchedEffect
+        animateMapCameraToTarget(map = map, cameraTarget = target)
+        viewModel.onMapCameraTargetHandled()
+    }
+
+    // ── Map initialisation (runs once when mapView is created) ────────────────
+    // We keep a stable reference to spacesProvider so getMapAsync doesn't
+    // capture a stale uiState snapshot.
+    val uiStateRef = remember { mutableStateOf(uiState) }
+    LaunchedEffect(uiState) { uiStateRef.value = uiState }
+
+    DisposableEffect(mapView) {
+        mapView.getMapAsync { map ->
+            map.setStyle(MAP_STYLE_URL) { _ ->
+                // Initial camera position
+                map.moveCamera(
+                    CameraUpdateFactory.newCameraPosition(
+                        CameraPosition.Builder()
+                            .target(LatLng(TRIER_LAT, TRIER_LON))
+                            .zoom(DEFAULT_ZOOM)
+                            .build()
+                    )
+                )
+
+                // Viewport → load nearby spots when camera comes to rest
+                map.addOnCameraIdleListener {
+                    val bounds = map.projection.visibleRegion.latLngBounds
+                    val sw = bounds.southWest
+                    val ne = bounds.northEast
+                    viewModel.onViewportChanged(
+                        BoundingBox(
+                            minLat = sw.latitude,
+                            minLon = sw.longitude,
+                            maxLat = ne.latitude,
+                            maxLon = ne.longitude
+                        )
+                    )
+                }
+
+                // Zoom bucket tracking (for icon size)
+                map.addOnCameraMoveListener {
+                    val next = map.cameraPosition.zoom.roundToInt()
+                    if (next != zoomBucket) zoomBucket = next
+                }
+
+                // Click → find the parking spot whose GeoJSON feature was tapped
+                map.addOnMapClickListener { latLng ->
+                    val screenPoint = map.projection.toScreenLocation(latLng)
+                    val features    = map.queryRenderedFeatures(screenPoint, LAYER_PARKING)
+                    val spaceId     = features.firstOrNull()?.getStringProperty(PROP_SPACE_ID)
+                    val spaces      = (uiStateRef.value as? MapUiState.Success)?.spaces.orEmpty()
+                    val clicked     = spaces.find { it.id == spaceId }
+                    if (clicked != null) { viewModel.selectSpace(clicked); true } else false
+                }
+
+                // Signal Compose that the map is ready → triggers LaunchedEffects above
+                maplibreMap = map
+            }
+        }
+        onDispose { maplibreMap = null }
+    }
+
+    // ── Navigation handlers ───────────────────────────────────────────────────
     val startNavigationHandler: NavigationHandler = remember(viewModel) {
         { space ->
             screenUiState.closeFavorites()
@@ -185,114 +246,58 @@ fun MainMapScreen(
             viewModel.selectSpace(space)
         }
     }
-    val myLocationTitle = stringResource(id = R.string.map_my_location)
-    val snippetSpacesFormat = stringResource(id = R.string.map_snippet_spaces_format)
-    val configuration = LocalConfiguration.current
-    val currentLanguageCode = remember(configuration) {
-        resolveCurrentLanguageCode(
-            context = context,
-            fallbackLanguage = configuration.locales.get(0)?.language.orEmpty()
-        )
-    }
-    val currentLanguageFlag = languageFlagForCode(currentLanguageCode)
 
-    LaunchedEffect(mapCameraTarget) {
-        val cameraTarget = mapCameraTarget ?: return@LaunchedEffect
-        animateMapCameraToTarget(mapView = mapView, cameraTarget = cameraTarget)
-        viewModel.onMapCameraTargetHandled()
-    }
-
+    // ── UI layout ─────────────────────────────────────────────────────────────
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
-            factory = { mapView },
-            modifier = Modifier.fillMaxSize(),
-            update = { map ->
-                if (uiState is MapUiState.Success) {
-                    val spaces = (uiState as MapUiState.Success).spaces
-                    updateMarkers(
-                        map = map,
-                        spaces = spaces,
-                        icons = MarkerIconSet(
-                            normal = normalMarkerIcon,
-                            favorite = favoriteMarkerIcon,
-                            selected = selectedMarkerIcon,
-                            activeNavigation = selectedMarkerIcon,
-                            mutedNormal = mutedNormalMarkerIcon,
-                            mutedFavorite = mutedFavoriteMarkerIcon,
-                            mutedSelected = mutedSelectedMarkerIcon,
-                            location = locationMarkerIcon
-                        ),
-                        state = MarkerRenderState(
-                            favoriteIds = favorites,
-                            selectedSpaceId = selectedSpace?.id,
-                            activeNavigationSpaceId = activeNavigation?.destination?.id,
-                            userLocation = userLocation
-                        ),
-                        display = MarkerDisplayConfig(
-                            context = context,
-                            labels = MarkerRenderLabels(
-                                myLocationTitle = myLocationTitle,
-                                snippetSpacesFormat = snippetSpacesFormat
-                            )
-                        ),
-                        route = RouteRenderData(
-                            color = markerStyleConfig.routeColor,
-                            points = activeNavigation?.route?.points.orEmpty()
-                        ),
-                        onMarkerClick = viewModel::selectSpace
-                    )
-                }
-            }
+            factory  = { mapView },
+            modifier = Modifier.fillMaxSize()
+            // No update block needed – all updates go through LaunchedEffect above.
         )
 
         MapStatusOverlay(uiState = uiState)
         MapNavigationOverlay(
             navigationUiState = navigationUiState,
-            onStopNavigation = viewModel::stopInAppNavigation,
-            onDismissError = viewModel::clearNavigationError
+            onStopNavigation  = viewModel::stopInAppNavigation,
+            onDismissError    = viewModel::clearNavigationError
         )
 
-        // Show download progress / success when activating offline routing
         when (val offState = offlineRoutingUiState) {
-            is OfflineRoutingUiState.Downloading     -> OfflineSetupProgressOverlay(state = offState)
+            is OfflineRoutingUiState.Downloading      -> OfflineSetupProgressOverlay(state = offState)
             is OfflineRoutingUiState.DownloadComplete -> OfflineSetupSuccessOverlay()
             else -> Unit
         }
 
         MapMenuCard(
             state = MapMenuCardState(
-                favoritesCount = favorites.size,
-                isDarkTheme = isDarkTheme,
+                favoritesCount     = favorites.size,
+                isDarkTheme        = isDarkTheme,
                 currentLanguageFlag = currentLanguageFlag,
-                isExpanded = screenUiState.isMenuExpanded,
+                isExpanded         = screenUiState.isMenuExpanded,
                 offlineRoutingUiState = offlineRoutingUiState
             ),
             actions = MapMenuCardActions(
-                onExpand = screenUiState::expandMenu,
-                onDismiss = screenUiState::dismissMenu,
-                onOpenFavorites = screenUiState::openFavorites,
-                onOpenLanguage = screenUiState::openLanguage,
-                onToggleDarkMode = {
-                    onDarkThemeToggle()
-                    screenUiState.dismissMenu()
-                },
+                onExpand              = screenUiState::expandMenu,
+                onDismiss             = screenUiState::dismissMenu,
+                onOpenFavorites       = screenUiState::openFavorites,
+                onOpenLanguage        = screenUiState::openLanguage,
+                onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
                 onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
-                onOpenProfileSheet = viewModel::openProfileSheet
+                onOpenProfileSheet    = viewModel::openProfileSheet
             )
         )
 
         MyLocationFab(onClick = requestOrUseLocation)
     }
 
+    // ── Bottom sheets ─────────────────────────────────────────────────────────
     if (screenUiState.isFavoritesSheetVisible) {
         FavoritesSheet(
-            // Use dedicated favoriteSpaces so the sheet always shows all favorites,
-            // even if they currently lie outside the visible map viewport.
-            spaces = favoriteSpaces,
-            favoriteIds = favorites,
-            onDismiss = screenUiState::closeFavorites,
+            spaces          = favoriteSpaces,
+            favoriteIds     = favorites,
+            onDismiss       = screenUiState::closeFavorites,
             onStartNavigation = startNavigationHandler,
-            onShowDetails = showDetailsHandler,
+            onShowDetails   = showDetailsHandler,
             onToggleFavorite = viewModel::toggleFavorite
         )
     }
@@ -300,15 +305,14 @@ fun MainMapScreen(
     if (screenUiState.isLanguageSheetVisible) {
         LanguageSheet(
             currentLanguageCode = currentLanguageCode,
-            onDismiss = screenUiState::closeLanguage,
-            onSelectLanguage = { languageCode ->
+            onDismiss           = screenUiState::closeLanguage,
+            onSelectLanguage    = { languageCode ->
                 applyLanguageSelection(context, languageCode)
                 screenUiState.closeLanguage()
             }
         )
     }
 
-    // Offline routing sheets
     if (showOfflineSetupSheet) {
         OfflineRoutingSetupSheet(
             onConfirm = viewModel::confirmOfflineRoutingSetup,
@@ -327,22 +331,21 @@ fun MainMapScreen(
         val currentProfile = (offlineRoutingUiState as? OfflineRoutingUiState.Enabled)?.profile
             ?: de.velospot.data.brouter.BRouterProfile.TREKKING
         RoutingProfileSheet(
-            currentProfile = currentProfile,
-            onSelectProfile = viewModel::selectRoutingProfile,
-            onDismiss = viewModel::dismissProfileSheet,
+            currentProfile         = currentProfile,
+            onSelectProfile        = viewModel::selectRoutingProfile,
+            onDismiss              = viewModel::dismissProfileSheet,
             onDisableOfflineRouting = viewModel::disableOfflineRouting
         )
     }
 
     selectedSpace?.let { space ->
         SelectedSpaceSheet(
-            space = space,
-            onDismiss = { viewModel.selectSpace(null) },
-            onNavigate = startNavigationHandler,
-            isFavorite = favorites.contains(space.id),
+            space           = space,
+            onDismiss       = { viewModel.selectSpace(null) },
+            onNavigate      = startNavigationHandler,
+            isFavorite      = favorites.contains(space.id),
             onToggleFavorite = viewModel::toggleFavorite
         )
     }
 }
-
 

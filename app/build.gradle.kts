@@ -82,7 +82,7 @@ dependencies {
     implementation(libs.moshiKotlin)
     implementation(libs.okhttpLoggingInterceptor)
 
-    implementation(libs.osmdroidAndroid)
+    implementation(libs.maplibreAndroid)
 
     // Room Database
     implementation(libs.roomRuntime)
@@ -103,5 +103,3 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
-
-
