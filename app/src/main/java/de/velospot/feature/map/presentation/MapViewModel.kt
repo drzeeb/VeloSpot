@@ -107,8 +107,15 @@ class MapViewModel @Inject constructor(
     private val _selectedSearchPin = MutableStateFlow<AddressSearchResult?>(null)
     val selectedSearchPin: StateFlow<AddressSearchResult?> = _selectedSearchPin.asStateFlow()
 
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
+    /** A freely placed pin set by tapping on an empty map location. */
+    private val _customMapPin = MutableStateFlow<GeoCoordinate?>(null)
+    val customMapPin: StateFlow<GeoCoordinate?> = _customMapPin.asStateFlow()
+
+    /** Resolved address for the current custom pin (null while loading or unavailable). */
+    private val _customMapPinAddress = MutableStateFlow<String?>(null)
+    val customMapPinAddress: StateFlow<String?> = _customMapPinAddress.asStateFlow()
+
+    fun onSearchQueryChanged(query: String) {        _searchQuery.value = query
         searchJob?.cancel()
         if (query.length < SEARCH_MIN_CHARS) {
             _searchResults.value = emptyList()
@@ -131,10 +138,58 @@ class MapViewModel @Inject constructor(
     }
 
     /**
+     * Called when the user taps on an empty map location.
+     * Places a custom pin there and dismisses any open space/search-pin sheets.
+     */
+    fun onMapTapped(lat: Double, lon: Double) {
+        _selectedSpace.value     = null
+        _selectedSearchPin.value = null
+        _customMapPin.value      = GeoCoordinate(lat, lon)
+        _customMapPinAddress.value = null   // reset while new address loads
+        _mapCameraTarget.value   = MapCameraTarget(
+            latitude               = lat,
+            longitude              = lon,
+            zoom                   = 15.0,
+            verticalOffsetFraction = 1.0 / 6.0
+        )
+        viewModelScope.launch {
+            _customMapPinAddress.value = nominatimGeocoder.reverseGeocode(lat, lon)
+        }
+    }
+
+    fun dismissCustomMapPin() {
+        _customMapPin.value        = null
+        _customMapPinAddress.value = null
+    }
+
+    /** Starts in-app navigation to the freely placed custom pin. */
+    fun startNavigationToCustomPin() {
+        val pin     = _customMapPin.value ?: return
+        val address = _customMapPinAddress.value
+        // Pin stays on the map so the route end-point remains visible during navigation.
+        val syntheticSpace = BikeParkingSpace(
+            id          = "custom_map_pin",
+            latitude    = pin.latitude,
+            longitude   = pin.longitude,
+            type        = BikeParkingType.UNKNOWN,
+            capacity    = null,
+            name        = address?.substringBefore(",")?.trim()
+                            ?: context.getString(de.velospot.R.string.custom_pin_title),
+            address     = address,
+            isCovered   = null,
+            imageUrl    = null,
+            operator    = null,
+            sourceLayer = "custom"
+        )
+        startInAppNavigation(syntheticSpace)
+    }
+
+    /**
      * Drops a pin at [result], animates the camera there, and opens the detail sheet.
      * Collapses the search dropdown but keeps the pin visible until dismissed.
      */
     fun onSearchResultSelected(result: AddressSearchResult) {
+        _customMapPin.value      = null
         _selectedSearchPin.value = result
         _searchResults.value     = emptyList()   // collapse dropdown
         _mapCameraTarget.value   = MapCameraTarget(
@@ -224,6 +279,8 @@ class MapViewModel @Inject constructor(
     fun selectSpace(space: BikeParkingSpace?) {
         _selectedSpace.update { space }
         if (space != null) {
+            _customMapPin.value    = null
+            _selectedSearchPin.value = null
             _mapCameraTarget.value = MapCameraTarget(
                 latitude = space.latitude, longitude = space.longitude,
                 zoom = 16.5, verticalOffsetFraction = 1.0 / 6.0
@@ -305,7 +362,16 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun stopInAppNavigation()  { _navigationUiState.value = NavigationUiState.Idle }
+    fun stopInAppNavigation() {
+        val wasCustomPin = (_navigationUiState.value as? NavigationUiState.Active)
+            ?.destination?.id == "custom_map_pin"
+        _navigationUiState.value = NavigationUiState.Idle
+        if (wasCustomPin) {
+            _customMapPin.value        = null
+            _customMapPinAddress.value = null
+        }
+    }
+
     fun clearNavigationError() { if (_navigationUiState.value is NavigationUiState.Error) _navigationUiState.value = NavigationUiState.Idle }
 
     // ── Offline routing ───────────────────────────────────────────────────────

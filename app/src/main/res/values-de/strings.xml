@@ -91,4 +91,10 @@
     <string name="search_clear">Suche löschen</string>
     <string name="search_result_pin_title">Adresse</string>
     <string name="search_navigate_to">Hierhin navigieren</string>
+
+    <!-- Custom map pin (Tipp auf leere Kartenstelle) -->
+    <string name="custom_pin_title">Markierter Ort</string>
+    <string name="custom_pin_subtitle">Tippe auf die Karte, um den Pin zu verschieben.</string>
+    <string name="custom_pin_navigate">Hierhin navigieren</string>
+    <string name="custom_pin_remove">Pin entfernen</string>
 </resources>
