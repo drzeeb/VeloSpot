@@ -22,7 +22,7 @@ accompanistPermissions = "0.37.3"
 coroutines = "1.11.0"
 ksp = "2.3.9"
 coil = "2.7.0"
-mockitoCore = "5.11.0"
+mockitoCore = "5.23.0"
 mockitoKotlin = "5.4.0"
 
 [libraries]
