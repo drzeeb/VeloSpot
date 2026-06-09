@@ -8,8 +8,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.velospot.core.routing.OfflineRoutingPreferences
 import de.velospot.core.routing.isWifiConnected
 import de.velospot.data.brouter.BRouterSegmentManager
+import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.domain.model.AddressSearchResult
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
+import de.velospot.domain.model.BikeParkingType
 import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.model.BRouterProfilesMissingException
 import de.velospot.domain.model.EmptyRouteGeometryException
@@ -33,6 +36,8 @@ import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
 private const val VIEWPORT_DEBOUNCE_MS  = 300L
+private const val SEARCH_DEBOUNCE_MS    = 400L
+private const val SEARCH_MIN_CHARS      = 3
 
 // Default map center used when no GPS fix is available yet.
 private const val DEFAULT_LAT = 49.7596
@@ -60,6 +65,7 @@ class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
+    private val nominatimGeocoder: NominatimGeocoder,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -83,6 +89,86 @@ class MapViewModel @Inject constructor(
 
     private val _navigationUiState = MutableStateFlow<NavigationUiState>(NavigationUiState.Idle)
     val navigationUiState: StateFlow<NavigationUiState> = _navigationUiState.asStateFlow()
+
+    // ── Address search ────────────────────────────────────────────────────────
+
+    private val _searchQuery   = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _searchResults = MutableStateFlow<List<AddressSearchResult>>(emptyList())
+    val searchResults: StateFlow<List<AddressSearchResult>> = _searchResults.asStateFlow()
+
+    private val _isSearching   = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private var searchJob: Job? = null
+
+    /** The address pin currently shown on the map (set when user taps a search result). */
+    private val _selectedSearchPin = MutableStateFlow<AddressSearchResult?>(null)
+    val selectedSearchPin: StateFlow<AddressSearchResult?> = _selectedSearchPin.asStateFlow()
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+        searchJob?.cancel()
+        if (query.length < SEARCH_MIN_CHARS) {
+            _searchResults.value = emptyList()
+            return
+        }
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_MS)
+            _isSearching.value = true
+            _searchResults.value = nominatimGeocoder.searchAddress(query)
+            _isSearching.value = false
+        }
+    }
+
+    fun onSearchCleared() {
+        searchJob?.cancel()
+        _searchQuery.value    = ""
+        _searchResults.value  = emptyList()
+        _isSearching.value    = false
+        _selectedSearchPin.value = null
+    }
+
+    /**
+     * Drops a pin at [result], animates the camera there, and opens the detail sheet.
+     * Collapses the search dropdown but keeps the pin visible until dismissed.
+     */
+    fun onSearchResultSelected(result: AddressSearchResult) {
+        _selectedSearchPin.value = result
+        _searchResults.value     = emptyList()   // collapse dropdown
+        _mapCameraTarget.value   = MapCameraTarget(
+            latitude             = result.latitude,
+            longitude            = result.longitude,
+            zoom                 = 15.0,
+            verticalOffsetFraction = 1.0 / 6.0  // shift up so sheet doesn't cover pin
+        )
+    }
+
+    fun dismissSearchPin() {
+        _selectedSearchPin.value = null
+    }
+
+    /** Starts in-app navigation to a free-form address [result] (not a parking spot). */
+    fun startNavigationToAddress(result: AddressSearchResult) {
+        // Wrap the address as a synthetic BikeParkingSpace so the existing routing
+        // and navigation overlay work without modification.
+        val syntheticSpace = BikeParkingSpace(
+            id          = "address_search_pin",
+            latitude    = result.latitude,
+            longitude   = result.longitude,
+            type        = BikeParkingType.UNKNOWN,
+            capacity    = null,
+            name        = result.displayName.substringBefore(",").trim(),
+            address     = result.displayName,
+            isCovered   = null,
+            imageUrl    = null,
+            operator    = null,
+            sourceLayer = "search"
+        )
+        _selectedSearchPin.value = null
+        startInAppNavigation(syntheticSpace)
+    }
 
     // ── Offline routing ───────────────────────────────────────────────────────
 

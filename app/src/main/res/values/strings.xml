@@ -97,4 +97,11 @@
     <string name="error_no_route_found">No bike route found to this destination.</string>
     <string name="error_route_geometry_empty">Route data is incomplete. Please try again.</string>
     <string name="error_unknown">An unexpected error occurred. Please try again.</string>
+
+    <!-- Search strings -->
+    <string name="search_placeholder">Search address…</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_clear">Clear search</string>
+    <string name="search_result_pin_title">Address</string>
+    <string name="search_navigate_to">Navigate here</string>
 </resources>

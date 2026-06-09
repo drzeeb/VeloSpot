@@ -4,7 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [v1.0.8] — 2026-06-10
+
+### Added
+- **Address search bar** — floating search field at the top of the map; type any German address and receive up to 5 Nominatim suggestions with 400 ms debounce (minimum 3 characters) while you type
+- **Search result pin** — tapping a suggestion drops a location pin on the map and animates the camera to that position; a `SearchPinSheet` bottom sheet displays the full resolved address and a "Navigate here" action that starts in-app BRouter routing directly to the address coordinates
+- **`AddressSearchResult`** domain model and `NominatimSearchResultDto` Moshi DTO backing the Nominatim `/search` JSON response
+- **Nominatim `/search` forward geocoding endpoint** added to `NominatimApi`; results are restricted to Germany (`countrycodes=de`); existing reverse geocoding endpoint unchanged
+- **Search string resources** in all 8 supported languages: `search_placeholder`, `search_no_results`, `search_clear`, `search_result_pin_title`, `search_navigate_to`
 
 ### Changed
 - **Map rendering migrated from OSMDroid to MapLibre** (`org.maplibre.gl:android-sdk:11.5.2`)
@@ -15,6 +22,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `MainMapScreen` updated: `getMapAsync` callback sets up `CameraIdleListener` (viewport changes), `CameraMoveListener` (zoom-bucket tracking), and map-click listener (feature hit-testing via `queryRenderedFeatures`) once; marker updates driven by `LaunchedEffect` reacting to Compose state
   - `BaseApplication` cleaned up: osmdroid `Configuration.getInstance()` initialisation removed
   - `MapCameraAnimatorTest` updated: `org.osmdroid.util.GeoPoint` replaced with `org.maplibre.android.geometry.LatLng`
+- **Address search bar and menu button** are now placed in a shared `Row` with `verticalAlignment = Alignment.CenterVertically` so both UI elements sit on the exact same horizontal baseline regardless of their individual card heights
+- **MapLibre compass** repositioned to top-left with system-bar-aware margins to avoid overlap with the search bar and menu card
+
+### Security
+- **R8 minification and obfuscation** enabled for release builds (`isMinifyEnabled = true`, `isShrinkResources = true` in `app/build.gradle.kts`)
+- **Comprehensive ProGuard rules** added for Room, Moshi, Retrofit, OkHttp, BRouter JAR (including private `ilat`/`ilon` reflection fields), Hilt/Dagger, Kotlin coroutines, and all domain/model classes
+- **`HttpLoggingInterceptor`** guarded behind `BuildConfig.DEBUG` — network URLs and headers are never written to Logcat in release builds
+- **All `Log.d` / `Log.w` calls** in `BRouterEngine` and `NominatimGeocoder` guarded behind `BuildConfig.DEBUG` to prevent GPS coordinates leaking to Logcat in production
+
+### Dependencies
+- `mockito-kotlin` updated to v6 (Renovate #35)
+- `mockito` monorepo updated to v5.23.0 (Renovate #34)
+- OkHttp / Retrofit (Networking) updated to v5.4.0 (Renovate #15)
 
 ---
 

@@ -353,14 +353,13 @@ internal fun BoxScope.MapNavigationOverlay(
 }
 
 @Composable
-internal fun BoxScope.MapMenuCard(
+internal fun MapMenuCard(
+    modifier: Modifier = Modifier,
     state: MapMenuCardState,
     actions: MapMenuCardActions
 ) {
     Card(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .padding(16.dp),
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
         ),

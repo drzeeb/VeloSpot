@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces anywhere in Germany. 100 000+ locations from OpenStreetMap, fully offline, with BRouter on-device bike routing, 5 cycling profiles, MapLibre vector tile map, favorites, live location tools, and multilingual support.">
-    <meta name="keywords" content="bike parking, Germany, Deutschland, cycling, map, Android, OpenStreetMap, OSM, offline, in-app navigation, BRouter, offline routing, MapLibre, vector tiles, OpenFreeMap, favorites, dark mode, room, nominatim, multilingual">
+    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces anywhere in Germany. 100 000+ locations from OpenStreetMap, fully offline, with address search, BRouter on-device bike routing, 5 cycling profiles, MapLibre vector tile map, favorites, live location tools, and multilingual support.">
+    <meta name="keywords" content="bike parking, Germany, Deutschland, cycling, map, Android, OpenStreetMap, OSM, offline, address search, geocoding, in-app navigation, BRouter, offline routing, MapLibre, vector tiles, OpenFreeMap, favorites, dark mode, room, nominatim, multilingual">
     <title>VeloSpot - Bike Parking Finder for Germany</title>
     <style>
         * {
@@ -462,7 +462,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1>🇩🇪 Bike Parking across All of Germany</h1>
-            <p>100 000+ parking locations from OpenStreetMap — bundled offline, available instantly, anywhere in Germany. MapLibre vector tile map, BRouter on-device routing, 5 cycling profiles, favorites, dark mode, and 8 languages included.</p>
+            <p>100 000+ parking locations from OpenStreetMap — bundled offline, available instantly, anywhere in Germany. Address search powered by Nominatim, MapLibre vector tile map, BRouter on-device routing, 5 cycling profiles, favorites, dark mode, and 8 languages included.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">View on GitHub</a>
                 <a href="#download" class="btn btn-secondary">Get Started</a>
@@ -475,6 +475,11 @@
         <div class="features-container">
             <h2 class="section-title">Why VeloSpot?</h2>
             <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Address Search</h3>
+                    <p>Type any German address into the floating search bar to get up to 5 live Nominatim suggestions. Tap a result to drop a pin on the map and start in-app BRouter navigation straight to that address.</p>
+                </div>
                 <div class="feature-card">
                     <div class="feature-icon">🇩🇪</div>
                     <h3>All of Germany</h3>
@@ -554,7 +559,7 @@
                 <div class="tech-badge">Room / SQLite Asset</div>
                 <div class="tech-badge">BRouter Offline Engine</div>
                 <div class="tech-badge">OSRM Online Fallback</div>
-                <div class="tech-badge">Nominatim Geocoding</div>
+                <div class="tech-badge">Nominatim Geocoding (Reverse + Forward)</div>
                 <div class="tech-badge">Play Services Location</div>
                 <div class="tech-badge">pyosmium Pipeline</div>
                 <div class="tech-badge">MVVM Pattern</div>
@@ -571,6 +576,7 @@
                     <h2>Built for Everyday Cycling — Anywhere in Germany</h2>
                     <p>VeloSpot bundles the complete OpenStreetMap bicycle parking dataset for Germany into a pre-populated SQLite database. All 100 000+ spots are available offline from first launch, with smooth viewport-based loading and automatic address resolution.</p>
                     <ul class="details-list">
+                        <li>Address search — type any German address, tap a result, navigate</li>
                         <li>100 000+ locations from OpenStreetMap — bundled offline</li>
                         <li>Viewport-based loading keeps performance smooth at any zoom level</li>
                         <li>Addresses resolved via Nominatim on first tap, cached permanently</li>
@@ -590,7 +596,7 @@
                     <div style="background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%); border-radius: 10px; color: white; padding: 40px; text-align: center;">
                         <div style="font-size: 60px; margin-bottom: 20px;">🇩🇪</div>
                         <p style="font-size: 18px; margin-bottom: 10px;"><strong>100 000+ Locations · Fully Offline</strong></p>
-                        <p>OpenStreetMap · Room Asset DB · Nominatim · MapLibre Vector Tiles · BRouter Offline Routing · OSRM Fallback</p>
+                        <p>OpenStreetMap · Room Asset DB · Nominatim (Reverse + Forward Geocoding) · MapLibre Vector Tiles · BRouter Offline Routing · OSRM Fallback</p>
                     </div>
                 </div>
             </div>
@@ -646,7 +652,7 @@
     <section class="cta-section" id="download">
         <div class="cta-content">
             <h2>Ready to Cycle Anywhere in Germany?</h2>
-            <p>Clone the project, build the Android app, and enjoy 100 000+ parking spots offline — plus MapLibre vector tile map, BRouter on-device routing, 5 cycling profiles, favorites, multilingual support, and dark mode.</p>
+            <p>Clone the project, build the Android app, and enjoy 100 000+ parking spots offline — plus address search via Nominatim, MapLibre vector tile map, BRouter on-device routing, 5 cycling profiles, favorites, multilingual support, and dark mode.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/drzeeb/VeloSpot" class="btn btn-primary">Clone Repository</a>
                 <a href="https://github.com/drzeeb/VeloSpot#getting-started" class="btn btn-secondary">View Documentation</a>

@@ -46,10 +46,12 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
 - **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
+- **🆕 Address search** — type any German address into the floating search bar and jump straight to the location; tap a result to drop a pin and start in-app BRouter navigation
 - **🆕 BRouter offline routing** — routes calculated entirely on-device with 5 cycling profiles; no internet needed after the one-time segment download
 
 ## 🌟 Features
 
+- 🔍 **Address Search** - Type any German address into the top search bar; get up to 5 geocoded suggestions and navigate directly to the result
 - 🇩🇪 **All of Germany** - 100 000+ bike parking spots from OpenStreetMap, bundled offline
 - 📍 **Interactive Map** - Browse bike parking spaces on an interactive **MapLibre vector tile** map
 - ⚡ **Viewport Loading** - Only the visible map area is queried; scroll anywhere in Germany without slowdowns
@@ -194,10 +196,12 @@ For more information about OpenStreetMap and ODbL, visit:
 
 ### Map Screen
 - Centered map view with bike parking markers
+- **Address search bar** (top of screen) — live Nominatim forward geocoding with 400 ms debounce; results shown in a dropdown; tap to drop a pin and open the `SearchPinSheet` with a direct "Navigate here" action
 - Zoom-responsive marker scaling
 - Favorite-aware marker colors
 - Current location marker and recenter action
 - Top-right quick menu with favorites, language picker, and dark mode toggle
+- Menu button and search bar vertically aligned in the same row for a clean, consistent header
 - In-app routing polyline, destination highlight, and route status card (distance/time)
 - Navigation focus styling that dims non-target markers (smaller, lighter gray, and more transparent)
 - Error handling and loading states
@@ -307,6 +311,11 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 - Address resolution happens the first time you tap a marker; it requires a brief network call to Nominatim
 - After the first tap the address is cached permanently in the local database
 
+### Address search returns no results
+- Make sure you have a network connection; forward geocoding queries Nominatim live
+- Results are restricted to Germany — international addresses will not appear
+- Try a more specific query (e.g. include the city name)
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -345,5 +354,5 @@ Navigate with confidence and never miss a parking spot again — anywhere in Ger
 
 ---
 
-**Last Updated**: 2026-06-09  
+**Last Updated**: 2026-06-10  
 **Status**: Active Development

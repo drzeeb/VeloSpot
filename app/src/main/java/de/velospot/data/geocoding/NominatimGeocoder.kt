@@ -4,6 +4,7 @@ import android.util.Log
 import de.velospot.BuildConfig
 import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.dto.NominatimAddressDto
+import de.velospot.domain.model.AddressSearchResult
 import javax.inject.Inject
 
 private const val TAG = "NominatimGeocoder"
@@ -46,6 +47,28 @@ class NominatimGeocoder @Inject constructor(
                 Log.w(TAG, "Reverse geocoding failed for ($latitude, $longitude): ${e.message}")
             }
         }.getOrNull()
+
+    /**
+     * Forward geocoding: returns up to 5 address suggestions for [query], restricted to Germany.
+     * Returns an empty list on network error or if Nominatim returns no results.
+     */
+    suspend fun searchAddress(query: String): List<AddressSearchResult> =
+        runCatching {
+            val response = api.search(query = query)
+            if (!response.isSuccessful) {
+                if (BuildConfig.DEBUG) Log.w(TAG, "Nominatim search returned HTTP ${response.code()} for '$query'")
+                return@runCatching emptyList()
+            }
+            response.body().orEmpty().map { dto ->
+                AddressSearchResult(
+                    displayName = dto.displayName,
+                    latitude    = dto.lat.toDouble(),
+                    longitude   = dto.lon.toDouble()
+                )
+            }
+        }.onFailure { e ->
+            if (BuildConfig.DEBUG) Log.w(TAG, "Address search failed for '$query': ${e.message}")
+        }.getOrElse { emptyList() }
 
     // ---------------------------------------------------------------------------
     // Private helpers
