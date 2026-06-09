@@ -86,5 +86,9 @@
     <string name="error_no_route_found">Geen fietsroute gevonden naar deze bestemming.</string>
     <string name="error_route_geometry_empty">Routegegevens onvolledig. Probeer het opnieuw.</string>
     <string name="error_unknown">Er is een onverwachte fout opgetreden. Probeer het opnieuw.</string>
+    <string name="search_placeholder">Adres zoeken…</string>
+    <string name="search_no_results">Geen resultaten gevonden</string>
+    <string name="search_clear">Zoekopdracht wissen</string>
+    <string name="search_result_pin_title">Adres</string>
+    <string name="search_navigate_to">Hierheen navigeren</string>
 </resources>
-

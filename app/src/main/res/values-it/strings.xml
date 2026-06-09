@@ -79,5 +79,9 @@
     <string name="type_garage">Garage per biciclette</string>
     <string name="type_bike_rack">Rastrelliera per biciclette</string>
     <string name="type_unknown">Area di sosta</string>
+    <string name="search_placeholder">Cerca indirizzo…</string>
+    <string name="search_no_results">Nessun risultato trovato</string>
+    <string name="search_clear">Cancella ricerca</string>
+    <string name="search_result_pin_title">Indirizzo</string>
+    <string name="search_navigate_to">Naviga qui</string>
 </resources>
-
