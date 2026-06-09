@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- **Map rendering migrated from OSMDroid to MapLibre** (`org.maplibre.gl:android-sdk:11.5.2`)
+  - Map tiles now rendered as **vector tiles** (OpenFreeMap Liberty style, no API key required) — smooth scaling at every zoom level, no more pixelated raster tiles
+  - `MapView` lifecycle now follows the full MapLibre lifecycle chain (`onCreate` / `onStart` / `onResume` / `onPause` / `onStop` / `onDestroy`)
+  - `MapCameraAnimator` rewritten to use `MapLibreMap.animateCamera()` with `CameraPosition.Builder` — replaces manual coroutine-based easing loop; vertical offset for bottom-sheet compensation preserved via `calculateAdjustedCenter()`
+  - `MapMarkerRenderer` rewritten: parking spots, route polyline, and location dot are now managed as **GeoJSON sources** (`GeoJsonSource`) with **`SymbolLayer`** / **`LineLayer`** instead of per-marker osmdroid overlays — only the data payload is updated on each state change, no overlay teardown/rebuild
+  - `MainMapScreen` updated: `getMapAsync` callback sets up `CameraIdleListener` (viewport changes), `CameraMoveListener` (zoom-bucket tracking), and map-click listener (feature hit-testing via `queryRenderedFeatures`) once; marker updates driven by `LaunchedEffect` reacting to Compose state
+  - `BaseApplication` cleaned up: osmdroid `Configuration.getInstance()` initialisation removed
+  - `MapCameraAnimatorTest` updated: `org.osmdroid.util.GeoPoint` replaced with `org.maplibre.android.geometry.LatLng`
+
+---
+
 ## [v1.0.7] — 2026-06-08
 
 ### Added

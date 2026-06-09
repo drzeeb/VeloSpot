@@ -5,6 +5,7 @@
 ![Platform](https://img.shields.io/badge/platform-Android%208.0%2B-0A2A66)
 ![Language](https://img.shields.io/badge/language-Kotlin-7F52FF)
 ![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4)
+![Map](https://img.shields.io/badge/map-MapLibre-3887BE)
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![Release](https://img.shields.io/github/v/release/drzeeb/VeloSpot?label=latest%20release)](https://github.com/drzeeb/VeloSpot/releases/latest)
 
@@ -32,13 +33,13 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 
 - **Germany-wide** bike parking data from OpenStreetMap (~100 000+ locations)
 - **Fully offline** after install — no WFS/WMS network calls required
-- OpenStreetMap-based map browsing with custom bike markers
+- OpenStreetMap-based map browsing with **MapLibre vector tiles** and custom bike markers
 - Viewport-based marker loading — smooth performance even across the entire country
 - Lazy address resolution via Nominatim (cached permanently to local DB)
 - Red marker highlighting for favorite parking spots
 - Orange marker highlighting for currently selected parking space
 - Dedicated favorites sheet with direct navigation shortcuts
-- Smooth animated map camera transitions with easing functions
+- Smooth animated map camera transitions powered by MapLibre's built-in easing
 - Current-location recentering and location marker support
 - In-app dark mode toggle from the top-right menu
 - **Parking space photos** with automatic caching via Coil for fast loading
@@ -50,11 +51,12 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 ## 🌟 Features
 
 - 🇩🇪 **All of Germany** - 100 000+ bike parking spots from OpenStreetMap, bundled offline
-- 📍 **Interactive Map** - Browse bike parking spaces on an interactive OSM map
+- 📍 **Interactive Map** - Browse bike parking spaces on an interactive **MapLibre vector tile** map
 - ⚡ **Viewport Loading** - Only the visible map area is queried; scroll anywhere in Germany without slowdowns
 - 🏠 **Offline-First** - All parking data is available instantly, even without a network connection
 - 📬 **Address Lookup** - Missing addresses are resolved via Nominatim and cached locally on first tap
-- 🎬 **Smooth Animations** - Fluid zoom and pan transitions with easing for a polished user experience
+- 🎬 **Smooth Animations** - Fluid zoom and pan transitions powered by MapLibre's native camera engine
+- 🗺️ **Vector Tiles** - Sharp, smooth map rendering at every zoom level via [OpenFreeMap](https://openfreemap.org/) Liberty style (no API key required)
 - 🧭 **My Location** - Center the map on your current position and display a live location marker
 - ❤️ **Favorites** - Save frequently used bike parking spots and use dedicated actions for navigation or spot details
 - ⭐ **Selected Highlight** - See your current selection highlighted with an orange marker
@@ -78,7 +80,8 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - **UI Framework**: Jetpack Compose
 - **Architecture**: Clean Architecture with MVVM
 - **Dependency Injection**: Hilt
-- **Data**: Retrofit, Moshi, Room (SQLite asset DB), OSMDroid
+- **Data**: Retrofit, Moshi, Room (SQLite asset DB), **MapLibre** (vector tile map rendering)
+- **Map Style**: [OpenFreeMap](https://openfreemap.org/) Liberty (free, no API key required)
 - **Geocoding**: Nominatim REST API (lazy, on-demand, cached)
 - **Location**: Android runtime permissions, Google Play Services location APIs
 - **Build System**: Gradle
@@ -179,7 +182,7 @@ VeloSpot bundles bike parking data extracted from OpenStreetMap and displays it 
 - **Data format**: Pre-processed SQLite asset (Room-compatible)
 - **Update frequency**: Bundled at build time; regenerate with `extract_osm_parking.py` for fresh data
 - **Reverse Geocoding**: [Nominatim](https://nominatim.openstreetmap.org/) (on-demand, cached, OSM-based)
-- **Map Tiles**: OpenStreetMap contributors
+- **Map Tiles**: OpenFreeMap vector tiles (Liberty style, [openfreemap.org](https://openfreemap.org/)) rendered via MapLibre
 - **Map License**: Open Data Commons Open Database License (ODbL 1.0)
 - **Attribution**: © OpenStreetMap contributors
 
@@ -291,8 +294,9 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 - If upgrading from a previous version: uninstall the old app first so Room copies the fresh asset (or use `adb shell run-as de.velospot rm databases/velospot_database.db` on debug builds)
 
 ### Map shows blank
-- Ensure OSM tiles are loading (check network tab)
-- Verify `userAgentValue` is set in `BaseApplication.kt`
+- The MapLibre map style is loaded from [OpenFreeMap](https://openfreemap.org/) on first launch — a brief internet connection is required to cache the vector tile style
+- After the style is cached, the map renders offline; only tile data for new map areas requires a network call
+- No API key or registration is required
 
 ### My Location does not work
 - Confirm location permission is granted for the app
@@ -341,5 +345,5 @@ Navigate with confidence and never miss a parking spot again — anywhere in Ger
 
 ---
 
-**Last Updated**: 2026-06-08  
+**Last Updated**: 2026-06-09  
 **Status**: Active Development
