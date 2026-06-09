@@ -199,9 +199,9 @@ fun MainMapScreen(
     DisposableEffect(mapView) {
         mapView.getMapAsync { map ->
             map.setStyle(MAP_STYLE_URL) { _ ->
-                // Compass bottom-left – clear of the search bar (top) and menu card (top-right).
-                map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.START
-                map.uiSettings.setCompassMargins(16, 0, 0, 120)
+                // Move compass to top-left so it doesn't overlap the top-right menu card.
+                map.uiSettings.compassGravity = Gravity.TOP or Gravity.START
+                map.uiSettings.setCompassMargins(16, 16, 0, 0)
 
                 // Initial camera position
                 map.moveCamera(
