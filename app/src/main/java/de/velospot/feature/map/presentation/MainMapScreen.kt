@@ -69,6 +69,8 @@ fun MainMapScreen(
     val searchResults        by viewModel.searchResults.collectAsStateWithLifecycle()
     val isSearching          by viewModel.isSearching.collectAsStateWithLifecycle()
     val selectedSearchPin    by viewModel.selectedSearchPin.collectAsStateWithLifecycle()
+    val customMapPin         by viewModel.customMapPin.collectAsStateWithLifecycle()
+    val customMapPinAddress  by viewModel.customMapPinAddress.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -145,7 +147,7 @@ fun MainMapScreen(
         maplibreMap, uiState, favorites, selectedSpace,
         userLocation, activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
-        selectedSearchPin
+        selectedSearchPin, customMapPin
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         if (uiState is MapUiState.Success) {
@@ -173,12 +175,13 @@ fun MainMapScreen(
                     context = context,
                     labels  = MarkerRenderLabels(myLocationTitle, snippetSpacesFormat)
                 ),
-                route     = RouteRenderData(
-                    color  = markerStyleConfig.routeColor,
-                    points = activeNavigation?.route?.points.orEmpty()
-                ),
-                searchPin = selectedSearchPin
-            )
+                    route     = RouteRenderData(
+                        color  = markerStyleConfig.routeColor,
+                        points = activeNavigation?.route?.points.orEmpty()
+                    ),
+                    searchPin    = selectedSearchPin,
+                    customMapPin = customMapPin
+                )
         }
     }
 
@@ -234,14 +237,20 @@ fun MainMapScreen(
                     if (next != zoomBucket) zoomBucket = next
                 }
 
-                // Click → find the parking spot whose GeoJSON feature was tapped
+                // Click → find the parking spot whose GeoJSON feature was tapped;
+                // if the tap hits empty space, place a custom pin there.
                 map.addOnMapClickListener { latLng ->
                     val screenPoint = map.projection.toScreenLocation(latLng)
                     val features    = map.queryRenderedFeatures(screenPoint, LAYER_PARKING)
                     val spaceId     = features.firstOrNull()?.getStringProperty(PROP_SPACE_ID)
                     val spaces      = (uiStateRef.value as? MapUiState.Success)?.spaces.orEmpty()
                     val clicked     = spaces.find { it.id == spaceId }
-                    if (clicked != null) { viewModel.selectSpace(clicked); true } else false
+                    if (clicked != null) {
+                        viewModel.selectSpace(clicked)
+                    } else {
+                        viewModel.onMapTapped(latLng.latitude, latLng.longitude)
+                    }
+                    true
                 }
 
                 // Signal Compose that the map is ready → triggers LaunchedEffects above
@@ -393,6 +402,21 @@ fun MainMapScreen(
             onDismiss  = viewModel::dismissSearchPin,
             onNavigate = viewModel::startNavigationToAddress
         )
+    }
+
+    customMapPin?.let { pin ->
+        // Hide the sheet while actively navigating to this pin –
+        // the pin stays visible on the map as a route end-point.
+        val navigatingToPin = activeNavigation?.destination?.id == "custom_map_pin"
+        if (!navigatingToPin) {
+            CustomMapPinSheet(
+                pin        = pin,
+                address    = customMapPinAddress,
+                onDismiss  = viewModel::dismissCustomMapPin,
+                onNavigate = viewModel::startNavigationToCustomPin,
+                onRemove   = viewModel::dismissCustomMapPin
+            )
+        }
     }
 }
 

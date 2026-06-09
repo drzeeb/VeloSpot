@@ -104,4 +104,10 @@
     <string name="search_clear">Clear search</string>
     <string name="search_result_pin_title">Address</string>
     <string name="search_navigate_to">Navigate here</string>
+
+    <!-- Custom map pin (tap on empty map) -->
+    <string name="custom_pin_title">Custom location</string>
+    <string name="custom_pin_subtitle">Tap on the map to move the pin.</string>
+    <string name="custom_pin_navigate">Navigate here</string>
+    <string name="custom_pin_remove">Remove pin</string>
 </resources>

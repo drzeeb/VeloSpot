@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- **Tap-to-place custom map pin** — tap any empty location on the map to drop a blue pin marker at that exact point; the map camera animates to the tapped position automatically
+- **`CustomMapPinSheet`** — bottom sheet that opens immediately when a custom pin is placed; shows the reverse-geocoded address from Nominatim (with a loading spinner and raw coordinates as fallback while the request is in-flight); provides a "Navigate here" primary action and a "Remove pin" secondary action
+- **Reverse geocoding on tap** — `MapViewModel.onMapTapped()` fires a `NominatimGeocoder.reverseGeocode()` coroutine in the background; the resolved address replaces the coordinate placeholder as soon as the response arrives
+- **Custom pin navigation** — "Navigate here" starts BRouter in-app bike routing directly to the tapped coordinates; the pin stays visible on the map as a route end-point marker for the entire duration of navigation and is automatically removed when navigation is stopped
+- **Blue custom pin icon** — new `createCustomPinIcon()` function in `MapMarkerRenderer` renders a distinct blue dropped-pin (Material Blue 700 `#1565C0`) to visually separate the tap pin from the red address-search pin and the bike-rack parking markers
+- **Dedicated GeoJSON source and layer** (`velospot-custom-pin-source` / `velospot-custom-pin-layer`) for the custom pin, following the same MapLibre `SymbolLayer` pattern as existing markers
+- **`customMapPin` and `customMapPinAddress` StateFlows** in `MapViewModel` to expose pin position and its resolved address to the UI layer independently
+- **String resources** for `custom_pin_title`, `custom_pin_subtitle`, `custom_pin_navigate`, `custom_pin_remove` in EN and DE
+
+### Changed
+- `MainMapScreen` map-click listener now **always consumes the tap event** (`return true`) — clicking an empty area places a custom pin instead of being silently ignored
+- Selecting a parking space or a Nominatim search result **dismisses any active custom pin** and vice versa, ensuring only one pin type is visible at a time
+- `stopInAppNavigation()` only clears the custom pin when the destination was the custom pin itself; navigating to a parking space or address does not affect the custom pin state
+
+---
+
 ## [v1.0.8] — 2026-06-10
 
 ### Added
