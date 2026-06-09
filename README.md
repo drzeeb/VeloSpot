@@ -47,11 +47,13 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
 - **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
 - **🆕 Address search** — type any German address into the floating search bar and jump straight to the location; tap a result to drop a pin and start in-app BRouter navigation
+- **🆕 Tap-to-place custom pin** — tap any empty spot on the map to drop a blue pin; the address is resolved automatically via Nominatim reverse geocoding and a bottom sheet lets you start navigation directly to that point
 - **🆕 BRouter offline routing** — routes calculated entirely on-device with 5 cycling profiles; no internet needed after the one-time segment download
 
 ## 🌟 Features
 
 - 🔍 **Address Search** - Type any German address into the top search bar; get up to 5 geocoded suggestions and navigate directly to the result
+- 📌 **Tap-to-Place Pin** - Tap any empty spot on the map to drop a custom blue pin; Nominatim reverse geocoding resolves the address automatically and a bottom sheet lets you start navigation directly to that point
 - 🇩🇪 **All of Germany** - 100 000+ bike parking spots from OpenStreetMap, bundled offline
 - 📍 **Interactive Map** - Browse bike parking spaces on an interactive **MapLibre vector tile** map
 - ⚡ **Viewport Loading** - Only the visible map area is queried; scroll anywhere in Germany without slowdowns
@@ -197,6 +199,7 @@ For more information about OpenStreetMap and ODbL, visit:
 ### Map Screen
 - Centered map view with bike parking markers
 - **Address search bar** (top of screen) — live Nominatim forward geocoding with 400 ms debounce; results shown in a dropdown; tap to drop a pin and open the `SearchPinSheet` with a direct "Navigate here" action
+- **Tap-to-place custom pin** — tap any empty map location to drop a blue pin; `CustomMapPinSheet` shows the reverse-geocoded address and a "Navigate here" action; pin remains visible as route end-point during active navigation
 - Zoom-responsive marker scaling
 - Favorite-aware marker colors
 - Current location marker and recenter action
