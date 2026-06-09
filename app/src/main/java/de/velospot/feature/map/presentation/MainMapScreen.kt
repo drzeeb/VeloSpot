@@ -24,6 +24,7 @@ import de.velospot.R
 import de.velospot.core.map.NavigationHandler
 import de.velospot.domain.model.BoundingBox
 import kotlin.math.roundToInt
+import android.view.Gravity
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -184,6 +185,10 @@ fun MainMapScreen(
     DisposableEffect(mapView) {
         mapView.getMapAsync { map ->
             map.setStyle(MAP_STYLE_URL) { _ ->
+                // Move compass to top-left so it doesn't overlap the top-right menu card.
+                map.uiSettings.compassGravity = Gravity.TOP or Gravity.START
+                map.uiSettings.setCompassMargins(16, 16, 0, 0)
+
                 // Initial camera position
                 map.moveCamera(
                     CameraUpdateFactory.newCameraPosition(
