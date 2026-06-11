@@ -94,4 +94,5 @@
 
     <!-- Aviso de nivel de zoom demasiado bajo -->
     <string name="zoom_in_for_parking">Acércate para ver los aparcabicis</string>
+    <string name="error_loading_parking">No se pudieron actualizar los datos de aparcamiento</string>
 </resources>

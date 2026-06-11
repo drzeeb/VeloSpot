@@ -41,6 +41,10 @@ class LocationRepositoryImpl @Inject constructor(
     override fun startLocationUpdates() {
         if (!hasPermission()) return
 
+        // Remove any previously registered listener to prevent leaking multiple active listeners
+        // when startLocationUpdates() is called more than once (e.g. initial + permission grant).
+        stopLocationUpdates()
+
         // Select best available provider (GPS preferred, network as fallback)
         val provider = when {
             locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->

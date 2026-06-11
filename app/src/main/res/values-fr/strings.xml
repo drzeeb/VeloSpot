@@ -94,4 +94,5 @@
 
     <!-- Indication de zoom trop faible -->
     <string name="zoom_in_for_parking">Zoomez pour voir les places de stationnement vélo</string>
+    <string name="error_loading_parking">Impossible de rafraîchir les données de stationnement</string>
 </resources>

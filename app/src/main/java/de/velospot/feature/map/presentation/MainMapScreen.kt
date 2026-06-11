@@ -75,6 +75,15 @@ fun MainMapScreen(
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
+    val viewportLoadError by viewModel.viewportLoadError.collectAsStateWithLifecycle()
+    val viewportErrorText = stringResource(R.string.error_loading_parking)
+    LaunchedEffect(viewportLoadError) {
+        if (viewportLoadError != null) {
+            Toast.makeText(context, viewportErrorText, Toast.LENGTH_SHORT).show()
+            viewModel.clearViewportLoadError()
+        }
+    }
+
     val mapView       = rememberMapViewWithLifecycle()
     val screenUiState = rememberMapScreenUiState()
     val markerStyleConfig = remember { defaultMarkerStyleConfig() }
@@ -419,7 +428,7 @@ fun MainMapScreen(
         customMapPin?.let { pin ->
         // Hide the sheet while actively navigating to this pin –
         // the pin stays visible on the map as a route end-point.
-        val navigatingToPin = activeNavigation?.destination?.id == "custom_map_pin"
+        val navigatingToPin = activeNavigation?.destination?.id == MapViewModel.ID_CUSTOM_MAP_PIN
         if (!navigatingToPin) {
             CustomMapPinSheet(
                 pin        = pin,

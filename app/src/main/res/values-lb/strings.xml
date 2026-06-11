@@ -94,4 +94,5 @@
 
     <!-- Hinweis wann de Zoom ze kleng ass -->
     <string name="zoom_in_for_parking">Erazommen fir Vëlosparken ze gesinn</string>
+    <string name="error_loading_parking">Parkdaten konnte net aktualiséiert ginn</string>
 </resources>

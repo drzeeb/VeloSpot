@@ -69,6 +69,13 @@ class MapViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    companion object {
+        /** ID used for the synthetic BikeParkingSpace created when navigating to a custom map pin. */
+        const val ID_CUSTOM_MAP_PIN = "custom_map_pin"
+        /** ID used for the synthetic BikeParkingSpace created when navigating to an address search result. */
+        const val ID_ADDRESS_SEARCH_PIN = "address_search_pin"
+    }
+
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
@@ -89,6 +96,16 @@ class MapViewModel @Inject constructor(
 
     private val _navigationUiState = MutableStateFlow<NavigationUiState>(NavigationUiState.Idle)
     val navigationUiState: StateFlow<NavigationUiState> = _navigationUiState.asStateFlow()
+
+    /**
+     * One-shot error event for failed viewport reloads (e.g. DB error while panning the map).
+     * Set to a non-null message when a reload fails after the initial load succeeded.
+     * The UI should clear it after displaying.
+     */
+    private val _viewportLoadError = MutableStateFlow<String?>(null)
+    val viewportLoadError: StateFlow<String?> = _viewportLoadError.asStateFlow()
+
+    fun clearViewportLoadError() { _viewportLoadError.value = null }
 
     // ── Address search ────────────────────────────────────────────────────────
 
@@ -168,7 +185,7 @@ class MapViewModel @Inject constructor(
         val address = _customMapPinAddress.value
         // Pin stays on the map so the route end-point remains visible during navigation.
         val syntheticSpace = BikeParkingSpace(
-            id          = "custom_map_pin",
+            id          = ID_CUSTOM_MAP_PIN,
             latitude    = pin.latitude,
             longitude   = pin.longitude,
             type        = BikeParkingType.UNKNOWN,
@@ -209,7 +226,7 @@ class MapViewModel @Inject constructor(
         // Wrap the address as a synthetic BikeParkingSpace so the existing routing
         // and navigation overlay work without modification.
         val syntheticSpace = BikeParkingSpace(
-            id          = "address_search_pin",
+            id          = ID_ADDRESS_SEARCH_PIN,
             latitude    = result.latitude,
             longitude   = result.longitude,
             type        = BikeParkingType.UNKNOWN,
@@ -273,7 +290,14 @@ class MapViewModel @Inject constructor(
             if (_uiState.value !is MapUiState.Success) _uiState.value = MapUiState.Loading
             runCatching { bikeParkingRepository.getSpacesInBoundingBox(bbox) }
                 .onSuccess { _uiState.value = MapUiState.Success(it) }
-                .onFailure { if (_uiState.value !is MapUiState.Success) _uiState.value = MapUiState.Error(MapError.Unknown(it.message)) }
+                .onFailure { throwable ->
+                    if (_uiState.value !is MapUiState.Success) {
+                        _uiState.value = MapUiState.Error(MapError.Unknown(throwable.message))
+                    } else {
+                        // Already showing data – don't replace the map; surface a transient error.
+                        _viewportLoadError.value = throwable.message
+                    }
+                }
         }
     }
 
@@ -372,7 +396,7 @@ class MapViewModel @Inject constructor(
         navigationJob?.cancel()
         navigationJob = null
         val wasCustomPin = (_navigationUiState.value as? NavigationUiState.Active)
-            ?.destination?.id == "custom_map_pin"
+            ?.destination?.id == ID_CUSTOM_MAP_PIN
         _navigationUiState.value = NavigationUiState.Idle
         if (wasCustomPin) {
             _customMapPin.value        = null

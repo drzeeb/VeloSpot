@@ -87,4 +87,5 @@
 
     <!-- Suggerimento zoom troppo basso -->
     <string name="zoom_in_for_parking">Ingrandisci per vedere i parcheggi bici</string>
+    <string name="error_loading_parking">Impossibile aggiornare i dati dei parcheggi</string>
 </resources>

@@ -262,11 +262,11 @@ private fun registerIcons(style: Style, icons: MarkerIconSet, navigationActive: 
     add(IMG_MUTED_NORMAL,   icons.mutedNormal)
     add(IMG_MUTED_FAVORITE, icons.mutedFavorite)
     add(IMG_MUTED_SELECTED, icons.mutedSelected)
-    // Location icons – re-add when navigation state changes (different drawable)
-    style.removeImage(IMG_LOCATION)
-    style.removeImage(IMG_LOCATION_NAV)
-    add(IMG_LOCATION,     icons.location)
-    add(IMG_LOCATION_NAV, icons.location)
+    // Location icons change when navigation state changes (different size/colour).
+    // Use addImage directly – MapLibre replaces an existing image with the same ID in-place,
+    // avoiding an unnecessary remove+add on every GPS position or zoom update.
+    style.addImage(IMG_LOCATION,     drawableToBitmap(icons.location))
+    style.addImage(IMG_LOCATION_NAV, drawableToBitmap(icons.location))
 }
 
 private fun drawableToBitmap(drawable: Drawable): Bitmap {

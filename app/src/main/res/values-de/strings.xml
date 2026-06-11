@@ -100,4 +100,5 @@
 
     <!-- Zoom-out-Hinweis: erscheint wenn der Zoom-Level zu niedrig ist -->
     <string name="zoom_in_for_parking">Reinzoomen um Fahrradstellplätze zu sehen</string>
+    <string name="error_loading_parking">Parkplatzdaten konnten nicht aktualisiert werden</string>
 </resources>
