@@ -15,11 +15,9 @@ navigationCompose = "2.9.8"
 retrofit = "3.0.0"
 moshi = "1.15.2"
 okhttp = "5.4.0"
-osmdroid = "6.1.20"
 maplibre = "13.3.0"
 room = "2.8.4"
 playServicesLocation = "21.3.0"
-accompanistPermissions = "0.37.3"
 coroutines = "1.11.0"
 ksp = "2.3.9"
 coil = "2.7.0"
@@ -54,13 +52,11 @@ retrofitCore = { group = "com.squareup.retrofit2", name = "retrofit", version.re
 retrofitConverterMoshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit" }
 moshiKotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
 okhttpLoggingInterceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
-osmdroidAndroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 maplibreAndroid = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
 roomRuntime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 roomKtx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 roomCompiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 playServicesLocation = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
-accompanistPermissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
 kotlinxCoroutinesTest = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 coilCompose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 mockitoCore = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }

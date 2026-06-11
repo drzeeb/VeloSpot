@@ -39,8 +39,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`ci.yml` workflow updated** — `ci-build` now assembles `assembleFdroidDebug` (the canonical open-source build); APK artifact upload path updated for the new flavor directory structure; unit tests run against `testFdroidDebugUnitTest`
 - **`NetworkModule`** — `provideFusedLocationClient` and `provideLocationRepository` extracted from the shared module into flavor-specific `LocationModule` Hilt modules (`src/googlePlay/…` and `src/fdroid/…`)
 - **`ATTRIBUTIONS.md`** fully rewritten in English; Trier Geoportal and OSMDroid entries removed; BRouter, MapLibre, Coil, OSRM, OpenFreeMap, and all current libraries added with correct licenses and source links
-- All German code comments translated to English across `build.gradle.kts`, workflow YAML files, `MapViewModel.kt`, `MainMapScreen.kt`, `MapMarkerRenderer.kt`, `metadata/de.velospot.yml`, and all `strings.xml` files
+- All German code comments translated to English across `build.gradle.kts`, workflow YAML files, `MapViewModel.kt`, `MainMapScreen.kt`, `MapMarkerRenderer.kt`, and all `strings.xml` files
 - `zoom_in_for_parking` string resource added in all 8 supported languages (DE, EN, FR, IT, PT, LB, NL, ES)
+- **`MapViewModel`** — `ID_CUSTOM_MAP_PIN` and `ID_ADDRESS_SEARCH_PIN` extracted as `companion object` constants; all usages in `MapViewModel` and `MainMapScreen` updated
+- **`RoutingRepositoryImpl`** — OSRM base URL extracted to `OSRM_BICYCLE_BASE_URL` private constant
+- **`MapMarkerRenderer.registerIcons()`** — location icons now updated via direct `style.addImage()` (MapLibre replaces in-place) instead of a `removeImage` + null-checked add on every call, eliminating unnecessary GPU work on each GPS position or zoom update
+
+### Fixed
+- **F-Droid `LocationRepositoryImpl` listener leak** — `startLocationUpdates()` now calls `stopLocationUpdates()` first, matching the Google Play implementation; previously calling start twice (once at init, once after permission grant) left the old `LocationListener` orphaned in `LocationManager`
+- **Viewport reload errors silently dropped** — when a parking-data refresh fails after the initial load, a short Toast is now shown (`error_loading_parking` string in all 8 languages) instead of discarding the error; the existing map data remains visible
+
+### Removed
+- **`metadata/de.velospot.yml`** removed from the app repository — this file belongs in the [`fdroid/fdroiddata`](https://gitlab.com/fdroid/fdroiddata) GitLab repository as part of the F-Droid submission MR, not in the app source tree
+- **`osmdroid`** version and library entries removed from `libs.versions.toml` — OSMDroid was replaced by MapLibre in v1.0.8; the catalog entries were never cleaned up
+- **`accompanistPermissions`** version and library entries removed from `libs.versions.toml` — the library was superseded by manual permission handling and was never referenced in any build file
 
 ---
 
