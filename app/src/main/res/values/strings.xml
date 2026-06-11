@@ -110,4 +110,7 @@
     <string name="custom_pin_subtitle">Tap on the map to move the pin.</string>
     <string name="custom_pin_navigate">Navigate here</string>
     <string name="custom_pin_remove">Remove pin</string>
+
+    <!-- Zoom-out hint: shown when zoom level is too low to display parking markers -->
+    <string name="zoom_in_for_parking">Zoom in to see bike parking spots</string>
 </resources>

@@ -1,0 +1,9 @@
+• Tipp auf leere Kartenstelle legt blauen Custom-Pin mit automatischer Adressauflösung (Nominatim)
+• Profil-Wechsel beim Offline-Routing berechnet die aktive Route sofort neu
+• Laufende Routenberechnung wird beim Start einer neuen Navigation abgebrochen
+• Fahrradstellplätze werden ab Zoom 11 ausgeblendet (Toast-Hinweis beim Herauszoomen)
+• F-Droid-Flavor ohne Google Play Services – nutzt Standard-Android-LocationManager
+• Versionsnummer wird automatisch aus dem Git-Tag berechnet (vX.Y.Z → versionCode)
+• Release-Signierung über GitHub Secrets konfigurierbar
+• ATTRIBUTIONS.md und alle Code-Kommentare auf Englisch aktualisiert
+

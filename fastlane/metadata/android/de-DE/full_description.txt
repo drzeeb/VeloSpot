@@ -1,0 +1,34 @@
+VeloSpot hilft Radfahrenden dabei, Fahrradabstellplätze in ganz Deutschland zu finden und dorthin zu navigieren – vollständig offline, ohne proprietäre Dienste und ohne Tracking.
+
+Die App enthält über 100.000 Fahrradparkplätze aus OpenStreetMap, die als SQLite-Datenbank direkt in der App gebündelt sind. Ab dem ersten Start sind alle Stellplätze ohne Netzverbindung sichtbar.
+
+<b>Karte &amp; Daten</b>
+• Interaktive Vektorkarte via MapLibre (OpenFreeMap Liberty-Stil, kein API-Key erforderlich)
+• 100.000+ Fahrradparkplätze aus OpenStreetMap, komplett offline verfügbar
+• Sichtbereichsbasiertes Laden – nur die aktuelle Kartenfläche wird abgefragt, kein Speicheroverhead
+• Automatische Adressauflösung per Nominatim (beim ersten Antippen eines Markers, danach lokal gecacht)
+
+<b>Navigation</b>
+• In-App-Fahrradrouting direkt auf der Karte – kein Wechsel zu einer externen App nötig
+• Offline-Navigation mit BRouter (5 Fahrradprofile: Trekking, Schnell, Kürzeste Strecke, Mountainbike, Gravel)
+• Online-Routing über OSRM als automatischer Fallback ohne WLAN
+• Adresssuche mit Live-Vorschlägen (Nominatim, 400 ms Debounce)
+• Eigenen Kartenpin per Tipp setzen – Adresse wird automatisch ermittelt, Navigation startet sofort
+
+<b>Komfort</b>
+• Favoriten mit direktem Navigationsbutton
+• Parkplatzfotos mit automatischem Bild-Cache (Coil)
+• Aktueller Standort mit Kartenzentrierung
+• Dunkelmodus-Umschalter im In-App-Menü
+• 8 Sprachen mit persistenter Sprachauswahl: Deutsch, Englisch, Französisch, Italienisch, Portugiesisch, Luxemburgisch, Niederländisch, Spanisch
+
+<b>Datenschutz &amp; Transparenz</b>
+• Keine Werbung, kein Tracking, keine Telemetrie
+• Keine proprietären Google-Dienste (F-Droid-Build nutzt ausschließlich freie Bibliotheken)
+• Keine Account-Pflicht
+• Alle Kartendaten stammen von OpenStreetMap (ODbL-Lizenz)
+• Quellcode: https://github.com/drzeeb/VeloSpot
+
+<b>Technischer Hintergrund</b>
+Android 8.0 (API 26) und neuer · Jetpack Compose · MapLibre · Room/SQLite · BRouter · OSRM · Nominatim · Hilt · Retrofit · Kotlin
+

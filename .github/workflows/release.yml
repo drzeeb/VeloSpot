@@ -1,5 +1,7 @@
-name: Build & Release APK
+name: Release
 
+# Triggered when a tag in the format vX.Y.Z is pushed,
+# or manually via "Run workflow" with any tag.
 on:
   push:
     tags:
@@ -7,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: "Release tag (e.g. v1.0.0)"
+        description: "Release tag (e.g. v1.0.8)"
         required: true
         default: "v1.0.0"
 
@@ -18,19 +20,43 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
-    name: Build debug APK and publish release
-    # Skip if this tag was already released by the security-release workflow.
-    # The security-release workflow pushes the tag itself; the actor will be
-    # "github-actions[bot]" in that case. Manual tags from developers should
-    # always run.
+  release:
+    name: Build & Release (F-Droid + Google Play)
+    # Do not re-run when the security-release workflow pushed the tag itself.
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
+      # ── Checkout ──────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
+      # ── Compute version from Git tag ──────────────────────────────────────────
+      # Format: vX.Y.Z  →  versionName = X.Y.Z  |  versionCode = X*10000 + Y*100 + Z
+      # Examples:  v1.0.0 → 10000  |  v1.0.8 → 10008  |  v1.2.3 → 10203
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${TAG#v}"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          PATCH=${PATCH:-0}
+          VERSION_CODE=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))
+          echo "tag=$TAG"                        >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"                >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE"      >> "$GITHUB_OUTPUT"
+          echo "VERSION_NAME=$VERSION"           >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$VERSION_CODE"      >> "$GITHUB_ENV"
+
+      # ── JDK ───────────────────────────────────────────────────────────────────
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -41,47 +67,110 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
-
-      - name: Rename APK with version tag
+      # ── Decode keystore from secret ───────────────────────────────────────────
+      # Required GitHub secrets (set once under Settings → Secrets → Actions):
+      #   KEYSTORE_BASE64   – base64-encoded content of the .jks file
+      #   STORE_PASSWORD    – keystore password
+      #   KEY_ALIAS         – signing key alias
+      #   KEY_PASSWORD      – key password
+      #
+      # Generate the secret value (one-time, locally):
+      #   macOS/Linux:  base64 -i release.jks | tr -d '\n'
+      #   Windows:      [Convert]::ToBase64String([IO.File]::ReadAllBytes("release.jks"))
+      - name: Decode release keystore
+        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          TAG="${{ github.ref_name }}"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag_name }}"
-          fi
-          mv app/build/outputs/apk/debug/app-debug.apk \
-             app/build/outputs/apk/debug/VeloSpot-${TAG}-debug.apk
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /tmp/release.jks
+          echo "KEYSTORE_PATH=/tmp/release.jks"          >> "$GITHUB_ENV"
+          echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"          >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"    >> "$GITHUB_ENV"
 
-      - name: Determine release tag
-        id: release_tag
+      # ── Build APKs ────────────────────────────────────────────────────────────
+      - name: Build F-Droid & Google Play Release APKs
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
+          ./gradlew assembleFdroidRelease assembleGooglePlayRelease \
+            -PversionName="${VERSION_NAME}" \
+            -PversionCode="${VERSION_CODE}" \
+            --no-daemon
 
-      - name: Create GitHub Release and upload APK
+      # ── Rename APKs ───────────────────────────────────────────────────────────
+      - name: Rename APKs
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          mv app/build/outputs/apk/fdroid/release/app-fdroid-release.apk \
+             "app/build/outputs/apk/fdroid/release/VeloSpot-${TAG}-fdroid.apk"
+          mv app/build/outputs/apk/googlePlay/release/app-googlePlay-release.apk \
+             "app/build/outputs/apk/googlePlay/release/VeloSpot-${TAG}-googlePlay.apk"
+
+      # ── Extract changelog section for this release ────────────────────────────
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          NOTES=$(awk "/^## \[v?${VERSION}\]/{found=1; next} found && /^## /{exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+          fi
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # ── Create GitHub Release ─────────────────────────────────────────────────
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ steps.release_tag.outputs.tag }}
-          name: "VeloSpot ${{ steps.release_tag.outputs.tag }}"
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "VeloSpot ${{ steps.version.outputs.tag }}"
           body: |
-            ## VeloSpot ${{ steps.release_tag.outputs.tag }}
+            ## VeloSpot ${{ steps.version.outputs.tag }}
 
-            ### Installation
+            ${{ steps.changelog.outputs.notes }}
+
+            ---
+
+            ### 📥 APK Variants
+
+            | File | Description |
+            |---|---|
+            | `VeloSpot-${{ steps.version.outputs.tag }}-fdroid.apk` | **F-Droid flavor** – no Google services, ready to sideload |
+            | `VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk` | **Google Play flavor** – includes Google Play Services Location |
+
+            ### Installation (sideload)
             1. Download the APK below.
-            2. On your Android device go to **Settings → Install unknown apps** and allow installs from your browser or file manager.
-            3. Open the downloaded APK and tap **Install**.
+            2. On your Android device: **Settings → Apps → Install unknown apps** → allow your browser or file manager.
+            3. Open the APK and tap **Install**.
 
-            > **Note:** This is a debug build. Release signing is not yet configured.
-
-            ### What's new
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full list of changes.
-          files: app/build/outputs/apk/debug/VeloSpot-${{ steps.release_tag.outputs.tag }}-debug.apk
+            > The **F-Droid flavor** is also available on [F-Droid](https://f-droid.org/packages/de.velospot/).
+          files: |
+            app/build/outputs/apk/fdroid/release/VeloSpot-${{ steps.version.outputs.tag }}-fdroid.apk
+            app/build/outputs/apk/googlePlay/release/VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # ── Create F-Droid changelog file ─────────────────────────────────────────
+      # fastlane/metadata/android/*/changelogs/<versionCode>.txt is read by F-Droid
+      # as release notes for this version.
+      - name: Create F-Droid changelog files
+        run: |
+          VERSION_CODE="${{ steps.version.outputs.version_code }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          NOTES=$(awk "/^## \[v?${VERSION}\]/{found=1; next} found && /^## /{exit} found{print}" CHANGELOG.md | head -20)
+          if [ -z "$NOTES" ]; then NOTES="VeloSpot ${VERSION}"; fi
+          echo "$NOTES" > "fastlane/metadata/android/de-DE/changelogs/${VERSION_CODE}.txt"
+          echo "$NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+
+      - name: Commit F-Droid changelog
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add fastlane/metadata/android/*/changelogs/
+          git diff --staged --quiet || \
+            git commit -m "chore: add F-Droid changelog for ${{ steps.version.outputs.tag }}"
+          git push origin HEAD:main || true

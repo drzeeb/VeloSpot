@@ -2,11 +2,13 @@ package de.velospot.feature.map.presentation
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
@@ -21,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -82,6 +83,16 @@ fun MainMapScreen(
     // Using mutableStateOf triggers recomposition so LaunchedEffects below fire.
     var maplibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
     var zoomBucket  by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
+
+    // Show a Toast when the user zooms out below the minimum parking marker level.
+    // Only fires on the false→true transition, not on further zoom-out.
+    val isZoomedOutForParking = zoomBucket < MIN_ZOOM_PARKING_VISIBLE.toInt()
+    val zoomHintText = stringResource(R.string.zoom_in_for_parking)
+    LaunchedEffect(isZoomedOutForParking) {
+        if (isZoomedOutForParking) {
+            Toast.makeText(context, zoomHintText, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // ── Permission handling ───────────────────────────────────────────────────
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -290,6 +301,7 @@ fun MainMapScreen(
             onDismissError    = viewModel::clearNavigationError
         )
 
+
         // ── Search bar + Menu button – vertically centred in one Row ─────────
         Row(
             modifier = Modifier
@@ -404,7 +416,7 @@ fun MainMapScreen(
         )
     }
 
-    customMapPin?.let { pin ->
+        customMapPin?.let { pin ->
         // Hide the sheet while actively navigating to this pin –
         // the pin stays visible on the map as a route end-point.
         val navigatingToPin = activeNavigation?.destination?.id == "custom_map_pin"
@@ -419,4 +431,5 @@ fun MainMapScreen(
         }
     }
 }
+
 

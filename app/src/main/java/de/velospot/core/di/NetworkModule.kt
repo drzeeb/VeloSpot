@@ -1,8 +1,6 @@
 package de.velospot.core.di
 
 import android.content.Context
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
@@ -22,7 +20,6 @@ import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.local.dao.BikeParkingSpaceDao
 import de.velospot.data.local.dao.FavoriteParkingSpaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
-import de.velospot.data.location.LocationRepositoryImpl
 import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.api.OsrmApi
 import de.velospot.data.repository.BikeParkingRepositoryImpl
@@ -30,7 +27,6 @@ import de.velospot.data.repository.FavoritesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
-import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RoutingRepository
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -172,22 +168,6 @@ object NetworkModule {
         @ApplicationContext context: Context
     ): RoutingRepository = RoutingRepositoryImpl(brouterEngine, segmentManager, osrmApi, context)
 
-    @Provides
-    @Singleton
-    fun provideFusedLocationClient(
-        @ApplicationContext context: Context
-    ): FusedLocationProviderClient {
-        return LocationServices.getFusedLocationProviderClient(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideLocationRepository(
-        @ApplicationContext context: Context,
-        fusedLocationClient: FusedLocationProviderClient
-    ): LocationRepository {
-        return LocationRepositoryImpl(context, fusedLocationClient)
-    }
 
     @Provides
     @Singleton

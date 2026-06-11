@@ -1,0 +1,43 @@
+Categories:
+  - Navigation
+License: MIT
+AuthorName: Michael
+SourceCode: https://github.com/drzeeb/VeloSpot
+IssueTracker: https://github.com/drzeeb/VeloSpot/issues
+Changelog: https://github.com/drzeeb/VeloSpot/blob/main/CHANGELOG.md
+
+AutoName: VeloSpot
+
+# Descriptions, short description and screenshots are read automatically from
+# fastlane/metadata/android/ in the app repository (de-DE and en-US).
+
+RepoType: git
+Repo: https://github.com/drzeeb/VeloSpot
+
+# The BRouter JAR (app/libs/brouter-1.6.3-all.jar) is a pre-built FLOSS binary (MIT License).
+# Source code: https://github.com/abrensch/brouter
+# The "all" JAR bundles all BRouter modules (brouter-codec, brouter-expressions,
+# brouter-router) into a single archive; no JitPack/Maven artifact exists for this variant.
+# The scanignore directive is therefore required.
+scanignore:
+  - app/libs/brouter-1.6.3-all.jar
+
+Builds:
+  # versionCode formula (set automatically by the release.yml workflow):
+  #   versionCode = MAJOR * 10000 + MINOR * 100 + PATCH
+  #   Examples: v1.0.0 → 10000 | v1.0.8 → 10008 | v1.2.3 → 10203
+  #
+  # First official F-Droid release – update tag and versionCode to match
+  # the actual first release tag before submitting the MR.
+  - versionName: "1.0.9"
+    versionCode: 10009
+    commit: v1.0.9
+    subdir: app
+    gradle:
+      - fdroid
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: "1.0.9"
+CurrentVersionCode: 10009
+
