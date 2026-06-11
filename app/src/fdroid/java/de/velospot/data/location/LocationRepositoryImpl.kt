@@ -2,7 +2,6 @@ package de.velospot.data.location
 
 import android.Manifest
 import android.content.Context
-import android.location.Criteria
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -17,9 +16,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * F-Droid-Implementierung von [LocationRepository].
- * Nutzt ausschließlich die Standard-Android-API (LocationManager),
- * ohne jede Abhängigkeit zu Google Play Services.
+ * F-Droid implementation of [LocationRepository].
+ * Uses only the standard Android API (LocationManager),
+ * without any dependency on Google Play Services.
  */
 @Singleton
 class LocationRepositoryImpl @Inject constructor(
@@ -42,15 +41,16 @@ class LocationRepositoryImpl @Inject constructor(
     override fun startLocationUpdates() {
         if (!hasPermission()) return
 
-        // Besten verfügbaren Provider ermitteln (GPS bevorzugt, Netzwerk als Fallback)
-        val criteria = Criteria().apply {
-            accuracy = Criteria.ACCURACY_FINE
-            powerRequirement = Criteria.POWER_HIGH
+        // Select best available provider (GPS preferred, network as fallback)
+        val provider = when {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                LocationManager.GPS_PROVIDER
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                LocationManager.NETWORK_PROVIDER
+            else -> LocationManager.GPS_PROVIDER
         }
-        val provider = locationManager.getBestProvider(criteria, true)
-            ?: LocationManager.GPS_PROVIDER
 
-        // Letzten bekannten Standort sofort emittieren
+        // Emit last known location immediately
         try {
             locationManager.getLastKnownLocation(provider)?.let {
                 _locationFlow.value = GeoCoordinate(it.latitude, it.longitude)
@@ -62,15 +62,15 @@ class LocationRepositoryImpl @Inject constructor(
                 _locationFlow.value = GeoCoordinate(location.latitude, location.longitude)
             }
 
-            @Suppress("DEPRECATION") // Für API < 29 erforderlich
+            @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION") // Required for API < 29
             override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
         }
 
         try {
             locationManager.requestLocationUpdates(
                 provider,
-                5_000L, // minTime: 5 Sekunden
-                5f,      // minDistance: 5 Meter
+                5_000L, // minTime: 5 seconds
+                5f,      // minDistance: 5 metres
                 locationListener!!
             )
         } catch (_: SecurityException) { }
