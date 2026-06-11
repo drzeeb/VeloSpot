@@ -12,8 +12,8 @@ import de.velospot.domain.repository.LocationRepository
 import javax.inject.Singleton
 
 /**
- * F-Droid-Flavor: stellt den Standard-Android-LocationManager bereit.
- * Keine Abhängigkeit zu Google Play Services.
+ * F-Droid flavor: provides the standard Android LocationManager.
+ * No dependency on Google Play Services.
  */
 @Module
 @InstallIn(SingletonComponent::class)
