@@ -6,6 +6,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
 import androidx.core.content.ContextCompat
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.repository.LocationRepository
@@ -27,7 +28,12 @@ class LocationRepositoryImpl @Inject constructor(
 ) : LocationRepository {
 
     private val _locationFlow = MutableStateFlow<GeoCoordinate?>(null)
-    private var locationListener: LocationListener? = null
+
+    /**
+     * Listeners per provider – we register GPS and Network simultaneously so whichever
+     * gets a fix first (Network is usually faster indoors) emits immediately.
+     */
+    private val activeListeners = mutableMapOf<String, LocationListener>()
 
     override fun getCurrentLocationFlow(): Flow<GeoCoordinate?> =
         _locationFlow.asStateFlow()
@@ -41,48 +47,47 @@ class LocationRepositoryImpl @Inject constructor(
     override fun startLocationUpdates() {
         if (!hasPermission()) return
 
-        // Remove any previously registered listener to prevent leaking multiple active listeners
-        // when startLocationUpdates() is called more than once (e.g. initial + permission grant).
+        // Remove any previously registered listeners before re-registering.
         stopLocationUpdates()
 
-        // Select best available provider (GPS preferred, network as fallback)
-        val provider = when {
-            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
-                LocationManager.GPS_PROVIDER
-            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
-                LocationManager.NETWORK_PROVIDER
-            else -> LocationManager.GPS_PROVIDER
-        }
+        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+            .filter { locationManager.isProviderEnabled(it) }
+            // Always try at least GPS even if reported as disabled (some devices lie)
+            .ifEmpty { listOf(LocationManager.GPS_PROVIDER) }
 
-        // Emit last known location immediately
-        try {
-            locationManager.getLastKnownLocation(provider)?.let {
-                _locationFlow.value = GeoCoordinate(it.latitude, it.longitude)
+        for (provider in providers) {
+            // Emit last known location for this provider immediately (best-effort)
+            try {
+                locationManager.getLastKnownLocation(provider)?.let { loc ->
+                    _locationFlow.value = GeoCoordinate(loc.latitude, loc.longitude)
+                }
+            } catch (_: SecurityException) { }
+
+            val listener = object : LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    _locationFlow.value = GeoCoordinate(location.latitude, location.longitude)
+                }
+
+                @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION") // Required for API < 29
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
             }
-        } catch (_: SecurityException) { }
 
-        locationListener = object : LocationListener {
-            override fun onLocationChanged(location: Location) {
-                _locationFlow.value = GeoCoordinate(location.latitude, location.longitude)
-            }
-
-            @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION") // Required for API < 29
-            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+            try {
+                // Explicit Looper required on API 31+ to avoid deprecation / silent failure.
+                locationManager.requestLocationUpdates(
+                    provider,
+                    5_000L,            // minTime: 5 seconds
+                    5f,                // minDistance: 5 metres
+                    listener,
+                    Looper.getMainLooper()
+                )
+                activeListeners[provider] = listener
+            } catch (_: SecurityException) { }
         }
-
-        try {
-            locationManager.requestLocationUpdates(
-                provider,
-                5_000L, // minTime: 5 seconds
-                5f,      // minDistance: 5 metres
-                locationListener!!
-            )
-        } catch (_: SecurityException) { }
     }
 
     override fun stopLocationUpdates() {
-        locationListener?.let { locationManager.removeUpdates(it) }
-        locationListener = null
+        activeListeners.values.forEach { locationManager.removeUpdates(it) }
+        activeListeners.clear()
     }
 }
-
