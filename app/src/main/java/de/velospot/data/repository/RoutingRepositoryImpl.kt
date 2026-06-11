@@ -57,13 +57,16 @@ class RoutingRepositoryImpl @Inject constructor(
 /** Realistic average cycling speed used to recalculate OSRM duration (15 km/h). */
 private const val OSRM_CYCLING_SPEED_MS = 15.0 / 3.6
 
+/** Public OSRM demo server endpoint for bicycle routing. */
+private const val OSRM_BICYCLE_BASE_URL = "https://router.project-osrm.org/route/v1/bicycle/"
+
 internal suspend fun osrmFallbackRoute(
     osrmApi: OsrmApi,
     from: GeoCoordinate,
     to: GeoCoordinate
 ): BikeRoute {
     val url = buildString {
-        append("https://router.project-osrm.org/route/v1/bicycle/")
+        append(OSRM_BICYCLE_BASE_URL)
         append(from.longitude); append(','); append(from.latitude)
         append(';')
         append(to.longitude); append(','); append(to.latitude)

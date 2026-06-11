@@ -91,4 +91,8 @@
     <string name="search_clear">Zoekopdracht wissen</string>
     <string name="search_result_pin_title">Adres</string>
     <string name="search_navigate_to">Hierheen navigeren</string>
+
+    <!-- Zoom-hinttekst bij te laag zoomniveau -->
+    <string name="zoom_in_for_parking">Zoom in om fietsenstallingen te zien</string>
+    <string name="error_loading_parking">Parkeergegevens konden niet worden vernieuwd</string>
 </resources>

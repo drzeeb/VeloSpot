@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [v1.0.9] — 2026-06-12
+
 ### Added
 - **Tap-to-place custom map pin** — tap any empty location on the map to drop a blue pin marker at that exact point; the map camera animates to the tapped position automatically
 - **`CustomMapPinSheet`** — bottom sheet that opens immediately when a custom pin is placed; shows the reverse-geocoded address from Nominatim (with a loading spinner and raw coordinates as fallback while the request is in-flight); provides a "Navigate here" primary action and a "Remove pin" secondary action
@@ -14,12 +18,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Blue custom pin icon** — new `createCustomPinIcon()` function in `MapMarkerRenderer` renders a distinct blue dropped-pin (Material Blue 700 `#1565C0`) to visually separate the tap pin from the red address-search pin and the bike-rack parking markers
 - **Dedicated GeoJSON source and layer** (`velospot-custom-pin-source` / `velospot-custom-pin-layer`) for the custom pin, following the same MapLibre `SymbolLayer` pattern as existing markers
 - **`customMapPin` and `customMapPinAddress` StateFlows** in `MapViewModel` to expose pin position and its resolved address to the UI layer independently
-- **String resources** for `custom_pin_title`, `custom_pin_subtitle`, `custom_pin_navigate`, `custom_pin_remove` in EN and DE
+- **Zoom-out parking marker visibility** — bike parking markers are hidden below zoom level 11 via MapLibre's native `minZoom` on the parking layer (GPU-side, no state update needed); a Toast notification informs the user when they zoom out too far
+- **`MIN_ZOOM_PARKING_VISIBLE` constant** (`= 11f`) in `MapMarkerRenderer` controls the visibility threshold and is shared with `MainMapScreen` for the Toast trigger
+- **Profile change recalculates active route** — switching the offline routing profile while navigation is active immediately triggers a new route calculation to the same destination with the new profile
+- **Navigation job cancellation** — starting a new navigation while a route is still being computed cancels the previous calculation immediately, preventing race conditions when the user taps quickly between spots
+- **F-Droid build flavor** — new `fdroid` product flavor that replaces Google's `FusedLocationProviderClient` with Android's standard `LocationManager`; the `googlePlay` flavor retains the existing GMS-based implementation; `play-services-location` dependency is scoped to `googlePlayImplementation` only
+- **F-Droid store listing** — full fastlane metadata for `de-DE` and `en-US` locales: `title.txt`, `short_description.txt`, `full_description.txt`, `changelogs/10000.txt`, phone screenshots
+- **F-Droid build metadata** — `metadata/de.velospot.yml` with `scanignore` for the BRouter JAR, `AutoUpdateMode: Version`, `UpdateCheckMode: Tags`, and versionCode formula (`X * 10000 + Y * 100 + Z`)
+- **BRouter LICENSE file** — `app/libs/brouter-LICENSE.txt` documents the MIT license and source URL of the bundled JAR for F-Droid reviewers
+- **Release signing via environment variables** — `signingConfigs.release` in `app/build.gradle.kts` reads `KEYSTORE_PATH`, `STORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` from the environment; local builds fall back to the debug key automatically
+- **Version injection from Git tag** — `versionCode` and `versionName` are now Gradle-property-injectable (`-PversionCode`, `-PversionName`); the release workflow computes `versionCode = X * 10000 + Y * 100 + Z` from the tag
+- **GitHub Pages screenshots** — added `searchbar.jpeg` and `found-location.jpeg` to the App Preview section; all screenshot `alt` texts updated to English
 
 ### Changed
 - `MainMapScreen` map-click listener now **always consumes the tap event** (`return true`) — clicking an empty area places a custom pin instead of being silently ignored
 - Selecting a parking space or a Nominatim search result **dismisses any active custom pin** and vice versa, ensuring only one pin type is visible at a time
 - `stopInAppNavigation()` only clears the custom pin when the destination was the custom pin itself; navigating to a parking space or address does not affect the custom pin state
+- **`release.yml` workflow rewritten** — builds both `fdroid` and `googlePlay` release APKs from a single job; version is extracted from the Git tag; release body includes a bilingual APK variant table and sideload instructions; F-Droid fastlane changelog files are auto-committed after each release
+- **`security-release.yml` workflow updated** — same two-flavor APK build and version-code formula as `release.yml`; section headings translated to English
+- **`ci.yml` workflow updated** — `ci-build` now assembles `assembleFdroidDebug` (the canonical open-source build); APK artifact upload path updated for the new flavor directory structure; unit tests run against `testFdroidDebugUnitTest`
+- **`NetworkModule`** — `provideFusedLocationClient` and `provideLocationRepository` extracted from the shared module into flavor-specific `LocationModule` Hilt modules (`src/googlePlay/…` and `src/fdroid/…`)
+- **`ATTRIBUTIONS.md`** fully rewritten in English; Trier Geoportal and OSMDroid entries removed; BRouter, MapLibre, Coil, OSRM, OpenFreeMap, and all current libraries added with correct licenses and source links
+- All German code comments translated to English across `build.gradle.kts`, workflow YAML files, `MapViewModel.kt`, `MainMapScreen.kt`, `MapMarkerRenderer.kt`, and all `strings.xml` files
+- `zoom_in_for_parking` string resource added in all 8 supported languages (DE, EN, FR, IT, PT, LB, NL, ES)
+- **`MapViewModel`** — `ID_CUSTOM_MAP_PIN` and `ID_ADDRESS_SEARCH_PIN` extracted as `companion object` constants; all usages in `MapViewModel` and `MainMapScreen` updated
+- **`RoutingRepositoryImpl`** — OSRM base URL extracted to `OSRM_BICYCLE_BASE_URL` private constant
+- **`MapMarkerRenderer.registerIcons()`** — location icons now updated via direct `style.addImage()` (MapLibre replaces in-place) instead of a `removeImage` + null-checked add on every call, eliminating unnecessary GPU work on each GPS position or zoom update
+
+### Fixed
+- **F-Droid `LocationRepositoryImpl` listener leak** — `startLocationUpdates()` now calls `stopLocationUpdates()` first, matching the Google Play implementation; previously calling start twice (once at init, once after permission grant) left the old `LocationListener` orphaned in `LocationManager`
+- **Viewport reload errors silently dropped** — when a parking-data refresh fails after the initial load, a short Toast is now shown (`error_loading_parking` string in all 8 languages) instead of discarding the error; the existing map data remains visible
+
+### Removed
+- **`osmdroid`** version and library entries removed from `libs.versions.toml` — OSMDroid was replaced by MapLibre in v1.0.8; the catalog entries were never cleaned up
+- **`accompanistPermissions`** version and library entries removed from `libs.versions.toml` — the library was superseded by manual permission handling and was never referenced in any build file
 
 ---
 

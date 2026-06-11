@@ -97,4 +97,8 @@
     <string name="custom_pin_subtitle">Tippe auf die Karte, um den Pin zu verschieben.</string>
     <string name="custom_pin_navigate">Hierhin navigieren</string>
     <string name="custom_pin_remove">Pin entfernen</string>
+
+    <!-- Zoom-out-Hinweis: erscheint wenn der Zoom-Level zu niedrig ist -->
+    <string name="zoom_in_for_parking">Reinzoomen um Fahrradstellplätze zu sehen</string>
+    <string name="error_loading_parking">Parkplatzdaten konnten nicht aktualisiert werden</string>
 </resources>

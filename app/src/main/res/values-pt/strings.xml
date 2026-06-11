@@ -91,4 +91,8 @@
     <string name="search_clear">Limpar pesquisa</string>
     <string name="search_result_pin_title">Endereço</string>
     <string name="search_navigate_to">Navegar aqui</string>
+
+    <!-- Dica de nível de zoom baixo demais -->
+    <string name="zoom_in_for_parking">Aproxime para ver os estacionamentos de bicicleta</string>
+    <string name="error_loading_parking">Não foi possível atualizar os dados de estacionamento</string>
 </resources>

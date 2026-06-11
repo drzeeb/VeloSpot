@@ -11,14 +11,44 @@ android {
     namespace = "de.velospot"
     compileSdk = 37
 
+    signingConfigs {
+        // Release signing is configured via environment variables in CI.
+        // Local builds fall back to the debug signing config automatically.
+        create("release") {
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+            if (keystorePath != null) {
+                storeFile     = file(keystorePath)
+                storePassword = System.getenv("STORE_PASSWORD")
+                keyAlias      = System.getenv("KEY_ALIAS")
+                keyPassword   = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "de.velospot"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+
+        // versionCode and versionName can be overridden via Gradle properties:
+        //   ./gradlew assembleRelease -PversionCode=10008 -PversionName=1.0.8
+        // In CI the values are computed automatically from the Git tag (format: vX.Y.Z).
+        // Formula: versionCode = X * 10000 + Y * 100 + Z  (e.g. v1.0.8 → 10008)
+        versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
+        versionName = (project.findProperty("versionName") as String?) ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions += "distribution"
+
+    productFlavors {
+        create("googlePlay") {
+            dimension = "distribution"
+        }
+        create("fdroid") {
+            dimension = "distribution"
+        }
     }
 
     buildTypes {
@@ -29,6 +59,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // In CI: release key from env variables. Locally: falls back to debug signing.
+            signingConfig = if (System.getenv("KEYSTORE_PATH") != null)
+                signingConfigs.getByName("release")
+            else
+                signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -89,8 +124,8 @@ dependencies {
     implementation(libs.roomKtx)
     ksp(libs.roomCompiler)
 
-    // Location Services
-    implementation(libs.playServicesLocation)
+    // Location Services – only for the Google Play flavor (proprietary, not F-Droid-compatible)
+    "googlePlayImplementation"(libs.playServicesLocation)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinxCoroutinesTest)
@@ -103,5 +138,3 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
-
-

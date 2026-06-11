@@ -32,14 +32,16 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
-      - name: Assemble debug
-        run: ./gradlew :app:assembleDebug --no-daemon
+      # Use the F-Droid flavor as the canonical CI build (no GMS required).
+      # The Google Play flavor is built separately in the release workflow.
+      - name: Assemble F-Droid debug
+        run: ./gradlew :app:assembleFdroidDebug --no-daemon
 
-      - name: Upload debug APK
+      - name: Upload F-Droid debug APK
         uses: actions/upload-artifact@v7
         with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-fdroid-debug-apk
+          path: app/build/outputs/apk/fdroid/debug/*.apk
           if-no-files-found: error
 
   ci-test:
@@ -61,4 +63,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest --no-daemon
+        run: ./gradlew :app:testFdroidDebugUnitTest --no-daemon

@@ -1,0 +1,34 @@
+VeloSpot helps cyclists find and navigate to bike parking facilities across all of Germany – fully offline, without proprietary services and without any tracking.
+
+The app ships with over 100,000 bike parking spots from OpenStreetMap, bundled as a SQLite database directly inside the app. All spots are visible from the very first launch, no network connection required.
+
+<b>Map &amp; Data</b>
+• Interactive vector map via MapLibre (OpenFreeMap Liberty style, no API key required)
+• 100,000+ bike parking spots from OpenStreetMap, fully available offline
+• Viewport-based loading – only the visible map area is queried, keeping memory low
+• Automatic address resolution via Nominatim (on first marker tap, then cached locally forever)
+
+<b>Navigation</b>
+• In-app bike routing rendered directly on the map – no handoff to an external app
+• Offline routing with BRouter (5 cycling profiles: Trekking, Fast, Shortest, Mountainbike, Gravel)
+• Online routing via OSRM as automatic fallback when no Wi-Fi is available
+• Address search with live suggestions (Nominatim, 400 ms debounce)
+• Drop a custom pin anywhere on the map – address is resolved automatically, navigation starts immediately
+
+<b>Usability</b>
+• Favourites with a dedicated navigation shortcut
+• Parking spot photos with automatic image caching (Coil)
+• Current location with map recentring
+• Dark mode toggle from the in-app menu
+• 8 languages with persistent language picker: German, English, French, Italian, Portuguese, Luxembourgish, Dutch, Spanish
+
+<b>Privacy &amp; Transparency</b>
+• No ads, no tracking, no telemetry
+• No proprietary Google services (F-Droid build uses only free/open libraries)
+• No account required
+• All map data is from OpenStreetMap (ODbL licence)
+• Source code: https://github.com/drzeeb/VeloSpot
+
+<b>Tech Stack</b>
+Android 8.0 (API 26)+ · Jetpack Compose · MapLibre · Room/SQLite · BRouter · OSRM · Nominatim · Hilt · Retrofit · Kotlin
+

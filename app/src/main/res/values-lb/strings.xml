@@ -90,5 +90,9 @@
     <string name="search_no_results">Keng Resultater fonnt</string>
     <string name="search_clear">Such läschen</string>
     <string name="search_result_pin_title">Adress</string>
-    <string name="search_navigate_to">Hei navigéieren</string>
+    <string name="search_navigate_to">Hei navigieren</string>
+
+    <!-- Hinweis wann de Zoom ze kleng ass -->
+    <string name="zoom_in_for_parking">Erazommen fir Vëlosparken ze gesinn</string>
+    <string name="error_loading_parking">Parkdaten konnte net aktualiséiert ginn</string>
 </resources>

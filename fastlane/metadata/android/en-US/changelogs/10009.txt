@@ -1,0 +1,5 @@
+• Tap any empty map location to drop a custom blue pin with automatic Nominatim reverse geocoding
+• Changing the offline routing profile while navigating immediately recalculates the active route
+• Starting a new navigation cancels any in-progress route calculation
+• Bike parking markers hidden below zoom level 11 with a Toast notification on zoom-out
+
