@@ -246,6 +246,9 @@ class MapViewModel @Inject constructor(
 
     private var viewportJob: Job? = null
 
+    /** Active route calculation job – cancelled immediately when a new navigation starts. */
+    private var navigationJob: Job? = null
+
     init {
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
@@ -341,8 +344,11 @@ class MapViewModel @Inject constructor(
             _navigationUiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
             return
         }
+        // Cancel any in-progress calculation – e.g. when the user taps a different
+        // parking spot while a route is still being computed.
+        navigationJob?.cancel()
         _navigationUiState.value = NavigationUiState.Loading
-        viewModelScope.launch {
+        navigationJob = viewModelScope.launch {
             runCatching {
                 routingRepository.getBikeRoute(
                     from = location,
@@ -363,6 +369,8 @@ class MapViewModel @Inject constructor(
     }
 
     fun stopInAppNavigation() {
+        navigationJob?.cancel()
+        navigationJob = null
         val wasCustomPin = (_navigationUiState.value as? NavigationUiState.Active)
             ?.destination?.id == "custom_map_pin"
         _navigationUiState.value = NavigationUiState.Idle
@@ -441,6 +449,12 @@ class MapViewModel @Inject constructor(
     fun selectRoutingProfile(profile: de.velospot.data.brouter.BRouterProfile) {
         OfflineRoutingPreferences.setSelectedProfile(context, profile)
         _offlineRoutingUiState.value = OfflineRoutingUiState.Enabled(profile)
+
+        // If navigation is currently active, immediately recalculate the route with the new profile.
+        val currentDestination = (_navigationUiState.value as? NavigationUiState.Active)?.destination
+        if (currentDestination != null) {
+            startInAppNavigation(currentDestination)
+        }
     }
 
     /** Disables offline routing and wipes all downloaded segment files. */

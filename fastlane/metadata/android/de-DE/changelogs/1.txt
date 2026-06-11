@@ -1,0 +1,10 @@
+Erste Veröffentlichung von VeloSpot.
+
+• 100.000+ Fahrradparkplätze aus OpenStreetMap für ganz Deutschland – offline ab dem ersten Start
+• Interaktive Vektorkarte mit MapLibre (kein API-Key, kein Tracking)
+• Offline-Navigation mit BRouter (5 Fahrradprofile) und Online-Fallback via OSRM
+• Adresssuche mit Live-Vorschlägen (Nominatim)
+• Eigenen Kartenpin per Tipp setzen und direkt navigieren
+• Favoriten, Parkplatzfotos, Dunkelmodus, 8 Sprachen
+• Keine proprietären Google-Dienste, keine Werbung, kein Tracking
+

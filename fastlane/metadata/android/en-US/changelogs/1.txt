@@ -1,0 +1,10 @@
+Initial release of VeloSpot.
+
+• 100,000+ bike parking spots from OpenStreetMap covering all of Germany – offline from first launch
+• Interactive vector map with MapLibre (no API key, no tracking)
+• Offline routing with BRouter (5 cycling profiles) and online fallback via OSRM
+• Address search with live suggestions (Nominatim)
+• Drop a custom pin anywhere on the map and navigate directly
+• Favourites, parking photos, dark mode, 8 languages
+• No proprietary Google services, no ads, no tracking
+

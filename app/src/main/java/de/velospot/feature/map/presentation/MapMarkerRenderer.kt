@@ -45,6 +45,13 @@ internal const val LAYER_LOCATION   = "velospot-location-layer"
 internal const val LAYER_SEARCH_PIN = "velospot-search-pin-layer"
 internal const val LAYER_CUSTOM_PIN = "velospot-custom-pin-layer"
 
+/**
+ * Minimum zoom level at which bike parking markers are displayed.
+ * Below this value MapLibre hides the layer natively (GPU-side, no state update needed).
+ * This roughly corresponds to city level (~50 km visible area).
+ */
+internal const val MIN_ZOOM_PARKING_VISIBLE = 11f
+
 private const val IMG_SEARCH_PIN    = "vs-search-pin"
 private const val IMG_CUSTOM_PIN    = "vs-custom-pin"
 
@@ -200,14 +207,14 @@ private fun ensureRouteLayer(style: Style, colorInt: Int) {
 
 private fun ensureParkingLayer(style: Style) {
     if (style.getLayer(LAYER_PARKING) != null) return
-    style.addLayer(
-        SymbolLayer(LAYER_PARKING, SOURCE_PARKING).withProperties(
-            PropertyFactory.iconImage(Expression.get(PROP_ICON)),
-            PropertyFactory.iconAllowOverlap(true),
-            PropertyFactory.iconIgnorePlacement(false),
-            PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
-        )
+    val layer = SymbolLayer(LAYER_PARKING, SOURCE_PARKING).withProperties(
+        PropertyFactory.iconImage(Expression.get(PROP_ICON)),
+        PropertyFactory.iconAllowOverlap(true),
+        PropertyFactory.iconIgnorePlacement(false),
+        PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
     )
+    layer.minZoom = MIN_ZOOM_PARKING_VISIBLE
+    style.addLayer(layer)
 }
 
 private fun ensureLocationLayer(style: Style) {
