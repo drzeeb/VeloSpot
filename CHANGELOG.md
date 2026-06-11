@@ -50,7 +50,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Viewport reload errors silently dropped** — when a parking-data refresh fails after the initial load, a short Toast is now shown (`error_loading_parking` string in all 8 languages) instead of discarding the error; the existing map data remains visible
 
 ### Removed
-- **`metadata/de.velospot.yml`** removed from the app repository — this file belongs in the [`fdroid/fdroiddata`](https://gitlab.com/fdroid/fdroiddata) GitLab repository as part of the F-Droid submission MR, not in the app source tree
 - **`osmdroid`** version and library entries removed from `libs.versions.toml` — OSMDroid was replaced by MapLibre in v1.0.8; the catalog entries were never cleaned up
 - **`accompanistPermissions`** version and library entries removed from `libs.versions.toml` — the library was superseded by manual permission handling and was never referenced in any build file
 
