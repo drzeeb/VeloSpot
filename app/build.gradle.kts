@@ -7,32 +7,6 @@ plugins {
     alias(libs.plugins.hiltAndroid)
 }
 
-/**
- * Reads the current Git tag (format vX.Y.Z) and converts it to a numeric versionCode
- * using the formula X * 10000 + Y * 100 + Z (e.g. v1.0.9 → 10009).
- *
- * Used as a fallback when -PversionCode / -PversionName are not supplied by the caller
- * (e.g. F-Droid builds the APK directly from the tagged commit without injecting properties).
- *
- * Returns (1, "1.0") when not on an exact tag (local dev builds).
- */
-fun versionFromGitTag(): Pair<Int, String> {
-    return try {
-        val tag = ProcessBuilder("git", "describe", "--tags", "--exact-match")
-            .directory(rootProject.projectDir)
-            .redirectErrorStream(true)
-            .start()
-            .inputStream.bufferedReader().readLine()?.trim() ?: ""
-        val clean = tag.removePrefix("v")
-        val parts = clean.split(".")
-        if (parts.size == 3) {
-            val code = parts[0].toInt() * 10000 + parts[1].toInt() * 100 + parts[2].toInt()
-            Pair(code, clean)
-        } else Pair(1, "1.0")
-    } catch (_: Exception) {
-        Pair(1, "1.0")
-    }
-}
 
 android {
     namespace = "de.velospot"
@@ -57,13 +31,12 @@ android {
         minSdk = 26
         targetSdk = 37
 
-        // versionCode and versionName are resolved in this priority order:
-        //  1. Gradle properties injected by CI: -PversionCode=10009 -PversionName=1.0.9
-        //  2. Current Git tag (vX.Y.Z → X*10000+Y*100+Z) – used by F-Droid builds
-        //  3. Fallback (1 / "1.0") for local dev builds without a tag
-        val (gitCode, gitName) = versionFromGitTag()
-        versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: gitCode
-        versionName = (project.findProperty("versionName") as String?) ?: gitName
+        // Static version literals – F-Droid's parser reads these directly via regex.
+        // The release workflow updates them via `sed` before committing the release tag,
+        // so the tagged commit always contains the correct values.
+        // ⚠️  Do NOT replace these literals with dynamic expressions – F-Droid will fail to parse them.
+        versionCode = 10009
+        versionName = "1.0.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -88,12 +88,21 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"          >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"    >> "$GITHUB_ENV"
 
+      # ── Bump static version literals ──────────────────────────────────────────
+      # F-Droid's fdroidserver uses a static regex parser on build.gradle.kts.
+      # It cannot evaluate Kotlin expressions – it only matches `versionCode = <int>`
+      # and `versionName = "<string>"` literals.
+      # We therefore update these literals in-place and move the tag to this commit
+      # so that F-Droid always reads the correct values from the tagged source.
+      - name: Update static versionCode / versionName in build.gradle.kts
+        run: |
+          sed -i "s/versionCode = [0-9]*/versionCode = ${VERSION_CODE}/" app/build.gradle.kts
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"${VERSION_NAME}\"/" app/build.gradle.kts
+
       # ── Build APKs ────────────────────────────────────────────────────────────
       - name: Build F-Droid & Google Play Release APKs
         run: |
           ./gradlew assembleFdroidRelease assembleGooglePlayRelease \
-            -PversionName="${VERSION_NAME}" \
-            -PversionCode="${VERSION_CODE}" \
             --no-daemon
 
       # ── Rename APKs ───────────────────────────────────────────────────────────
@@ -166,11 +175,15 @@ jobs:
           echo "$NOTES" > "fastlane/metadata/android/de-DE/changelogs/${VERSION_CODE}.txt"
           echo "$NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
 
-      - name: Commit F-Droid changelog
+      - name: Commit version bump + F-Droid changelog and move tag
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle.kts
           git add fastlane/metadata/android/*/changelogs/
           git diff --staged --quiet || \
-            git commit -m "chore: add F-Droid changelog for ${{ steps.version.outputs.tag }}"
+            git commit -m "chore: bump versionCode/versionName + F-Droid changelog for ${{ steps.version.outputs.tag }}"
+          # Move the release tag to this commit so F-Droid reads the correct static values.
+          git tag -f "${{ steps.version.outputs.tag }}" HEAD
+          git push --force origin "${{ steps.version.outputs.tag }}"
           git push origin HEAD:main || true
