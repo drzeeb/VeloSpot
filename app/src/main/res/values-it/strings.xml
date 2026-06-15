@@ -88,4 +88,21 @@
     <!-- Suggerimento zoom troppo basso -->
     <string name="zoom_in_for_parking">Ingrandisci per vedere i parcheggi bici</string>
     <string name="error_loading_parking">Impossibile aggiornare i dati dei parcheggi</string>
+    <!-- Saved places (custom pins saved as named favourites) -->
+    <string name="save_place_as_favorite">Salva come preferito</string>
+    <string name="save_place_dialog_title">Assegna un nome al preferito</string>
+    <string name="save_place_name_hint">Nome</string>
+    <string name="save_place_confirm">Salva</string>
+    <string name="saved_place_title">Luogo salvato</string>
+    <string name="favorites_saved_places_header">Luoghi salvati</string>
+    <!-- Layers (toggle pin categories) -->
+    <string name="menu_layers">Livelli</string>
+    <string name="layers_title">Livelli</string>
+    <string name="layers_subtitle">Scegli quali segnaposto mostrare sulla mappa.</string>
+    <string name="layers_parking_title">Parcheggi</string>
+    <string name="layers_parking_desc">Tutti i parcheggi per biciclette</string>
+    <string name="layers_favorites_title">Preferiti</string>
+    <string name="layers_favorites_desc">I tuoi parcheggi preferiti</string>
+    <string name="layers_saved_title">Luoghi salvati</string>
+    <string name="layers_saved_desc">I tuoi segnaposto salvati</string>
 </resources>

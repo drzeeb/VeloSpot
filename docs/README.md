@@ -18,6 +18,8 @@ This directory contains the GitHub Pages website for VeloSpot. The site is autom
 - Technology stack showcase
 - Product highlights for favorites, my location, dark mode, and SQLite caching
 - Product highlights for in-app bike navigation, route overlay, and navigation focus marker styling
+- Product highlights for dark map tiles, toggleable map layers, and saved places
+- App preview gallery (including dark map mode and the layers sheet screenshots)
 - Getting started guide
 - Footer with social links
 
@@ -25,7 +27,8 @@ This directory contains the GitHub Pages website for VeloSpot. The site is autom
 
 ```
 docs/
-└── index.html    # Main website (all-in-one file)
+├── index.html       # Main website (all-in-one file)
+└── screenshots/     # App preview images used by the site & README
 ```
 
 ## Customization
@@ -54,7 +57,8 @@ Current website copy highlights:
 - Favorites and direct navigation shortcuts
 - In-app bike navigation with route overlay and destination-focused marker styling
 - Current-location tools and live location marker
-- Dark mode toggle in the app menu
+- Dark mode toggle in the app menu — including a bundled dark vector-tile map style
+- Toggleable map layers (parking, favorites, saved places) and saved custom places
 - Room / SQLite pre-populated asset database
 - OpenStreetMap attribution in the footer
 

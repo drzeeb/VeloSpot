@@ -95,4 +95,21 @@
     <!-- Zoom-hinttekst bij te laag zoomniveau -->
     <string name="zoom_in_for_parking">Zoom in om fietsenstallingen te zien</string>
     <string name="error_loading_parking">Parkeergegevens konden niet worden vernieuwd</string>
+    <!-- Saved places (custom pins saved as named favourites) -->
+    <string name="save_place_as_favorite">Opslaan als favoriet</string>
+    <string name="save_place_dialog_title">Geef deze favoriet een naam</string>
+    <string name="save_place_name_hint">Naam</string>
+    <string name="save_place_confirm">Opslaan</string>
+    <string name="saved_place_title">Opgeslagen plek</string>
+    <string name="favorites_saved_places_header">Opgeslagen plekken</string>
+    <!-- Layers (toggle pin categories) -->
+    <string name="menu_layers">Lagen</string>
+    <string name="layers_title">Lagen</string>
+    <string name="layers_subtitle">Kies welke pins op de kaart worden getoond.</string>
+    <string name="layers_parking_title">Stallingen</string>
+    <string name="layers_parking_desc">Alle fietsenstallingen</string>
+    <string name="layers_favorites_title">Favorieten</string>
+    <string name="layers_favorites_desc">Je favoriete stallingen</string>
+    <string name="layers_saved_title">Opgeslagen plekken</string>
+    <string name="layers_saved_desc">Je opgeslagen pins</string>
 </resources>

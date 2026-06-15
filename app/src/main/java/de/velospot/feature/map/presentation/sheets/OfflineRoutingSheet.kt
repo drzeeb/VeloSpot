@@ -1,4 +1,6 @@
-package de.velospot.feature.map.presentation
+package de.velospot.feature.map.presentation.sheets
+
+import de.velospot.feature.map.presentation.*
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

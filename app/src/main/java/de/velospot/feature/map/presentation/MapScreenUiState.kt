@@ -18,6 +18,9 @@ internal class MapScreenUiState {
     var isLanguageSheetVisible by mutableStateOf(false)
         private set
 
+    var isLayersSheetVisible by mutableStateOf(false)
+        private set
+
     fun expandMenu() {
         isMenuExpanded = true
     }
@@ -42,6 +45,15 @@ internal class MapScreenUiState {
 
     fun closeLanguage() {
         isLanguageSheetVisible = false
+    }
+
+    fun openLayers() {
+        isLayersSheetVisible = true
+        isMenuExpanded = false
+    }
+
+    fun closeLayers() {
+        isLayersSheetVisible = false
     }
 }
 

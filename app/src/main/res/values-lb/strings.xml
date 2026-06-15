@@ -95,4 +95,21 @@
     <!-- Hinweis wann de Zoom ze kleng ass -->
     <string name="zoom_in_for_parking">Erazommen fir Vëlosparken ze gesinn</string>
     <string name="error_loading_parking">Parkdaten konnte net aktualiséiert ginn</string>
+    <!-- Saved places (custom pins saved as named favourites) -->
+    <string name="save_place_as_favorite">Als Favorit späicheren</string>
+    <string name="save_place_dialog_title">Dëse Favorit benennen</string>
+    <string name="save_place_name_hint">Numm</string>
+    <string name="save_place_confirm">Späicheren</string>
+    <string name="saved_place_title">Gespäicherten Uert</string>
+    <string name="favorites_saved_places_header">Gespäichert Äerter</string>
+    <!-- Layers (toggle pin categories) -->
+    <string name="menu_layers">Ebenen</string>
+    <string name="layers_title">Ebenen</string>
+    <string name="layers_subtitle">Wiel aus, wéi eng Pinnen op der Kaart ugewise ginn.</string>
+    <string name="layers_parking_title">Ofstellplazen</string>
+    <string name="layers_parking_desc">All Vëlos-Ofstellplazen</string>
+    <string name="layers_favorites_title">Favoritten</string>
+    <string name="layers_favorites_desc">Deng favoriséiert Plazen</string>
+    <string name="layers_saved_title">Gespäichert Äerter</string>
+    <string name="layers_saved_desc">Deng gespäichert Pinnen</string>
 </resources>

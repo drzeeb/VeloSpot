@@ -19,15 +19,19 @@ import de.velospot.data.local.BikeParkingCacheDataSource
 import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.local.dao.BikeParkingSpaceDao
 import de.velospot.data.local.dao.FavoriteParkingSpaceDao
+import de.velospot.data.local.dao.SavedPlaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
+import de.velospot.data.local.database.SavedPlacesDatabase
 import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.api.OsrmApi
 import de.velospot.data.repository.BikeParkingRepositoryImpl
 import de.velospot.data.repository.FavoritesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
+import de.velospot.data.repository.SavedPlacesRepositoryImpl
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.RoutingRepository
+import de.velospot.domain.repository.SavedPlacesRepository
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -175,6 +179,28 @@ object NetworkModule {
         favoritesDao: FavoriteParkingSpaceDao
     ): FavoritesRepository {
         return FavoritesRepositoryImpl(favoritesDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSavedPlacesDatabase(
+        @ApplicationContext context: Context
+    ): SavedPlacesDatabase {
+        return SavedPlacesDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSavedPlaceDao(database: SavedPlacesDatabase): SavedPlaceDao {
+        return database.savedPlaceDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSavedPlacesRepository(
+        savedPlaceDao: SavedPlaceDao
+    ): SavedPlacesRepository {
+        return SavedPlacesRepositoryImpl(savedPlaceDao)
     }
 }
 

@@ -1,4 +1,4 @@
-package de.velospot.feature.map.presentation
+package de.velospot.feature.map.presentation.sheets
 
 import android.app.Activity
 import android.content.Context

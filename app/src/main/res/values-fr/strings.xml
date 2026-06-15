@@ -95,4 +95,21 @@
     <!-- Indication de zoom trop faible -->
     <string name="zoom_in_for_parking">Zoomez pour voir les places de stationnement vélo</string>
     <string name="error_loading_parking">Impossible de rafraîchir les données de stationnement</string>
+    <!-- Saved places (custom pins saved as named favourites) -->
+    <string name="save_place_as_favorite">Enregistrer comme favori</string>
+    <string name="save_place_dialog_title">Nommer ce favori</string>
+    <string name="save_place_name_hint">Nom</string>
+    <string name="save_place_confirm">Enregistrer</string>
+    <string name="saved_place_title">Lieu enregistré</string>
+    <string name="favorites_saved_places_header">Lieux enregistrés</string>
+    <!-- Layers (toggle pin categories) -->
+    <string name="menu_layers">Calques</string>
+    <string name="layers_title">Calques</string>
+    <string name="layers_subtitle">Choisissez les marqueurs affichés sur la carte.</string>
+    <string name="layers_parking_title">Stationnements</string>
+    <string name="layers_parking_desc">Tous les stationnements vélo</string>
+    <string name="layers_favorites_title">Favoris</string>
+    <string name="layers_favorites_desc">Vos stationnements favoris</string>
+    <string name="layers_saved_title">Lieux enregistrés</string>
+    <string name="layers_saved_desc">Vos marqueurs enregistrés</string>
 </resources>

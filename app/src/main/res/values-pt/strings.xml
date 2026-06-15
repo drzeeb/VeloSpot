@@ -95,4 +95,21 @@
     <!-- Dica de nível de zoom baixo demais -->
     <string name="zoom_in_for_parking">Aproxime para ver os estacionamentos de bicicleta</string>
     <string name="error_loading_parking">Não foi possível atualizar os dados de estacionamento</string>
+    <!-- Saved places (custom pins saved as named favourites) -->
+    <string name="save_place_as_favorite">Guardar como favorito</string>
+    <string name="save_place_dialog_title">Dê um nome a este favorito</string>
+    <string name="save_place_name_hint">Nome</string>
+    <string name="save_place_confirm">Guardar</string>
+    <string name="saved_place_title">Local guardado</string>
+    <string name="favorites_saved_places_header">Locais guardados</string>
+    <!-- Layers (toggle pin categories) -->
+    <string name="menu_layers">Camadas</string>
+    <string name="layers_title">Camadas</string>
+    <string name="layers_subtitle">Escolhe que marcadores são mostrados no mapa.</string>
+    <string name="layers_parking_title">Estacionamentos</string>
+    <string name="layers_parking_desc">Todos os estacionamentos para bicicletas</string>
+    <string name="layers_favorites_title">Favoritos</string>
+    <string name="layers_favorites_desc">Os teus estacionamentos favoritos</string>
+    <string name="layers_saved_title">Locais guardados</string>
+    <string name="layers_saved_desc">Os teus marcadores guardados</string>
 </resources>

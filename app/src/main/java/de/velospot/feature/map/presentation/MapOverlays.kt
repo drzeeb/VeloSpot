@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.SignalWifiOff
@@ -56,6 +57,7 @@ internal data class MapMenuCardActions(
     val onOpenFavorites: () -> Unit,
     val onOpenLanguage: () -> Unit,
     val onToggleDarkMode: () -> Unit,
+    val onOpenLayers: () -> Unit = {},
     val onActivateOfflineRouting: () -> Unit = {},
     val onOpenProfileSheet: () -> Unit = {}
 )
@@ -394,6 +396,13 @@ internal fun MapMenuCard(
                         )
                     },
                     onClick = actions.onOpenFavorites
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_layers)) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Layers, contentDescription = null)
+                    },
+                    onClick = actions.onOpenLayers
                 )
                 DropdownMenuItem(
                     text = {

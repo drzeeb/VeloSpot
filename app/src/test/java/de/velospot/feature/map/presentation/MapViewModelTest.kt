@@ -13,10 +13,12 @@ import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingFailedException
+import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RoutingRepository
+import de.velospot.domain.repository.SavedPlacesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -77,6 +79,7 @@ class MapViewModelTest {
         routingRepository     = routingRepository,
         segmentManager        = mockSegmentManager,
         nominatimGeocoder     = mockNominatimGeocoder,
+        savedPlacesRepository = FakeSavedPlacesRepository(),
         context               = mockContext
     )
 
@@ -380,6 +383,20 @@ private class FakeFavoritesRepository : FavoritesRepository {
 
     override suspend fun removeFavorite(parkingSpaceId: String) {
         favorites.value = favorites.value - parkingSpaceId
+    }
+}
+
+private class FakeSavedPlacesRepository : SavedPlacesRepository {
+    private val savedPlaces = MutableStateFlow<List<SavedPlace>>(emptyList())
+
+    override fun getSavedPlacesFlow(): Flow<List<SavedPlace>> = savedPlaces
+
+    override suspend fun savePlace(place: SavedPlace) {
+        savedPlaces.value = savedPlaces.value.filter { it.id != place.id } + place
+    }
+
+    override suspend fun removePlace(id: String) {
+        savedPlaces.value = savedPlaces.value.filterNot { it.id == id }
     }
 }
 

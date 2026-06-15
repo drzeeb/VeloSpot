@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import de.velospot.core.map.LayerVisibility
+import de.velospot.core.map.LayerVisibilityPreferences
+import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.routing.OfflineRoutingPreferences
 import de.velospot.core.routing.isWifiConnected
 import de.velospot.data.brouter.BRouterSegmentManager
@@ -21,10 +24,12 @@ import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoInternetConnectionException
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutingFailedException
+import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RoutingRepository
+import de.velospot.domain.repository.SavedPlacesRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +37,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
@@ -66,6 +72,7 @@ class MapViewModel @Inject constructor(
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
     private val nominatimGeocoder: NominatimGeocoder,
+    private val savedPlacesRepository: SavedPlacesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -74,6 +81,8 @@ class MapViewModel @Inject constructor(
         const val ID_CUSTOM_MAP_PIN = "custom_map_pin"
         /** ID used for the synthetic BikeParkingSpace created when navigating to an address search result. */
         const val ID_ADDRESS_SEARCH_PIN = "address_search_pin"
+        /** ID used for the synthetic BikeParkingSpace created when navigating to a saved place. */
+        const val ID_SAVED_PLACE = "saved_place"
     }
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
@@ -132,6 +141,24 @@ class MapViewModel @Inject constructor(
     private val _customMapPinAddress = MutableStateFlow<String?>(null)
     val customMapPinAddress: StateFlow<String?> = _customMapPinAddress.asStateFlow()
 
+    /** All user-saved custom places (manually placed pins saved as named favourites). */
+    private val _savedPlaces = MutableStateFlow<List<SavedPlace>>(emptyList())
+    val savedPlaces: StateFlow<List<SavedPlace>> = _savedPlaces.asStateFlow()
+
+    /** The saved place whose detail sheet is currently open (null when none). */
+    private val _selectedSavedPlace = MutableStateFlow<SavedPlace?>(null)
+    val selectedSavedPlace: StateFlow<SavedPlace?> = _selectedSavedPlace.asStateFlow()
+
+    /** Which pin categories ("layers") are currently shown on the map. */
+    private val _layerVisibility = MutableStateFlow(LayerVisibilityPreferences.get(context))
+    val layerVisibility: StateFlow<LayerVisibility> = _layerVisibility.asStateFlow()
+
+    /** Toggles a pin layer's visibility and persists the choice. */
+    fun setLayerVisible(category: MapLayerCategory, visible: Boolean) {
+        LayerVisibilityPreferences.setVisible(context, category, visible)
+        _layerVisibility.update { it.withVisibility(category, visible) }
+    }
+
     fun onSearchQueryChanged(query: String) {        _searchQuery.value = query
         searchJob?.cancel()
         if (query.length < SEARCH_MIN_CHARS) {
@@ -177,6 +204,80 @@ class MapViewModel @Inject constructor(
     fun dismissCustomMapPin() {
         _customMapPin.value        = null
         _customMapPinAddress.value = null
+    }
+
+    // ── Saved places (custom pins saved as named favourites) ───────────────────
+
+    private fun observeSavedPlaces() {
+        viewModelScope.launch {
+            savedPlacesRepository.getSavedPlacesFlow().collect { _savedPlaces.value = it }
+        }
+    }
+
+    /**
+     * Saves the current custom pin as a named favourite place and dismisses the
+     * transient custom pin (it reappears as a persistent saved-place marker).
+     */
+    fun saveCustomPinAsFavorite(name: String) {
+        val pin     = _customMapPin.value ?: return
+        val address = _customMapPinAddress.value
+        val resolvedName = name.trim().ifBlank {
+            address?.substringBefore(",")?.trim()
+                ?: context.getString(de.velospot.R.string.saved_place_title)
+        }
+        viewModelScope.launch {
+            savedPlacesRepository.savePlace(
+                SavedPlace(
+                    id        = UUID.randomUUID().toString(),
+                    name      = resolvedName,
+                    latitude  = pin.latitude,
+                    longitude = pin.longitude,
+                    address   = address,
+                    addedAt   = System.currentTimeMillis()
+                )
+            )
+        }
+        dismissCustomMapPin()
+    }
+
+    /** Opens the detail sheet for a saved place and centres the camera on it. */
+    fun selectSavedPlace(place: SavedPlace) {
+        _customMapPin.value      = null
+        _selectedSearchPin.value = null
+        _selectedSpace.value     = null
+        _selectedSavedPlace.value = place
+        _mapCameraTarget.value = MapCameraTarget(
+            latitude               = place.latitude,
+            longitude              = place.longitude,
+            zoom                   = 16.0,
+            verticalOffsetFraction = 1.0 / 6.0
+        )
+    }
+
+    fun dismissSelectedSavedPlace() { _selectedSavedPlace.value = null }
+
+    fun removeSavedPlace(id: String) {
+        if (_selectedSavedPlace.value?.id == id) _selectedSavedPlace.value = null
+        viewModelScope.launch { savedPlacesRepository.removePlace(id) }
+    }
+
+    /** Starts in-app navigation to a saved place. */
+    fun navigateToSavedPlace(place: SavedPlace) {
+        val syntheticSpace = BikeParkingSpace(
+            id          = ID_SAVED_PLACE,
+            latitude    = place.latitude,
+            longitude   = place.longitude,
+            type        = BikeParkingType.UNKNOWN,
+            capacity    = null,
+            name        = place.name,
+            address     = place.address,
+            isCovered   = null,
+            imageUrl    = null,
+            operator    = null,
+            sourceLayer = "saved"
+        )
+        _selectedSavedPlace.value = null
+        startInAppNavigation(syntheticSpace)
     }
 
     /** Starts in-app navigation to the freely placed custom pin. */
@@ -270,6 +371,7 @@ class MapViewModel @Inject constructor(
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
         observeUserLocation()
+        observeSavedPlaces()
     }
 
     // ── Viewport / parking ────────────────────────────────────────────────────
@@ -344,10 +446,28 @@ class MapViewModel @Inject constructor(
 
     // ── Location ──────────────────────────────────────────────────────────────
 
+    /**
+     * Whether the map has already been auto-centred on the user's position once
+     * after launch. Ensures the one-shot startup centering only fires a single time.
+     */
+    private var hasCenteredOnStartup = false
+
     private fun observeUserLocation() {
         locationRepository.startLocationUpdates()
         viewModelScope.launch {
-            locationRepository.getCurrentLocationFlow().collect { _userLocation.value = it }
+            locationRepository.getCurrentLocationFlow().collect { location ->
+                _userLocation.value = location
+                // One-time startup centering: as soon as the first GPS fix arrives,
+                // move the camera to the user's position. Fires only once per ViewModel.
+                if (!hasCenteredOnStartup && location != null) {
+                    hasCenteredOnStartup = true
+                    _mapCameraTarget.value = MapCameraTarget(
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        zoom = 16.0
+                    )
+                }
+            }
         }
     }
 

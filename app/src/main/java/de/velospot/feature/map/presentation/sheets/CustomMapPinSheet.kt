@@ -1,4 +1,6 @@
-package de.velospot.feature.map.presentation
+package de.velospot.feature.map.presentation.sheets
+
+import de.velospot.feature.map.presentation.*
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,7 +47,8 @@ internal fun CustomMapPinSheet(
     address: String?,
     onDismiss: () -> Unit,
     onNavigate: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    onSaveAsFavorite: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -116,6 +120,16 @@ internal fun CustomMapPinSheet(
                 text     = stringResource(R.string.custom_pin_navigate),
                 icon     = Icons.Default.Navigation,
                 onClick  = onNavigate,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            // ── Save as favourite ────────────────────────────────────────────
+            SecondaryActionButton(
+                text     = stringResource(R.string.save_place_as_favorite),
+                icon     = Icons.Default.StarBorder,
+                onClick  = onSaveAsFavorite,
                 modifier = Modifier.fillMaxWidth()
             )
 
