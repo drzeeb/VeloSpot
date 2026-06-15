@@ -99,6 +99,27 @@ jobs:
           echo "----- resolved version literals -----"
           grep -nE "versionCode = |versionName = " app/build.gradle.kts
 
+      # ── Promote the Unreleased changelog section to this release ──────────────
+      # The GitHub release notes and the F-Droid changelog are extracted from a
+      # "## [vX.Y.Z] — DATE" heading. We rewrite the "## [Unreleased]" heading in
+      # place so the released commit/tag carries a proper, dated version section
+      # (same format as older releases: tag, an em dash "—", then the UTC date).
+      # If no [Unreleased] section exists (e.g. it was renamed manually), this is
+      # a no-op and the existing CHANGELOG.md is left untouched.
+      - name: Promote Unreleased changelog section to this version
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          DATE="$(date -u +%Y-%m-%d)"
+          EMDASH="$(printf '\u2014')"
+          if grep -q "^## \[Unreleased\]" CHANGELOG.md; then
+            sed -i -E "s|^## \[Unreleased\].*$|## [${TAG}] ${EMDASH} ${DATE}|" CHANGELOG.md
+            echo "Promoted [Unreleased] -> [${TAG}] ${EMDASH} ${DATE}"
+          else
+            echo "No [Unreleased] section found; CHANGELOG.md left unchanged"
+          fi
+          echo "----- top changelog headings -----"
+          grep -nE "^## \[" CHANGELOG.md | head -n 5
+
       # ── Build APKs ────────────────────────────────────────────────────────────
       - name: Build F-Droid & Google Play Release APKs
         run: |
@@ -179,9 +200,10 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add app/build.gradle.kts
+          git add CHANGELOG.md
           git add fastlane/metadata/android/*/changelogs/
           git diff --staged --quiet || \
-            git commit -m "chore: bump versionCode/versionName + F-Droid changelog for ${{ steps.version.outputs.tag }}"
+            git commit -m "chore: release ${{ steps.version.outputs.tag }} — bump version, promote changelog, F-Droid notes"
           # Move the release tag to this commit so F-Droid reads the correct static values.
           git tag -f "${{ steps.version.outputs.tag }}" HEAD
           git push --force origin "${{ steps.version.outputs.tag }}"
