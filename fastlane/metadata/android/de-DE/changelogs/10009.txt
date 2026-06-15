@@ -1,6 +1,20 @@
-• Tipp auf leere Kartenstelle legt blauen Custom-Pin mit automatischer Adressauflösung (Nominatim)
-• Profil-Wechsel beim Offline-Routing berechnet die aktive Route sofort neu
-• Laufende Routenberechnung wird beim Start einer neuen Navigation abgebrochen
-• Fahrradstellplätze werden ab Zoom 11 ausgeblendet (Toast-Hinweis beim Herauszoomen)
 
-
+### Added
+- **Tap-to-place custom map pin** — tap any empty location on the map to drop a blue pin marker at that exact point; the map camera animates to the tapped position automatically
+- **`CustomMapPinSheet`** — bottom sheet that opens immediately when a custom pin is placed; shows the reverse-geocoded address from Nominatim (with a loading spinner and raw coordinates as fallback while the request is in-flight); provides a "Navigate here" primary action and a "Remove pin" secondary action
+- **Reverse geocoding on tap** — `MapViewModel.onMapTapped()` fires a `NominatimGeocoder.reverseGeocode()` coroutine in the background; the resolved address replaces the coordinate placeholder as soon as the response arrives
+- **Custom pin navigation** — "Navigate here" starts BRouter in-app bike routing directly to the tapped coordinates; the pin stays visible on the map as a route end-point marker for the entire duration of navigation and is automatically removed when navigation is stopped
+- **Blue custom pin icon** — new `createCustomPinIcon()` function in `MapMarkerRenderer` renders a distinct blue dropped-pin (Material Blue 700 `#1565C0`) to visually separate the tap pin from the red address-search pin and the bike-rack parking markers
+- **Dedicated GeoJSON source and layer** (`velospot-custom-pin-source` / `velospot-custom-pin-layer`) for the custom pin, following the same MapLibre `SymbolLayer` pattern as existing markers
+- **`customMapPin` and `customMapPinAddress` StateFlows** in `MapViewModel` to expose pin position and its resolved address to the UI layer independently
+- **Zoom-out parking marker visibility** — bike parking markers are hidden below zoom level 11 via MapLibre's native `minZoom` on the parking layer (GPU-side, no state update needed); a Toast notification informs the user when they zoom out too far
+- **`MIN_ZOOM_PARKING_VISIBLE` constant** (`= 11f`) in `MapMarkerRenderer` controls the visibility threshold and is shared with `MainMapScreen` for the Toast trigger
+- **Profile change recalculates active route** — switching the offline routing profile while navigation is active immediately triggers a new route calculation to the same destination with the new profile
+- **Navigation job cancellation** — starting a new navigation while a route is still being computed cancels the previous calculation immediately, preventing race conditions when the user taps quickly between spots
+- **F-Droid build flavor** — new `fdroid` product flavor that replaces Google's `FusedLocationProviderClient` with Android's standard `LocationManager`; the `googlePlay` flavor retains the existing GMS-based implementation; `play-services-location` dependency is scoped to `googlePlayImplementation` only
+- **F-Droid store listing** — full fastlane metadata for `de-DE` and `en-US` locales: `title.txt`, `short_description.txt`, `full_description.txt`, `changelogs/10000.txt`, phone screenshots
+- **F-Droid build metadata** — `metadata/de.velospot.yml` with `scanignore` for the BRouter JAR, `AutoUpdateMode: Version`, `UpdateCheckMode: Tags`, and versionCode formula (`X * 10000 + Y * 100 + Z`)
+- **BRouter LICENSE file** — `app/libs/brouter-LICENSE.txt` documents the MIT license and source URL of the bundled JAR for F-Droid reviewers
+- **Release signing via environment variables** — `signingConfigs.release` in `app/build.gradle.kts` reads `KEYSTORE_PATH`, `STORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` from the environment; local builds fall back to the debug key automatically
+- **Version injection from Git tag** — `versionCode` and `versionName` are now Gradle-property-injectable (`-PversionCode`, `-PversionName`); the release workflow computes `versionCode = X * 10000 + Y * 100 + Z` from the tag
+- **GitHub Pages screenshots** — added `searchbar.jpeg` and `found-location.jpeg` to the App Preview section; all screenshot `alt` texts updated to English
