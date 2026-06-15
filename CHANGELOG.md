@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **MapView leak** — `rememberMapViewWithLifecycle` now calls `onDestroy()` in `onDispose`, releasing the native renderer, GL context and map listeners even when the composable leaves composition before the Activity is destroyed
 - **Location callback** — the `googlePlay` `LocationRepositoryImpl` resets `locationCallback` to `null` after `removeLocationUpdates` (no double removal, reference is released)
-- **F-Droid build hardening** — removed the `foojay-resolver-convention` plugin (which downloaded JDK toolchains over the network at build time) from `settings.gradle.kts`; it was unused
+- **F-Droid build hardening** — removed the `foojay-resolver-convention` plugin from `settings.gradle.kts` **and** the `gradle/gradle-daemon-jvm.properties` daemon-JVM pinning (which forced a JetBrains JDK 21 toolchain download via Foojay). The Gradle daemon now runs on the invoking JDK (CI: 17, local: developer's JDK); the app still targets Java 11. This also fixes CI builds failing with `Unable to download toolchain ... vendor=JetBrains`
 
 ---
 
