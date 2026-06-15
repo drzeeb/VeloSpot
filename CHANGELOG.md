@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [v1.0.11] — 2026-06-15
+
 ### Added
 - **Map layer toggles** — a new "Layers" entry in the menu opens a sheet where the user can show/hide three pin categories independently: **parking spots**, **favourites** and **saved places**. Each layer is a tappable card with a coloured pin badge and a switch (active cards tinted in the layer's accent colour). All layers are visible by default; changes are persisted across restarts via `LayerVisibilityPreferences`. The selected spot and the active navigation destination always stay visible regardless of the toggles. Filtering happens in `buildParkingFeatures` (parking vs. favourites by favourite-state) and on the saved-places source.
 - **Dark map tiles** — the map now switches to a dark vector-tile style when dark mode is enabled. The dark style (`app/src/main/assets/map_style_dark.json`) reuses the very same OpenFreeMap vector tiles (OpenMapTiles schema) as the light `liberty` style, so no extra tile provider, API key or tracking dependency is introduced. Toggling dark mode in the menu re-loads the style live without resetting the camera.
