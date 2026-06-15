@@ -6,11 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Release workflow auto-promotes the changelog** — the release workflow now turns the `## [Unreleased]` section into a dated `## [vX.Y.Z] — YYYY-MM-DD` heading and inserts a fresh, empty `## [Unreleased]` section above it. The change is committed and a sync PR is opened back to `main`. The step is idempotent: if a heading for the released version already exists (e.g. promoted manually), it does nothing.
+
+---
+
+## [v1.0.11] — 2026-06-16
+
 ### Added
 - **Map layer toggles** — a new "Layers" entry in the menu opens a sheet where the user can show/hide three pin categories independently: **parking spots**, **favourites** and **saved places**. Each layer is a tappable card with a coloured pin badge and a switch (active cards tinted in the layer's accent colour). All layers are visible by default; changes are persisted across restarts via `LayerVisibilityPreferences`. The selected spot and the active navigation destination always stay visible regardless of the toggles. Filtering happens in `buildParkingFeatures` (parking vs. favourites by favourite-state) and on the saved-places source.
 - **Dark map tiles** — the map now switches to a dark vector-tile style when dark mode is enabled. The dark style (`app/src/main/assets/map_style_dark.json`) reuses the very same OpenFreeMap vector tiles (OpenMapTiles schema) as the light `liberty` style, so no extra tile provider, API key or tracking dependency is introduced. Toggling dark mode in the menu re-loads the style live without resetting the camera.
 - **Theme-aware map markers** — `defaultMarkerStyleConfig(isDarkTheme)` now returns a brighter, higher-contrast marker/route palette for the dark style (normal pin `#3B82F6` instead of the dark navy `#0A2A66`, which previously blended into the dark water colour; favourite `#F44336`, selected `#FFB300`, route `#42A5F5`). The light style keeps its original colours unchanged. Marker icons are regenerated on theme switch.
-- **One-time startup centering** — on launch the map now centres on the user's current position once, as soon as the first GPS fix arrives (`hasCenteredOnStartup` guard in `MapViewModel.observeUserLocation()`). Subsequent location updates no longer move the camera, so the user stays in control after the initial centering.- **Save custom pins as named favourites** — a manually placed map pin can now be saved as a named favourite via a new "Save as favourite" action in the custom-pin sheet (with a naming dialog). Saved places:
+- **One-time startup centering** — on launch the map now centres on the user's current position once, as soon as the first GPS fix arrives (`hasCenteredOnStartup` guard in `MapViewModel.observeUserLocation()`). Subsequent location updates no longer move the camera, so the user stays in control after the initial centering.
+- **Save custom pins as named favourites** — a manually placed map pin can now be saved as a named favourite via a new "Save as favourite" action in the custom-pin sheet (with a naming dialog). Saved places:
   - persist in a **dedicated, isolated Room database** (`SavedPlacesDatabase` / `saved_places` table) so they are completely independent of the asset-seeded parking database and its destructive migrations — a schema change to one can never wipe the other
   - render as **persistent green star markers** on the map (`createSavedPlaceIcon()`, new `velospot-saved-pin` source/layer); tapping one opens a sheet to navigate there or remove it
   - appear in a **"Saved places" section** in the favourites sheet with navigate and delete actions
