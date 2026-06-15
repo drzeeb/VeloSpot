@@ -5,6 +5,17 @@
     <string name="menu_language_with_flag">Language: %1$s</string>
     <string name="menu_enable_dark_mode">Enable dark mode</string>
     <string name="menu_disable_dark_mode">Disable dark mode</string>
+    <string name="menu_layers">Layers</string>
+
+    <!-- Layers sheet (toggle pin categories) -->
+    <string name="layers_title">Layers</string>
+    <string name="layers_subtitle">Choose which pins are shown on the map.</string>
+    <string name="layers_parking_title">Parking spots</string>
+    <string name="layers_parking_desc">All bike parking facilities</string>
+    <string name="layers_favorites_title">Favourites</string>
+    <string name="layers_favorites_desc">Your favourited parking spots</string>
+    <string name="layers_saved_title">Saved places</string>
+    <string name="layers_saved_desc">Your saved custom pins</string>
 
     <string name="language_sheet_title">Choose language</string>
 
@@ -110,6 +121,14 @@
     <string name="custom_pin_subtitle">Tap on the map to move the pin.</string>
     <string name="custom_pin_navigate">Navigate here</string>
     <string name="custom_pin_remove">Remove pin</string>
+
+    <!-- Saved places (custom pins saved as named favourites) -->
+    <string name="save_place_as_favorite">Save as favourite</string>
+    <string name="save_place_dialog_title">Name this favourite</string>
+    <string name="save_place_name_hint">Name</string>
+    <string name="save_place_confirm">Save</string>
+    <string name="saved_place_title">Saved place</string>
+    <string name="favorites_saved_places_header">Saved places</string>
 
     <!-- Zoom-out hint: shown when zoom level is too low to display parking markers -->
     <string name="zoom_in_for_parking">Zoom in to see bike parking spots</string>

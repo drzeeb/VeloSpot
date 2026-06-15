@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Abrir menú</string>
     <string name="menu_favorites_count">Favoritos (%1$d)</string>
@@ -95,6 +95,23 @@
     <!-- Aviso de nivel de zoom demasiado bajo -->
     <string name="zoom_in_for_parking">Acércate para ver los aparcabicis</string>
     <string name="error_loading_parking">No se pudieron actualizar los datos de aparcamiento</string>
+    <!-- Saved places (custom pins saved as named favourites) -->
+    <string name="save_place_as_favorite">Guardar como favorito</string>
+    <string name="save_place_dialog_title">Nombra este favorito</string>
+    <string name="save_place_name_hint">Nombre</string>
+    <string name="save_place_confirm">Guardar</string>
+    <string name="saved_place_title">Lugar guardado</string>
+    <string name="favorites_saved_places_header">Lugares guardados</string>
+    <!-- Layers (toggle pin categories) -->
+    <string name="menu_layers">Capas</string>
+    <string name="layers_title">Capas</string>
+    <string name="layers_subtitle">Elige qué marcadores se muestran en el mapa.</string>
+    <string name="layers_parking_title">Aparcamientos</string>
+    <string name="layers_parking_desc">Todos los aparcamientos para bicicletas</string>
+    <string name="layers_favorites_title">Favoritos</string>
+    <string name="layers_favorites_desc">Tus aparcamientos favoritos</string>
+    <string name="layers_saved_title">Lugares guardados</string>
+    <string name="layers_saved_desc">Tus marcadores guardados</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Ubicación personalizada</string>
     <string name="custom_pin_subtitle">Toca el mapa para mover el marcador.</string>

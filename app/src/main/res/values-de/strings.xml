@@ -98,6 +98,25 @@
     <string name="custom_pin_navigate">Hierhin navigieren</string>
     <string name="custom_pin_remove">Pin entfernen</string>
 
+    <!-- Gespeicherte Orte (manuell gesetzte Pins als benannte Favoriten) -->
+    <string name="save_place_as_favorite">Als Favorit speichern</string>
+    <string name="save_place_dialog_title">Favorit benennen</string>
+    <string name="save_place_name_hint">Name</string>
+    <string name="save_place_confirm">Speichern</string>
+    <string name="saved_place_title">Gespeicherter Ort</string>
+    <string name="favorites_saved_places_header">Gespeicherte Orte</string>
+
+    <!-- Ebenen (Pin-Kategorien ein-/ausblenden) -->
+    <string name="menu_layers">Ebenen</string>
+    <string name="layers_title">Ebenen</string>
+    <string name="layers_subtitle">Wähle, welche Pins auf der Karte angezeigt werden.</string>
+    <string name="layers_parking_title">Abstellplätze</string>
+    <string name="layers_parking_desc">Alle Fahrrad-Stellplätze</string>
+    <string name="layers_favorites_title">Favoriten</string>
+    <string name="layers_favorites_desc">Deine favorisierten Plätze</string>
+    <string name="layers_saved_title">Gespeicherte Orte</string>
+    <string name="layers_saved_desc">Deine gespeicherten Pins</string>
+
     <!-- Zoom-out-Hinweis: erscheint wenn der Zoom-Level zu niedrig ist -->
     <string name="zoom_in_for_parking">Reinzoomen um Fahrradstellplätze zu sehen</string>
     <string name="error_loading_parking">Parkplatzdaten konnten nicht aktualisiert werden</string>

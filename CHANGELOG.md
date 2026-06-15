@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Map layer toggles** — a new "Layers" entry in the menu opens a sheet where the user can show/hide three pin categories independently: **parking spots**, **favourites** and **saved places**. Each layer is a tappable card with a coloured pin badge and a switch (active cards tinted in the layer's accent colour). All layers are visible by default; changes are persisted across restarts via `LayerVisibilityPreferences`. The selected spot and the active navigation destination always stay visible regardless of the toggles. Filtering happens in `buildParkingFeatures` (parking vs. favourites by favourite-state) and on the saved-places source.
+- **Dark map tiles** — the map now switches to a dark vector-tile style when dark mode is enabled. The dark style (`app/src/main/assets/map_style_dark.json`) reuses the very same OpenFreeMap vector tiles (OpenMapTiles schema) as the light `liberty` style, so no extra tile provider, API key or tracking dependency is introduced. Toggling dark mode in the menu re-loads the style live without resetting the camera.
+- **Theme-aware map markers** — `defaultMarkerStyleConfig(isDarkTheme)` now returns a brighter, higher-contrast marker/route palette for the dark style (normal pin `#3B82F6` instead of the dark navy `#0A2A66`, which previously blended into the dark water colour; favourite `#F44336`, selected `#FFB300`, route `#42A5F5`). The light style keeps its original colours unchanged. Marker icons are regenerated on theme switch.
+- **One-time startup centering** — on launch the map now centres on the user's current position once, as soon as the first GPS fix arrives (`hasCenteredOnStartup` guard in `MapViewModel.observeUserLocation()`). Subsequent location updates no longer move the camera, so the user stays in control after the initial centering.- **Save custom pins as named favourites** — a manually placed map pin can now be saved as a named favourite via a new "Save as favourite" action in the custom-pin sheet (with a naming dialog). Saved places:
+  - persist in a **dedicated, isolated Room database** (`SavedPlacesDatabase` / `saved_places` table) so they are completely independent of the asset-seeded parking database and its destructive migrations — a schema change to one can never wipe the other
+  - render as **persistent green star markers** on the map (`createSavedPlaceIcon()`, new `velospot-saved-pin` source/layer); tapping one opens a sheet to navigate there or remove it
+  - appear in a **"Saved places" section** in the favourites sheet with navigate and delete actions
+  - new domain model `SavedPlace`, `SavedPlacesRepository` (+ Room-backed impl), DAO, Hilt providers, and `MapViewModel` wiring (`saveCustomPinAsFavorite`, `selectSavedPlace`, `navigateToSavedPlace`, `removeSavedPlace`)
+  - fully localised in all 8 supported languages
+
+### Changed
+- **`MainMapScreen` map initialisation refactored** — one-time map setup (compass, initial camera, viewport/zoom/click listeners) is now separated from style loading. Style loading runs in its own `LaunchedEffect(maplibreMap, isDarkTheme)` and re-applies the correct light/dark style whenever the theme changes; a `styleVersion` counter re-runs the marker rendering effect so all custom sources/layers/images are rebuilt after a style reload
+- **Favourites counter includes saved places** — the menu favourites count now sums bike-parking favourites **and** saved custom places (`favorites.size + savedPlaces.size`)
+- **Explicit "Save as favourite" button on parking spots** — the parking detail sheet (`SelectedSpaceSheet`) now shows a full-width "Save as favourite" / "Remove from favourites" button (matching the custom-pin sheet) instead of the small corner heart toggle
+- **Favourites list uses a delete icon** — the remove action in the favourites list now uses a trash/`Delete` icon (consistent with the saved-places cards) instead of the filled heart
+- **"Show spot" for saved places** — saved-place cards in the favourites list now offer a "Show spot" action (alongside "Start navigation") that centres the map on the place and opens its detail sheet
+- **Modernised adaptive app icon** — redesigned launcher icon for a fresh 2026 look: a vibrant green gradient background with a bold white location pin and brand-green bicycle; foreground, background and Android-13 themed (monochrome) layers all updated
+
+### Refactored
+- **`feature/map/presentation` split into sub-packages** for clarity: rendering infrastructure moved to `presentation/markers/` (`MapMarkerRenderer`, `MarkerIconFactory`, `MapStyleLayers`, `MarkerStyleConfig`) and all modal sheets/dialogs moved to `presentation/sheets/` (`MapBottomSheets`, `FavoritesSheet`, `LayersSheet`, `SavedPlaceSheet`, `SelectedSpaceSheet`, `CustomMapPinSheet`, `SearchPinSheet`, `LanguageSheet`, `OfflineRoutingSheet`, `SavePlaceDialog`). The root package keeps the core screen, view model, UI state, overlays, shared components and lifecycle helpers. The shared `BikeParkingType.label` helper moved to `MapUiActionComponents`.
+- **`MapMarkerRenderer.kt` split by concern** into three files: `MarkerIconFactory.kt` (pure pin/icon drawing), `MapStyleLayers.kt` (MapLibre source/layer/image IDs + idempotent registration helpers) and `MapMarkerRenderer.kt` (state→GeoJSON orchestration only)
+- **`MainMapScreen.kt` slimmed down** by extracting `MapBottomSheets.kt` (all modal sheets/dialogs, collecting their own state from the ViewModel) and `MapInitializer.kt` (the imperative one-time MapLibre setup — compass, initial camera, viewport/zoom/click listeners — plus the map style URLs); behaviour is unchanged
+
+### Docs
+- **README, GitHub Pages site and `docs/` updated** with the new features (dark map tiles, map layer toggles, saved places) and two new screenshots (`dark-mode.jpeg`, `layers.jpeg`); the README gains a screenshots gallery
+
+### Fixed
+- **Bike marker glyph washed out on lighter pins** — the bike symbol inside the parking markers was drawn as a colour **emoji** (`🚲`), whose tint could not be controlled, so it rendered greyish/blurry on the brighter dark-mode pins. Replaced with a crisp white vector drawable (`ic_bike_marker.xml`, Material `directions_bike`) tinted via `DrawableCompat`, giving a sharp, high-contrast glyph on every pin colour in both light and dark mode (including the dimmed navigation markers)
+
 ---
 
 ## [v1.0.10] — 2026-06-15

@@ -1,4 +1,6 @@
-package de.velospot.feature.map.presentation
+package de.velospot.feature.map.presentation.sheets
+
+import de.velospot.feature.map.presentation.*
 
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
@@ -14,14 +16,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Garage
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -96,21 +97,6 @@ private fun SheetContent(
                 subtitle = space.type.label(context),
                 modifier = Modifier.weight(1f)
             )
-            IconButton(
-                onClick = { onToggleFavorite(space.id) },
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = if (isFavorite) {
-                        stringResource(id = R.string.favorites_remove)
-                    } else {
-                        stringResource(id = R.string.favorites_add)
-                    },
-                    tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
@@ -155,15 +141,26 @@ private fun SheetContent(
                 .height(52.dp),
             icon = Icons.AutoMirrored.Filled.ArrowForward
         )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // --- Save / remove favourite button ------------------------------------
+        SecondaryActionButton(
+            text = if (isFavorite) {
+                stringResource(id = R.string.favorites_remove)
+            } else {
+                stringResource(id = R.string.save_place_as_favorite)
+            },
+            icon = if (isFavorite) Icons.Default.Delete else Icons.Default.StarBorder,
+            onClick = { onToggleFavorite(space.id) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+        )
     }
 }
 
 
-internal fun BikeParkingType.label(context: Context): String = when (this) {
-    BikeParkingType.GARAGE -> context.getString(R.string.type_garage)
-    BikeParkingType.BIKE_RACK -> context.getString(R.string.type_bike_rack)
-    BikeParkingType.UNKNOWN -> context.getString(R.string.type_unknown)
-}
 
 private fun BikeParkingType.icon(): ImageVector = when (this) {
     BikeParkingType.GARAGE    -> Icons.Default.Garage

@@ -1,4 +1,6 @@
-package de.velospot.feature.map.presentation
+package de.velospot.feature.map.presentation.sheets
+
+import de.velospot.feature.map.presentation.*
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,34 +12,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import de.velospot.R
-import de.velospot.domain.model.AddressSearchResult
+import de.velospot.domain.model.SavedPlace
 
 /**
- * Bottom sheet shown when the user taps a Nominatim search result.
- *
- * Displays the full address and offers a "Navigate here" action that
- * starts in-app BRouter bike routing to the address coordinates.
+ * Bottom sheet shown when the user taps a saved place marker.
+ * Offers navigation to the place and an option to remove it from favourites.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SearchPinSheet(
-    result: AddressSearchResult,
+internal fun SavedPlaceSheet(
+    place: SavedPlace,
     onDismiss: () -> Unit,
-    onNavigate: (AddressSearchResult) -> Unit
+    onNavigate: (SavedPlace) -> Unit,
+    onRemove: (String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -54,35 +57,48 @@ internal fun SearchPinSheet(
             // ── Header ───────────────────────────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector        = Icons.Default.LocationOn,
+                    imageVector        = Icons.Default.Star,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.error,
+                    tint               = Color(0xFF2E7D32),
                     modifier           = Modifier.size(28.dp)
                 )
                 Spacer(Modifier.width(12.dp))
-                SheetHeader(title = stringResource(R.string.search_result_pin_title))
+                SheetHeader(title = place.name)
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            // ── Full address ─────────────────────────────────────────────────
-            Text(
-                text  = result.displayName,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            place.address?.let { address ->
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text  = address,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Spacer(Modifier.height(20.dp))
 
-            // ── Action ───────────────────────────────────────────────────────
+            // ── Primary action ───────────────────────────────────────────────
             PrimaryActionButton(
-                text     = stringResource(R.string.search_navigate_to),
+                text     = stringResource(R.string.custom_pin_navigate),
                 icon     = Icons.Default.Navigation,
-                onClick  = { onNavigate(result) },
+                onClick  = { onNavigate(place) },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
+
+            // ── Secondary action ─────────────────────────────────────────────
+            TextButton(
+                onClick  = { onRemove(place.id) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text  = stringResource(R.string.favorites_remove),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(Modifier.height(4.dp))
         }
     }
 }

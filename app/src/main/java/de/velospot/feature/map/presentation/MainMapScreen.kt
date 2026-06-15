@@ -30,22 +30,23 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
-import de.velospot.core.map.NavigationHandler
-import de.velospot.domain.model.BoundingBox
+import de.velospot.feature.map.presentation.markers.MarkerDisplayConfig
+import de.velospot.feature.map.presentation.markers.MarkerIconSet
+import de.velospot.feature.map.presentation.markers.MarkerRenderLabels
+import de.velospot.feature.map.presentation.markers.MarkerRenderState
+import de.velospot.feature.map.presentation.markers.MIN_ZOOM_PARKING_VISIBLE
+import de.velospot.feature.map.presentation.markers.RouteRenderData
+import de.velospot.feature.map.presentation.markers.createBikeMarkerIcon
+import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
+import de.velospot.feature.map.presentation.markers.createMutedMarkerIcon
+import de.velospot.feature.map.presentation.markers.defaultMarkerStyleConfig
+import de.velospot.feature.map.presentation.markers.updateMarkers
+import de.velospot.feature.map.presentation.sheets.MapBottomSheets
+import de.velospot.feature.map.presentation.sheets.languageFlagForCode
+import de.velospot.feature.map.presentation.sheets.resolveCurrentLanguageCode
 import kotlin.math.roundToInt
-import android.view.Gravity
-import org.maplibre.android.camera.CameraPosition
-import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 
-// Free vector tile style from OpenFreeMap – no API key required.
-// Switch to any other MapLibre-compatible style URL here.
-private const val MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
-
-private const val TRIER_LAT   = 49.7596
-private const val TRIER_LON   = 6.6441
-private const val DEFAULT_ZOOM = 14.0
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,19 +60,16 @@ fun MainMapScreen(
     val selectedSpace        by viewModel.selectedSpace.collectAsStateWithLifecycle()
     val favorites            by viewModel.favorites.collectAsStateWithLifecycle()
     val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
-    val favoriteSpaces       by viewModel.favoriteSpaces.collectAsStateWithLifecycle()
     val mapCameraTarget      by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
-    val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
-    val showProfileSheet     by viewModel.showProfileSheet.collectAsStateWithLifecycle()
-    val showWifiWarning      by viewModel.showWifiWarning.collectAsStateWithLifecycle()
     val searchQuery          by viewModel.searchQuery.collectAsStateWithLifecycle()
     val searchResults        by viewModel.searchResults.collectAsStateWithLifecycle()
     val isSearching          by viewModel.isSearching.collectAsStateWithLifecycle()
     val selectedSearchPin    by viewModel.selectedSearchPin.collectAsStateWithLifecycle()
     val customMapPin         by viewModel.customMapPin.collectAsStateWithLifecycle()
-    val customMapPinAddress  by viewModel.customMapPinAddress.collectAsStateWithLifecycle()
+    val savedPlaces          by viewModel.savedPlaces.collectAsStateWithLifecycle()
+    val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -86,12 +84,18 @@ fun MainMapScreen(
 
     val mapView       = rememberMapViewWithLifecycle()
     val screenUiState = rememberMapScreenUiState()
-    val markerStyleConfig = remember { defaultMarkerStyleConfig() }
+    val markerStyleConfig = remember(isDarkTheme) { defaultMarkerStyleConfig(isDarkTheme) }
 
     // The MapLibreMap is provided asynchronously via getMapAsync.
     // Using mutableStateOf triggers recomposition so LaunchedEffects below fire.
     var maplibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
     var zoomBucket  by remember { mutableIntStateOf(DEFAULT_ZOOM.roundToInt()) }
+
+    // Incremented every time a (new) style finishes loading. Re-loading the style –
+    // e.g. when toggling dark mode – wipes all custom sources/layers/images, so we
+    // use this as a key to re-run the marker rendering effect and rebuild them.
+    var styleVersion by remember { mutableIntStateOf(0) }
+
 
     // Show a Toast when the user zooms out below the minimum parking marker level.
     // Only fires on the false→true transition, not on further zoom-out.
@@ -128,24 +132,24 @@ fun MainMapScreen(
     }
 
     // ── Pre-compute icons (zoom-dependent) ───────────────────────────────────
-    val normalMarkerIcon = remember(context, zoomBucket) {
+    val normalMarkerIcon = remember(context, zoomBucket, markerStyleConfig) {
         createBikeMarkerIcon(context, zoomBucket, markerStyleConfig.normalPinColor)
     }
-    val favoriteMarkerIcon = remember(context, zoomBucket) {
+    val favoriteMarkerIcon = remember(context, zoomBucket, markerStyleConfig) {
         createBikeMarkerIcon(context, zoomBucket, markerStyleConfig.favoritePinColor)
     }
-    val selectedMarkerIcon = remember(context, zoomBucket) {
+    val selectedMarkerIcon = remember(context, zoomBucket, markerStyleConfig) {
         createBikeMarkerIcon(context, zoomBucket, markerStyleConfig.selectedPinColor)
     }
-    val mutedNormalMarkerIcon = remember(context, zoomBucket) {
+    val mutedNormalMarkerIcon = remember(context, zoomBucket, markerStyleConfig) {
         createMutedMarkerIcon(context, normalMarkerIcon, markerStyleConfig.mutedScale,
             markerStyleConfig.mutedAlpha, markerStyleConfig.mutedBrightenOffset)
     }
-    val mutedFavoriteMarkerIcon = remember(context, zoomBucket) {
+    val mutedFavoriteMarkerIcon = remember(context, zoomBucket, markerStyleConfig) {
         createMutedMarkerIcon(context, favoriteMarkerIcon, markerStyleConfig.mutedScale,
             markerStyleConfig.mutedAlpha, markerStyleConfig.mutedBrightenOffset)
     }
-    val mutedSelectedMarkerIcon = remember(context, zoomBucket) {
+    val mutedSelectedMarkerIcon = remember(context, zoomBucket, markerStyleConfig) {
         createMutedMarkerIcon(context, selectedMarkerIcon, markerStyleConfig.mutedScale,
             markerStyleConfig.mutedAlpha, markerStyleConfig.mutedBrightenOffset)
     }
@@ -167,7 +171,7 @@ fun MainMapScreen(
         maplibreMap, uiState, favorites, selectedSpace,
         userLocation, activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
-        selectedSearchPin, customMapPin
+        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         if (uiState is MapUiState.Success) {
@@ -200,7 +204,9 @@ fun MainMapScreen(
                         points = activeNavigation?.route?.points.orEmpty()
                     ),
                     searchPin    = selectedSearchPin,
-                    customMapPin = customMapPin
+                    customMapPin = customMapPin,
+                    savedPlaces  = savedPlaces,
+                    layerVisibility = layerVisibility
                 )
         }
     }
@@ -219,81 +225,34 @@ fun MainMapScreen(
     val uiStateRef = remember { mutableStateOf(uiState) }
     LaunchedEffect(uiState) { uiStateRef.value = uiState }
 
+    // Stable reference to the saved places so the once-registered map click
+    // listener always sees the current list when hit-testing the saved layer.
+    val savedPlacesRef = remember { mutableStateOf(savedPlaces) }
+    LaunchedEffect(savedPlaces) { savedPlacesRef.value = savedPlaces }
+
     DisposableEffect(mapView) {
-        mapView.getMapAsync { map ->
-            map.setStyle(MAP_STYLE_URL) { _ ->
-                // Compass bottom-left – clear of the search bar (top) and menu card (top-right).
-                map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.START
-                map.uiSettings.setCompassMargins(16, 0, 0, 120)
-
-                // Initial camera position
-                map.moveCamera(
-                    CameraUpdateFactory.newCameraPosition(
-                        CameraPosition.Builder()
-                            .target(LatLng(TRIER_LAT, TRIER_LON))
-                            .zoom(DEFAULT_ZOOM)
-                            .build()
-                    )
-                )
-
-                // Viewport → load nearby spots when camera comes to rest
-                map.addOnCameraIdleListener {
-                    val bounds = map.projection.visibleRegion.latLngBounds
-                    val sw = bounds.southWest
-                    val ne = bounds.northEast
-                    viewModel.onViewportChanged(
-                        BoundingBox(
-                            minLat = sw.latitude,
-                            minLon = sw.longitude,
-                            maxLat = ne.latitude,
-                            maxLon = ne.longitude
-                        )
-                    )
-                }
-
-                // Zoom bucket tracking (for icon size)
-                map.addOnCameraMoveListener {
-                    val next = map.cameraPosition.zoom.roundToInt()
-                    if (next != zoomBucket) zoomBucket = next
-                }
-
-                // Click → find the parking spot whose GeoJSON feature was tapped;
-                // if the tap hits empty space, place a custom pin there.
-                map.addOnMapClickListener { latLng ->
-                    val screenPoint = map.projection.toScreenLocation(latLng)
-                    val features    = map.queryRenderedFeatures(screenPoint, LAYER_PARKING)
-                    val spaceId     = features.firstOrNull()?.getStringProperty(PROP_SPACE_ID)
-                    val spaces      = (uiStateRef.value as? MapUiState.Success)?.spaces.orEmpty()
-                    val clicked     = spaces.find { it.id == spaceId }
-                    if (clicked != null) {
-                        viewModel.selectSpace(clicked)
-                    } else {
-                        viewModel.onMapTapped(latLng.latitude, latLng.longitude)
-                    }
-                    true
-                }
-
-                // Signal Compose that the map is ready → triggers LaunchedEffects above
-                maplibreMap = map
-            }
-        }
+        mapView.initVeloSpotMap(
+            viewModel          = viewModel,
+            currentSpaces      = { (uiStateRef.value as? MapUiState.Success)?.spaces.orEmpty() },
+            currentSavedPlaces = { savedPlacesRef.value },
+            onZoomBucketChanged = { next -> if (next != zoomBucket) zoomBucket = next },
+            onMapReady         = { maplibreMap = it }
+        )
         onDispose { maplibreMap = null }
     }
 
-    // ── Navigation handlers ───────────────────────────────────────────────────
-    val startNavigationHandler: NavigationHandler = remember(viewModel) {
-        { space ->
-            screenUiState.closeFavorites()
-            viewModel.selectSpace(null)
-            viewModel.startInAppNavigation(space)
+    // ── Style loading / dark-mode switching ───────────────────────────────────
+    // Loads the light or dark tile style depending on the current theme. Runs on
+    // first map creation and again whenever the user toggles dark mode. Re-loading
+    // the style discards all custom sources/layers/images, so we bump styleVersion
+    // to re-run the marker rendering effect above.
+    LaunchedEffect(maplibreMap, isDarkTheme) {
+        val map = maplibreMap ?: return@LaunchedEffect
+        map.setStyle(mapStyleUrl(isDarkTheme)) { _ ->
+            styleVersion++
         }
     }
-    val showDetailsHandler: NavigationHandler = remember(viewModel) {
-        { space ->
-            screenUiState.closeFavorites()
-            viewModel.selectSpace(space)
-        }
-    }
+
 
     // ── UI layout ─────────────────────────────────────────────────────────────
     Box(modifier = Modifier.fillMaxSize()) {
@@ -332,7 +291,7 @@ fun MainMapScreen(
             Spacer(Modifier.width(8.dp))
             MapMenuCard(
                 state = MapMenuCardState(
-                    favoritesCount     = favorites.size,
+                    favoritesCount     = favorites.size + savedPlaces.size,
                     isDarkTheme        = isDarkTheme,
                     currentLanguageFlag = currentLanguageFlag,
                     isExpanded         = screenUiState.isMenuExpanded,
@@ -344,6 +303,7 @@ fun MainMapScreen(
                     onOpenFavorites       = screenUiState::openFavorites,
                     onOpenLanguage        = screenUiState::openLanguage,
                     onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
+                    onOpenLayers          = screenUiState::openLayers,
                     onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
                     onOpenProfileSheet    = viewModel::openProfileSheet
                 )
@@ -359,86 +319,8 @@ fun MainMapScreen(
         MyLocationFab(onClick = requestOrUseLocation)
     }
 
-    // ── Bottom sheets ─────────────────────────────────────────────────────────
-    if (screenUiState.isFavoritesSheetVisible) {
-        FavoritesSheet(
-            spaces          = favoriteSpaces,
-            favoriteIds     = favorites,
-            onDismiss       = screenUiState::closeFavorites,
-            onStartNavigation = startNavigationHandler,
-            onShowDetails   = showDetailsHandler,
-            onToggleFavorite = viewModel::toggleFavorite
-        )
-    }
-
-    if (screenUiState.isLanguageSheetVisible) {
-        LanguageSheet(
-            currentLanguageCode = currentLanguageCode,
-            onDismiss           = screenUiState::closeLanguage,
-            onSelectLanguage    = { languageCode ->
-                applyLanguageSelection(context, languageCode)
-                screenUiState.closeLanguage()
-            }
-        )
-    }
-
-    if (showOfflineSetupSheet) {
-        OfflineRoutingSetupSheet(
-            onConfirm = viewModel::confirmOfflineRoutingSetup,
-            onDismiss = viewModel::dismissOfflineSetupSheet
-        )
-    }
-
-    if (showWifiWarning) {
-        WifiWarningDialog(
-            onConfirm = viewModel::confirmDownloadOnMobileData,
-            onDismiss = viewModel::dismissWifiWarning
-        )
-    }
-
-    if (showProfileSheet) {
-        val currentProfile = (offlineRoutingUiState as? OfflineRoutingUiState.Enabled)?.profile
-            ?: de.velospot.data.brouter.BRouterProfile.TREKKING
-        RoutingProfileSheet(
-            currentProfile         = currentProfile,
-            onSelectProfile        = viewModel::selectRoutingProfile,
-            onDismiss              = viewModel::dismissProfileSheet,
-            onDisableOfflineRouting = viewModel::disableOfflineRouting
-        )
-    }
-
-    selectedSpace?.let { space ->
-        SelectedSpaceSheet(
-            space           = space,
-            onDismiss       = { viewModel.selectSpace(null) },
-            onNavigate      = startNavigationHandler,
-            isFavorite      = favorites.contains(space.id),
-            onToggleFavorite = viewModel::toggleFavorite
-        )
-    }
-
-    selectedSearchPin?.let { pin ->
-        SearchPinSheet(
-            result     = pin,
-            onDismiss  = viewModel::dismissSearchPin,
-            onNavigate = viewModel::startNavigationToAddress
-        )
-    }
-
-        customMapPin?.let { pin ->
-        // Hide the sheet while actively navigating to this pin –
-        // the pin stays visible on the map as a route end-point.
-        val navigatingToPin = activeNavigation?.destination?.id == MapViewModel.ID_CUSTOM_MAP_PIN
-        if (!navigatingToPin) {
-            CustomMapPinSheet(
-                pin        = pin,
-                address    = customMapPinAddress,
-                onDismiss  = viewModel::dismissCustomMapPin,
-                onNavigate = viewModel::startNavigationToCustomPin,
-                onRemove   = viewModel::dismissCustomMapPin
-            )
-        }
-    }
+    // ── Bottom sheets & dialogs ───────────────────────────────────────────────
+    MapBottomSheets(viewModel = viewModel, screenUiState = screenUiState)
 }
 
 

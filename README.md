@@ -44,7 +44,9 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - Dedicated favorites sheet with direct navigation shortcuts
 - Smooth animated map camera transitions powered by MapLibre's built-in easing
 - Current-location recentering and location marker support
-- In-app dark mode toggle from the top-right menu
+- In-app dark mode toggle from the top-right menu — **including dark map tiles** that turn the whole vector map dark
+- **🆕 Toggle map layers** — show or hide pin categories (parking, favorites, saved places) from an intuitive layers sheet; the choice is persisted
+- **🆕 Saved places** — save any tapped location as a named favorite; it appears as a persistent green star marker and in the favorites list
 - **Parking space photos** with automatic caching via Coil for fast loading
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
@@ -68,7 +70,9 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - ❤️ **Favorites** - Save frequently used bike parking spots and use dedicated actions for navigation or spot details
 - ⭐ **Selected Highlight** - See your current selection highlighted with an orange marker
 - 📸 **Parking Photos** - View parking space photos with automatic smart caching for fast loading
-- 🌙 **Dark Mode Toggle** - Switch the app theme directly from the in-app menu
+- 🌙 **Dark Mode Toggle** - Switch the app theme directly from the in-app menu — the map also switches to a bundled dark vector-tile style (reusing the same OpenFreeMap tiles) with higher-contrast markers
+- 🗂️ **Toggle Map Layers** - Show or hide each pin category independently (parking spots, favorites, saved places) via a layers sheet; the selection is remembered across restarts
+- ⭐ **Saved Places** - Save any tapped location as a named favorite; saved places appear as persistent green star markers and in the favorites list with navigate and show-on-map actions
 - 🌐 **8 Languages** - Choose from German, English, French, Italian, Portuguese, Luxembourgish, Dutch, and Spanish; the selection is remembered across restarts
 - 💾 **SQLite Offline Database** - All ~100 000 parking locations are bundled as a Room asset; no sync required
 - 🎯 **In-App Navigation** - Calculate bike routes directly inside the app and render the route path on the map
@@ -80,6 +84,16 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 
 - **Android 8.0 (API 26)** and above
 - Minimum: API 26 | Target: API 37
+
+## 📸 Screenshots
+
+| Map overview | Dark map mode | Map layers |
+| :---: | :---: | :---: |
+| ![Map overview](docs/screenshots/map-overview.jpeg) | ![Dark map mode](docs/screenshots/dark-mode.jpeg) | ![Map layers](docs/screenshots/layers.jpeg) |
+| **Address search** | **Parking details** | **Favorites** |
+| ![Address search](docs/screenshots/searchbar.jpeg) | ![Parking details](docs/screenshots/parking-details.jpeg) | ![Favorites](docs/screenshots/favorites-sheet.jpeg) |
+
+> More screenshots and a live feature overview are on the [GitHub Pages site](https://drzeeb.github.io/VeloSpot/).
 
 ## 🛠 Tech Stack
 

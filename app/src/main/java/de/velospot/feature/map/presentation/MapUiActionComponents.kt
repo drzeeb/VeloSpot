@@ -1,5 +1,6 @@
 package de.velospot.feature.map.presentation
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import de.velospot.R
+import de.velospot.domain.model.BikeParkingType
+
+/** Localised display label for a [BikeParkingType]. Shared across map sheets and overlays. */
+internal fun BikeParkingType.label(context: Context): String = when (this) {
+    BikeParkingType.GARAGE    -> context.getString(R.string.type_garage)
+    BikeParkingType.BIKE_RACK -> context.getString(R.string.type_bike_rack)
+    BikeParkingType.UNKNOWN   -> context.getString(R.string.type_unknown)
+}
 
 @Composable
 internal fun PrimaryActionButton(
@@ -44,9 +54,14 @@ internal fun SecondaryActionButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
     maxLines: Int = 1
 ) {
     OutlinedButton(onClick = onClick, modifier = modifier) {
+        icon?.let {
+            Icon(imageVector = it, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         Text(text = text, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
     }
 }
