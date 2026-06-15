@@ -1,0 +1,6 @@
+# BRouter routing data files are shipped byte-for-byte as released upstream.
+# Disable end-of-line conversion so the packaged assets are identical on every
+# platform (e.g. Windows local builds vs. the F-Droid Linux builder) and stay
+# in sync with the BRouter source used by the F-Droid srclib build.
+app/src/main/assets/brouter/profiles/** -text
+
