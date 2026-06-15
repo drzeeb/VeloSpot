@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [v1.0.10] — 2026-06-15
+
+### Added
+- **CI: Gradle Wrapper Validation workflow** — verifies the `gradle-wrapper.jar` checksum against official Gradle releases on every push/PR (supply-chain hardening)
+- **CI: CodeQL security scanning** — workflow added but currently **disabled for automatic runs** (manual dispatch only): CodeQL's Kotlin extractor does not yet support Kotlin 2.4.x (rejects ≥ 2.3.30 with a build, extracts no Kotlin sources with `build-mode: none`). The build-based config is kept ready to re-enable once CodeQL supports Kotlin 2.4
+- **CI: Android Lint workflow** — runs `lintFdroidDebug` on every push/PR and uploads the HTML/XML report as a build artifact
+- **CI: Dependency Review workflow** — fails PRs that introduce dependencies with known high-severity vulnerabilities or disallowed licenses
+- **README: live pipeline status badges** — CI, Release workflow and Android Lint status badges
+
+### Changed
+- **F-Droid: BRouter is now built from source** — the pre-built `app/libs/brouter-1.6.3-all.jar` is no longer shipped as a binary blob in the F-Droid build; instead it is rebuilt from the official BRouter source code via an srclib (`BRouter@1.6.3`) and a `prebuild` step configured in the `fdroiddata` recipe (`metadata/de.velospot.yml` + `srclibs/BRouter.yml`). Local and `googlePlay` builds keep using the committed JAR.
+
+### Fixed
+- **Missing translations completed** — added the `custom_pin_*` strings to all 6 non-default locales (es, fr, it, lb, nl, pt) and the `error_*` strings to Italian, resolving the 10 `MissingTranslation` lint errors that broke the Android Lint CI job
+- **MapView leak** — `rememberMapViewWithLifecycle` now calls `onDestroy()` in `onDispose`, releasing the native renderer, GL context and map listeners even when the composable leaves composition before the Activity is destroyed
+- **Location callback** — the `googlePlay` `LocationRepositoryImpl` resets `locationCallback` to `null` after `removeLocationUpdates` (no double removal, reference is released)
+- **F-Droid build hardening** — removed the `foojay-resolver-convention` plugin from `settings.gradle.kts` **and** the `gradle/gradle-daemon-jvm.properties` daemon-JVM pinning (which forced a JetBrains JDK 21 toolchain download via Foojay). The Gradle daemon now runs on the invoking JDK (CI: 17, local: developer's JDK); the app still targets Java 11. This also fixes CI builds failing with `Unable to download toolchain ... vendor=JetBrains`
+
+---
+
 ## [v1.0.9] — 2026-06-12
 
 ### Added

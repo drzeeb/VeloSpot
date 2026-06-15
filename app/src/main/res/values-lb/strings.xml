@@ -95,4 +95,9 @@
     <!-- Hinweis wann de Zoom ze kleng ass -->
     <string name="zoom_in_for_parking">Erazommen fir Vëlosparken ze gesinn</string>
     <string name="error_loading_parking">Parkdaten konnte net aktualiséiert ginn</string>
+    <!-- Custom map pin -->
+    <string name="custom_pin_title">Markéierten Uert</string>
+    <string name="custom_pin_subtitle">Tipp op d\'Kaart, fir de Pin ze réckelen.</string>
+    <string name="custom_pin_navigate">Hei hin navigéieren</string>
+    <string name="custom_pin_remove">Pin ewechhuelen</string>
 </resources>

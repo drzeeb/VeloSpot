@@ -34,13 +34,19 @@ fun rememberMapViewWithLifecycle(): MapView {
                 Lifecycle.Event.ON_RESUME  -> mapView.onResume()
                 Lifecycle.Event.ON_PAUSE   -> mapView.onPause()
                 Lifecycle.Event.ON_STOP    -> mapView.onStop()
-                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                // ON_DESTROY is intentionally handled in onDispose below (not here)
+                // so the MapView is destroyed exactly once, and also when the
+                // composable leaves composition while the host lifecycle is still active.
                 else                       -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            // Release the native renderer, GL context and all registered map
+            // listeners. Without this the MapView leaks when the composable is
+            // removed from composition before the Activity is destroyed.
+            mapView.onDestroy()
         }
     }
 
