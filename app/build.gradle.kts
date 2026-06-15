@@ -34,8 +34,8 @@ android {
         // The release workflow updates them via sed before committing the release tag,
         // so the tagged commit always contains the correct values.
         // WARNING: Do NOT replace these literals with dynamic expressions.
-        versionCode = 10009
-        versionName = "1.0.9"
+        versionCode = 10010
+        versionName = "1.0.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -89,7 +89,11 @@ kotlin {
 
 dependencies {
 
-    // BRouter offline routing engine – place brouter.jar from https://brouter.de into app/libs/
+    // BRouter offline routing engine.
+    // - Local dev & googlePlay builds use the pre-built brouter-1.6.3-all.jar in app/libs/.
+    // - The F-Droid build rebuilds this JAR from source (BRouter 1.6.3 srclib) via a
+    //   prebuild step in the fdroiddata recipe (metadata/de.velospot.yml) before assembly.
+    // The fileTree include is filename-agnostic so either JAR is picked up.
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
     implementation(libs.androidx.core.ktx)

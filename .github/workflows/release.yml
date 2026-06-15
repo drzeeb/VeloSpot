@@ -113,6 +113,34 @@ jobs:
           mv app/build/outputs/apk/googlePlay/release/app-googlePlay-release.apk \
              "app/build/outputs/apk/googlePlay/release/VeloSpot-${TAG}-googlePlay.apk"
 
+      # ── Promote the [Unreleased] changelog section ────────────────────────────
+      # Turns "## [Unreleased]" into "## [vX.Y.Z] — <date>" and inserts a fresh,
+      # empty "## [Unreleased]" section above it. Idempotent: if a heading for
+      # this version already exists (e.g. promoted manually), it does nothing.
+      - name: Promote [Unreleased] changelog section
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date -u +%Y-%m-%d)
+          if grep -qE "^## \[v?${VERSION}\]" CHANGELOG.md; then
+            echo "Heading for ${VERSION} already present – skipping promotion."
+          elif grep -q '^## \[Unreleased\]' CHANGELOG.md; then
+            awk -v ver="$VERSION" -v date="$DATE" '
+              !done && /^## \[Unreleased\]/ {
+                print "## [Unreleased]";
+                print "";
+                print "---";
+                print "";
+                print "## [v" ver "] — " date;
+                done=1;
+                next
+              }
+              { print }
+            ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+            echo "Promoted [Unreleased] → [v${VERSION}] — ${DATE}"
+          else
+            echo "No [Unreleased] section found – skipping promotion."
+          fi
+
       # ── Extract changelog section for this release ────────────────────────────
       - name: Extract changelog for this version
         id: changelog
@@ -179,9 +207,10 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add app/build.gradle.kts
+          git add CHANGELOG.md
           git add fastlane/metadata/android/*/changelogs/
           git diff --staged --quiet || \
-            git commit -m "chore: bump versionCode/versionName + F-Droid changelog for ${{ steps.version.outputs.tag }}"
+            git commit -m "chore: bump versionCode/versionName + changelog for ${{ steps.version.outputs.tag }}"
           # Move the release tag to this commit so F-Droid reads the correct static values.
           git tag -f "${{ steps.version.outputs.tag }}" HEAD
           git push --force origin "${{ steps.version.outputs.tag }}"

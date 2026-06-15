@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [v1.0.10] — 2026-06-15
+
+### Changed
+- **F-Droid: BRouter is now built from source** — the pre-built `app/libs/brouter-1.6.3-all.jar` is no longer shipped as a binary blob in the F-Droid build; instead it is rebuilt from the official BRouter source code via an srclib (`BRouter@1.6.3`) and a `prebuild` step configured in the `fdroiddata` recipe (`metadata/de.velospot.yml` + `srclibs/BRouter.yml`). Local and `googlePlay` builds keep using the committed JAR.
+
+### Fixed
+- **MapView leak** — `rememberMapViewWithLifecycle` now calls `onDestroy()` in `onDispose`, releasing the native renderer, GL context and map listeners even when the composable leaves composition before the Activity is destroyed
+- **Location callback** — the `googlePlay` `LocationRepositoryImpl` resets `locationCallback` to `null` after `removeLocationUpdates` (no double removal, reference is released)
+- **F-Droid build hardening** — removed the `foojay-resolver-convention` plugin (which downloaded JDK toolchains over the network at build time) from `settings.gradle.kts`; it was unused
+
+---
+
 ## [v1.0.9] — 2026-06-12
 
 ### Added
