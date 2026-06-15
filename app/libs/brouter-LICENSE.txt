@@ -23,22 +23,28 @@ SOFTWARE.
 ---
 
 This file documents the license of the BRouter JAR bundled in this repository
-as app/libs/brouter-1.6.3-all.jar.
+as app/libs/brouter-1.7.9-all.jar.
 
 Source code: https://github.com/abrensch/brouter
-Version:     1.6.3
+Version:     1.7.9
 License:     MIT (as stated in the BRouter repository)
 
-The "all" JAR bundles the following BRouter modules:
-  - brouter-codec
-  - brouter-expressions
-  - brouter-router
-All modules are MIT-licensed and contain no proprietary dependencies.
+The bundled JAR is a slimmed archive containing only the on-device routing
+modules:
+  - brouter-codec       (btools.codec)
+  - brouter-expressions (btools.expressions)
+  - brouter-router      (btools.router)
+  - btools.mapaccess
+  - btools.util
+The server / map-creation modules (btools.server, btools.mapcreator) and their
+protobuf / osmosis dependencies are intentionally excluded — they are only used
+to build map data, not to calculate routes on-device. All bundled modules are
+MIT-licensed and contain no proprietary dependencies.
 
 Build provenance:
   - Local development and the googlePlay flavor use this pre-built JAR directly.
   - The F-Droid build does NOT ship this binary. It rebuilds the exact same
-    BRouter 1.6.3 classes from source (BRouter srclib) during the build, as
+    BRouter 1.7.9 classes from source (BRouter srclib) during the build, as
     configured in the fdroiddata recipe (metadata/de.velospot.yml).
 
 

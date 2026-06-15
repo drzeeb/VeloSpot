@@ -58,11 +58,11 @@ OSM data is available under the ODbL. This means:
 ## 📦 Libraries
 
 ### BRouter (offline routing engine)
-- **Version**: 1.6.3
+- **Version**: 1.7.9
 - **License**: MIT License
 - **Source code**: https://github.com/abrensch/brouter
-- **Binary in repo**: `app/libs/brouter-1.6.3-all.jar`
-  - The JAR is a pre-built all-in-one archive compiled from the source above.
+- **Binary in repo**: `app/libs/brouter-1.7.9-all.jar`
+  - A slimmed archive built from the source above, containing only the on-device routing modules (`btools.router`, `.mapaccess`, `.util`, `.codec`, `.expressions`).
   - It contains no proprietary dependencies.
   - For F-Droid the binary is declared under `scanignore`; license and source code are publicly available.
 - **Usage**: Offline bicycle route calculation entirely on-device

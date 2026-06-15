@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -202,16 +203,41 @@ jobs:
           echo "$NOTES" > "fastlane/metadata/android/de-DE/changelogs/${VERSION_CODE}.txt"
           echo "$NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
 
-      - name: Commit version bump + F-Droid changelog and move tag
+      - name: Commit version bump + changelog, move tag, open sync PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          TAG="${{ steps.version.outputs.tag }}"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add app/build.gradle.kts
           git add CHANGELOG.md
           git add fastlane/metadata/android/*/changelogs/
-          git diff --staged --quiet || \
-            git commit -m "chore: bump versionCode/versionName + changelog for ${{ steps.version.outputs.tag }}"
-          # Move the release tag to this commit so F-Droid reads the correct static values.
-          git tag -f "${{ steps.version.outputs.tag }}" HEAD
-          git push --force origin "${{ steps.version.outputs.tag }}"
-          git push origin HEAD:main || true
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit – moving tag only."
+            git tag -f "$TAG" HEAD
+            git push --force origin "$TAG"
+            exit 0
+          fi
+
+          git commit -m "chore: bump versionCode/versionName + promote changelog for ${TAG}"
+
+          # Move the release tag to this commit so F-Droid reads the correct static
+          # values and the GitHub Release ships the promoted changelog. Tags are not
+          # covered by the branch protection ruleset, so this always succeeds.
+          git tag -f "$TAG" HEAD
+          git push --force origin "$TAG"
+
+          # `main` is protected (ruleset "main-protection-strict": PR + review
+          # required, no bypass actors). A direct push from the bot is rejected, so
+          # instead we push the commit to a dedicated branch and open a PR to bring
+          # the promoted changelog / version bump back into `main`.
+          BRANCH="release/${TAG}"
+          git push --force origin "HEAD:refs/heads/${BRANCH}"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: release ${TAG} — changelog & version bump" \
+            --body "Automated release sync for **${TAG}**: promotes the \`[Unreleased]\` changelog section to \`${TAG}\` (with today's date) and bumps \`versionCode\`/\`versionName\`. Merge to keep \`main\` in sync with the release tag." \
+            || echo "PR already exists for ${BRANCH} – skipping."
