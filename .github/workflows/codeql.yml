@@ -1,15 +1,15 @@
 name: CodeQL
 
-# Static security analysis for the Kotlin/Java sources. Runs on every PR and push
-# to main, plus a weekly scheduled scan. Results appear under the repo's
-# Security → Code scanning tab.
+# ⚠️ DISABLED for automatic runs.
+# CodeQL's Kotlin extractor does not yet support Kotlin 2.4.x (it rejects
+# versions >= 2.3.30 during a compiler-based build), and `build-mode: none`
+# does not extract Kotlin sources ("no source code seen during build").
+# Since this project is essentially pure Kotlin, no CodeQL mode currently works.
+# This workflow therefore only runs on manual dispatch. Re-enable the
+# push / pull_request / schedule triggers below once CodeQL gains Kotlin 2.4
+# support, then this build-based config will work as-is.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: "27 3 * * 1" # Mondays 03:27 UTC
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -28,18 +28,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java-kotlin
-          # build-mode: none extracts the sources directly without invoking the
-          # Kotlin compiler. This avoids the "Kotlin version 2.4.0 is too recent"
-          # extractor error (CodeQL's Kotlin support lags behind the latest
-          # releases) and removes the need for a JDK/Gradle build step.
-          build-mode: none
-          # security-and-quality adds maintainability/leak queries on top of the
-          # default security-extended set.
           queries: security-and-quality
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Build F-Droid debug
+        run: ./gradlew :app:assembleFdroidDebug --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

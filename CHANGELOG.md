@@ -12,10 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - **CI: Gradle Wrapper Validation workflow** — verifies the `gradle-wrapper.jar` checksum against official Gradle releases on every push/PR (supply-chain hardening)
-- **CI: CodeQL security scanning** — static analysis of the Kotlin/Java sources (`security-and-quality` queries) on every push/PR plus a weekly scheduled scan; results surface under Security → Code scanning. Uses `build-mode: none` so it stays compatible with Kotlin 2.4.x (CodeQL's compiler-based extractor does not yet support Kotlin ≥ 2.3.30)
+- **CI: CodeQL security scanning** — workflow added but currently **disabled for automatic runs** (manual dispatch only): CodeQL's Kotlin extractor does not yet support Kotlin 2.4.x (rejects ≥ 2.3.30 with a build, extracts no Kotlin sources with `build-mode: none`). The build-based config is kept ready to re-enable once CodeQL supports Kotlin 2.4
 - **CI: Android Lint workflow** — runs `lintFdroidDebug` on every push/PR and uploads the HTML/XML report as a build artifact
 - **CI: Dependency Review workflow** — fails PRs that introduce dependencies with known high-severity vulnerabilities or disallowed licenses
-- **README: live pipeline status badges** — CI, Release workflow, CodeQL and Android Lint status badges
+- **README: live pipeline status badges** — CI, Release workflow and Android Lint status badges
 
 ### Changed
 - **F-Droid: BRouter is now built from source** — the pre-built `app/libs/brouter-1.6.3-all.jar` is no longer shipped as a binary blob in the F-Droid build; instead it is rebuilt from the official BRouter source code via an srclib (`BRouter@1.6.3`) and a `prebuild` step configured in the `fdroiddata` recipe (`metadata/de.velospot.yml` + `srclibs/BRouter.yml`). Local and `googlePlay` builds keep using the committed JAR.

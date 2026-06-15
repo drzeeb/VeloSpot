@@ -10,7 +10,6 @@
 [![Release](https://img.shields.io/github/v/release/drzeeb/VeloSpot?label=latest%20release)](https://github.com/drzeeb/VeloSpot/releases/latest)
 [![CI](https://github.com/drzeeb/VeloSpot/actions/workflows/ci.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/ci.yml)
 [![Release workflow](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml)
-[![CodeQL](https://github.com/drzeeb/VeloSpot/actions/workflows/codeql.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/codeql.yml)
 [![Android Lint](https://github.com/drzeeb/VeloSpot/actions/workflows/android-lint.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/android-lint.yml)
 
 VeloSpot is an Android application that helps cyclists discover and navigate to bike parking facilities **anywhere in Germany**. Powered by a pre-bundled OpenStreetMap dataset with over **100 000 locations**, the app works fully offline from the very first launch — no network required to find parking.
