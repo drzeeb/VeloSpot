@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [v1.0.10] — 2026-06-15
 
+### Added
+- **CI: Gradle Wrapper Validation workflow** — verifies the `gradle-wrapper.jar` checksum against official Gradle releases on every push/PR (supply-chain hardening)
+- **CI: CodeQL security scanning** — static analysis of the Kotlin/Java sources (`security-and-quality` queries) on every push/PR plus a weekly scheduled scan; results surface under Security → Code scanning
+- **CI: Android Lint workflow** — runs `lintFdroidDebug` on every push/PR and uploads the HTML/XML report as a build artifact
+- **CI: Dependency Review workflow** — fails PRs that introduce dependencies with known high-severity vulnerabilities or disallowed licenses
+- **README: live pipeline status badges** — CI, Release workflow, CodeQL and Android Lint status badges
+
 ### Changed
 - **F-Droid: BRouter is now built from source** — the pre-built `app/libs/brouter-1.6.3-all.jar` is no longer shipped as a binary blob in the F-Droid build; instead it is rebuilt from the official BRouter source code via an srclib (`BRouter@1.6.3`) and a `prebuild` step configured in the `fdroiddata` recipe (`metadata/de.velospot.yml` + `srclibs/BRouter.yml`). Local and `googlePlay` builds keep using the committed JAR.
 

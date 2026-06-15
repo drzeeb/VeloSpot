@@ -1,0 +1,29 @@
+name: Dependency Review
+
+# Scans dependency changes introduced by a pull request and fails if a new
+# dependency with a known high-severity vulnerability or a disallowed license
+# is added. Complements Renovate (which updates) by gating new/changed deps.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+
