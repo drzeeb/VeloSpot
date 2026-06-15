@@ -90,8 +90,11 @@ kotlin {
 dependencies {
 
     // BRouter offline routing engine.
-    // - Local dev & googlePlay builds use the pre-built brouter-1.6.3-all.jar in app/libs/.
-    // - The F-Droid build rebuilds this JAR from source (BRouter 1.6.3 srclib) via a
+    // - Local dev & googlePlay builds use the pre-built brouter-1.7.9-all.jar in app/libs/.
+    //   It is a slimmed jar containing only the routing modules (btools.router,
+    //   .mapaccess, .util, .codec, .expressions) — the server/mapcreator code and its
+    //   protobuf/osmosis dependencies are intentionally excluded (not needed on-device).
+    // - The F-Droid build rebuilds this JAR from source (BRouter 1.7.9 srclib) via a
     //   prebuild step in the fdroiddata recipe (metadata/de.velospot.yml) before assembly.
     // The fileTree include is filename-agnostic so either JAR is picked up.
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
