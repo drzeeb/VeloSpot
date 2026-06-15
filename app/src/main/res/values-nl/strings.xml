@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Menu openen</string>
     <string name="menu_favorites_count">Favorieten (%1$d)</string>
@@ -112,4 +112,9 @@
     <string name="layers_favorites_desc">Je favoriete stallingen</string>
     <string name="layers_saved_title">Opgeslagen plekken</string>
     <string name="layers_saved_desc">Je opgeslagen pins</string>
+    <!-- Custom map pin -->
+    <string name="custom_pin_title">Aangepaste locatie</string>
+    <string name="custom_pin_subtitle">Tik op de kaart om de speld te verplaatsen.</string>
+    <string name="custom_pin_navigate">Navigeer hierheen</string>
+    <string name="custom_pin_remove">Speld verwijderen</string>
 </resources>

@@ -99,27 +99,6 @@ jobs:
           echo "----- resolved version literals -----"
           grep -nE "versionCode = |versionName = " app/build.gradle.kts
 
-      # ── Promote the Unreleased changelog section to this release ──────────────
-      # The GitHub release notes and the F-Droid changelog are extracted from a
-      # "## [vX.Y.Z] — DATE" heading. We rewrite the "## [Unreleased]" heading in
-      # place so the released commit/tag carries a proper, dated version section
-      # (same format as older releases: tag, an em dash "—", then the UTC date).
-      # If no [Unreleased] section exists (e.g. it was renamed manually), this is
-      # a no-op and the existing CHANGELOG.md is left untouched.
-      - name: Promote Unreleased changelog section to this version
-        run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          DATE="$(date -u +%Y-%m-%d)"
-          EMDASH="$(printf '\u2014')"
-          if grep -q "^## \[Unreleased\]" CHANGELOG.md; then
-            sed -i -E "s|^## \[Unreleased\].*$|## [${TAG}] ${EMDASH} ${DATE}|" CHANGELOG.md
-            echo "Promoted [Unreleased] -> [${TAG}] ${EMDASH} ${DATE}"
-          else
-            echo "No [Unreleased] section found; CHANGELOG.md left unchanged"
-          fi
-          echo "----- top changelog headings -----"
-          grep -nE "^## \[" CHANGELOG.md | head -n 5
-
       # ── Build APKs ────────────────────────────────────────────────────────────
       - name: Build F-Droid & Google Play Release APKs
         run: |
@@ -133,6 +112,34 @@ jobs:
              "app/build/outputs/apk/fdroid/release/VeloSpot-${TAG}-fdroid.apk"
           mv app/build/outputs/apk/googlePlay/release/app-googlePlay-release.apk \
              "app/build/outputs/apk/googlePlay/release/VeloSpot-${TAG}-googlePlay.apk"
+
+      # ── Promote the [Unreleased] changelog section ────────────────────────────
+      # Turns "## [Unreleased]" into "## [vX.Y.Z] — <date>" and inserts a fresh,
+      # empty "## [Unreleased]" section above it. Idempotent: if a heading for
+      # this version already exists (e.g. promoted manually), it does nothing.
+      - name: Promote [Unreleased] changelog section
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date -u +%Y-%m-%d)
+          if grep -qE "^## \[v?${VERSION}\]" CHANGELOG.md; then
+            echo "Heading for ${VERSION} already present – skipping promotion."
+          elif grep -q '^## \[Unreleased\]' CHANGELOG.md; then
+            awk -v ver="$VERSION" -v date="$DATE" '
+              !done && /^## \[Unreleased\]/ {
+                print "## [Unreleased]";
+                print "";
+                print "---";
+                print "";
+                print "## [v" ver "] — " date;
+                done=1;
+                next
+              }
+              { print }
+            ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+            echo "Promoted [Unreleased] → [v${VERSION}] — ${DATE}"
+          else
+            echo "No [Unreleased] section found – skipping promotion."
+          fi
 
       # ── Extract changelog section for this release ────────────────────────────
       - name: Extract changelog for this version
@@ -203,7 +210,7 @@ jobs:
           git add CHANGELOG.md
           git add fastlane/metadata/android/*/changelogs/
           git diff --staged --quiet || \
-            git commit -m "chore: release ${{ steps.version.outputs.tag }} — bump version, promote changelog, F-Droid notes"
+            git commit -m "chore: bump versionCode/versionName + changelog for ${{ steps.version.outputs.tag }}"
           # Move the release tag to this commit so F-Droid reads the correct static values.
           git tag -f "${{ steps.version.outputs.tag }}" HEAD
           git push --force origin "${{ steps.version.outputs.tag }}"

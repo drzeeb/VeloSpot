@@ -22,8 +22,8 @@ SOFTWARE.
 
 ---
 
-This file documents the license of the pre-built BRouter JAR bundled in this
-repository as app/libs/brouter-1.6.3-all.jar.
+This file documents the license of the BRouter JAR bundled in this repository
+as app/libs/brouter-1.6.3-all.jar.
 
 Source code: https://github.com/abrensch/brouter
 Version:     1.6.3
@@ -34,4 +34,11 @@ The "all" JAR bundles the following BRouter modules:
   - brouter-expressions
   - brouter-router
 All modules are MIT-licensed and contain no proprietary dependencies.
+
+Build provenance:
+  - Local development and the googlePlay flavor use this pre-built JAR directly.
+  - The F-Droid build does NOT ship this binary. It rebuilds the exact same
+    BRouter 1.6.3 classes from source (BRouter srclib) during the build, as
+    configured in the fdroiddata recipe (metadata/de.velospot.yml).
+
 

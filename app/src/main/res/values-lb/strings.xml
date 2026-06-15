@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Menü opmaachen</string>
     <string name="menu_favorites_count">Favoritten (%1$d)</string>
@@ -112,4 +112,9 @@
     <string name="layers_favorites_desc">Deng favoriséiert Plazen</string>
     <string name="layers_saved_title">Gespäichert Äerter</string>
     <string name="layers_saved_desc">Deng gespäichert Pinnen</string>
+    <!-- Custom map pin -->
+    <string name="custom_pin_title">Markéierten Uert</string>
+    <string name="custom_pin_subtitle">Tipp op d\'Kaart, fir de Pin ze réckelen.</string>
+    <string name="custom_pin_navigate">Hei hin navigéieren</string>
+    <string name="custom_pin_remove">Pin ewechhuelen</string>
 </resources>

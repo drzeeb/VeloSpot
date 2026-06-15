@@ -96,6 +96,9 @@ class LocationRepositoryImpl @Inject constructor(
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
         }
+        // Drop the reference so the callback (and its captured state) can be
+        // garbage-collected and a later stop() call does not remove it twice.
+        locationCallback = null
     }
 }
 

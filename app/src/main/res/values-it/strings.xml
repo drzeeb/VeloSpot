@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Apri menu</string>
     <string name="menu_favorites_count">Preferiti (%1$d)</string>
@@ -105,4 +105,18 @@
     <string name="layers_favorites_desc">I tuoi parcheggi preferiti</string>
     <string name="layers_saved_title">Luoghi salvati</string>
     <string name="layers_saved_desc">I tuoi segnaposto salvati</string>
+
+    <!-- Custom map pin -->
+    <string name="custom_pin_title">Posizione personalizzata</string>
+    <string name="custom_pin_subtitle">Tocca la mappa per spostare il segnaposto.</string>
+    <string name="custom_pin_navigate">Naviga qui</string>
+    <string name="custom_pin_remove">Rimuovi segnaposto</string>
+
+    <!-- Error messages -->
+    <string name="error_network_unavailable">Impossibile caricare i parcheggi. Controlla la connessione.</string>
+    <string name="error_location_unavailable">Posizione non disponibile. Abilita l\'accesso alla posizione.</string>
+    <string name="error_routing_failed">Calcolo del percorso non riuscito. Riprova.</string>
+    <string name="error_no_route_found">Nessun percorso ciclabile trovato per questa destinazione.</string>
+    <string name="error_route_geometry_empty">Dati del percorso incompleti. Riprova.</string>
+    <string name="error_unknown">Si è verificato un errore imprevisto. Riprova.</string>
 </resources>
