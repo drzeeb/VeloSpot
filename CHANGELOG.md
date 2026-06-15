@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - **CI: Gradle Wrapper Validation workflow** — verifies the `gradle-wrapper.jar` checksum against official Gradle releases on every push/PR (supply-chain hardening)
-- **CI: CodeQL security scanning** — static analysis of the Kotlin/Java sources (`security-and-quality` queries) on every push/PR plus a weekly scheduled scan; results surface under Security → Code scanning
+- **CI: CodeQL security scanning** — static analysis of the Kotlin/Java sources (`security-and-quality` queries) on every push/PR plus a weekly scheduled scan; results surface under Security → Code scanning. Uses `build-mode: none` so it stays compatible with Kotlin 2.4.x (CodeQL's compiler-based extractor does not yet support Kotlin ≥ 2.3.30)
 - **CI: Android Lint workflow** — runs `lintFdroidDebug` on every push/PR and uploads the HTML/XML report as a build artifact
 - **CI: Dependency Review workflow** — fails PRs that introduce dependencies with known high-severity vulnerabilities or disallowed licenses
 - **README: live pipeline status badges** — CI, Release workflow, CodeQL and Android Lint status badges
