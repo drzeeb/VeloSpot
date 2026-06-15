@@ -95,4 +95,9 @@
     <!-- Dica de nível de zoom baixo demais -->
     <string name="zoom_in_for_parking">Aproxime para ver os estacionamentos de bicicleta</string>
     <string name="error_loading_parking">Não foi possível atualizar os dados de estacionamento</string>
+    <!-- Custom map pin -->
+    <string name="custom_pin_title">Localização personalizada</string>
+    <string name="custom_pin_subtitle">Toque no mapa para mover o marcador.</string>
+    <string name="custom_pin_navigate">Navegar até aqui</string>
+    <string name="custom_pin_remove">Remover marcador</string>
 </resources>

@@ -95,4 +95,9 @@
     <!-- Aviso de nivel de zoom demasiado bajo -->
     <string name="zoom_in_for_parking">Acércate para ver los aparcabicis</string>
     <string name="error_loading_parking">No se pudieron actualizar los datos de aparcamiento</string>
+    <!-- Custom map pin -->
+    <string name="custom_pin_title">Ubicación personalizada</string>
+    <string name="custom_pin_subtitle">Toca el mapa para mover el marcador.</string>
+    <string name="custom_pin_navigate">Navegar aquí</string>
+    <string name="custom_pin_remove">Quitar marcador</string>
 </resources>

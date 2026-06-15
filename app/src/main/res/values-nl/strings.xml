@@ -95,4 +95,9 @@
     <!-- Zoom-hinttekst bij te laag zoomniveau -->
     <string name="zoom_in_for_parking">Zoom in om fietsenstallingen te zien</string>
     <string name="error_loading_parking">Parkeergegevens konden niet worden vernieuwd</string>
+    <!-- Custom map pin -->
+    <string name="custom_pin_title">Aangepaste locatie</string>
+    <string name="custom_pin_subtitle">Tik op de kaart om de speld te verplaatsen.</string>
+    <string name="custom_pin_navigate">Navigeer hierheen</string>
+    <string name="custom_pin_remove">Speld verwijderen</string>
 </resources>
