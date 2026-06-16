@@ -1,0 +1,2 @@
+Reproducible build: the embedded VCS info (Git commit hash) is no longer written into the release APK, so the F-Droid build is now byte-for-byte reproducible.
+

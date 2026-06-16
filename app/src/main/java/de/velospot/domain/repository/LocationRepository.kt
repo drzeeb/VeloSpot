@@ -19,8 +19,13 @@ interface LocationRepository {
 
     /**
      * Start listening to location updates.
+     *
+     * @param highAccuracy when `true`, requests frequent, GPS-based high-accuracy
+     *  fixes (used during active turn-by-turn navigation). When `false` (the
+     *  default), a battery-friendly balanced-power mode with a larger update
+     *  interval and minimum displacement is used for idle map browsing.
      */
-    fun startLocationUpdates()
+    fun startLocationUpdates(highAccuracy: Boolean = false)
 
     /**
      * Stop listening to location updates.

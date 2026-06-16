@@ -138,24 +138,53 @@ Use the **SHA-256** value (lowercase, colons removed) as `AllowedAPKSigningKeys`
 
 ## 5. Cutting a release (GitHub Actions)
 
-Releases are automated by `.github/workflows/release.yml`:
+The release **content** (version bump + changelog) is prepared **in the release PR**,
+*before* tagging. The `.github/workflows/release.yml` workflow then only **builds,
+signs and publishes** — it never rewrites files, never moves the tag and never opens
+a sync PR. This keeps `main` and the release tag perfectly in sync (no drift) while
+respecting the protected `main` branch.
 
-1. Make sure `main` is green and the changelog `## [Unreleased]` section is filled.
-2. Push a tag `vX.Y.Z`:
+### Step 1 — Prepare the release PR (off `main`)
 
-   ```bash
-   git tag v1.0.14
-   git push origin v1.0.14
-   ```
+In a normal PR to `main`, do all three:
 
-3. The workflow then:
-   - checks out the repo **with submodules**,
-   - sets the static `versionCode` / `versionName` literals to match the tag,
-   - runs `assembleFdroidRelease` (+ `assembleGooglePlayRelease`),
-   - signs with the keystore decoded from `KEYSTORE_BASE64`,
-   - uploads the F-Droid APK as **`VeloSpot-vX.Y.Z.apk`** (the exact name the
-     fdroiddata `Binaries` URL expects:
-     `https://github.com/drzeeb/VeloSpot/releases/download/v%v/VeloSpot-v%v.apk`).
+1. **Bump the version** in `app/build.gradle.kts`
+   (`versionCode = X*10000 + Y*100 + Z`, `versionName = "X.Y.Z"`).
+   These are static literals F-Droid parses via regex — keep them literal.
+2. **Promote the changelog**: rename the `## [Unreleased]` section to
+   `## [vX.Y.Z] — YYYY-MM-DD` and insert a fresh, empty `## [Unreleased]` above it.
+3. **Add the F-Droid "What's New" files** (read by F-Droid as release notes):
+   `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt` and
+   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+
+Get the PR reviewed, green (`ci-build` / `ci-test`) and **merged** into `main`.
+
+### Step 2 — Tag the merge commit and push
+
+The tag MUST point to the merged commit on `main` (reproducibility: the tagged
+source is exactly what was reviewed and what F-Droid rebuilds):
+
+```bash
+git checkout main
+git pull --ff-only
+git tag vX.Y.Z          # on the merge/release commit
+git push origin vX.Y.Z
+```
+
+### Step 3 — The workflow builds & publishes
+
+On the `vX.Y.Z` tag push, `release.yml`:
+
+- checks out the repo **with submodules**,
+- **verifies** the static `versionCode` / `versionName` literals match the tag and
+  warns if the `## [vX.Y.Z]` changelog heading is missing (fails fast on mismatch —
+  so a forgotten bump can't ship a mislabelled APK),
+- runs `assembleFdroidRelease` (+ `assembleGooglePlayRelease`),
+- signs with the keystore decoded from `KEYSTORE_BASE64`,
+- uploads the F-Droid APK as **`VeloSpot-vX.Y.Z.apk`** (the exact name the
+  fdroiddata `Binaries` URL expects:
+  `https://github.com/drzeeb/VeloSpot/releases/download/v%v/VeloSpot-v%v.apk`).
+
 
 ### Required GitHub Actions secrets
 

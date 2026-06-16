@@ -49,8 +49,12 @@ class LocationRepositoryImpl @Inject constructor(
     /**
      * Start receiving location updates.
      * Must be called after permissions are granted.
+     *
+     * @param highAccuracy `true` for frequent GPS fixes during active navigation,
+     *  `false` (default) for a battery-friendly balanced-power mode used while the
+     *  user is just browsing the map.
      */
-    override fun startLocationUpdates() {
+    override fun startLocationUpdates(highAccuracy: Boolean) {
         if (!checkPermissionSync()) return
 
         locationCallback?.let {
@@ -67,10 +71,21 @@ class LocationRepositoryImpl @Inject constructor(
             // Permission denied or not yet granted.
         }
 
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            5000  // Update interval: 5 seconds
-        ).build()
+        // Power-aware request: high-accuracy GPS only while navigating, otherwise a
+        // balanced-power mode with a longer interval and a minimum displacement so
+        // the GPS chip is not woken up while the user stands still.
+        val priority = if (highAccuracy) {
+            Priority.PRIORITY_HIGH_ACCURACY
+        } else {
+            Priority.PRIORITY_BALANCED_POWER_ACCURACY
+        }
+        val intervalMs   = if (highAccuracy) 3_000L else 15_000L
+        val minDistanceM = if (highAccuracy) 5f else 20f
+
+        val locationRequest = LocationRequest.Builder(priority, intervalMs)
+            .setMinUpdateDistanceMeters(minDistanceM)
+            .setMinUpdateIntervalMillis(intervalMs)
+            .build()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {

@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
+- **Battery: power-aware location strategy** — the app no longer keeps the GPS running at full `HIGH_ACCURACY` every 5 s for the whole session. While the user is just browsing the map it now uses a battery-friendly **balanced-power mode** (15 s interval, 20 m minimum displacement, `PRIORITY_BALANCED_POWER_ACCURACY` on Google Play / relaxed `LocationManager` cadence on F-Droid); precise, frequent GPS fixes (3 s / 5 m, `PRIORITY_HIGH_ACCURACY`) are requested **only during active turn-by-turn navigation** and dropped again when navigation ends. In addition, location updates are now fully **stopped when the app goes to the background** and re-armed on return, so the GPS radio no longer drains the battery while the app is not visible. Implemented across the shared `LocationRepository` (new `startLocationUpdates(highAccuracy)`), both flavor `LocationRepositoryImpl`s, and `MapViewModel`/`MainMapScreen` lifecycle wiring.
+- **Release workflow: validate the new changelog-promotion prompt** — verifies that the release pipeline correctly promotes the `## [Unreleased]` section to a dated `## [v1.0.15]` heading and re-creates an empty `## [Unreleased]` section above it.
+
+### Fixed
+- **Reproducible build: disable embedded VCS info** — the Android Gradle Plugin embeds the current Git commit hash into `META-INF/version-control-info.textproto` at build time. This was the only file that still differed between F-Droid's rebuild and the signed release APK, breaking byte-for-byte reproducibility. Added `vcsInfo { include = false }` to the `release` build type in `app/build.gradle.kts`, so the file is no longer written into the APK and the F-Droid build is now fully reproducible.
+
+---
+
+## [v1.0.14] — 2026-06-16
+
+### Changed
 - **BRouter is now built from source — fully reproducible, no binary blob, no prebuild** — the bundled `app/libs/brouter-1.7.9-all.jar` is removed. BRouter is now compiled from source by a new `:brouter` Gradle module that builds the on-device routing modules (`btools.router`, `.mapaccess`, `.util`, `.codec`, `.expressions`) from the pinned `brouter-upstream` git submodule (BRouter `v1.7.9`). A plain `./gradlew :app:assembleFdroidRelease` now resolves BRouter without any preparation scripts. This eliminates the F-Droid custom `prebuild` step and `BRouter` `srclib`; the `fdroiddata` recipe simplifies to `submodules: true` + `gradle: [fdroid]`. The ProGuard rules `-dontwarn java.awt.**` / `-dontwarn javax.imageio.**` (previously appended by the prebuild) are now committed in `app/proguard-rules.pro`.
 - **Reproducible release setup** — release signing now reads from a gitignored `keystore.properties` or CI env vars (`KEYSTORE_PATH`/`KEYSTORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD`); secrets are never committed. The release workflow checks out submodules and publishes the F-Droid APK under the stable name `VeloSpot-v<versionName>.apk` (matching the fdroiddata `Binaries` URL). See [`docs/RELEASING.md`](docs/RELEASING.md).
 

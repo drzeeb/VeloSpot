@@ -1,0 +1,2 @@
+Reproduzierbarer Build: Die eingebettete VCS-Info (Git-Commit-Hash) wird nicht mehr ins Release-APK geschrieben, sodass der F-Droid-Build jetzt byte-für-byte reproduzierbar ist.
+
