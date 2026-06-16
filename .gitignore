@@ -14,3 +14,15 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# ---------------------------------------------------------------------------
+# Release signing secrets – NEVER commit these.
+# Losing the keystore makes reproducible F-Droid updates impossible (see
+# docs/RELEASING.md), so back it up securely OUTSIDE the repository.
+# ---------------------------------------------------------------------------
+keystore.properties
+*.jks
+*.keystore
+*.p12
+*.base64
+
