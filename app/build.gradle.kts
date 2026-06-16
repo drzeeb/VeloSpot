@@ -56,8 +56,8 @@ android {
         // The release workflow updates them via sed before committing the release tag,
         // so the tagged commit always contains the correct values.
         // WARNING: Do NOT replace these literals with dynamic expressions.
-        versionCode = 10013
-        versionName = "1.0.13"
+        versionCode = 10015
+        versionName = "1.0.15"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -86,6 +86,15 @@ android {
                 signingConfigs.getByName("release")
             else
                 signingConfigs.getByName("debug")
+
+            // Reproducible builds: do NOT embed the Git commit hash into
+            // META-INF/version-control-info.textproto. AGP writes this VCS info at
+            // build time, which is non-reproducible and is the ONLY file that differs
+            // between F-Droid's rebuild and the signed release APK. Disabling it makes
+            // the F-Droid build byte-for-byte reproducible. (AGP 8.0+ `vcsInfo` DSL.)
+            vcsInfo {
+                include = false
+            }
         }
     }
     compileOptions {
