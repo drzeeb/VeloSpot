@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **Reproducible build: disable embedded VCS info** — the Android Gradle Plugin embeds the current Git commit hash into `META-INF/version-control-info.textproto` at build time. This was the only file that still differed between F-Droid's rebuild and the signed release APK, breaking byte-for-byte reproducibility. Added `vcsInfo { include = false }` to the `release` build type in `app/build.gradle.kts`, so the file is no longer written into the APK and the F-Droid build is now fully reproducible.
 
+### Changed
+- **Release process: changelog promotion & version bump now happen in the release PR** — the `release.yml` workflow no longer rewrites `app/build.gradle.kts` / `CHANGELOG.md`, no longer force-moves the tag and no longer opens a `release/vX.Y.Z` sync PR (those PRs were never merged, so `main` drifted and `[Unreleased]` was never promoted). Instead the contributor bumps the version, promotes `## [Unreleased]` → `## [vX.Y.Z] — <date>` and adds the fastlane `changelogs/<versionCode>.txt` files **in the release PR**, then tags the merged commit. The workflow now only **verifies** the literals match the tag (fail-fast) and **builds + signs + publishes**. See [`docs/RELEASING.md`](docs/RELEASING.md).
+
 ---
 
 ## [v1.0.14] — 2026-06-16

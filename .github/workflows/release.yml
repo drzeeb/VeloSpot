@@ -15,7 +15,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -92,16 +91,25 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"                 >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"           >> "$GITHUB_ENV"
 
-      # ── Bump static version literals so F-Droid can parse them ────────────────
-      # F-Droid's fdroidserver uses a STATIC regex parser and cannot evaluate
-      # Kotlin expressions. We rewrite the literals to match the pushed tag, so the
-      # commit the tag ends up pointing to always contains the correct values.
-      - name: Set versionCode / versionName in build.gradle.kts
+      # ── Verify the tagged commit already carries the correct version ─────────
+      # Release process (see docs/RELEASING.md): the contributor bumps
+      # versionCode/versionName AND promotes the CHANGELOG [Unreleased] section
+      # to "## [vX.Y.Z] — <date>" IN THE RELEASE PR, *before* tagging. This
+      # workflow only builds & publishes — it never rewrites files, never moves
+      # the tag and never opens a sync PR. Fail fast if the static literals do not
+      # match the tag, so a forgotten bump can't ship a mislabelled APK.
+      - name: Verify version literals match the tag
         run: |
-          sed -i -E "s/versionCode = [0-9]+/versionCode = ${VERSION_CODE}/" app/build.gradle.kts
-          sed -i -E "s/versionName = \"[^\"]*\"/versionName = \"${VERSION_NAME}\"/" app/build.gradle.kts
-          echo "----- resolved version literals -----"
-          grep -nE "versionCode = |versionName = " app/build.gradle.kts
+          ACTUAL_CODE=$(grep -oE "versionCode = [0-9]+" app/build.gradle.kts | grep -oE "[0-9]+")
+          ACTUAL_NAME=$(grep -oE 'versionName = "[^"]*"' app/build.gradle.kts | sed -E 's/.*"([^"]*)".*/\1/')
+          echo "tag → ${VERSION_NAME} / ${VERSION_CODE}   build.gradle.kts → ${ACTUAL_NAME} / ${ACTUAL_CODE}"
+          if [ "$ACTUAL_CODE" != "$VERSION_CODE" ] || [ "$ACTUAL_NAME" != "$VERSION_NAME" ]; then
+            echo "::error::app/build.gradle.kts is at ${ACTUAL_NAME}/${ACTUAL_CODE} but tag ${{ steps.version.outputs.tag }} expects ${VERSION_NAME}/${VERSION_CODE}. Bump the version in your release PR BEFORE tagging (see docs/RELEASING.md)."
+            exit 1
+          fi
+          if ! grep -qE "^## \[v?${VERSION_NAME//./\\.}\]" CHANGELOG.md; then
+            echo "::warning::No '## [v${VERSION_NAME}]' heading found in CHANGELOG.md — promote the [Unreleased] section in your release PR before tagging."
+          fi
 
       # ── Build APKs ────────────────────────────────────────────────────────────
       - name: Build F-Droid & Google Play Release APKs
@@ -120,35 +128,8 @@ jobs:
           mv app/build/outputs/apk/googlePlay/release/app-googlePlay-release.apk \
              "app/build/outputs/apk/googlePlay/release/VeloSpot-${TAG}-googlePlay.apk"
 
-      # ── Promote the [Unreleased] changelog section ────────────────────────────
-      # Turns "## [Unreleased]" into "## [vX.Y.Z] — <date>" and inserts a fresh,
-      # empty "## [Unreleased]" section above it. Idempotent: if a heading for
-      # this version already exists (e.g. promoted manually), it does nothing.
-      - name: Promote [Unreleased] changelog section
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          DATE=$(date -u +%Y-%m-%d)
-          if grep -qE "^## \[v?${VERSION}\]" CHANGELOG.md; then
-            echo "Heading for ${VERSION} already present – skipping promotion."
-          elif grep -q '^## \[Unreleased\]' CHANGELOG.md; then
-            awk -v ver="$VERSION" -v date="$DATE" '
-              !done && /^## \[Unreleased\]/ {
-                print "## [Unreleased]";
-                print "";
-                print "---";
-                print "";
-                print "## [v" ver "] — " date;
-                done=1;
-                next
-              }
-              { print }
-            ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
-            echo "Promoted [Unreleased] → [v${VERSION}] — ${DATE}"
-          else
-            echo "No [Unreleased] section found – skipping promotion."
-          fi
-
       # ── Extract changelog section for this release ────────────────────────────
+      # Reads the "## [vX.Y.Z]" section that the release PR already promoted.
       - name: Extract changelog for this version
         id: changelog
         run: |
@@ -197,53 +178,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Create F-Droid changelog file ─────────────────────────────────────────
-      # fastlane/metadata/android/*/changelogs/<versionCode>.txt is read by F-Droid
-      # as release notes for this version.
-      - name: Create F-Droid changelog files
-        run: |
-          VERSION_CODE="${{ steps.version.outputs.version_code }}"
-          VERSION="${{ steps.version.outputs.version }}"
-          NOTES=$(awk "/^## \[v?${VERSION}\]/{found=1; next} found && /^## /{exit} found{print}" CHANGELOG.md | head -20)
-          if [ -z "$NOTES" ]; then NOTES="VeloSpot ${VERSION}"; fi
-          echo "$NOTES" > "fastlane/metadata/android/de-DE/changelogs/${VERSION_CODE}.txt"
-          echo "$NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
-
-      - name: Commit version bump + changelog, move tag, open sync PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle.kts
-          git add CHANGELOG.md
-          git add fastlane/metadata/android/*/changelogs/
-
-          if git diff --staged --quiet; then
-            echo "No changes to commit – moving tag only."
-            git tag -f "$TAG" HEAD
-            git push --force origin "$TAG"
-            exit 0
-          fi
-
-          git commit -m "chore: bump versionCode/versionName + promote changelog for ${TAG}"
-
-          # Move the release tag to this commit so F-Droid reads the correct static
-          # values and the GitHub Release ships the promoted changelog. Tags are not
-          # covered by the branch protection ruleset, so this always succeeds.
-          git tag -f "$TAG" HEAD
-          git push --force origin "$TAG"
-
-          # `main` is protected (ruleset "main-protection-strict": PR + review
-          # required, no bypass actors). A direct push from the bot is rejected, so
-          # instead we push the commit to a dedicated branch and open a PR to bring
-          # the promoted changelog / version bump back into `main`.
-          BRANCH="release/${TAG}"
-          git push --force origin "HEAD:refs/heads/${BRANCH}"
-          gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "chore: release ${TAG} — changelog & version bump" \
-            --body "Automated release sync for **${TAG}**: promotes the \`[Unreleased]\` changelog section to \`${TAG}\` (with today's date) and bumps \`versionCode\`/\`versionName\`. Merge to keep \`main\` in sync with the release tag." \
-            || echo "PR already exists for ${BRANCH} – skipping."
