@@ -23,12 +23,15 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * Wraps the BRouter offline routing engine (brouter.jar) and exposes a
- * coroutine-friendly API to calculate bike routes entirely on-device.
+ * Wraps the BRouter offline routing engine and exposes a coroutine-friendly
+ * API to calculate bike routes entirely on-device.
+ *
+ * The BRouter classes (`btools.*`) are compiled from source by the `:brouter`
+ * Gradle module (pinned `brouter-upstream` submodule); no JAR is bundled.
  *
  * ## Setup
- * 1. Place `brouter.jar` (downloaded from https://brouter.de) into `app/libs/`.
- * 2. Copy the `.brf` profile files from the BRouter ZIP into
+ * 1. Initialise the BRouter source submodule once: `git submodule update --init`.
+ * 2. The `.brf` profile files and `lookups.dat` are bundled under
  *    `app/src/main/assets/brouter/profiles/`.
  * 3. Make sure the required `.rd5` segment files have been downloaded via
  *    [BRouterSegmentManager] before calling [calculateRoute].

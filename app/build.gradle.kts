@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -7,20 +8,41 @@ plugins {
     alias(libs.plugins.hiltAndroid)
 }
 
+// ---------------------------------------------------------------------------
+// Release signing credentials
+// ---------------------------------------------------------------------------
+// Resolved (in order) from:
+//   1. A gitignored `keystore.properties` at the repo root (local releases)
+//   2. Environment variables (CI / GitHub Actions)
+// The keystore and all passwords are NEVER committed (see .gitignore).
+//
+// keystore.properties keys: storeFile, storePassword, keyAlias, keyPassword
+// CI env variables:        KEYSTORE_PATH, KEYSTORE_PASSWORD (or STORE_PASSWORD),
+//                          KEY_ALIAS, KEY_PASSWORD
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+fun releaseSigning(propKey: String, vararg envKeys: String): String? =
+    keystoreProperties.getProperty(propKey)
+        ?: envKeys.firstNotNullOfOrNull { System.getenv(it) }
+
 android {
     namespace = "de.velospot"
     compileSdk = 37
 
     signingConfigs {
-        // Release signing is configured via environment variables in CI.
-        // Local builds fall back to the debug signing config automatically.
+        // Release signing is configured via keystore.properties or CI env vars.
+        // Local builds without those fall back to the debug signing config.
         create("release") {
-            val keystorePath = System.getenv("KEYSTORE_PATH")
-            if (keystorePath != null) {
-                storeFile     = file(keystorePath)
-                storePassword = System.getenv("STORE_PASSWORD")
-                keyAlias      = System.getenv("KEY_ALIAS")
-                keyPassword   = System.getenv("KEY_PASSWORD")
+            val storePath = releaseSigning("storeFile", "KEYSTORE_PATH")
+            if (storePath != null) {
+                storeFile     = file(storePath)
+                storePassword = releaseSigning("storePassword", "KEYSTORE_PASSWORD", "STORE_PASSWORD")
+                keyAlias      = releaseSigning("keyAlias", "KEY_ALIAS")
+                keyPassword   = releaseSigning("keyPassword", "KEY_PASSWORD")
             }
         }
     }
@@ -60,7 +82,7 @@ android {
                 "proguard-rules.pro"
             )
             // In CI: release key from env variables. Locally: falls back to debug signing.
-            signingConfig = if (System.getenv("KEYSTORE_PATH") != null)
+            signingConfig = if (releaseSigning("storeFile", "KEYSTORE_PATH") != null)
                 signingConfigs.getByName("release")
             else
                 signingConfigs.getByName("debug")
@@ -98,14 +120,11 @@ kotlin {
 dependencies {
 
     // BRouter offline routing engine.
-    // - Local dev & googlePlay builds use the pre-built brouter-1.7.9-all.jar in app/libs/.
-    //   It is a slimmed jar containing only the routing modules (btools.router,
-    //   .mapaccess, .util, .codec, .expressions) — the server/mapcreator code and its
-    //   protobuf/osmosis dependencies are intentionally excluded (not needed on-device).
-    // - The F-Droid build rebuilds this JAR from source (BRouter 1.7.9 srclib) via a
-    //   prebuild step in the fdroiddata recipe (metadata/de.velospot.yml) before assembly.
-    // The fileTree include is filename-agnostic so either JAR is picked up.
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    // Built reproducibly from source via the :brouter module, which compiles the
+    // pinned `brouter-upstream` git submodule (BRouter v1.7.9). No pre-built JAR,
+    // no binary blob, no F-Droid prebuild step — a plain Gradle build resolves it.
+    // See brouter/README.md for the module/submodule setup.
+    implementation(project(":brouter"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

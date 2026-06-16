@@ -51,7 +51,7 @@
 -keep class okhttp3.internal.** { *; }
 
 # ---------------------------------------------------------------------------
-# BRouter JAR (btools.*) – keep all public API plus the private coordinate
+# BRouter (btools.*) – keep all public API plus the private coordinate
 # fields (ilat/ilon) that are read via reflection in BRouterEngine
 # ---------------------------------------------------------------------------
 -keep class btools.** { *; }
@@ -64,6 +64,11 @@
     int ilon;
     java.lang.String name;
 }
+# Some BRouter classes reference desktop-only APIs (AWT / ImageIO) on code paths
+# that are never reached on Android. These rules were previously appended by the
+# F-Droid prebuild step; they now live here so the build needs no preparation.
+-dontwarn java.awt.**
+-dontwarn javax.imageio.**
 
 # ---------------------------------------------------------------------------
 # Hilt / Dagger – generated component classes must not be removed
