@@ -1,5 +1,9 @@
 [submodule "brouter-upstream"]
 	path = brouter-upstream
-	url = https://github.com/abrensch/brouter.git
-	branch = v1.7.9
+	# Pinned to a VeloSpot fork of abrensch/brouter (BRouter v1.7.9) with the
+	# unused GitHub Packages publishing block removed from buildSrc so F-Droid's
+	# repository scanner no longer flags the unresolved System.env.REPO maven URL.
+	# Source-identical to upstream v1.7.9 except for that buildSrc-only change.
+	url = https://github.com/drzeeb/brouter.git
+	branch = velospot/v1.7.9-no-gh-packages
 

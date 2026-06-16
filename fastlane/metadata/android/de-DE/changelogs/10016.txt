@@ -1,0 +1,2 @@
+Wartung: Die ungenutzte GitHub-Packages-Publishing-Konfiguration der mitgelieferten BRouter-Routing-Engine wurde entfernt, sodass der F-Droid-Quellcode-Scanner kein unbekanntes Maven-Repository mehr meldet. Keine für Nutzer sichtbaren Änderungen.
+
