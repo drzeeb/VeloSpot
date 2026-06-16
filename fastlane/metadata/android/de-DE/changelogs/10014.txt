@@ -1,0 +1,6 @@
+
+### Changed
+- **BRouter is now built from source — fully reproducible, no binary blob, no prebuild** — the bundled `app/libs/brouter-1.7.9-all.jar` is removed. BRouter is now compiled from source by a new `:brouter` Gradle module that builds the on-device routing modules (`btools.router`, `.mapaccess`, `.util`, `.codec`, `.expressions`) from the pinned `brouter-upstream` git submodule (BRouter `v1.7.9`). A plain `./gradlew :app:assembleFdroidRelease` now resolves BRouter without any preparation scripts. This eliminates the F-Droid custom `prebuild` step and `BRouter` `srclib`; the `fdroiddata` recipe simplifies to `submodules: true` + `gradle: [fdroid]`. The ProGuard rules `-dontwarn java.awt.**` / `-dontwarn javax.imageio.**` (previously appended by the prebuild) are now committed in `app/proguard-rules.pro`.
+- **Reproducible release setup** — release signing now reads from a gitignored `keystore.properties` or CI env vars (`KEYSTORE_PATH`/`KEYSTORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD`); secrets are never committed. The release workflow checks out submodules and publishes the F-Droid APK under the stable name `VeloSpot-v<versionName>.apk` (matching the fdroiddata `Binaries` URL). See [`docs/RELEASING.md`](docs/RELEASING.md).
+
+---
