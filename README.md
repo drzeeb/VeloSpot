@@ -49,6 +49,8 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - **🆕 Saved places** — save any tapped location as a named favorite; it appears as a persistent green star marker and in the favorites list
 - **Parking space photos** with automatic caching via Coil for fast loading
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
+- **🆕 Live 3D turn-by-turn navigation** — a Google-Maps-style 3D follow camera (60° pitch, heading-up, speed-dependent zoom), snap-to-route map matching, a rotating heading arrow, live remaining-distance/ETA, a greyed-out travelled path, 3D buildings, and automatic off-route rerouting
+- **🆕 2D / 3D map view switch** — choose a flat top-down map or a tilted 3D view (with extruded buildings) for the resting map; the choice is persisted. Navigation itself is always 3D
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
 - **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
 - **🆕 Address search** — type any German address into the floating search bar and jump straight to the location; tap a result to drop a pin and start in-app BRouter navigation
@@ -76,6 +78,8 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - 🌐 **8 Languages** - Choose from German, English, French, Italian, Portuguese, Luxembourgish, Dutch, and Spanish; the selection is remembered across restarts
 - 💾 **SQLite Offline Database** - All ~100 000 parking locations are bundled as a Room asset; no sync required
 - 🎯 **In-App Navigation** - Calculate bike routes directly inside the app and render the route path on the map
+- 🧭 **Live 3D Navigation** - A mit­laufende, Google-Maps-style 3D follow camera (fixed 60° pitch, heading-up rotation, speed- and turn-dependent zoom) with snap-to-route map matching, a rotating heading arrow, live remaining-distance + ETA, a greyed-out travelled path, extruded 3D buildings, and automatic off-route rerouting via BRouter
+- 🧱 **2D / 3D Map View** - Switch the resting map between a flat top-down view and a tilted 3D view with 3D buildings from a sleek segmented selector; the choice is remembered. Active navigation always uses the full 3D camera
 - 👁️ **Navigation Focus** - During active navigation, non-target markers are dimmed to keep the destination visually prominent
 - 📊 **Detailed Information** - View capacity, address, coverage information, and photos for each location
 - 🎨 **Modern UI** - Clean and intuitive Jetpack Compose-based interface
@@ -103,6 +107,7 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - **Dependency Injection**: Hilt
 - **Data**: Retrofit, Moshi, Room (SQLite asset DB), **MapLibre** (vector tile map rendering)
 - **Map Style**: [OpenFreeMap](https://openfreemap.org/) Liberty (free, no API key required)
+- **Navigation**: BRouter offline routing + a custom `NavigationManager` (Choreographer-driven 3D follow camera, snap-to-route map matching, `fill-extrusion` 3D buildings)
 - **Geocoding**: Nominatim REST API (lazy, on-demand, cached)
 - **Location**: Android runtime permissions, Google Play Services location APIs
 - **Build System**: Gradle
@@ -223,6 +228,7 @@ For more information about OpenStreetMap and ODbL, visit:
 - Top-right quick menu with favorites, language picker, and dark mode toggle
 - Menu button and search bar vertically aligned in the same row for a clean, consistent header
 - In-app routing polyline, destination highlight, and route status card (distance/time)
+- **Live 3D navigation mode** — a tilted (60°) follow camera that snaps the position onto the BRouter route, rotates with the heading, zooms with speed, greys out the travelled path, raises 3D buildings, shows live remaining distance/ETA, and reroutes automatically when you go off-route
 - Navigation focus styling that dims non-target markers (smaller, lighter gray, and more transparent)
 - Error handling and loading states
 
@@ -374,5 +380,5 @@ Navigate with confidence and never miss a parking spot again — anywhere in Ger
 
 ---
 
-**Last Updated**: 2026-06-10  
+**Last Updated**: 2026-06-16  
 **Status**: Active Development

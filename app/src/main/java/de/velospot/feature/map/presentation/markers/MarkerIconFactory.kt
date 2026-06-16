@@ -94,6 +94,42 @@ internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Bool
     return BitmapDrawable(context.resources, bitmap)
 }
 
+/**
+ * A chevron/arrow heading puck for active 3D navigation: a coloured circle with
+ * a white triangular arrow pointing "up" (north). The MapLibre layer rotates it
+ * by the live bearing (see [PROP_BEARING]) so it points along the road.
+ */
+internal fun createNavigationArrowIcon(context: Context): Drawable {
+    val size = 54
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val cx = size / 2f
+    val cy = size / 2f
+
+    // Soft outer halo for contrast on any basemap.
+    canvas.drawCircle(cx, cy, 25f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x33000000; style = Paint.Style.FILL
+    })
+    // Coloured disc.
+    canvas.drawCircle(cx, cy, 22f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = "#00695C".toColorInt(); style = Paint.Style.FILL
+    })
+    // White ring.
+    canvas.drawCircle(cx, cy, 22f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.STROKE; strokeWidth = 3f
+    })
+    // White arrow pointing up (towards the top = bearing 0 before rotation).
+    canvas.drawPath(Path().apply {
+        moveTo(cx, cy - 13f)          // tip
+        lineTo(cx - 10f, cy + 11f)    // bottom-left
+        lineTo(cx, cy + 5f)           // notch
+        lineTo(cx + 10f, cy + 11f)    // bottom-right
+        close()
+    }, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL })
+
+    return BitmapDrawable(context.resources, bitmap)
+}
+
 internal fun createMutedMarkerIcon(
     context: Context, source: Drawable,
     scale: Float = 0.84f, alpha: Int = 130, brightenOffset: Float = 34f
