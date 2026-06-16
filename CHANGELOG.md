@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [v1.0.13] — 2026-06-16
+
+### Fixed
+- **F-Droid: strip the AGP "Dependency metadata" signing block from the APK** — the Android Gradle Plugin embeds a Google-signed *Dependency metadata* block into the release APK's signing section. F-Droid's `scanner` / *Check App* job rejects this opaque, non-reproducible block (`CRITICAL: Found extra signing block 'Dependency metadata'`), failing the pipeline. Added a `dependenciesInfo { includeInApk = false; includeInBundle = true }` block to `app/build.gradle.kts` so the block is no longer written into the APK that F-Droid scans, while it is kept in the AAB for Google Play's upload-time processing.
+
+---
+
+## [v1.0.12] — 2026-06-16
+
 ### Changed
 - **BRouter upgraded 1.6.3 → 1.7.9** — the bundled offline-routing engine (`app/libs/brouter-1.7.9-all.jar`) is updated to BRouter 1.7.9. The JAR is a **slimmed archive** rebuilt from the official `brouter-1.7.9.zip` release that contains only the on-device routing modules (`btools.router`, `.mapaccess`, `.util`, `.codec`, `.expressions`); the server/map-creation modules and their protobuf/osmosis dependencies (~2 MB of the upstream `-all.jar`) are intentionally stripped, since they are only used to build map data, not to route on-device. `BRouterEngine.kt` needed **no code change**: the used API (`RoutingEngine(String, String, File, List, RoutingContext)`, `doRun`, `getFoundTrack`, `RoutingContext.localFunction`, `OsmNodeNamed`, and the reflection-read private `OsmPathElement.ilat/ilon` fields) is fully present in 1.7.9. The bundled routing profiles and `lookups.dat` in `app/src/main/assets/brouter/profiles/` (`trekking`, `fastbike`, `gravel`, `mtb`, `shortest`) are refreshed to the 1.7.9 versions from the same release. F-Droid's `srclib` (`BRouter@1.6.3` → `BRouter@1.7.9`) and the `prebuild` step in the `fdroiddata` recipe (`metadata/de.velospot.yml` + `srclibs/BRouter.yml`) must be bumped to 1.7.9 accordingly.
 - **Release workflow auto-promotes the changelog** — the release workflow now turns the `## [Unreleased]` section into a dated `## [vX.Y.Z] — YYYY-MM-DD` heading and inserts a fresh, empty `## [Unreleased]` section above it. The change is committed and a sync PR is opened back to `main`. The step is idempotent: if a heading for the released version already exists (e.g. promoted manually), it does nothing.
