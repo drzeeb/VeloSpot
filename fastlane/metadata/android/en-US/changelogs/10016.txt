@@ -1,0 +1,2 @@
+Maintenance: removed the unused GitHub Packages publishing config from the bundled BRouter routing engine, so the F-Droid source scanner no longer flags an unknown Maven repository. No user-facing changes.
+

@@ -6,10 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [v1.0.16] — 2026-06-16
+
 ### Changed
 - **Remove unused GitHub Packages publishing from bundled BRouter** — the pinned `brouter-upstream` submodule now points to a VeloSpot fork of `abrensch/brouter` (BRouter `v1.7.9`) with the `publishing { ... }` block deleted from `buildSrc/src/main/groovy/brouter.library-conventions.gradle`. That block declared a GitHub Packages Maven repository via an unresolved `System.env.REPO` URL, which F-Droid's repository scanner flagged as an *unknown maven repo*. It is only used to publish the library to GitHub Packages and is not needed to build the app, so it (and the now-unused `maven-publish` plugin) was removed at the source instead of being hidden behind a `scanignore`. The fork is source-identical to upstream `v1.7.9` apart from this buildSrc-only change; the `.gitmodules` URL/branch and the submodule pointer are updated accordingly.
-
- — the app no longer keeps the GPS running at full `HIGH_ACCURACY` every 5 s for the whole session. While the user is just browsing the map it now uses a battery-friendly **balanced-power mode** (15 s interval, 20 m minimum displacement, `PRIORITY_BALANCED_POWER_ACCURACY` on Google Play / relaxed `LocationManager` cadence on F-Droid); precise, frequent GPS fixes (3 s / 5 m, `PRIORITY_HIGH_ACCURACY`) are requested **only during active turn-by-turn navigation** and dropped again when navigation ends. In addition, location updates are now fully **stopped when the app goes to the background** and re-armed on return, so the GPS radio no longer drains the battery while the app is not visible. Implemented across the shared `LocationRepository` (new `startLocationUpdates(highAccuracy)`), both flavor `LocationRepositoryImpl`s, and `MapViewModel`/`MainMapScreen` lifecycle wiring.
+- **Battery: power-aware location strategy** — the app no longer keeps the GPS running at full `HIGH_ACCURACY` every 5 s for the whole session. While the user is just browsing the map it now uses a battery-friendly **balanced-power mode** (15 s interval, 20 m minimum displacement, `PRIORITY_BALANCED_POWER_ACCURACY` on Google Play / relaxed `LocationManager` cadence on F-Droid); precise, frequent GPS fixes (3 s / 5 m, `PRIORITY_HIGH_ACCURACY`) are requested **only during active turn-by-turn navigation** and dropped again when navigation ends. In addition, location updates are now fully **stopped when the app goes to the background** and re-armed on return, so the GPS radio no longer drains the battery while the app is not visible. Implemented across the shared `LocationRepository` (new `startLocationUpdates(highAccuracy)`), both flavor `LocationRepositoryImpl`s, and `MapViewModel`/`MainMapScreen` lifecycle wiring.
 - **Release workflow: validate the new changelog-promotion prompt** — verifies that the release pipeline correctly promotes the `## [Unreleased]` section to a dated `## [v1.0.15]` heading and re-creates an empty `## [Unreleased]` section above it.
 
 ### Fixed
