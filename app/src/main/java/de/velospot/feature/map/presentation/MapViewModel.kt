@@ -452,8 +452,53 @@ class MapViewModel @Inject constructor(
      */
     private var hasCenteredOnStartup = false
 
+    /**
+     * Whether the app is currently in the foreground. Location updates are only
+     * registered while foregrounded; going to the background fully stops the GPS
+     * radio to save battery (re-armed in [onAppForegrounded]).
+     */
+    private var isForeground = true
+
+    /**
+     * Whether high-accuracy (frequent GPS) location updates are currently
+     * requested. Enabled only during active turn-by-turn navigation; idle map
+     * browsing uses a battery-friendly balanced-power mode.
+     */
+    private var highAccuracyLocation = false
+
+    /**
+     * (Re-)applies the current location-update strategy based on [isForeground]
+     * and [highAccuracyLocation]. Single source of truth so accuracy changes and
+     * lifecycle changes can never leave the GPS in the wrong power state.
+     */
+    private fun applyLocationStrategy() {
+        if (isForeground) {
+            locationRepository.startLocationUpdates(highAccuracy = highAccuracyLocation)
+        } else {
+            locationRepository.stopLocationUpdates()
+        }
+    }
+
+    private fun setHighAccuracyLocation(enabled: Boolean) {
+        if (highAccuracyLocation == enabled) return
+        highAccuracyLocation = enabled
+        applyLocationStrategy()
+    }
+
+    /** Called when the map screen returns to the foreground — re-arm location updates. */
+    fun onAppForegrounded() {
+        isForeground = true
+        applyLocationStrategy()
+    }
+
+    /** Called when the map screen leaves the foreground — stop the GPS to save battery. */
+    fun onAppBackgrounded() {
+        isForeground = false
+        locationRepository.stopLocationUpdates()
+    }
+
     private fun observeUserLocation() {
-        locationRepository.startLocationUpdates()
+        applyLocationStrategy()
         viewModelScope.launch {
             locationRepository.getCurrentLocationFlow().collect { location ->
                 _userLocation.value = location
@@ -471,7 +516,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun onLocationPermissionGranted() = locationRepository.startLocationUpdates()
+    fun onLocationPermissionGranted() = applyLocationStrategy()
 
     fun centerMapOnUserLocation() {
         _userLocation.value?.let {
@@ -500,6 +545,8 @@ class MapViewModel @Inject constructor(
                 )
             }.onSuccess {
                 _navigationUiState.value = NavigationUiState.Active(destination = space, route = it)
+                // Active navigation needs precise, frequent fixes.
+                setHighAccuracyLocation(true)
             }.onFailure { throwable ->
                 _navigationUiState.value = NavigationUiState.Error(when (throwable) {
                     is BRouterProfilesMissingException -> MapError.BRouterProfilesMissing
@@ -522,6 +569,8 @@ class MapViewModel @Inject constructor(
             _customMapPin.value        = null
             _customMapPinAddress.value = null
         }
+        // Navigation ended → drop back to the battery-friendly balanced-power mode.
+        setHighAccuracyLocation(false)
     }
 
     fun clearNavigationError() { if (_navigationUiState.value is NavigationUiState.Error) _navigationUiState.value = NavigationUiState.Idle }

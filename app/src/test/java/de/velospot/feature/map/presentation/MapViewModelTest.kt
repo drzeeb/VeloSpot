@@ -410,7 +410,7 @@ private class FakeLocationRepository(
     override fun getCurrentLocationFlow(): Flow<GeoCoordinate?> = locationFlow
 
 
-    override fun startLocationUpdates() {
+    override fun startLocationUpdates(highAccuracy: Boolean) {
         startUpdatesCallCount += 1
     }
 

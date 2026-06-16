@@ -6,16 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
----
-
-## [v1.0.15] — 2026-06-16
+### Changed
+- **Battery: power-aware location strategy** — the app no longer keeps the GPS running at full `HIGH_ACCURACY` every 5 s for the whole session. While the user is just browsing the map it now uses a battery-friendly **balanced-power mode** (15 s interval, 20 m minimum displacement, `PRIORITY_BALANCED_POWER_ACCURACY` on Google Play / relaxed `LocationManager` cadence on F-Droid); precise, frequent GPS fixes (3 s / 5 m, `PRIORITY_HIGH_ACCURACY`) are requested **only during active turn-by-turn navigation** and dropped again when navigation ends. In addition, location updates are now fully **stopped when the app goes to the background** and re-armed on return, so the GPS radio no longer drains the battery while the app is not visible. Implemented across the shared `LocationRepository` (new `startLocationUpdates(highAccuracy)`), both flavor `LocationRepositoryImpl`s, and `MapViewModel`/`MainMapScreen` lifecycle wiring.
+- **Release workflow: validate the new changelog-promotion prompt** — verifies that the release pipeline correctly promotes the `## [Unreleased]` section to a dated `## [v1.0.15]` heading and re-creates an empty `## [Unreleased]` section above it.
 
 ### Fixed
 - **Reproducible build: disable embedded VCS info** — the Android Gradle Plugin embeds the current Git commit hash into `META-INF/version-control-info.textproto` at build time. This was the only file that still differed between F-Droid's rebuild and the signed release APK, breaking byte-for-byte reproducibility. Added `vcsInfo { include = false }` to the `release` build type in `app/build.gradle.kts`, so the file is no longer written into the APK and the F-Droid build is now fully reproducible.
-
-### Changed
-- **Release process: changelog promotion & version bump now happen in the release PR** — the `release.yml` workflow no longer rewrites `app/build.gradle.kts` / `CHANGELOG.md`, no longer force-moves the tag and no longer opens a `release/vX.Y.Z` sync PR (those PRs were never merged, so `main` drifted and `[Unreleased]` was never promoted). Instead the contributor bumps the version, promotes `## [Unreleased]` → `## [vX.Y.Z] — <date>` and adds the fastlane `changelogs/<versionCode>.txt` files **in the release PR**, then tags the merged commit. The workflow now only **verifies** the literals match the tag (fail-fast) and **builds + signs + publishes**. See [`docs/RELEASING.md`](docs/RELEASING.md).
-- **`security-release.yml` aligned with the new model** — the Renovate-security auto-release no longer builds/tags/publishes directly with `-PversionName`/`-PversionCode` Gradle flags (which `app/build.gradle.kts` never read, since the version literals are static — so the APK would have shipped with the wrong, un-bumped version). It now opens a **release-prep PR** (`release-prep/vX.Y.Z`) that bumps the version, promotes the changelog and adds fastlane notes; merging it and pushing the tag then triggers the normal `release.yml` build & publish — keeping security patches reproducible.
 
 ---
 
