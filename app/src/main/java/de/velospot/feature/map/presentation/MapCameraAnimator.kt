@@ -70,6 +70,11 @@ internal fun animateMapCameraToTarget(
     val cameraPosition = CameraPosition.Builder()
         .target(adjustedLatLng)
         .zoom(cameraTarget.zoom)
+        // Preserve the current tilt/bearing so one-shot moves (selecting a spot,
+        // centering, search results) keep the active 2D/3D perspective instead of
+        // snapping the map back to flat north-up.
+        .tilt(map.cameraPosition.tilt)
+        .bearing(map.cameraPosition.bearing)
         .build()
 
     val durationMs = if (hasZoomChange(currentZoom, cameraTarget.zoom))

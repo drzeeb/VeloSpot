@@ -73,41 +73,58 @@ internal fun updateMarkers(
     searchPin: AddressSearchResult? = null,
     customMapPin: GeoCoordinate? = null,
     savedPlaces: List<SavedPlace> = emptyList(),
-    layerVisibility: LayerVisibility = LayerVisibility()
+    layerVisibility: LayerVisibility = LayerVisibility(),
+    /**
+     * When `true` the live location puck is owned by `NavigationManager`
+     * (it animates the rotating heading arrow every frame), so this renderer
+     * must not write [SOURCE_LOCATION] to avoid fighting / flicker.
+     */
+    suppressLocationDot: Boolean = false,
+    /**
+     * When `true` the route polyline is owned by `NavigationManager`, which
+     * renders the split travelled/remaining geometry. This renderer then leaves
+     * [SOURCE_ROUTE] / [LAYER_ROUTE] untouched.
+     */
+    suppressRoute: Boolean = false
 ) {
     val style = map.style ?: return
 
     registerIcons(style, icons)
 
-    // Route polyline
-    val routeGeoJson = if (route.points.size > 1) {
-        FeatureCollection.fromFeature(
-            Feature.fromGeometry(
-                LineString.fromLngLats(route.points.map { Point.fromLngLat(it.longitude, it.latitude) })
+    // Route polyline — skipped while NavigationManager renders the travelled /
+    // remaining split.
+    if (!suppressRoute) {
+        val routeGeoJson = if (route.points.size > 1) {
+            FeatureCollection.fromFeature(
+                Feature.fromGeometry(
+                    LineString.fromLngLats(route.points.map { Point.fromLngLat(it.longitude, it.latitude) })
+                )
             )
-        )
-    } else {
-        FeatureCollection.fromFeatures(emptyList())
+        } else {
+            FeatureCollection.fromFeatures(emptyList())
+        }
+        upsertSource(style, SOURCE_ROUTE, routeGeoJson)
+        ensureRouteLayer(style, route.color)
     }
-    upsertSource(style, SOURCE_ROUTE, routeGeoJson)
-    ensureRouteLayer(style, route.color)
 
     // Parking markers
     upsertSource(style, SOURCE_PARKING, FeatureCollection.fromFeatures(buildParkingFeatures(spaces, state, layerVisibility)))
     ensureParkingLayer(style)
 
-    // Location dot
-    val locFeature = state.userLocation?.let { loc ->
-        Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude)).also {
-            it.addStringProperty(PROP_ICON, if (state.activeNavigationSpaceId != null) IMG_LOCATION_NAV else IMG_LOCATION)
+    // Location dot — skipped while NavigationManager animates the heading arrow.
+    if (!suppressLocationDot) {
+        val locFeature = state.userLocation?.let { loc ->
+            Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude)).also {
+                it.addStringProperty(PROP_ICON, IMG_LOCATION)
+            }
         }
+        upsertSource(
+            style, SOURCE_LOCATION,
+            if (locFeature != null) FeatureCollection.fromFeature(locFeature)
+            else FeatureCollection.fromFeatures(emptyList())
+        )
+        ensureLocationLayer(style)
     }
-    upsertSource(
-        style, SOURCE_LOCATION,
-        if (locFeature != null) FeatureCollection.fromFeature(locFeature)
-        else FeatureCollection.fromFeatures(emptyList())
-    )
-    ensureLocationLayer(style)
 
     // Search pin (address result)
     val searchPinGeoJson = if (searchPin != null) {

@@ -65,13 +65,13 @@ class LocationRepositoryImpl @Inject constructor(
             // Emit last known location for this provider immediately (best-effort)
             try {
                 locationManager.getLastKnownLocation(provider)?.let { loc ->
-                    _locationFlow.value = GeoCoordinate(loc.latitude, loc.longitude)
+                    _locationFlow.value = loc.toGeoCoordinate()
                 }
             } catch (_: SecurityException) { }
 
             val listener = object : LocationListener {
                 override fun onLocationChanged(location: Location) {
-                    _locationFlow.value = GeoCoordinate(location.latitude, location.longitude)
+                    _locationFlow.value = location.toGeoCoordinate()
                 }
 
                 @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION") // Required for API < 29
@@ -97,3 +97,16 @@ class LocationRepositoryImpl @Inject constructor(
         activeListeners.clear()
     }
 }
+
+/**
+ * Maps an Android [Location] to the domain [GeoCoordinate], carrying the optional
+ * bearing/speed sensor data used to drive the 3D navigation camera and the
+ * heading arrow. Values absent on the fix are mapped to `null`.
+ */
+private fun Location.toGeoCoordinate(): GeoCoordinate = GeoCoordinate(
+    latitude  = latitude,
+    longitude = longitude,
+    bearing   = if (hasBearing()) bearing else null,
+    speedMetersPerSecond = if (hasSpeed()) speed else null
+)
+

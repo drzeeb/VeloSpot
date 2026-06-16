@@ -25,6 +25,7 @@
     <string name="navigation_start">Navigatioun starten</string>
     <string name="navigation_stop">Navigatioun stoppen</string>
     <string name="navigation_route_loading">Vëlosroute gëtt berechent...</string>
+    <string name="navigation_rerouting">Niewent der Route – gëtt nei berechent…</string>
     <string name="navigation_downloading_segments">Offline-Kaartdaten fir dës Regioun ginn erofgelueden…</string>
     <string name="error_brouter_profiles_missing">Routing-Profiler feelen.</string>
     <string name="error_no_internet">Keng Internetverbindung. Prüft W-Lan oder mobil Daten a probéiert nach eng Kéier.</string>
@@ -104,6 +105,16 @@
     <string name="favorites_saved_places_header">Gespäichert Äerter</string>
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Ebenen</string>
+    <string name="menu_navigation_view">Kaartenusiicht (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Route simuléieren (GPS-Mock)</string>
+    <string name="menu_simulate_route_stop">⏹ Routesimulatioun stoppen</string>
+    <string name="menu_simulate_route_hint">▶ Route simuléieren (fir d\'éischt Navigatioun starten)</string>
+    <string name="nav_view_title">Kaartenusiicht</string>
+    <string name="nav_view_subtitle">Wiel aus, wéi d\'Kaart während der Navigatioun ugewise gëtt.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Klassesch flaach Vugelhellech-Usiicht</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Geneigt Usiicht mat 3D-Gebaier</string>
     <string name="layers_title">Ebenen</string>
     <string name="layers_subtitle">Wiel aus, wéi eng Pinnen op der Kaart ugewise ginn.</string>
     <string name="layers_parking_title">Ofstellplazen</string>

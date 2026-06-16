@@ -25,6 +25,7 @@
     <string name="navigation_start">Démarrer la navigation</string>
     <string name="navigation_stop">Arrêter la navigation</string>
     <string name="navigation_route_loading">Calcul de l\'itinéraire vélo...</string>
+    <string name="navigation_rerouting">Hors itinéraire – recalcul…</string>
     <string name="navigation_downloading_segments">Téléchargement des données cartographiques hors ligne…</string>
     <string name="error_brouter_profiles_missing">Profils de routage manquants.</string>
     <string name="error_no_internet">Pas de connexion internet. Vérifiez votre Wi-Fi ou données mobiles et réessayez.</string>
@@ -104,6 +105,16 @@
     <string name="favorites_saved_places_header">Lieux enregistrés</string>
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Calques</string>
+    <string name="menu_navigation_view">Vue de la carte (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Simuler l\'itinéraire (GPS fictif)</string>
+    <string name="menu_simulate_route_stop">⏹ Arrêter la simulation</string>
+    <string name="menu_simulate_route_hint">▶ Simuler l\'itinéraire (démarrer la navigation d\'abord)</string>
+    <string name="nav_view_title">Vue de la carte</string>
+    <string name="nav_view_subtitle">Choisissez l\'affichage de la carte pendant la navigation.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Carte plate classique vue du dessus</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Vue inclinée avec bâtiments 3D</string>
     <string name="layers_title">Calques</string>
     <string name="layers_subtitle">Choisissez les marqueurs affichés sur la carte.</string>
     <string name="layers_parking_title">Stationnements</string>

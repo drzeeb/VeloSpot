@@ -21,6 +21,9 @@ internal class MapScreenUiState {
     var isLayersSheetVisible by mutableStateOf(false)
         private set
 
+    var isNavigationViewSheetVisible by mutableStateOf(false)
+        private set
+
     fun expandMenu() {
         isMenuExpanded = true
     }
@@ -54,6 +57,15 @@ internal class MapScreenUiState {
 
     fun closeLayers() {
         isLayersSheetVisible = false
+    }
+
+    fun openNavigationView() {
+        isNavigationViewSheetVisible = true
+        isMenuExpanded = false
+    }
+
+    fun closeNavigationView() {
+        isNavigationViewSheetVisible = false
     }
 }
 

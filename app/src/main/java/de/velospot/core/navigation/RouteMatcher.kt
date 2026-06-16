@@ -1,0 +1,153 @@
+package de.velospot.core.navigation
+
+import de.velospot.domain.model.RoutePoint
+
+/**
+ * Snaps raw GPS fixes onto the active BRouter polyline ("map matching") and
+ * derives the data the camera needs: the on-route position, the heading along
+ * the route, the remaining distance and how sharp the next turn is.
+ *
+ * Pure and Android-free → unit testable. State (the last matched segment) is
+ * passed in/out via [Match.segmentIndex] so the caller can keep matching forward
+ * along the route and avoid snapping back to an earlier, geometrically-close
+ * segment (e.g. on a hairpin or a road crossing itself).
+ */
+internal object RouteMatcher {
+
+    /**
+     * @property latitude Snapped latitude on the route.
+     * @property longitude Snapped longitude on the route.
+     * @property bearing Heading of the matched segment in degrees `[0, 360)`.
+     * @property segmentIndex Index of the matched segment's start vertex.
+     * @property t Position within the matched segment (0..1).
+     * @property distanceFromRouteMeters Perpendicular distance of the raw fix
+     *  from the route — large values indicate the user is off-route.
+     * @property remainingMeters Distance from the snapped point to the
+     *  destination along the route.
+     * @property turnSharpnessDegrees Largest heading change found within the
+     *  next [TURN_LOOKAHEAD_METERS]; `0` on straight stretches, up to `180` for
+     *  a U-turn. Drives the "zoom in before a turn" behaviour.
+     */
+    data class Match(
+        val latitude: Double,
+        val longitude: Double,
+        val bearing: Double,
+        val segmentIndex: Int,
+        val t: Double,
+        val distanceFromRouteMeters: Double,
+        val remainingMeters: Double,
+        val turnSharpnessDegrees: Double
+    )
+
+    /** How far ahead we look to detect an upcoming turn. */
+    const val TURN_LOOKAHEAD_METERS = 35.0
+
+    /**
+     * Only segments within `[fromSegment, fromSegment + SEARCH_WINDOW]` are
+     * considered, plus a small look-back, so matching stays forward-biased and
+     * O(window) instead of O(route length) on every fix.
+     */
+    private const val SEARCH_WINDOW = 60
+    private const val SEARCH_LOOKBACK = 4
+
+    /**
+     * Matches ([lat], [lon]) to [points], searching forward from [fromSegment].
+     *
+     * @return the [Match], or `null` when the route has fewer than two points.
+     */
+    fun match(
+        points: List<RoutePoint>,
+        lat: Double,
+        lon: Double,
+        fromSegment: Int = 0
+    ): Match? {
+        if (points.size < 2) return null
+
+        val start = (fromSegment - SEARCH_LOOKBACK).coerceAtLeast(0)
+        val end = (fromSegment + SEARCH_WINDOW).coerceAtMost(points.size - 2)
+
+        var bestIdx = start
+        var bestProj = GeoMath.projectOntoSegment(
+            lat, lon,
+            points[start].latitude, points[start].longitude,
+            points[start + 1].latitude, points[start + 1].longitude
+        )
+
+        for (i in (start + 1)..end) {
+            val proj = GeoMath.projectOntoSegment(
+                lat, lon,
+                points[i].latitude, points[i].longitude,
+                points[i + 1].latitude, points[i + 1].longitude
+            )
+            if (proj.distanceMeters < bestProj.distanceMeters) {
+                bestProj = proj
+                bestIdx = i
+            }
+        }
+
+        val a = points[bestIdx]
+        val b = points[bestIdx + 1]
+        val bearing = GeoMath.bearingDegrees(a.latitude, a.longitude, b.latitude, b.longitude)
+
+        return Match(
+            latitude = bestProj.latitude,
+            longitude = bestProj.longitude,
+            bearing = bearing,
+            segmentIndex = bestIdx,
+            t = bestProj.t,
+            distanceFromRouteMeters = bestProj.distanceMeters,
+            remainingMeters = remainingMeters(points, bestIdx, bestProj.t),
+            turnSharpnessDegrees = turnSharpness(points, bestIdx, bestProj.t)
+        )
+    }
+
+    /** Distance from the snapped point (segment [index], fraction [t]) to the route end. */
+    fun remainingMeters(points: List<RoutePoint>, index: Int, t: Double): Double {
+        if (points.size < 2) return 0.0
+        val a = points[index]
+        val b = points[index + 1]
+        val segLen = GeoMath.distanceMeters(a.latitude, a.longitude, b.latitude, b.longitude)
+        var total = segLen * (1.0 - t)
+        for (i in index + 1 until points.size - 1) {
+            total += GeoMath.distanceMeters(
+                points[i].latitude, points[i].longitude,
+                points[i + 1].latitude, points[i + 1].longitude
+            )
+        }
+        return total
+    }
+
+    /**
+     * Largest heading change within [TURN_LOOKAHEAD_METERS] ahead of the snapped
+     * point, relative to the current segment heading.
+     */
+    private fun turnSharpness(points: List<RoutePoint>, index: Int, t: Double): Double {
+        if (index + 1 >= points.size - 1) return 0.0
+        val currentBearing = GeoMath.bearingDegrees(
+            points[index].latitude, points[index].longitude,
+            points[index + 1].latitude, points[index + 1].longitude
+        )
+        var distance = GeoMath.distanceMeters(
+            points[index].latitude, points[index].longitude,
+            points[index + 1].latitude, points[index + 1].longitude
+        ) * (1.0 - t)
+
+        var maxDelta = 0.0
+        var i = index + 1
+        while (i < points.size - 1 && distance < TURN_LOOKAHEAD_METERS) {
+            val segBearing = GeoMath.bearingDegrees(
+                points[i].latitude, points[i].longitude,
+                points[i + 1].latitude, points[i + 1].longitude
+            )
+            val delta = GeoMath.angularDistance(currentBearing, segBearing)
+            if (delta > maxDelta) maxDelta = delta
+            distance += GeoMath.distanceMeters(
+                points[i].latitude, points[i].longitude,
+                points[i + 1].latitude, points[i + 1].longitude
+            )
+            i++
+        }
+        return maxDelta
+    }
+}
+
