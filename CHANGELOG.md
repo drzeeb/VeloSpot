@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - **Release process: changelog promotion & version bump now happen in the release PR** — the `release.yml` workflow no longer rewrites `app/build.gradle.kts` / `CHANGELOG.md`, no longer force-moves the tag and no longer opens a `release/vX.Y.Z` sync PR (those PRs were never merged, so `main` drifted and `[Unreleased]` was never promoted). Instead the contributor bumps the version, promotes `## [Unreleased]` → `## [vX.Y.Z] — <date>` and adds the fastlane `changelogs/<versionCode>.txt` files **in the release PR**, then tags the merged commit. The workflow now only **verifies** the literals match the tag (fail-fast) and **builds + signs + publishes**. See [`docs/RELEASING.md`](docs/RELEASING.md).
+- **`security-release.yml` aligned with the new model** — the Renovate-security auto-release no longer builds/tags/publishes directly with `-PversionName`/`-PversionCode` Gradle flags (which `app/build.gradle.kts` never read, since the version literals are static — so the APK would have shipped with the wrong, un-bumped version). It now opens a **release-prep PR** (`release-prep/vX.Y.Z`) that bumps the version, promotes the changelog and adds fastlane notes; merging it and pushing the tag then triggers the normal `release.yml` build & publish — keeping security patches reproducible.
 
 ---
 
