@@ -1,0 +1,2 @@
+Maintenance: removed the unused BRouter "brouter-routing-app" module from the bundled routing engine. It shipped binary blobs (segments4.zip / modes.zip) that the F-Droid source scanner flagged. VeloSpot only compiles the on-device routing modules from source. No user-facing changes.
+

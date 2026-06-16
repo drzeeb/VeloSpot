@@ -1,9 +1,12 @@
 [submodule "brouter-upstream"]
 	path = brouter-upstream
-	# Pinned to a VeloSpot fork of abrensch/brouter (BRouter v1.7.9) with the
-	# unused GitHub Packages publishing block removed from buildSrc so F-Droid's
-	# repository scanner no longer flags the unresolved System.env.REPO maven URL.
-	# Source-identical to upstream v1.7.9 except for that buildSrc-only change.
+	# Pinned to a VeloSpot fork of abrensch/brouter (BRouter v1.7.9). Two source-only
+	# changes versus upstream v1.7.9, both to satisfy F-Droid's repository scanner:
+	#   1. The unused GitHub Packages publishing block (with the unresolved
+	#      System.env.REPO maven URL) was removed from buildSrc.
+	#   2. The unused `brouter-routing-app` Android module was removed, dropping its
+	#      bundled binary blobs (segments4.zip / modes.zip). VeloSpot only compiles
+	#      the on-device routing modules from source and never builds that app.
 	url = https://github.com/drzeeb/brouter.git
-	branch = velospot/v1.7.9-no-gh-packages
+	branch = velospot/v1.7.9-clean
 

@@ -1,0 +1,2 @@
+Wartung: Das ungenutzte BRouter-Modul „brouter-routing-app" wurde aus der mitgelieferten Routing-Engine entfernt. Es enthielt Binärdateien (segments4.zip / modes.zip), die der F-Droid-Quellcode-Scanner bemängelte. VeloSpot kompiliert nur die On-Device-Routing-Module aus dem Quellcode. Keine für Nutzer sichtbaren Änderungen.
+

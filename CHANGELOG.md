@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [v1.0.17] — 2026-06-16
+
+### Fixed
+- **F-Droid scanner: remove the bundled BRouter `brouter-routing-app` module** — the pinned `brouter-upstream` submodule now points to a VeloSpot fork of `abrensch/brouter` (BRouter `v1.7.9`) with the entire `brouter-routing-app` Android module deleted. That module bundled binary asset blobs (the `segments4` / `modes` ZIP archives), which F-Droid's repository scanner flagged as non-free/unexpected binaries. VeloSpot only compiles the on-device routing modules (`btools.router`, `.mapaccess`, `.util`, `.codec`, `.expressions`) from source and never builds the routing app, so the module — together with its now-dead references in `settings.gradle` and `brouter-server/build.gradle` — was removed at the source. This complements the earlier removal of the GitHub Packages publishing block, so the checked-out submodule tree no longer contains the GitHub Packages Maven URL or the routing-app binary archives. The `.gitmodules` branch/URL and the submodule pointer are updated accordingly.
+
+---
+
 ## [v1.0.16] — 2026-06-16
 
 ### Changed
