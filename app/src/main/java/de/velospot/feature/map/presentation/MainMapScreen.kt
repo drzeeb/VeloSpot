@@ -66,6 +66,7 @@ fun MainMapScreen(
     val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
     val mapCameraTarget      by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
+    val navigationProgress   by viewModel.navigationProgress.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
     val searchQuery          by viewModel.searchQuery.collectAsStateWithLifecycle()
     val searchResults        by viewModel.searchResults.collectAsStateWithLifecycle()
@@ -74,6 +75,8 @@ fun MainMapScreen(
     val customMapPin         by viewModel.customMapPin.collectAsStateWithLifecycle()
     val savedPlaces          by viewModel.savedPlaces.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
+    val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
+    val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -89,6 +92,10 @@ fun MainMapScreen(
     val mapView       = rememberMapViewWithLifecycle()
     val screenUiState = rememberMapScreenUiState()
     val markerStyleConfig = remember(isDarkTheme) { defaultMarkerStyleConfig(isDarkTheme) }
+
+    // Drives the live 3D navigation camera + heading arrow. Owned by the screen,
+    // bound to the MapLibreMap once a style is ready (see effects below).
+    val navigationManager = remember(context) { NavigationManager(context) }
 
     // The MapLibreMap is provided asynchronously via getMapAsync.
     // Using mutableStateOf triggers recomposition so LaunchedEffects below fire.
@@ -228,8 +235,63 @@ fun MainMapScreen(
                     searchPin    = selectedSearchPin,
                     customMapPin = customMapPin,
                     savedPlaces  = savedPlaces,
-                    layerVisibility = layerVisibility
+                    layerVisibility = layerVisibility,
+                    // While navigating, NavigationManager owns the location puck
+                    // (animated heading arrow), so the renderer must not draw it.
+                    suppressLocationDot = activeNavigation != null,
+                    // …and it owns the route polyline (travelled/remaining split).
+                    suppressRoute = activeNavigation != null
                 )
+        }
+    }
+
+    // ── 3D navigation: bind manager + start/stop with the active route ────────
+    // Re-attach after every (re)loaded style so the arrow image / 3D building
+    // layer are re-registered (style reload wipes custom sources/layers/images).
+    LaunchedEffect(maplibreMap, styleVersion) {
+        val map = maplibreMap ?: return@LaunchedEffect
+        val style = map.style ?: return@LaunchedEffect
+        navigationManager.attach(map, style)
+    }
+
+    // Start navigation when a route becomes active, stop when it ends.
+    LaunchedEffect(activeNavigation?.route, maplibreMap, styleVersion) {
+        val route = activeNavigation?.route
+        if (route != null && route.points.size > 1) {
+            navigationManager.start(
+                routePoints          = route.points,
+                totalDistanceMeters  = route.distanceMeters,
+                totalDurationSeconds = route.durationSeconds,
+                routeColor           = markerStyleConfig.routeColor
+            )
+            // Immediately feed the last known fix so the camera tilts straight in.
+            userLocation?.let(navigationManager::onLocationUpdate)
+        } else {
+            navigationManager.stop()
+        }
+    }
+
+    // Feed every GPS fix into the manager while navigating.
+    LaunchedEffect(userLocation, activeNavigation) {
+        if (activeNavigation != null) {
+            userLocation?.let(navigationManager::onLocationUpdate)
+        }
+    }
+
+    // Apply the user's 2D/3D preference live (also re-applied after style reloads).
+    LaunchedEffect(is3DNavigation, maplibreMap, styleVersion) {
+        navigationManager.setMode(is3DNavigation)
+    }
+
+    DisposableEffect(navigationManager) {
+        // Live route progress (distance + ETA) and the off-route reroute trigger
+        // are forwarded to the ViewModel.
+        navigationManager.onProgress = viewModel::updateNavigationProgress
+        navigationManager.onOffRoute = viewModel::onUserWentOffRoute
+        onDispose {
+            navigationManager.onProgress = null
+            navigationManager.onOffRoute = null
+            navigationManager.stop()
         }
     }
 
@@ -237,7 +299,12 @@ fun MainMapScreen(
     LaunchedEffect(mapCameraTarget, maplibreMap) {
         val target = mapCameraTarget ?: return@LaunchedEffect
         val map    = maplibreMap    ?: return@LaunchedEffect
-        animateMapCameraToTarget(map = map, cameraTarget = target)
+        // During active navigation the NavigationManager owns the camera; ignore
+        // one-shot targets (startup centering, FAB) so they don't fight the
+        // per-frame 3D camera.
+        if (activeNavigation == null) {
+            animateMapCameraToTarget(map = map, cameraTarget = target)
+        }
         viewModel.onMapCameraTargetHandled()
     }
 
@@ -287,6 +354,7 @@ fun MainMapScreen(
         MapStatusOverlay(uiState = uiState)
         MapNavigationOverlay(
             navigationUiState = navigationUiState,
+            progress          = navigationProgress,
             onStopNavigation  = viewModel::stopInAppNavigation,
             onDismissError    = viewModel::clearNavigationError
         )
@@ -317,7 +385,12 @@ fun MainMapScreen(
                     isDarkTheme        = isDarkTheme,
                     currentLanguageFlag = currentLanguageFlag,
                     isExpanded         = screenUiState.isMenuExpanded,
-                    offlineRoutingUiState = offlineRoutingUiState
+                    offlineRoutingUiState = offlineRoutingUiState,
+                    // Debug-only GPS route simulator: always visible in debug
+                    // builds, enabled once a route is available to drive along.
+                    showSimulator      = de.velospot.BuildConfig.DEBUG,
+                    simulatorEnabled   = activeNavigation != null,
+                    isSimulating       = isSimulatingRoute
                 ),
                 actions = MapMenuCardActions(
                     onExpand              = screenUiState::expandMenu,
@@ -326,8 +399,10 @@ fun MainMapScreen(
                     onOpenLanguage        = screenUiState::openLanguage,
                     onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
                     onOpenLayers          = screenUiState::openLayers,
+                    onOpenNavigationView  = screenUiState::openNavigationView,
                     onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
-                    onOpenProfileSheet    = viewModel::openProfileSheet
+                    onOpenProfileSheet    = viewModel::openProfileSheet,
+                    onToggleSimulation    = viewModel::toggleRouteSimulation
                 )
             )
         }

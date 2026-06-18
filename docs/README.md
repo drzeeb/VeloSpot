@@ -18,6 +18,7 @@ This directory contains the GitHub Pages website for VeloSpot. The site is autom
 - Technology stack showcase
 - Product highlights for favorites, my location, dark mode, and SQLite caching
 - Product highlights for in-app bike navigation, route overlay, and navigation focus marker styling
+- Product highlights for live 3D turn-by-turn navigation (3D follow camera, snap-to-route, 3D buildings) and the 2D/3D map view switch
 - Product highlights for dark map tiles, toggleable map layers, and saved places
 - App preview gallery (including dark map mode and the layers sheet screenshots)
 - Getting started guide
@@ -56,6 +57,7 @@ Current website copy highlights:
 - Lazy Nominatim reverse geocoding with permanent local cache
 - Favorites and direct navigation shortcuts
 - In-app bike navigation with route overlay and destination-focused marker styling
+- Live 3D turn-by-turn navigation (3D follow camera, snap-to-route map matching, 3D buildings, live ETA, off-route rerouting) and a 2D/3D map view switch
 - Current-location tools and live location marker
 - Dark mode toggle in the app menu — including a bundled dark vector-tile map style
 - Toggleable map layers (parking, favorites, saved places) and saved custom places

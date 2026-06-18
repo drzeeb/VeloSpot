@@ -64,7 +64,7 @@ class LocationRepositoryImpl @Inject constructor(
         try {
             fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
                 if (lastLocation != null) {
-                    _locationFlow.value = GeoCoordinate(lastLocation.latitude, lastLocation.longitude)
+                    _locationFlow.value = lastLocation.toGeoCoordinate()
                 }
             }
         } catch (e: SecurityException) {
@@ -91,7 +91,7 @@ class LocationRepositoryImpl @Inject constructor(
             override fun onLocationResult(locationResult: LocationResult) {
                 val lastLocation = locationResult.lastLocation
                 if (lastLocation != null) {
-                    _locationFlow.value = GeoCoordinate(lastLocation.latitude, lastLocation.longitude)
+                    _locationFlow.value = lastLocation.toGeoCoordinate()
                 }
             }
         }
@@ -116,4 +116,16 @@ class LocationRepositoryImpl @Inject constructor(
         locationCallback = null
     }
 }
+
+/**
+ * Maps a Play-Services [android.location.Location] to the domain [GeoCoordinate],
+ * carrying the optional bearing/speed sensor data used to drive the 3D navigation
+ * camera and the heading arrow. Values absent on the fix are mapped to `null`.
+ */
+private fun android.location.Location.toGeoCoordinate(): GeoCoordinate = GeoCoordinate(
+    latitude  = latitude,
+    longitude = longitude,
+    bearing   = if (hasBearing()) bearing else null,
+    speedMetersPerSecond = if (hasSpeed()) speed else null
+)
 
