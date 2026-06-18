@@ -32,13 +32,16 @@ import de.velospot.R
 import de.velospot.domain.model.GeoCoordinate
 
 /**
- * Bottom sheet shown when the user taps on an empty location on the map.
+ * Bottom sheet shown for a freely placed map pin — either a location tapped on the
+ * map ("custom pin") or a selected address-search result. Both share the exact same
+ * card and actions: navigate, save as favourite and remove the pin.
  *
  * Shows the resolved address from Nominatim (or the raw coordinates as fallback while loading).
- * Offers a "Navigate here" action and a "Remove pin" option.
  *
- * @param pin       The tapped coordinate.
- * @param address   The reverse-geocoded address string, or null while it is still loading.
+ * @param pin       The pinned coordinate.
+ * @param address   The resolved address string, or null while it is still loading.
+ * @param title     Sheet header title (defaults to the custom-pin title).
+ * @param subtitle  Optional hint shown under the header; pass null to hide it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +51,9 @@ internal fun CustomMapPinSheet(
     onDismiss: () -> Unit,
     onNavigate: () -> Unit,
     onRemove: () -> Unit,
-    onSaveAsFavorite: () -> Unit
+    onSaveAsFavorite: () -> Unit,
+    title: String = stringResource(R.string.custom_pin_title),
+    subtitle: String? = stringResource(R.string.custom_pin_subtitle)
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -71,17 +76,18 @@ internal fun CustomMapPinSheet(
                     modifier           = Modifier.size(28.dp)
                 )
                 Spacer(Modifier.width(12.dp))
-                SheetHeader(title = stringResource(R.string.custom_pin_title))
+                SheetHeader(title = title)
             }
 
-            Spacer(Modifier.height(8.dp))
-
             // ── Hint ─────────────────────────────────────────────────────────
-            Text(
-                text  = stringResource(R.string.custom_pin_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            subtitle?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text  = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 

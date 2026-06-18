@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **2D / 3D map view switch** — a new "Map view" entry in the menu opens a sheet with a segmented 2D/3D selector (animated preview tiles). The choice is persisted (`NavigationModePreferences`) and applied live to the **resting** map (flat north-up vs. 45° tilt + 3D buildings); after navigation ends the map returns to the saved perspective. Active navigation always uses the full 3D camera regardless of the setting.
 - **GPS route simulator (debug)** — a debug-only "Simulate route" menu entry drives a synthetic GPS track along the active BRouter route (with bearing + speed, snap/off-route compatible), so the whole live-navigation pipeline can be tested from the couch without moving. Backed by a unit-tested `RouteSimulator`; real GPS updates are ignored while simulating.
 
+### Fixed
+- **Address-search result now shows the full custom-pin sheet** — selecting an address from the search dropdown previously opened a reduced sheet that only offered "Navigate here". It now reuses the exact same card as a tapped custom pin, so a searched location also offers **Save as favourite** (with the naming dialog → persistent saved place) and **Remove pin** alongside navigation. The `CustomMapPinSheet` header/subtitle are now parameterised (the search variant shows the "Address" title without the tap-to-move hint); `MapViewModel` gains `saveSearchPinAsFavorite()`, and the now-redundant `SearchPinSheet` was removed.
+
 ---
 
 ## [v1.0.17] — 2026-06-16

@@ -10,8 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.velospot.R
 import de.velospot.core.map.NavigationHandler
+import de.velospot.domain.model.GeoCoordinate
 
 /**
  * All modal bottom sheets and dialogs of the map screen, grouped in one place.
@@ -47,6 +50,8 @@ internal fun MapBottomSheets(
 
     // Controls the "name this favourite" dialog opened from the custom pin sheet.
     var showSavePlaceDialog by remember { mutableStateOf(false) }
+    // Controls the "name this favourite" dialog opened from the search pin sheet.
+    var showSaveSearchPinDialog by remember { mutableStateOf(false) }
 
     val configuration       = LocalConfiguration.current
     val currentLanguageCode = remember(configuration) {
@@ -151,10 +156,30 @@ internal fun MapBottomSheets(
     }
 
     selectedSearchPin?.let { pin ->
-        SearchPinSheet(
-            result     = pin,
-            onDismiss  = viewModel::dismissSearchPin,
-            onNavigate = viewModel::startNavigationToAddress
+        // Reuse the very same card as the custom map pin so a searched address
+        // offers navigate, save-as-favourite and remove-pin actions too.
+        CustomMapPinSheet(
+            pin              = GeoCoordinate(pin.latitude, pin.longitude),
+            address          = pin.displayName,
+            onDismiss        = viewModel::dismissSearchPin,
+            onNavigate       = { viewModel.startNavigationToAddress(pin) },
+            onRemove         = viewModel::dismissSearchPin,
+            onSaveAsFavorite = { showSaveSearchPinDialog = true },
+            title            = stringResource(R.string.search_result_pin_title),
+            subtitle         = null
+        )
+    }
+
+    // Name-and-save dialog for the current search pin.
+    if (showSaveSearchPinDialog && selectedSearchPin != null) {
+        val suggestedName = selectedSearchPin?.displayName?.substringBefore(",")?.trim().orEmpty()
+        SavePlaceDialog(
+            suggestedName = suggestedName,
+            onConfirm = { name ->
+                viewModel.saveSearchPinAsFavorite(name)
+                showSaveSearchPinDialog = false
+            },
+            onDismiss = { showSaveSearchPinDialog = false }
         )
     }
 

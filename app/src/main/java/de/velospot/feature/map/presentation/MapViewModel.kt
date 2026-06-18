@@ -396,6 +396,33 @@ class MapViewModel @Inject constructor(
         _selectedSearchPin.value = null
     }
 
+    /**
+     * Saves the currently selected address-search pin as a named favourite place
+     * and dismisses the transient search pin (it reappears as a persistent
+     * saved-place marker). Mirrors [saveCustomPinAsFavorite] for the search flow.
+     */
+    fun saveSearchPinAsFavorite(name: String) {
+        val pin = _selectedSearchPin.value ?: return
+        val address = pin.displayName
+        val resolvedName = name.trim().ifBlank {
+            address.substringBefore(",").trim()
+                .ifBlank { context.getString(de.velospot.R.string.saved_place_title) }
+        }
+        viewModelScope.launch {
+            savedPlacesRepository.savePlace(
+                SavedPlace(
+                    id        = UUID.randomUUID().toString(),
+                    name      = resolvedName,
+                    latitude  = pin.latitude,
+                    longitude = pin.longitude,
+                    address   = address,
+                    addedAt   = System.currentTimeMillis()
+                )
+            )
+        }
+        dismissSearchPin()
+    }
+
     /** Starts in-app navigation to a free-form address [result] (not a parking spot). */
     fun startNavigationToAddress(result: AddressSearchResult) {
         // Wrap the address as a synthetic BikeParkingSpace so the existing routing
