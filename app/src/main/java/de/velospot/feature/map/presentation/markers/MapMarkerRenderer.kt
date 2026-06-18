@@ -58,6 +58,12 @@ internal data class RouteRenderData(
     val points: List<RoutePoint>
 )
 
+/** Colours used for the native parking cluster bubbles and their count labels. */
+internal data class ClusterRenderStyle(
+    val circleColor: Int,
+    val textColor: Int
+)
+
 // ── Main update function ──────────────────────────────────────────────────────
 
 /**
@@ -70,6 +76,7 @@ internal fun updateMarkers(
     state: MarkerRenderState,
     display: MarkerDisplayConfig,
     route: RouteRenderData,
+    clusterStyle: ClusterRenderStyle,
     searchPin: AddressSearchResult? = null,
     customMapPin: GeoCoordinate? = null,
     savedPlaces: List<SavedPlace> = emptyList(),
@@ -92,9 +99,14 @@ internal fun updateMarkers(
     upsertSource(style, SOURCE_ROUTE, routeGeoJson)
     ensureRouteLayer(style, route.color)
 
-    // Parking markers
-    upsertSource(style, SOURCE_PARKING, FeatureCollection.fromFeatures(buildParkingFeatures(spaces, state, layerVisibility)))
+    // Parking markers — bulk spots are clustered natively; the highlighted spot
+    // (selection / active navigation destination) is rendered un-clustered on top.
+    val (bulkFeatures, highlightFeatures) = buildParkingFeatures(spaces, state, layerVisibility)
+    upsertParkingSource(style, FeatureCollection.fromFeatures(bulkFeatures))
     ensureParkingLayer(style)
+    ensureParkingClusterLayers(style, clusterStyle.circleColor, clusterStyle.textColor)
+    upsertSource(style, SOURCE_PARKING_HIGHLIGHT, FeatureCollection.fromFeatures(highlightFeatures))
+    ensureParkingHighlightLayer(style)
 
     // Location dot
     val locFeature = state.userLocation?.let { loc ->
@@ -163,23 +175,27 @@ private fun buildParkingFeatures(
     spaces: List<BikeParkingSpace>,
     state: MarkerRenderState,
     layerVisibility: LayerVisibility
-): List<Feature> {
-    val highlightedId = state.activeNavigationSpaceId ?: state.selectedSpaceId
-    // Filter by layer visibility. The selected spot and the active navigation
-    // destination are always kept visible so they don't vanish from under the user.
+): Pair<List<Feature>, List<Feature>> {
+    // The selected spot and the active navigation destination are always kept
+    // visible (un-clustered, on top) so they don't vanish into a cluster bubble.
+    val highlightIds = setOfNotNull(state.selectedSpaceId, state.activeNavigationSpaceId)
+    // Filter by layer visibility, but always keep the highlighted spots.
     val visibleSpaces = spaces.filter { space ->
         val isFavorite  = state.favoriteIds.contains(space.id)
-        val alwaysShow  = space.id == state.activeNavigationSpaceId || space.id == state.selectedSpaceId
+        val alwaysShow  = space.id in highlightIds
         val categoryShow = if (isFavorite) layerVisibility.showFavorites else layerVisibility.showParking
         alwaysShow || categoryShow
     }
-    val (others, highlighted) = visibleSpaces.partition { it.id != highlightedId }
-    return (others + highlighted).map { space ->
-        Feature.fromGeometry(Point.fromLngLat(space.longitude, space.latitude)).also {
+    val bulk = ArrayList<Feature>(visibleSpaces.size)
+    val highlight = ArrayList<Feature>(highlightIds.size)
+    visibleSpaces.forEach { space ->
+        val feature = Feature.fromGeometry(Point.fromLngLat(space.longitude, space.latitude)).also {
             it.addStringProperty(PROP_SPACE_ID, space.id)
             it.addStringProperty(PROP_ICON, resolveIconKey(space, state))
         }
+        if (space.id in highlightIds) highlight.add(feature) else bulk.add(feature)
     }
+    return bulk to highlight
 }
 
 private fun resolveIconKey(space: BikeParkingSpace, state: MarkerRenderState): String {
