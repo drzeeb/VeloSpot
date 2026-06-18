@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable
 import de.velospot.core.map.LayerVisibility
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.GeoCoordinate
+import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.model.AddressSearchResult
@@ -80,6 +81,7 @@ internal fun updateMarkers(
     searchPin: AddressSearchResult? = null,
     customMapPin: GeoCoordinate? = null,
     savedPlaces: List<SavedPlace> = emptyList(),
+    parkedBike: ParkedBike? = null,
     layerVisibility: LayerVisibility = LayerVisibility(),
     /**
      * When `true` the live location puck is owned by `NavigationManager`
@@ -183,6 +185,22 @@ internal fun updateMarkers(
     }
     upsertSource(style, SOURCE_SAVED_PIN, savedGeoJson)
     ensureSavedPinLayer(style)
+
+    // Parked bike — a single persistent amber marker until the user picks it up.
+    val parkedBikeGeoJson = if (parkedBike != null) {
+        FeatureCollection.fromFeature(
+            Feature.fromGeometry(Point.fromLngLat(parkedBike.longitude, parkedBike.latitude)).also {
+                it.addStringProperty(PROP_PARKED_BIKE_ID, PARKED_BIKE_FEATURE_ID)
+            }
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    if (style.getImage(IMG_PARKED_BIKE) == null) {
+        style.addImage(IMG_PARKED_BIKE, drawableToBitmap(createParkedBikeIcon(display.context)))
+    }
+    upsertSource(style, SOURCE_PARKED_BIKE, parkedBikeGeoJson)
+    ensureParkedBikeLayer(style)
 }
 
 

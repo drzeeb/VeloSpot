@@ -128,4 +128,15 @@
     <string name="custom_pin_subtitle">Tipp op d\'Kaart, fir de Pin ze réckelen.</string>
     <string name="custom_pin_navigate">Hei hin navigéieren</string>
     <string name="custom_pin_remove">Pin ewechhuelen</string>
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Velo hei parken</string>
+    <string name="menu_show_parked_bike">Mäi gepaarkte Velo</string>
+    <string name="parked_bike_title">Mäi gepaarkte Velo</string>
+    <string name="parked_bike_park_here">Velo hei parken</string>
+    <string name="parked_bike_navigate">Bei mäi Velo navigéieren</string>
+    <string name="parked_bike_pick_up">Velo ofgeholl</string>
+    <string name="parked_bike_saved">Velo-Standuert gespäichert</string>
+    <string name="parked_bike_just_now">Just gepaarkt</string>
+    <string name="parked_bike_parked_ago">Virun %1$s gepaarkt</string>
+    <string name="parked_bike_distance_away">%1$s ewech</string>
 </resources>

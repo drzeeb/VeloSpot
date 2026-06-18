@@ -7,6 +7,8 @@
     <string name="menu_disable_dark_mode">Disable dark mode</string>
     <string name="menu_layers">Layers</string>
     <string name="menu_navigation_view">Map view (2D/3D)</string>
+    <string name="menu_park_bike_here">Park bike here</string>
+    <string name="menu_show_parked_bike">My parked bike</string>
     <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
     <string name="menu_simulate_route_stop">⏹ Stop route simulation</string>
     <string name="menu_simulate_route_hint">▶ Simulate route (start navigation first)</string>
@@ -142,6 +144,16 @@
     <string name="save_place_confirm">Save</string>
     <string name="saved_place_title">Saved place</string>
     <string name="favorites_saved_places_header">Saved places</string>
+
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="parked_bike_title">My parked bike</string>
+    <string name="parked_bike_park_here">Park bike here</string>
+    <string name="parked_bike_navigate">Navigate to my bike</string>
+    <string name="parked_bike_pick_up">I picked up my bike</string>
+    <string name="parked_bike_saved">Bike location saved</string>
+    <string name="parked_bike_just_now">Just parked</string>
+    <string name="parked_bike_parked_ago">Parked %1$s ago</string>
+    <string name="parked_bike_distance_away">%1$s away</string>
 
     <!-- Zoom-out hint: shown when zoom level is too low to display parking markers -->
     <string name="zoom_in_for_parking">Zoom in to see bike parking spots</string>

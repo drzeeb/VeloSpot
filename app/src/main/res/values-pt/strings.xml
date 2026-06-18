@@ -128,4 +128,15 @@
     <string name="custom_pin_subtitle">Toque no mapa para mover o marcador.</string>
     <string name="custom_pin_navigate">Navegar até aqui</string>
     <string name="custom_pin_remove">Remover marcador</string>
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Estacionar a bici aqui</string>
+    <string name="menu_show_parked_bike">A minha bici estacionada</string>
+    <string name="parked_bike_title">A minha bici estacionada</string>
+    <string name="parked_bike_park_here">Estacionar a bici aqui</string>
+    <string name="parked_bike_navigate">Navegar até à minha bici</string>
+    <string name="parked_bike_pick_up">Já recolhi a minha bici</string>
+    <string name="parked_bike_saved">Localização da bici guardada</string>
+    <string name="parked_bike_just_now">Acabou de estacionar</string>
+    <string name="parked_bike_parked_ago">Estacionada há %1$s</string>
+    <string name="parked_bike_distance_away">a %1$s</string>
 </resources>

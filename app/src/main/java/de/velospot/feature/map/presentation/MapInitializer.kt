@@ -7,6 +7,7 @@ import de.velospot.domain.model.SavedPlace
 import de.velospot.feature.map.presentation.markers.LAYER_PARKING
 import de.velospot.feature.map.presentation.markers.LAYER_PARKING_CLUSTER
 import de.velospot.feature.map.presentation.markers.LAYER_PARKING_HIGHLIGHT
+import de.velospot.feature.map.presentation.markers.LAYER_PARKED_BIKE
 import de.velospot.feature.map.presentation.markers.LAYER_SAVED_PIN
 import de.velospot.feature.map.presentation.markers.PROP_SAVED_ID
 import de.velospot.feature.map.presentation.markers.PROP_SPACE_ID
@@ -115,6 +116,13 @@ internal fun MapView.initVeloSpotMap(
                         )
                     )
                 }
+                return@addOnMapClickListener true
+            }
+
+            // Tapped the parked-bike marker → open its detail sheet.
+            val parkedBikeHit = map.queryRenderedFeatures(screenPoint, LAYER_PARKED_BIKE).firstOrNull()
+            if (parkedBikeHit != null) {
+                viewModel.showParkedBike()
                 return@addOnMapClickListener true
             }
 

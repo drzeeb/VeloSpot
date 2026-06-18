@@ -28,6 +28,7 @@ internal const val SOURCE_LOCATION   = "velospot-location-source"
 internal const val SOURCE_SEARCH_PIN = "velospot-search-pin-source"
 internal const val SOURCE_CUSTOM_PIN = "velospot-custom-pin-source"
 internal const val SOURCE_SAVED_PIN  = "velospot-saved-pin-source"
+internal const val SOURCE_PARKED_BIKE = "velospot-parked-bike-source"
 
 /** Geometry of the already-travelled part of the route (drawn greyed-out). */
 internal const val SOURCE_ROUTE_TRAVELED = "velospot-route-traveled-source"
@@ -41,6 +42,7 @@ internal const val LAYER_LOCATION   = "velospot-location-layer"
 internal const val LAYER_SEARCH_PIN = "velospot-search-pin-layer"
 internal const val LAYER_CUSTOM_PIN = "velospot-custom-pin-layer"
 internal const val LAYER_SAVED_PIN  = "velospot-saved-pin-layer"
+internal const val LAYER_PARKED_BIKE = "velospot-parked-bike-layer"
 
 /** Greyed-out "already travelled" portion of the route, drawn beneath [LAYER_ROUTE]. */
 internal const val LAYER_ROUTE_TRAVELED = "velospot-route-traveled-layer"
@@ -79,11 +81,16 @@ private const val PROP_POINT_COUNT_ABBREVIATED = "point_count_abbreviated"
 internal const val IMG_SEARCH_PIN    = "vs-search-pin"
 internal const val IMG_CUSTOM_PIN    = "vs-custom-pin"
 internal const val IMG_SAVED_PIN     = "vs-saved-pin"
+internal const val IMG_PARKED_BIKE   = "vs-parked-bike"
 
 /** Feature property key used for click-to-space lookup in the parking layer. */
 internal const val PROP_SPACE_ID = "spaceId"
 /** Feature property key used for click-to-saved-place lookup in the saved-pin layer. */
 internal const val PROP_SAVED_ID = "savedId"
+/** Feature property key used for click-to-parked-bike lookup in the parked-bike layer. */
+internal const val PROP_PARKED_BIKE_ID = "parkedBikeId"
+/** The single feature id carried by the parked-bike marker (there is only ever one). */
+internal const val PARKED_BIKE_FEATURE_ID = "parked-bike"
 internal const val PROP_ICON     = "iconImage"
 /** Feature property holding the heading (degrees) used to rotate the navigation arrow. */
 internal const val PROP_BEARING  = "bearing"
@@ -322,6 +329,18 @@ internal fun ensureSavedPinLayer(style: Style) {
         SymbolLayer(LAYER_SAVED_PIN, SOURCE_SAVED_PIN).withProperties(
             PropertyFactory.iconImage(IMG_SAVED_PIN),
             PropertyFactory.iconAllowOverlap(true),
+            PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
+        )
+    )
+}
+
+internal fun ensureParkedBikeLayer(style: Style) {
+    if (style.getLayer(LAYER_PARKED_BIKE) != null) return
+    style.addLayer(
+        SymbolLayer(LAYER_PARKED_BIKE, SOURCE_PARKED_BIKE).withProperties(
+            PropertyFactory.iconImage(IMG_PARKED_BIKE),
+            PropertyFactory.iconAllowOverlap(true),
+            PropertyFactory.iconIgnorePlacement(true),
             PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
         )
     )

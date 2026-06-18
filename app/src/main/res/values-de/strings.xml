@@ -107,6 +107,18 @@
     <string name="saved_place_title">Gespeicherter Ort</string>
     <string name="favorites_saved_places_header">Gespeicherte Orte</string>
 
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Fahrrad hier parken</string>
+    <string name="menu_show_parked_bike">Mein geparktes Fahrrad</string>
+    <string name="parked_bike_title">Mein geparktes Fahrrad</string>
+    <string name="parked_bike_park_here">Fahrrad hier parken</string>
+    <string name="parked_bike_navigate">Zu meinem Fahrrad navigieren</string>
+    <string name="parked_bike_pick_up">Fahrrad abgeholt</string>
+    <string name="parked_bike_saved">Fahrrad-Standort gespeichert</string>
+    <string name="parked_bike_just_now">Gerade geparkt</string>
+    <string name="parked_bike_parked_ago">Geparkt vor %1$s</string>
+    <string name="parked_bike_distance_away">%1$s entfernt</string>
+
     <!-- Ebenen (Pin-Kategorien ein-/ausblenden) -->
     <string name="menu_layers">Ebenen</string>
     <string name="menu_navigation_view">Kartenansicht (2D/3D)</string>

@@ -11,12 +11,14 @@ import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoRouteFoundException
+import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
+import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import kotlinx.coroutines.Dispatchers
@@ -80,6 +82,7 @@ class MapViewModelTest {
         segmentManager        = mockSegmentManager,
         nominatimGeocoder     = mockNominatimGeocoder,
         savedPlacesRepository = FakeSavedPlacesRepository(),
+        parkedBikeRepository  = FakeParkedBikeRepository(),
         context               = mockContext
     )
 
@@ -334,6 +337,55 @@ class MapViewModelTest {
         assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
     }
 
+    @Test
+    fun `parkBikeAtCurrentLocation stores a parked bike at the current fix`() = runTest {
+        val viewModel = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.parkBikeAtCurrentLocation()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val bike = viewModel.parkedBike.value
+        assertTrue(bike != null)
+        assertEquals(49.75, bike!!.latitude, 0.0)
+        assertEquals(6.64, bike.longitude, 0.0)
+    }
+
+    @Test
+    fun `parkBikeAtCurrentLocation without a fix reports location unavailable`() = runTest {
+        val viewModel = makeViewModel(
+            locationRepository = FakeLocationRepository(initialLocation = null)
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.parkBikeAtCurrentLocation()
+
+        assertTrue(viewModel.parkedBike.value == null)
+        assertEquals(de.velospot.R.string.error_location_unavailable, viewModel.userMessageRes.value)
+    }
+
+    @Test
+    fun `pickUpBike clears the previously parked bike`() = runTest {
+        val viewModel = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.parkBikeAtCurrentLocation()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.parkedBike.value != null)
+
+        viewModel.pickUpBike()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.parkedBike.value == null)
+    }
+
     private fun sampleSpace(id: String) = BikeParkingSpace(
         id = id,
         latitude = 49.75,
@@ -398,6 +450,16 @@ private class FakeSavedPlacesRepository : SavedPlacesRepository {
     override suspend fun removePlace(id: String) {
         savedPlaces.value = savedPlaces.value.filterNot { it.id == id }
     }
+}
+
+private class FakeParkedBikeRepository : ParkedBikeRepository {
+    private val parkedBike = MutableStateFlow<ParkedBike?>(null)
+
+    override fun getParkedBikeFlow(): Flow<ParkedBike?> = parkedBike
+
+    override suspend fun park(bike: ParkedBike) { parkedBike.value = bike }
+
+    override suspend fun clear() { parkedBike.value = null }
 }
 
 private class FakeLocationRepository(

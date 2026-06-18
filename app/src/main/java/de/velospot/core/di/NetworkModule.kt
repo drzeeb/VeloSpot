@@ -26,10 +26,12 @@ import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.api.OsrmApi
 import de.velospot.data.repository.BikeParkingRepositoryImpl
 import de.velospot.data.repository.FavoritesRepositoryImpl
+import de.velospot.data.repository.ParkedBikeRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.data.repository.SavedPlacesRepositoryImpl
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
+import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import okhttp3.OkHttpClient
@@ -201,6 +203,14 @@ object NetworkModule {
         savedPlaceDao: SavedPlaceDao
     ): SavedPlacesRepository {
         return SavedPlacesRepositoryImpl(savedPlaceDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideParkedBikeRepository(
+        @ApplicationContext context: Context
+    ): ParkedBikeRepository {
+        return ParkedBikeRepositoryImpl(context)
     }
 }
 

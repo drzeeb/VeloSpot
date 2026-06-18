@@ -128,4 +128,15 @@
     <string name="custom_pin_subtitle">Tik op de kaart om de speld te verplaatsen.</string>
     <string name="custom_pin_navigate">Navigeer hierheen</string>
     <string name="custom_pin_remove">Speld verwijderen</string>
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Fiets hier parkeren</string>
+    <string name="menu_show_parked_bike">Mijn geparkeerde fiets</string>
+    <string name="parked_bike_title">Mijn geparkeerde fiets</string>
+    <string name="parked_bike_park_here">Fiets hier parkeren</string>
+    <string name="parked_bike_navigate">Navigeer naar mijn fiets</string>
+    <string name="parked_bike_pick_up">Ik heb mijn fiets opgehaald</string>
+    <string name="parked_bike_saved">Fietslocatie opgeslagen</string>
+    <string name="parked_bike_just_now">Net geparkeerd</string>
+    <string name="parked_bike_parked_ago">%1$s geleden geparkeerd</string>
+    <string name="parked_bike_distance_away">%1$s verderop</string>
 </resources>
