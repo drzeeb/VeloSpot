@@ -28,8 +28,9 @@ VeloSpot ships with a pre-bundled OpenStreetMap extract covering **all of German
 
 ## 🔗 Quick Links
 
+- **Website**: https://velospot.app
 - **GitHub Repository**: https://github.com/drzeeb/VeloSpot
-- **GitHub Pages**: https://drzeeb.github.io/VeloSpot/
+- **Privacy Policy**: https://velospot.app/privacy.html ([`PRIVACY.md`](./PRIVACY.md))
 - **Changelog**: [`CHANGELOG.md`](./CHANGELOG.md)
 - **Licensing & Attribution**: [ATTRIBUTIONS.md](ATTRIBUTIONS.md)
 
@@ -53,7 +54,7 @@ VeloSpot ships with a pre-bundled OpenStreetMap extract covering **all of German
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
 - **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
-- **🆕 Address search** — type any German address into the floating search bar and jump straight to the location; tap a result to drop a pin and start in-app BRouter navigation
+- **🆕 Address search** — type any German address into the floating search bar and jump straight to the location; tap a result to drop a pin and start in-app BRouter navigation, save it as a favourite, or remove the pin (same sheet as a custom pin)
 - **🆕 Tap-to-place custom pin** — tap any empty spot on the map to drop a blue pin; the address is resolved automatically via Nominatim reverse geocoding and a bottom sheet lets you start navigation directly to that point
 - **🆕 BRouter offline routing** — routes calculated entirely on-device with 5 cycling profiles; no internet needed after the one-time segment download
 
@@ -220,7 +221,7 @@ For more information about OpenStreetMap and ODbL, visit:
 ### Map Screen
 - Centered map view with bike parking markers
 - **Marker clustering** — at low zoom, nearby pins merge into count bubbles; tapping a cluster animates the camera in to its expansion zoom. The selected spot and active navigation destination stay visible on a dedicated non-clustered layer
-- **Address search bar** (top of screen) — live Nominatim forward geocoding with 400 ms debounce; results shown in a dropdown; tap to drop a pin and open the `SearchPinSheet` with a direct "Navigate here" action
+- **Address search bar** (top of screen) — live Nominatim forward geocoding with 400 ms debounce; results shown in a dropdown; tap a result to drop a pin and open the **same sheet as a custom pin** (`CustomMapPinSheet`) with "Navigate here", "Save as favourite" and "Remove pin" actions
 - **Tap-to-place custom pin** — tap any empty map location to drop a blue pin; `CustomMapPinSheet` shows the reverse-geocoded address and a "Navigate here" action; pin remains visible as route end-point during active navigation
 - Zoom-responsive marker scaling
 - Favorite-aware marker colors
