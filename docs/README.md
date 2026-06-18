@@ -28,6 +28,9 @@ This directory contains the GitHub Pages website for VeloSpot. The site is autom
 ```
 docs/
 ├── index.html       # Main website (all-in-one file)
+├── privacy.html     # Privacy policy page (served at https://velospot.app/privacy.html)
+├── PRIVACY.md       # Privacy policy (Markdown source)
+├── CNAME            # Custom domain (velospot.app)
 └── screenshots/     # App preview images used by the site & README
 ```
 
@@ -53,14 +56,16 @@ Update section titles, descriptions, and links as needed.
 Current website copy highlights:
 - Germany-wide coverage (100 000+ locations from OpenStreetMap, fully offline)
 - Viewport-based loading for smooth performance across the whole country
+- Marker clustering that aggregates dense pins at low zoom
 - Lazy Nominatim reverse geocoding with permanent local cache
+- Address search whose result opens the same sheet as a custom pin (navigate, save, remove)
 - Favorites and direct navigation shortcuts
 - In-app bike navigation with route overlay and destination-focused marker styling
 - Current-location tools and live location marker
 - Dark mode toggle in the app menu — including a bundled dark vector-tile map style
 - Toggleable map layers (parking, favorites, saved places) and saved custom places
 - Room / SQLite pre-populated asset database
-- OpenStreetMap attribution in the footer
+- Privacy policy page (`privacy.html`) and OpenStreetMap attribution in the footer
 
 ## Deployment
 
@@ -68,7 +73,8 @@ The site is automatically deployed when you:
 1. Push changes to `main` branch
 2. GitHub automatically rebuilds and deploys
 
-The site will be available at: `https://drzeeb.github.io/VeloSpot/`
+The site is available at the custom domain: `https://velospot.app` (configured via `docs/CNAME`).
+The privacy policy is available at: `https://velospot.app/privacy.html`
 
 ## Performance Tips
 
