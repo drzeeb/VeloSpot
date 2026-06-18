@@ -45,6 +45,7 @@ internal fun MapBottomSheets(
     val showWifiWarning      by viewModel.showWifiWarning.collectAsStateWithLifecycle()
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
+    val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
     // Controls the "name this favourite" dialog opened from the custom pin sheet.
@@ -108,6 +109,14 @@ internal fun MapBottomSheets(
             visibility = layerVisibility,
             onToggle   = viewModel::setLayerVisible,
             onDismiss  = screenUiState::closeLayers
+        )
+    }
+
+    if (screenUiState.isNavigationViewSheetVisible) {
+        NavigationViewSheet(
+            is3DEnabled = is3DNavigation,
+            onSelect    = viewModel::setNavigation3DEnabled,
+            onDismiss   = screenUiState::closeNavigationView
         )
     }
 

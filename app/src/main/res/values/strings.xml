@@ -6,6 +6,18 @@
     <string name="menu_enable_dark_mode">Enable dark mode</string>
     <string name="menu_disable_dark_mode">Disable dark mode</string>
     <string name="menu_layers">Layers</string>
+    <string name="menu_navigation_view">Map view (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
+    <string name="menu_simulate_route_stop">⏹ Stop route simulation</string>
+    <string name="menu_simulate_route_hint">▶ Simulate route (start navigation first)</string>
+
+    <!-- Navigation view sheet (2D / 3D perspective switch) -->
+    <string name="nav_view_title">Map view</string>
+    <string name="nav_view_subtitle">Choose how the map is shown during navigation.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Classic flat top-down map</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Tilted view with 3D buildings</string>
 
     <!-- Layers sheet (toggle pin categories) -->
     <string name="layers_title">Layers</string>
@@ -36,6 +48,7 @@
     <string name="navigation_start">Start navigation</string>
     <string name="navigation_stop">Stop navigation</string>
     <string name="navigation_route_loading">Calculating bike route...</string>
+    <string name="navigation_rerouting">Off route – recalculating…</string>
     <string name="navigation_downloading_segments">Downloading offline map data for this region…</string>
     <string name="error_brouter_profiles_missing">Routing profiles missing. Please add lookups.dat and *.brf files to assets/brouter/profiles/.</string>
     <string name="error_no_internet">No internet connection. Please check your Wi-Fi or mobile data and try again.</string>

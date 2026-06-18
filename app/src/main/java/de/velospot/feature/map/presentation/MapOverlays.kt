@@ -19,7 +19,10 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SignalWifiOff
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,7 +51,13 @@ internal data class MapMenuCardState(
     val isDarkTheme: Boolean,
     val currentLanguageFlag: String,
     val isExpanded: Boolean,
-    val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled
+    val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled,
+    /** Debug-only: show the GPS route-simulator entry (debug builds only). */
+    val showSimulator: Boolean = false,
+    /** Debug-only: whether a route is available to simulate (active navigation). */
+    val simulatorEnabled: Boolean = false,
+    /** Debug-only: whether the GPS route simulator is currently running. */
+    val isSimulating: Boolean = false
 )
 
 internal data class MapMenuCardActions(
@@ -58,8 +67,10 @@ internal data class MapMenuCardActions(
     val onOpenLanguage: () -> Unit,
     val onToggleDarkMode: () -> Unit,
     val onOpenLayers: () -> Unit = {},
+    val onOpenNavigationView: () -> Unit = {},
     val onActivateOfflineRouting: () -> Unit = {},
-    val onOpenProfileSheet: () -> Unit = {}
+    val onOpenProfileSheet: () -> Unit = {},
+    val onToggleSimulation: () -> Unit = {}
 )
 
 @Composable
@@ -222,7 +233,8 @@ internal fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
 internal fun BoxScope.MapNavigationOverlay(
     navigationUiState: NavigationUiState,
     onStopNavigation: () -> Unit,
-    onDismissError: () -> Unit
+    onDismissError: () -> Unit,
+    progress: de.velospot.core.navigation.NavigationProgress? = null
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
@@ -304,8 +316,13 @@ internal fun BoxScope.MapNavigationOverlay(
         }
 
         is NavigationUiState.Active -> {
-            val distanceKm  = navigationUiState.route.distanceMeters / 1000.0
-            val totalMin    = (navigationUiState.route.durationSeconds / 60.0).roundToInt()
+            // Prefer the live, dynamically-shrinking distance + ETA from the
+            // NavigationManager; fall back to the static BRouter totals before the
+            // first GPS fix arrives.
+            val distanceMeters = progress?.remainingMeters ?: navigationUiState.route.distanceMeters
+            val durationSecs   = progress?.remainingSeconds ?: navigationUiState.route.durationSeconds
+            val distanceKm  = distanceMeters / 1000.0
+            val totalMin    = (durationSecs / 60.0).roundToInt()
             val durationText = if (totalMin < 60) {
                 stringResource(R.string.duration_minutes, totalMin)
             } else {
@@ -343,6 +360,22 @@ internal fun BoxScope.MapNavigationOverlay(
                         ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    if (progress?.isOffRoute == true) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(id = R.string.navigation_rerouting),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
                     PrimaryActionButton(
                         text = stringResource(id = R.string.navigation_stop),
@@ -403,6 +436,13 @@ internal fun MapMenuCard(
                         Icon(imageVector = Icons.Default.Layers, contentDescription = null)
                     },
                     onClick = actions.onOpenLayers
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_navigation_view)) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.ViewInAr, contentDescription = null)
+                    },
+                    onClick = actions.onOpenNavigationView
                 )
                 DropdownMenuItem(
                     text = {
@@ -475,6 +515,34 @@ internal fun MapMenuCard(
                             enabled = false
                         )
                     }
+                }
+
+                // ── Debug: GPS route simulator (couch testing) ────────────────
+                if (state.showSimulator) {
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        enabled = state.simulatorEnabled,
+                        text = {
+                            Text(
+                                stringResource(
+                                    when {
+                                        state.isSimulating     -> R.string.menu_simulate_route_stop
+                                        state.simulatorEnabled -> R.string.menu_simulate_route_start
+                                        else                   -> R.string.menu_simulate_route_hint
+                                    }
+                                )
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (state.isSimulating) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = if (state.isSimulating) MaterialTheme.colorScheme.error
+                                       else MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        onClick = { actions.onDismiss(); actions.onToggleSimulation() }
+                    )
                 }
             }
         }
