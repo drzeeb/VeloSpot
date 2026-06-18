@@ -38,6 +38,7 @@ import de.velospot.feature.map.presentation.markers.MarkerIconSet
 import de.velospot.feature.map.presentation.markers.MarkerRenderLabels
 import de.velospot.feature.map.presentation.markers.MarkerRenderState
 import de.velospot.feature.map.presentation.markers.MIN_ZOOM_PARKING_VISIBLE
+import de.velospot.feature.map.presentation.markers.ClusterRenderStyle
 import de.velospot.feature.map.presentation.markers.RouteRenderData
 import de.velospot.feature.map.presentation.markers.createBikeMarkerIcon
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
@@ -219,6 +220,10 @@ fun MainMapScreen(
                     route     = RouteRenderData(
                         color  = markerStyleConfig.routeColor,
                         points = activeNavigation?.route?.points.orEmpty()
+                    ),
+                    clusterStyle = ClusterRenderStyle(
+                        circleColor = markerStyleConfig.normalPinColor,
+                        textColor   = android.graphics.Color.WHITE
                     ),
                     searchPin    = selectedSearchPin,
                     customMapPin = customMapPin,

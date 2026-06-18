@@ -14,14 +14,15 @@
 
 VeloSpot is an Android application that helps cyclists discover and navigate to bike parking facilities **anywhere in Germany**. Powered by a pre-bundled OpenStreetMap dataset with over **100 000 locations**, the app works fully offline from the very first launch — no network required to find parking.
 
-## 🇩🇪 Germany-Wide Coverage — Now Live!
+## 🇩🇪 Germany-Wide Bike Parking Data
 
-> **This release replaces the previous Trier-only WFS/WMS data source with a pre-bundled OpenStreetMap extract covering all of Germany.**
+VeloSpot ships with a pre-bundled OpenStreetMap extract covering **all of Germany**.
 
 - **~100 000+ bicycle parking locations** extracted from the OSM Germany dataset
-- **Fully offline** — all data is bundled inside the APK as a Room/SQLite asset
+- **Fully offline** — all data is bundled inside the app as a Room/SQLite asset
 - **Instant startup** — no network call needed to see parking spots
 - **Viewport-based loading** — only the markers visible in the current map area are queried, keeping memory usage low even with 100 000 entries
+- **Marker clustering** — at city-level zoom dense areas are aggregated into native MapLibre clusters for smooth panning and zooming; tapping a cluster zooms in to break it apart
 - **Lazy reverse geocoding** — when you tap a marker without a stored address, Nominatim is queried once, the result is cached locally and shown immediately in the details sheet
 - **Extraction script included** (`scripts/extract_osm_parking.py`) — regenerate the bundled database from a fresh Geofabrik PBF at any time
 
@@ -35,9 +36,10 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 ## ✨ Highlights
 
 - **Germany-wide** bike parking data from OpenStreetMap (~100 000+ locations)
-- **Fully offline** after install — no WFS/WMS network calls required
+- **Fully offline** after install — no network calls required to find parking
 - OpenStreetMap-based map browsing with **MapLibre vector tiles** and custom bike markers
 - Viewport-based marker loading — smooth performance even across the entire country
+- **Marker clustering** — nearby parking pins are merged into clusters at low zoom for a fast, uncluttered map; tap a cluster to zoom in
 - Lazy address resolution via Nominatim (cached permanently to local DB)
 - Red marker highlighting for favorite parking spots
 - Orange marker highlighting for currently selected parking space
@@ -62,6 +64,7 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - 🇩🇪 **All of Germany** - 100 000+ bike parking spots from OpenStreetMap, bundled offline
 - 📍 **Interactive Map** - Browse bike parking spaces on an interactive **MapLibre vector tile** map
 - ⚡ **Viewport Loading** - Only the visible map area is queried; scroll anywhere in Germany without slowdowns
+- 🧊 **Marker Clustering** - At city-level zoom, dense parking pins are aggregated into clusters for a fast, uncluttered map; tap a cluster to zoom in and break it apart
 - 🏠 **Offline-First** - All parking data is available instantly, even without a network connection
 - 📬 **Address Lookup** - Missing addresses are resolved via Nominatim and cached locally on first tap
 - 🎬 **Smooth Animations** - Fluid zoom and pan transitions powered by MapLibre's native camera engine
@@ -77,7 +80,7 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - 💾 **SQLite Offline Database** - All ~100 000 parking locations are bundled as a Room asset; no sync required
 - 🎯 **In-App Navigation** - Calculate bike routes directly inside the app and render the route path on the map
 - 👁️ **Navigation Focus** - During active navigation, non-target markers are dimmed to keep the destination visually prominent
-- 📊 **Detailed Information** - View capacity, address, coverage information, and photos for each location
+- 📊 **Detailed Information** - View capacity, address, operator, and photos for each location
 - 🎨 **Modern UI** - Clean and intuitive Jetpack Compose-based interface
 
 ## 📱 Target Platform
@@ -104,7 +107,8 @@ VeloSpot is an Android application that helps cyclists discover and navigate to 
 - **Data**: Retrofit, Moshi, Room (SQLite asset DB), **MapLibre** (vector tile map rendering)
 - **Map Style**: [OpenFreeMap](https://openfreemap.org/) Liberty (free, no API key required)
 - **Geocoding**: Nominatim REST API (lazy, on-demand, cached)
-- **Location**: Android runtime permissions, Google Play Services location APIs
+- **Routing**: BRouter (on-device, offline) with OSRM online fallback
+- **Location**: Android runtime permissions — `FusedLocationProviderClient` (Google Play flavor) / `LocationManager` (F-Droid flavor)
 - **Build System**: Gradle
 - **Data Pipeline**: Python + pyosmium (`scripts/extract_osm_parking.py`)
 
@@ -215,6 +219,7 @@ For more information about OpenStreetMap and ODbL, visit:
 
 ### Map Screen
 - Centered map view with bike parking markers
+- **Marker clustering** — at low zoom, nearby pins merge into count bubbles; tapping a cluster animates the camera in to its expansion zoom. The selected spot and active navigation destination stay visible on a dedicated non-clustered layer
 - **Address search bar** (top of screen) — live Nominatim forward geocoding with 400 ms debounce; results shown in a dropdown; tap to drop a pin and open the `SearchPinSheet` with a direct "Navigate here" action
 - **Tap-to-place custom pin** — tap any empty map location to drop a blue pin; `CustomMapPinSheet` shows the reverse-geocoded address and a "Navigate here" action; pin remains visible as route end-point during active navigation
 - Zoom-responsive marker scaling
@@ -229,9 +234,9 @@ For more information about OpenStreetMap and ODbL, visit:
 ### Parking Details Sheet
 - Bottom sheet with parking information
 - Address auto-resolved via Nominatim if not present in OSM data
-- Favorite toggle for quick saving
+- Capacity and operator details when available, plus a parking photo if present
+- Full-width "Save as favourite" / "Remove from favourites" button
 - Quick-access navigation button
-- Capacity and coverage indicators
 
 ### Favorites Sheet
 - Dedicated list of saved bike parking spots
@@ -374,5 +379,5 @@ Navigate with confidence and never miss a parking spot again — anywhere in Ger
 
 ---
 
-**Last Updated**: 2026-06-10  
+**Last Updated**: 2026-06-19  
 **Status**: Active Development

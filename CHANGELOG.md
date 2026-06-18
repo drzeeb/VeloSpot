@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Marker clustering for the parking layer — major map performance boost** — at city-level zoom the ~100 000 bike-parking markers are now aggregated into native MapLibre clusters instead of being drawn as thousands of overlapping individual symbols. The parking `GeoJsonSource` is created with clustering enabled (`clusterMaxZoom = 13`, `clusterRadius = 60`); the existing icon layer is filtered to non-clustered points (`!has("point_count")`), and two new layers render the cluster bubble (`CircleLayer` with a step-scaled radius) and its count label (`SymbolLayer`, `point_count_abbreviated`, "Noto Sans Bold"). Tapping a cluster animates the camera to the source's `getClusterExpansionZoom`, so it smoothly breaks apart. The currently selected spot and the active navigation destination are rendered on a dedicated **non-clustered highlight layer** (`velospot-parking-highlight-*`) so they always stay visible on top, never disappearing into a cluster. This drastically reduces the number of rendered symbols when panning/zooming dense areas. Implemented in `MapStyleLayers.kt`, `MapMarkerRenderer.kt` (new `ClusterRenderStyle`, split bulk/highlight feature building) and the click handling in `MapInitializer.kt`.
+
 ---
 
 ## [v1.0.17] — 2026-06-16

@@ -5,15 +5,20 @@ import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.model.SavedPlace
 import de.velospot.feature.map.presentation.markers.LAYER_PARKING
+import de.velospot.feature.map.presentation.markers.LAYER_PARKING_CLUSTER
+import de.velospot.feature.map.presentation.markers.LAYER_PARKING_HIGHLIGHT
 import de.velospot.feature.map.presentation.markers.LAYER_SAVED_PIN
 import de.velospot.feature.map.presentation.markers.PROP_SAVED_ID
 import de.velospot.feature.map.presentation.markers.PROP_SPACE_ID
+import de.velospot.feature.map.presentation.markers.SOURCE_PARKING
 import kotlin.math.roundToInt
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Point
 
 // ── Map style URLs ─────────────────────────────────────────────────────────────
 // Free vector tile styles from OpenFreeMap – no API key required. The dark style
@@ -83,15 +88,33 @@ internal fun MapView.initVeloSpotMap(
             onZoomBucketChanged(map.cameraPosition.zoom.roundToInt())
         }
 
-        // Click → parking spot first, then saved place; otherwise drop a custom pin.
+        // Click → parking spot first, then cluster (zoom in), then saved place;
+        // otherwise drop a custom pin.
         map.addOnMapClickListener { latLng ->
             val screenPoint = map.projection.toScreenLocation(latLng)
 
-            val spaceId = map.queryRenderedFeatures(screenPoint, LAYER_PARKING)
+            val spaceId = map.queryRenderedFeatures(screenPoint, LAYER_PARKING_HIGHLIGHT, LAYER_PARKING)
                 .firstOrNull()?.getStringProperty(PROP_SPACE_ID)
             val clicked = currentSpaces().find { it.id == spaceId }
             if (clicked != null) {
                 viewModel.selectSpace(clicked)
+                return@addOnMapClickListener true
+            }
+
+            // Tapped a cluster bubble → zoom in to its expansion level so it breaks apart.
+            val cluster = map.queryRenderedFeatures(screenPoint, LAYER_PARKING_CLUSTER).firstOrNull()
+            if (cluster != null) {
+                val source = map.style?.getSource(SOURCE_PARKING) as? GeoJsonSource
+                val center = cluster.geometry() as? Point
+                if (source != null && center != null) {
+                    val expansionZoom = source.getClusterExpansionZoom(cluster)
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(center.latitude(), center.longitude()),
+                            expansionZoom.toDouble()
+                        )
+                    )
+                }
                 return@addOnMapClickListener true
             }
 
