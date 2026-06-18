@@ -1,132 +1,133 @@
-# Datenschutzerklärung für VeloSpot
+# Privacy Policy for VeloSpot
 
-**Stand: 18. Juni 2026**
+**Last updated: June 18, 2026**
 
-Diese Datenschutzerklärung informiert dich darüber, wie die App **VeloSpot** („die App") mit deinen Daten umgeht. Der Schutz deiner Privatsphäre ist uns wichtig. VeloSpot wurde nach dem Grundsatz der Datensparsamkeit entwickelt: Die App benötigt **kein Benutzerkonto**, enthält **keine Werbung** und nutzt **kein Tracking und keine Analyse-Tools**.
+This privacy policy explains how the **VeloSpot** app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires **no user account**, contains **no advertising**, and uses **no tracking or analytics tools**.
 
 ---
 
-## 1. Verantwortlicher
+## 1. Data Controller
 
-Verantwortlich für die Datenverarbeitung im Zusammenhang mit dieser App ist:
+The party responsible for data processing in connection with this app is:
 
-**Michael** (Entwickler von VeloSpot)
-Kontakt: über das GitHub-Repository
+**Michael** (developer of VeloSpot)
+Contact: via the GitHub repository
 - Issues: https://github.com/drzeeb/VeloSpot/issues
 - Repository: https://github.com/drzeeb/VeloSpot
+- Mail: velospot@proton.me
 
-> Bitte ergänze hier bei Bedarf deine vollständigen Kontaktdaten (Name, Anschrift, E-Mail-Adresse), wie sie für deine Veröffentlichung im Google Play Store erforderlich sind.
-
----
-
-## 2. Grundsatz: Keine zentrale Datensammlung
-
-VeloSpot betreibt **keinen eigenen Server** und speichert **keine personenbezogenen Daten** auf zentralen Systemen. Es werden keine Nutzerprofile erstellt, keine Konten angelegt und keine Daten an den Entwickler übermittelt.
-
-Alle von dir erzeugten Daten (z. B. Favoriten und gespeicherte Orte) verbleiben **ausschließlich lokal auf deinem Gerät**.
+> Please add your full contact details here as needed (name, postal address, email address), as required for your publication on the Google Play Store.
 
 ---
 
-## 3. Welche Daten werden verarbeitet?
+## 2. Principle: No Central Data Collection
 
-### 3.1 Standortdaten
+VeloSpot operates **no server of its own** and stores **no personal data** on central systems. No user profiles are created, no accounts are set up, and no data is transmitted to the developer.
 
-- **Zweck:** Anzeige deiner aktuellen Position auf der Karte, Zentrieren der Karte auf deinen Standort sowie als Ausgangspunkt für die Fahrrad-Navigation.
-- **Berechtigungen:** `ACCESS_FINE_LOCATION` und `ACCESS_COARSE_LOCATION`.
-- **Verarbeitung:** Dein Standort wird **nur auf dem Gerät** verarbeitet und **nicht** an den Entwickler oder Dritte übertragen. Die Standortermittlung erfolgt erst, nachdem du die Berechtigung erteilt und die Funktion (z. B. „Mein Standort") aktiv genutzt hast.
-- **Freiwilligkeit:** Die Standortberechtigung ist optional. Die App kann auch ohne Standortfreigabe genutzt werden; lediglich die Standort-bezogenen Funktionen stehen dann nicht zur Verfügung.
-- **Hinweis (Google-Play-Version):** Zur Standortermittlung werden die Google-Play-Services-Standort-APIs verwendet. Es gelten zusätzlich die [Datenschutzbestimmungen von Google](https://policies.google.com/privacy).
-
-### 3.2 Lokal gespeicherte Daten
-
-Folgende Daten werden ausschließlich **lokal in einer Datenbank/Einstellungen auf deinem Gerät** gespeichert und nicht übertragen:
-
-- Favoriten (markierte Fahrrad-Parkplätze)
-- Selbst gespeicherte Orte (eigene Pins)
-- Über Nominatim aufgelöste und lokal zwischengespeicherte Adressen
-- App-Einstellungen (z. B. gewählte Sprache, Dark-Mode, sichtbare Kartenebenen)
-
-Diese Daten werden gelöscht, sobald du die App deinstallierst oder die App-Daten in den Android-Einstellungen löschst.
-
-### 3.3 Karten- und Parkplatzdaten
-
-Die rund 100.000 Fahrrad-Parkplätze sind als **Offline-Datenbank** in der App enthalten (OpenStreetMap-Daten). Für die Anzeige der Parkplätze ist **keine Internetverbindung** erforderlich, und es werden dabei keine Daten übertragen.
+All data you generate (e.g. favorites and saved places) remains **exclusively on your device**.
 
 ---
 
-## 4. Netzwerkverbindungen an Dritte
+## 3. What Data Is Processed?
 
-Bei Nutzung bestimmter Funktionen baut die App Verbindungen zu externen Diensten auf. Dabei wird technisch bedingt deine **IP-Adresse** an den jeweiligen Diensteanbieter übermittelt; je nach Funktion zusätzlich die nachfolgend genannten Daten. Diese Anbieter sind eigenständig Verantwortliche im Sinne des Datenschutzrechts.
+### 3.1 Location Data
 
-| Dienst | Zweck | Übermittelte Daten | Anbieter / Datenschutz |
+- **Purpose:** Displaying your current position on the map, centering the map on your location, and as the starting point for bike navigation.
+- **Permissions:** `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION`.
+- **Processing:** Your location is processed **only on the device** and is **not** transmitted to the developer or third parties. Location detection only happens after you have granted the permission and actively use the feature (e.g. "My Location").
+- **Voluntariness:** The location permission is optional. The app can also be used without sharing your location; only location-based features will then be unavailable.
+- **Note (Google Play version):** The Google Play Services location APIs are used to determine your location. The [Google Privacy Policy](https://policies.google.com/privacy) additionally applies.
+
+### 3.2 Locally Stored Data
+
+The following data is stored **exclusively locally in a database/settings on your device** and is not transmitted:
+
+- Favorites (marked bike parking spots)
+- Self-saved places (custom pins)
+- Addresses resolved via Nominatim and cached locally
+- App settings (e.g. selected language, dark mode, visible map layers)
+
+This data is deleted as soon as you uninstall the app or clear the app data in your Android settings.
+
+### 3.3 Map and Parking Data
+
+The roughly 100,000 bike parking spots are included in the app as an **offline database** (OpenStreetMap data). Displaying the parking spots requires **no internet connection**, and no data is transmitted in the process.
+
+---
+
+## 4. Network Connections to Third Parties
+
+When you use certain features, the app establishes connections to external services. For technical reasons, this transmits your **IP address** to the respective service provider; depending on the feature, additional data listed below is transmitted. These providers are independent data controllers under data protection law.
+
+| Service | Purpose | Transmitted Data | Provider / Privacy |
 | --- | --- | --- | --- |
-| **OpenFreeMap** | Laden der Vektor-Kartenkacheln | Angefragter Kartenausschnitt, IP-Adresse | [openfreemap.org](https://openfreemap.org/) |
-| **Nominatim (OpenStreetMap)** | Adresssuche & Adressauflösung (Geocoding) | Suchbegriff bzw. Koordinaten, IP-Adresse | [OSM-Datenschutzrichtlinie](https://wiki.osmfoundation.org/wiki/Privacy_Policy) |
-| **OSRM** | Berechnung von Routen (sofern verwendet) | Start-/Zielkoordinaten, IP-Adresse | [project-osrm.org](https://project-osrm.org/) |
+| **OpenFreeMap** | Loading vector map tiles | Requested map area, IP address | [openfreemap.org](https://openfreemap.org/) |
+| **Nominatim (OpenStreetMap)** | Address search & address resolution (geocoding) | Search term or coordinates, IP address | [OSM Privacy Policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) |
+| **OSRM** | Calculating routes (if used) | Start/destination coordinates, IP address | [project-osrm.org](https://project-osrm.org/) |
 
-**Hinweise:**
-- Diese Verbindungen erfolgen **nur bei aktiver Nutzung** der jeweiligen Funktion (z. B. beim Verschieben der Karte, einer Adresssuche oder dem Antippen eines Parkplatzes ohne gespeicherte Adresse).
-- Die **Fahrrad-Navigation per BRouter** erfolgt **vollständig offline auf deinem Gerät**; hierbei werden keine Routendaten an Dritte übertragen.
-- Die App überträgt **keine personenbezogenen Kennungen** (keine Werbe-ID, keine Geräte-ID) an diese Dienste.
+**Notes:**
+- These connections only occur **when the respective feature is actively used** (e.g. when panning the map, performing an address search, or tapping a parking spot without a stored address).
+- **Bike navigation via BRouter** runs **entirely offline on your device**; no route data is transmitted to third parties.
+- The app transmits **no personal identifiers** (no advertising ID, no device ID) to these services.
 
 ---
 
-## 5. Berechtigungen im Überblick
+## 5. Permissions Overview
 
-| Berechtigung | Zweck |
+| Permission | Purpose |
 | --- | --- |
-| `INTERNET` | Laden von Kartenkacheln, Adresssuche/-auflösung und Parkplatzfotos |
-| `ACCESS_NETWORK_STATE` | Prüfen, ob eine Netzwerkverbindung besteht |
-| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Anzeige des eigenen Standorts und Navigation (optional) |
+| `INTERNET` | Loading map tiles, address search/resolution, and parking photos |
+| `ACCESS_NETWORK_STATE` | Checking whether a network connection exists |
+| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Displaying your own location and navigation (optional) |
 
 ---
 
-## 6. Keine Werbung, kein Tracking, keine Analyse
+## 6. No Advertising, No Tracking, No Analytics
 
-VeloSpot enthält:
-- **keine** Werbe-SDKs,
-- **keine** Analyse- oder Tracking-Werkzeuge (z. B. kein Google Analytics, kein Firebase Analytics),
-- **keine** Weitergabe von Daten zu Werbezwecken.
-
----
-
-## 7. Datensicherheit
-
-Verbindungen zu externen Diensten erfolgen, wo immer möglich, verschlüsselt über HTTPS. Deine lokal gespeicherten Daten unterliegen den Schutzmechanismen deines Android-Geräts.
+VeloSpot contains:
+- **no** advertising SDKs,
+- **no** analytics or tracking tools (e.g. no Google Analytics, no Firebase Analytics),
+- **no** sharing of data for advertising purposes.
 
 ---
 
-## 8. Rechtsgrundlagen (DSGVO)
+## 7. Data Security
 
-Soweit personenbezogene Daten verarbeitet werden, erfolgt dies auf Grundlage von:
-- **Art. 6 Abs. 1 lit. a DSGVO** (Einwilligung) – z. B. für die Nutzung der Standortfunktion;
-- **Art. 6 Abs. 1 lit. b DSGVO** (Vertragserfüllung/Bereitstellung der Funktionen) – z. B. für Adresssuche, Kartendarstellung und Routing auf deine Anfrage hin;
-- **Art. 6 Abs. 1 lit. f DSGVO** (berechtigtes Interesse) – an der technisch fehlerfreien Bereitstellung der App.
+Connections to external services use encrypted HTTPS wherever possible. Your locally stored data is protected by your Android device's security mechanisms.
 
 ---
 
-## 9. Deine Rechte
+## 8. Legal Bases (GDPR)
 
-Da der Entwickler keine personenbezogenen Daten über dich speichert oder verarbeitet, liegen ihm in der Regel keine Daten zu deiner Person vor, auf die sich Auskunfts-, Berichtigungs- oder Löschansprüche beziehen könnten. Du kannst alle lokal in der App gespeicherten Daten jederzeit selbst löschen, indem du die App-Daten löschst oder die App deinstallierst.
-
-Dir stehen nach der DSGVO grundsätzlich folgende Rechte zu: Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21). Zudem hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren.
-
----
-
-## 10. Kinder
-
-VeloSpot richtet sich nicht gezielt an Kinder und erhebt wissentlich keine personenbezogenen Daten von Kindern.
+Insofar as personal data is processed, this is done on the basis of:
+- **Art. 6(1)(a) GDPR** (consent) – e.g. for using the location feature;
+- **Art. 6(1)(b) GDPR** (performance of a contract / provision of features) – e.g. for address search, map display, and routing at your request;
+- **Art. 6(1)(f) GDPR** (legitimate interest) – in the technically flawless provision of the app.
 
 ---
 
-## 11. Änderungen dieser Datenschutzerklärung
+## 9. Your Rights
 
-Diese Datenschutzerklärung kann angepasst werden, wenn sich die App oder rechtliche Anforderungen ändern. Die jeweils aktuelle Fassung ist im Projekt-Repository hinterlegt. Das oben genannte Datum gibt den Stand der letzten Aktualisierung an.
+Because the developer does not store or process any personal data about you, generally no data relating to you is held that could be subject to rights of access, rectification, or erasure. You can delete all data stored locally in the app at any time yourself by clearing the app data or uninstalling the app.
+
+Under the GDPR you are generally entitled to the following rights: access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20), and objection (Art. 21). You also have the right to lodge a complaint with a data protection supervisory authority.
 
 ---
 
-## 12. Kontakt
+## 10. Children
 
-Bei Fragen zum Datenschutz wende dich bitte über das GitHub-Repository an den Entwickler:
+VeloSpot is not specifically directed at children and does not knowingly collect personal data from children.
+
+---
+
+## 11. Changes to This Privacy Policy
+
+This privacy policy may be amended if the app or legal requirements change. The current version is kept in the project repository. The date stated above indicates the date of the last update.
+
+---
+
+## 12. Contact
+
+If you have any questions about data protection, please contact the developer via the GitHub repository:
 https://github.com/drzeeb/VeloSpot/issues
 
