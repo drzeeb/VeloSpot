@@ -89,10 +89,20 @@ internal fun MapView.initVeloSpotMap(
             onZoomBucketChanged(map.cameraPosition.zoom.roundToInt())
         }
 
-        // Click → parking spot first, then cluster (zoom in), then saved place;
-        // otherwise drop a custom pin.
+        // Click → parked bike first (it may sit on top of a parking spot), then
+        // parking spot, then cluster (zoom in), then saved place; otherwise drop
+        // a custom pin.
         map.addOnMapClickListener { latLng ->
             val screenPoint = map.projection.toScreenLocation(latLng)
+
+            // Parked bike takes priority so it stays tappable even when it overlaps
+            // a parking spot (e.g. after auto-parking at a bike rack). The matching
+            // spot marker is hidden while parked, so there is nothing underneath.
+            val parkedBikeHit = map.queryRenderedFeatures(screenPoint, LAYER_PARKED_BIKE).firstOrNull()
+            if (parkedBikeHit != null) {
+                viewModel.showParkedBike()
+                return@addOnMapClickListener true
+            }
 
             val spaceId = map.queryRenderedFeatures(screenPoint, LAYER_PARKING_HIGHLIGHT, LAYER_PARKING)
                 .firstOrNull()?.getStringProperty(PROP_SPACE_ID)
@@ -116,13 +126,6 @@ internal fun MapView.initVeloSpotMap(
                         )
                     )
                 }
-                return@addOnMapClickListener true
-            }
-
-            // Tapped the parked-bike marker → open its detail sheet.
-            val parkedBikeHit = map.queryRenderedFeatures(screenPoint, LAYER_PARKED_BIKE).firstOrNull()
-            if (parkedBikeHit != null) {
-                viewModel.showParkedBike()
                 return@addOnMapClickListener true
             }
 
