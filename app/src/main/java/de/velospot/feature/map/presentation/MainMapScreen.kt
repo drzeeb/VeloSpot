@@ -92,9 +92,12 @@ fun MainMapScreen(
 
     // One-shot user messages (e.g. "bike location saved") surfaced as a Toast.
     val userMessageRes by viewModel.userMessageRes.collectAsStateWithLifecycle()
-    LaunchedEffect(userMessageRes) {
-        userMessageRes?.let { res ->
-            Toast.makeText(context, context.getString(res), Toast.LENGTH_SHORT).show()
+    // Resolve the message via stringResource (composition scope) rather than
+    // context.getString — the latter trips the LocalContextGetResourceValueCall lint.
+    val userMessageText = userMessageRes?.let { stringResource(it) }
+    LaunchedEffect(userMessageText) {
+        userMessageText?.let { text ->
+            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
             viewModel.consumeUserMessage()
         }
     }
