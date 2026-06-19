@@ -131,6 +131,15 @@
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Fiets hier parkeren</string>
     <string name="menu_show_parked_bike">Mijn geparkeerde fiets</string>
+    <string name="menu_about">Over</string>
+    <string name="about_tagline">Vind fietsenstallingen &amp; navigeer ernaartoe.</string>
+    <string name="about_website">Website</string>
+    <string name="about_data_status">Datastatus</string>
+    <string name="about_country_germany">Duitsland</string>
+    <string name="about_country_france">Frankrijk</string>
+    <string name="about_country_luxembourg">Luxemburg</string>
+    <string name="about_privacy">Privacy</string>
+    <string name="about_open_link">Link openen</string>
     <string name="parked_bike_title">Mijn geparkeerde fiets</string>
     <string name="parked_bike_park_here">Fiets hier parkeren</string>
     <string name="parked_bike_navigate">Navigeer naar mijn fiets</string>

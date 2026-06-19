@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -80,6 +81,16 @@ fun MainMapScreen(
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
+
+    // Keep the screen awake while navigation is running, so the display does not
+    // dim/lock mid-ride. The flag is cleared automatically when navigation ends
+    // or the screen leaves composition.
+    val isNavigating = activeNavigation != null
+    val currentView = LocalView.current
+    DisposableEffect(currentView, isNavigating) {
+        currentView.keepScreenOn = isNavigating
+        onDispose { currentView.keepScreenOn = false }
+    }
 
     val viewportLoadError by viewModel.viewportLoadError.collectAsStateWithLifecycle()
     val viewportErrorText = stringResource(R.string.error_loading_parking)
@@ -419,7 +430,8 @@ fun MainMapScreen(
                     onOpenProfileSheet    = viewModel::openProfileSheet,
                     onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
                     onShowParkedBike      = viewModel::showParkedBike,
-                    onToggleSimulation    = viewModel::toggleRouteSimulation
+                    onToggleSimulation    = viewModel::toggleRouteSimulation,
+                    onOpenAbout           = screenUiState::openAbout
                 )
             )
         }

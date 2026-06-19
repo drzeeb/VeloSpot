@@ -131,6 +131,15 @@
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Estacionar a bici aqui</string>
     <string name="menu_show_parked_bike">A minha bici estacionada</string>
+    <string name="menu_about">Sobre</string>
+    <string name="about_tagline">Encontre estacionamento para bicicletas e navegue até lá.</string>
+    <string name="about_website">Site</string>
+    <string name="about_data_status">Estado dos dados</string>
+    <string name="about_country_germany">Alemanha</string>
+    <string name="about_country_france">França</string>
+    <string name="about_country_luxembourg">Luxemburgo</string>
+    <string name="about_privacy">Privacidade</string>
+    <string name="about_open_link">Abrir ligação</string>
     <string name="parked_bike_title">A minha bici estacionada</string>
     <string name="parked_bike_park_here">Estacionar a bici aqui</string>
     <string name="parked_bike_navigate">Navegar até à minha bici</string>

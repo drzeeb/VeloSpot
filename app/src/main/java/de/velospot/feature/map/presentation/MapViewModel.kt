@@ -309,7 +309,12 @@ class MapViewModel @Inject constructor(
         searchJob = viewModelScope.launch {
             delay(SEARCH_DEBOUNCE_MS)
             _isSearching.value = true
-            _searchResults.value = nominatimGeocoder.searchAddress(query)
+            val near = _userLocation.value
+            _searchResults.value = nominatimGeocoder.searchAddress(
+                query = query,
+                nearLatitude = near?.latitude,
+                nearLongitude = near?.longitude
+            )
             _isSearching.value = false
         }
     }

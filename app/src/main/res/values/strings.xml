@@ -12,6 +12,17 @@
     <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
     <string name="menu_simulate_route_stop">⏹ Stop route simulation</string>
     <string name="menu_simulate_route_hint">▶ Simulate route (start navigation first)</string>
+    <string name="menu_about">About</string>
+
+    <!-- About sheet -->
+    <string name="about_tagline">Find bike parking &amp; navigate there.</string>
+    <string name="about_website">Website</string>
+    <string name="about_data_status">Dataset status</string>
+    <string name="about_country_germany">Germany</string>
+    <string name="about_country_france">France</string>
+    <string name="about_country_luxembourg">Luxembourg</string>
+    <string name="about_privacy">Privacy Policy</string>
+    <string name="about_open_link">Open link</string>
 
     <!-- Navigation view sheet (2D / 3D perspective switch) -->
     <string name="nav_view_title">Map view</string>

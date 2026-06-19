@@ -131,6 +131,15 @@
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Velo hei parken</string>
     <string name="menu_show_parked_bike">Mäi gepaarkte Velo</string>
+    <string name="menu_about">Iwwer</string>
+    <string name="about_tagline">Fannt Vëlosparkplazen &amp; navigéiert dohin.</string>
+    <string name="about_website">Websäit</string>
+    <string name="about_data_status">Datestand</string>
+    <string name="about_country_germany">Däitschland</string>
+    <string name="about_country_france">Frankräich</string>
+    <string name="about_country_luxembourg">Lëtzebuerg</string>
+    <string name="about_privacy">Dateschutz</string>
+    <string name="about_open_link">Link opmaachen</string>
     <string name="parked_bike_title">Mäi gepaarkte Velo</string>
     <string name="parked_bike_park_here">Velo hei parken</string>
     <string name="parked_bike_navigate">Bei mäi Velo navigéieren</string>

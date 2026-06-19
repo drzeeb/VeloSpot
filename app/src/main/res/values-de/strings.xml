@@ -110,6 +110,15 @@
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Fahrrad hier parken</string>
     <string name="menu_show_parked_bike">Mein geparktes Fahrrad</string>
+    <string name="menu_about">Über</string>
+    <string name="about_tagline">Fahrradparkplätze finden &amp; dorthin navigieren.</string>
+    <string name="about_website">Webseite</string>
+    <string name="about_data_status">Datenstand</string>
+    <string name="about_country_germany">Deutschland</string>
+    <string name="about_country_france">Frankreich</string>
+    <string name="about_country_luxembourg">Luxemburg</string>
+    <string name="about_privacy">Datenschutz</string>
+    <string name="about_open_link">Link öffnen</string>
     <string name="parked_bike_title">Mein geparktes Fahrrad</string>
     <string name="parked_bike_park_here">Fahrrad hier parken</string>
     <string name="parked_bike_navigate">Zu meinem Fahrrad navigieren</string>
