@@ -22,6 +22,7 @@
     <string name="about_country_france">France</string>
     <string name="about_country_luxembourg">Luxembourg</string>
     <string name="about_privacy">Privacy Policy</string>
+    <string name="about_support">Buy me a coffee</string>
     <string name="about_open_link">Open link</string>
 
     <!-- Navigation view sheet (2D / 3D perspective switch) -->

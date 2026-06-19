@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PrivacyTip
@@ -35,6 +36,7 @@ import de.velospot.R
 
 private const val APP_URL = "https://velospot.app"
 private const val PRIVACY_URL = "https://velospot.app/privacy"
+private const val SUPPORT_URL = "https://buymeacoffee.com/velospot"
 
 /** Release date of the bundled Germany OSM parking dataset. */
 private const val DATA_DATE_GERMANY = "08.08.2026"
@@ -122,6 +124,16 @@ internal fun AboutSheet(
                 title = stringResource(id = R.string.about_privacy),
                 subtitle = "velospot.app/privacy",
                 onClick = { openUrl(PRIVACY_URL) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            // Support / donation link (opens externally in the browser)
+            AboutLinkRow(
+                icon = Icons.Default.Coffee,
+                title = stringResource(id = R.string.about_support),
+                subtitle = "buymeacoffee.com/velospot",
+                onClick = { openUrl(SUPPORT_URL) }
             )
 
             Spacer(Modifier.height(8.dp))
