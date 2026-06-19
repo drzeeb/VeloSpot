@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [v1.0.17] - 2026-06-19
+## [v1.0.18] - 2026-06-19
 
 ### Added
 - **"Where did I park my bike?" — remember your parked-bike location** — a new feature lets riders save exactly where they left their bike and find it again later:
@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **GPS route simulator (debug)** — a debug-only "Simulate route" menu entry drives a synthetic GPS track along the active BRouter route (with bearing + speed, snap/off-route compatible), so the whole live-navigation pipeline can be tested from the couch without moving. Backed by a unit-tested `RouteSimulator`; real GPS updates are ignored while simulating.
 
 ### Fixed
+- **Parking pins no longer get stuck at the wrong size** — the zoom-bucket-scaled parking marker icons (`IMG_NORMAL` … `IMG_MUTED_SELECTED`) were only registered on the style **once** (`registerIcons` guarded each `addImage` with `getImage(id) == null`), so zooming never updated their on-map pixel size — they stayed frozen at the size of the zoom level they were first registered at and only refreshed on a full style reload (e.g. a dark-mode toggle). That made the pins occasionally appear too large/small for the current zoom. The zoom-dependent icons are now re-registered in place on every icon-set change (matching the location dot), so they always match the current zoom level.
 - **Address-search result now shows the full custom-pin sheet** — selecting an address from the search dropdown previously opened a reduced sheet that only offered "Navigate here". It now reuses the exact same card as a tapped custom pin, so a searched location also offers **Save as favourite** (with the naming dialog → persistent saved place) and **Remove pin** alongside navigation. The `CustomMapPinSheet` header/subtitle are now parameterised (the search variant shows the "Address" title without the tap-to-move hint); `MapViewModel` gains `saveSearchPinAsFavorite()`, and the now-redundant `SearchPinSheet` was removed.
 
 ---

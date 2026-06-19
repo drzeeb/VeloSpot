@@ -349,8 +349,14 @@ internal fun ensureParkedBikeLayer(style: Style) {
 // â”€â”€ Icon registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 internal fun registerIcons(style: Style, icons: MarkerIconSet) {
+    // These pin icons are zoom-bucket dependent (their pixel size scales with the
+    // zoom level), so they MUST be replaced whenever the icon set changes — a
+    // guarded `getImage(id) == null` add would freeze the pins at the size of the
+    // zoom level they were first registered at, only updating on a style reload
+    // (e.g. dark-mode toggle). That left pins looking too big/small until the next
+    // reload. MapLibre replaces a same-ID image in place, so this is cheap.
     fun add(id: String, d: Drawable) {
-        if (style.getImage(id) == null) style.addImage(id, drawableToBitmap(d))
+        style.addImage(id, drawableToBitmap(d))
     }
     add(IMG_NORMAL,         icons.normal)
     add(IMG_FAVORITE,       icons.favorite)
