@@ -136,9 +136,7 @@ private fun SheetContent(
         PrimaryActionButton(
             text = stringResource(id = R.string.navigation_start),
             onClick = { onNavigate(space) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
+            modifier = Modifier.fillMaxWidth(),
             icon = Icons.AutoMirrored.Filled.ArrowForward
         )
 
@@ -153,9 +151,7 @@ private fun SheetContent(
             },
             icon = if (isFavorite) Icons.Default.Delete else Icons.Default.StarBorder,
             onClick = { onToggleFavorite(space.id) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

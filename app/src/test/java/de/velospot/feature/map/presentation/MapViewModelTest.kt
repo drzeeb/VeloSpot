@@ -369,6 +369,63 @@ class MapViewModelTest {
     }
 
     @Test
+    fun `arriving at a bike parking spot auto-parks the bike and ends navigation`() = runTest {
+        val destination = sampleSpace(id = "rack-1")
+        val viewModel = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Active)
+
+        // Still far away: no auto-park yet.
+        viewModel.updateNavigationProgress(progress(remainingMeters = 120.0))
+        assertTrue(viewModel.parkedBike.value == null)
+
+        // Within the arrival radius: the bike is parked at the destination.
+        viewModel.updateNavigationProgress(progress(remainingMeters = 12.0))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val bike = viewModel.parkedBike.value
+        assertTrue(bike != null)
+        assertEquals(destination.latitude, bike!!.latitude, 0.0)
+        assertEquals(destination.longitude, bike.longitude, 0.0)
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
+    }
+
+    @Test
+    fun `arriving at a synthetic destination does not auto-park`() = runTest {
+        // A saved place is wrapped in a synthetic BikeParkingSpace and must never auto-park.
+        val viewModel = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.navigateToSavedPlace(
+            SavedPlace(
+                id = "p1",
+                name = "Home",
+                latitude = 49.76,
+                longitude = 6.65,
+                address = null,
+                addedAt = 0L
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Active)
+
+        viewModel.updateNavigationProgress(progress(remainingMeters = 5.0))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.parkedBike.value == null)
+    }
+
+    @Test
     fun `pickUpBike clears the previously parked bike`() = runTest {
         val viewModel = makeViewModel(
             locationRepository = FakeLocationRepository(
@@ -385,6 +442,13 @@ class MapViewModelTest {
 
         assertTrue(viewModel.parkedBike.value == null)
     }
+
+    private fun progress(remainingMeters: Double) = de.velospot.core.navigation.NavigationProgress(
+        remainingMeters = remainingMeters,
+        remainingSeconds = remainingMeters / 4.5,
+        distanceFromRouteMeters = 2.0,
+        isOffRoute = false
+    )
 
     private fun sampleSpace(id: String) = BikeParkingSpace(
         id = id,

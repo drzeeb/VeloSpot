@@ -93,6 +93,21 @@ class MapViewModel @Inject constructor(
         const val ID_SAVED_PLACE = "saved_place"
         /** ID used for the synthetic BikeParkingSpace created when navigating to the parked bike. */
         const val ID_PARKED_BIKE = "parked_bike"
+
+        /**
+         * Remaining route distance (m) below which the rider counts as "arrived".
+         * When navigating to a real bike parking spot, reaching this radius auto-parks
+         * the bike at the destination.
+         */
+        private const val ARRIVAL_THRESHOLD_METERS = 25.0
+
+        /**
+         * Synthetic destination IDs that must NOT trigger auto-parking on arrival —
+         * only navigation to a genuine bike parking spot from the map data should.
+         */
+        private val SYNTHETIC_DESTINATION_IDS = setOf(
+            ID_CUSTOM_MAP_PIN, ID_ADDRESS_SEARCH_PIN, ID_SAVED_PLACE, ID_PARKED_BIKE
+        )
     }
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
@@ -127,6 +142,36 @@ class MapViewModel @Inject constructor(
     /** Pushed from the UI layer's `NavigationManager.onProgress` callback. */
     fun updateNavigationProgress(progress: de.velospot.core.navigation.NavigationProgress) {
         _navigationProgress.value = progress
+        maybeAutoParkOnArrival(progress)
+    }
+
+    /**
+     * Guards against repeatedly auto-parking once the rider has reached a parking
+     * spot. Reset whenever a fresh navigation starts.
+     */
+    private var hasAutoParkedForCurrentRoute = false
+
+    /**
+     * Auto-parks the bike the moment the rider arrives at a real bike parking spot.
+     * The route tracking already reports the remaining distance on every GPS fix;
+     * once it drops below [ARRIVAL_THRESHOLD_METERS] for a genuine parking-spot
+     * destination, the bike is parked at the spot and navigation ends — so the
+     * persistent marker is dropped without any extra tap.
+     */
+    private fun maybeAutoParkOnArrival(progress: de.velospot.core.navigation.NavigationProgress) {
+        if (hasAutoParkedForCurrentRoute) return
+        val destination = (_navigationUiState.value as? NavigationUiState.Active)?.destination ?: return
+        // Only navigation to a genuine bike parking spot auto-parks; synthetic
+        // destinations (custom pin, address search, saved place, parked bike) don't.
+        if (destination.id in SYNTHETIC_DESTINATION_IDS) return
+        if (progress.isOffRoute) return
+        if (progress.remainingMeters > ARRIVAL_THRESHOLD_METERS) return
+
+        hasAutoParkedForCurrentRoute = true
+        parkBikeAt(destination.latitude, destination.longitude)
+        // Override the generic "saved" toast with a clearer arrival confirmation.
+        _userMessageRes.value = de.velospot.R.string.parked_bike_arrived
+        stopInAppNavigation()
     }
 
     // ── GPS route simulator (debug couch-testing) ─────────────────────────────
@@ -758,6 +803,7 @@ class MapViewModel @Inject constructor(
         navigationJob?.cancel()
         _navigationUiState.value = NavigationUiState.Loading
         _navigationProgress.value = null
+        hasAutoParkedForCurrentRoute = false
         navigationJob = viewModelScope.launch {
             runCatching {
                 routingRepository.getBikeRoute(

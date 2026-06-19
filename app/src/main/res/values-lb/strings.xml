@@ -136,6 +136,7 @@
     <string name="parked_bike_navigate">Bei mäi Velo navigéieren</string>
     <string name="parked_bike_pick_up">Velo ofgeholl</string>
     <string name="parked_bike_saved">Velo-Standuert gespäichert</string>
+    <string name="parked_bike_arrived">Ukomm — Velo hei geparkt</string>
     <string name="parked_bike_just_now">Just gepaarkt</string>
     <string name="parked_bike_parked_ago">Virun %1$s gepaarkt</string>
     <string name="parked_bike_distance_away">%1$s ewech</string>

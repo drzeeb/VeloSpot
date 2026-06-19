@@ -277,15 +277,15 @@ internal fun createSavedPlaceIcon(): Drawable {
  * instantly recognisable on the map.
  */
 internal fun createParkedBikeIcon(context: Context): Drawable {
-    val width  = 88
-    val height = 116
+    val width  = 104
+    val height = 137
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val cx = width / 2f
-    val cy = 38f
+    val cy = 45f
 
     // Shadow
-    canvas.drawCircle(cx + 3f, 90f, 15f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    canvas.drawCircle(cx + 4f, 106f, 18f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0x33000000; style = Paint.Style.FILL
     })
 
@@ -294,18 +294,18 @@ internal fun createParkedBikeIcon(context: Context): Drawable {
         color = "#F57C00".toColorInt()
         style = Paint.Style.FILL
     }
-    canvas.drawCircle(cx, cy, 34f, pinPaint)
+    canvas.drawCircle(cx, cy, 40f, pinPaint)
 
     // Pin tip
     canvas.drawPath(Path().apply {
-        moveTo(cx, 108f)
-        lineTo(cx - 20f, 60f)
-        lineTo(cx + 20f, 60f)
+        moveTo(cx, 128f)
+        lineTo(cx - 24f, 71f)
+        lineTo(cx + 24f, 71f)
         close()
     }, pinPaint)
 
     // White inner disc so the bike glyph reads cleanly at any size.
-    canvas.drawCircle(cx, cy, 25f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    canvas.drawCircle(cx, cy, 30f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE; style = Paint.Style.FILL
     })
 
@@ -313,7 +313,7 @@ internal fun createParkedBikeIcon(context: Context): Drawable {
     val bikeDrawable = AppCompatResources.getDrawable(context, R.drawable.ic_bike_marker)?.mutate()
     if (bikeDrawable != null) {
         DrawableCompat.setTint(bikeDrawable, "#E65100".toColorInt())
-        val iconSize = 34
+        val iconSize = 40
         val left = (cx - iconSize / 2f).roundToInt()
         val top  = (cy - iconSize / 2f).roundToInt()
         bikeDrawable.setBounds(left, top, left + iconSize, top + iconSize)

@@ -115,6 +115,7 @@
     <string name="parked_bike_navigate">Zu meinem Fahrrad navigieren</string>
     <string name="parked_bike_pick_up">Fahrrad abgeholt</string>
     <string name="parked_bike_saved">Fahrrad-Standort gespeichert</string>
+    <string name="parked_bike_arrived">Angekommen — Fahrrad hier geparkt</string>
     <string name="parked_bike_just_now">Gerade geparkt</string>
     <string name="parked_bike_parked_ago">Geparkt vor %1$s</string>
     <string name="parked_bike_distance_away">%1$s entfernt</string>

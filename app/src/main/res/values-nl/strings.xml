@@ -136,6 +136,7 @@
     <string name="parked_bike_navigate">Navigeer naar mijn fiets</string>
     <string name="parked_bike_pick_up">Ik heb mijn fiets opgehaald</string>
     <string name="parked_bike_saved">Fietslocatie opgeslagen</string>
+    <string name="parked_bike_arrived">Aangekomen — fiets hier geparkeerd</string>
     <string name="parked_bike_just_now">Net geparkeerd</string>
     <string name="parked_bike_parked_ago">%1$s geleden geparkeerd</string>
     <string name="parked_bike_distance_away">%1$s verderop</string>

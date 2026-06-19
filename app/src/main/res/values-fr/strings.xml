@@ -137,6 +137,7 @@
     <string name="parked_bike_navigate">Aller à mon vélo</string>
     <string name="parked_bike_pick_up">J\'ai récupéré mon vélo</string>
     <string name="parked_bike_saved">Position du vélo enregistrée</string>
+    <string name="parked_bike_arrived">Arrivé — vélo garé ici</string>
     <string name="parked_bike_just_now">Tout juste garé</string>
     <string name="parked_bike_parked_ago">Garé il y a %1$s</string>
     <string name="parked_bike_distance_away">à %1$s</string>

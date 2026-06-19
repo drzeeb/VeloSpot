@@ -151,6 +151,7 @@
     <string name="parked_bike_navigate">Navigate to my bike</string>
     <string name="parked_bike_pick_up">I picked up my bike</string>
     <string name="parked_bike_saved">Bike location saved</string>
+    <string name="parked_bike_arrived">You\'ve arrived — bike parked here</string>
     <string name="parked_bike_just_now">Just parked</string>
     <string name="parked_bike_parked_ago">Parked %1$s ago</string>
     <string name="parked_bike_distance_away">%1$s away</string>

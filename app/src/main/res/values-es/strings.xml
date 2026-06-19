@@ -112,6 +112,7 @@
     <string name="parked_bike_navigate">Ir a mi bici</string>
     <string name="parked_bike_pick_up">He recogido mi bici</string>
     <string name="parked_bike_saved">Ubicación de la bici guardada</string>
+    <string name="parked_bike_arrived">Has llegado: bici aparcada aquí</string>
     <string name="parked_bike_just_now">Recién aparcada</string>
     <string name="parked_bike_parked_ago">Aparcada hace %1$s</string>
     <string name="parked_bike_distance_away">a %1$s</string>
