@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
@@ -76,7 +77,8 @@ internal data class MapMenuCardActions(
     val onOpenProfileSheet: () -> Unit = {},
     val onParkBikeHere: () -> Unit = {},
     val onShowParkedBike: () -> Unit = {},
-    val onToggleSimulation: () -> Unit = {}
+    val onToggleSimulation: () -> Unit = {},
+    val onOpenAbout: () -> Unit = {}
 )
 
 @Composable
@@ -502,6 +504,14 @@ internal fun MapMenuCard(
                         Icon(imageVector = Icons.Default.DarkMode, contentDescription = null)
                     },
                     onClick = actions.onToggleDarkMode
+                )
+
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_about)) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Info, contentDescription = null)
+                    },
+                    onClick = { actions.onDismiss(); actions.onOpenAbout() }
                 )
 
                 HorizontalDivider()

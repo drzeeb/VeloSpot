@@ -123,6 +123,10 @@ internal fun MapBottomSheets(
         )
     }
 
+    if (screenUiState.isAboutSheetVisible) {
+        AboutSheet(onDismiss = screenUiState::closeAbout)
+    }
+
     if (showOfflineSetupSheet) {
         OfflineRoutingSetupSheet(
             onConfirm = viewModel::confirmOfflineRoutingSetup,

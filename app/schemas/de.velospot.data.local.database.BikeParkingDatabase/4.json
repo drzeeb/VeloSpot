@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "d724c4ab0656349cd4e8038b29e95603",
+    "identityHash": "ca75ce6b6a55084bd38d33bd6bf37740",
     "entities": [
       {
         "tableName": "bike_parking_spaces",
@@ -80,7 +80,19 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "idx_parking_lat_lon",
+            "unique": false,
+            "columnNames": [
+              "latitude",
+              "longitude"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_parking_lat_lon` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          }
+        ]
       },
       {
         "tableName": "favorite_parking_spaces",
@@ -127,7 +139,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd724c4ab0656349cd4e8038b29e95603')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ca75ce6b6a55084bd38d33bd6bf37740')"
     ]
   }
 }

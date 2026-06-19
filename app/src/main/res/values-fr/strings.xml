@@ -132,6 +132,15 @@
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Garer le vélo ici</string>
     <string name="menu_show_parked_bike">Mon vélo garé</string>
+    <string name="menu_about">À propos</string>
+    <string name="about_tagline">Trouvez des stationnements vélo &amp; naviguez-y.</string>
+    <string name="about_website">Site web</string>
+    <string name="about_data_status">État des données</string>
+    <string name="about_country_germany">Allemagne</string>
+    <string name="about_country_france">France</string>
+    <string name="about_country_luxembourg">Luxembourg</string>
+    <string name="about_privacy">Confidentialité</string>
+    <string name="about_open_link">Ouvrir le lien</string>
     <string name="parked_bike_title">Mon vélo garé</string>
     <string name="parked_bike_park_here">Garer le vélo ici</string>
     <string name="parked_bike_navigate">Aller à mon vélo</string>

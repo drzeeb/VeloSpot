@@ -24,6 +24,9 @@ internal class MapScreenUiState {
     var isNavigationViewSheetVisible by mutableStateOf(false)
         private set
 
+    var isAboutSheetVisible by mutableStateOf(false)
+        private set
+
     fun expandMenu() {
         isMenuExpanded = true
     }
@@ -67,8 +70,16 @@ internal class MapScreenUiState {
     fun closeNavigationView() {
         isNavigationViewSheetVisible = false
     }
+
+    fun openAbout() {
+        isAboutSheetVisible = true
+        isMenuExpanded = false
+    }
+
+    fun closeAbout() {
+        isAboutSheetVisible = false
+    }
 }
 
 @Composable
 internal fun rememberMapScreenUiState(): MapScreenUiState = remember { MapScreenUiState() }
-
