@@ -103,6 +103,19 @@
     <string name="save_place_confirm">Guardar</string>
     <string name="saved_place_title">Lugar guardado</string>
     <string name="favorites_saved_places_header">Lugares guardados</string>
+
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Aparcar la bici aquí</string>
+    <string name="menu_show_parked_bike">Mi bici aparcada</string>
+    <string name="parked_bike_title">Mi bici aparcada</string>
+    <string name="parked_bike_park_here">Aparcar la bici aquí</string>
+    <string name="parked_bike_navigate">Ir a mi bici</string>
+    <string name="parked_bike_pick_up">He recogido mi bici</string>
+    <string name="parked_bike_saved">Ubicación de la bici guardada</string>
+    <string name="parked_bike_arrived">Has llegado: bici aparcada aquí</string>
+    <string name="parked_bike_just_now">Recién aparcada</string>
+    <string name="parked_bike_parked_ago">Aparcada hace %1$s</string>
+    <string name="parked_bike_distance_away">a %1$s</string>
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Capas</string>
     <string name="menu_navigation_view">Vista del mapa (2D/3D)</string>

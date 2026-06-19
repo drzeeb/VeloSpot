@@ -130,4 +130,16 @@
     <string name="error_no_route_found">Nessun percorso ciclabile trovato per questa destinazione.</string>
     <string name="error_route_geometry_empty">Dati del percorso incompleti. Riprova.</string>
     <string name="error_unknown">Si è verificato un errore imprevisto. Riprova.</string>
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Parcheggia la bici qui</string>
+    <string name="menu_show_parked_bike">La mia bici parcheggiata</string>
+    <string name="parked_bike_title">La mia bici parcheggiata</string>
+    <string name="parked_bike_park_here">Parcheggia la bici qui</string>
+    <string name="parked_bike_navigate">Vai alla mia bici</string>
+    <string name="parked_bike_pick_up">Ho ripreso la bici</string>
+    <string name="parked_bike_saved">Posizione della bici salvata</string>
+    <string name="parked_bike_arrived">Arrivato — bici parcheggiata qui</string>
+    <string name="parked_bike_just_now">Appena parcheggiata</string>
+    <string name="parked_bike_parked_ago">Parcheggiata %1$s fa</string>
+    <string name="parked_bike_distance_away">a %1$s</string>
 </resources>

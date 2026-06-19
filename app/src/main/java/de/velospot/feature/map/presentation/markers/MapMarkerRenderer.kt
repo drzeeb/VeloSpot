@@ -3,8 +3,10 @@ package de.velospot.feature.map.presentation.markers
 import android.content.Context
 import android.graphics.drawable.Drawable
 import de.velospot.core.map.LayerVisibility
+import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.GeoCoordinate
+import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.model.AddressSearchResult
@@ -80,6 +82,7 @@ internal fun updateMarkers(
     searchPin: AddressSearchResult? = null,
     customMapPin: GeoCoordinate? = null,
     savedPlaces: List<SavedPlace> = emptyList(),
+    parkedBike: ParkedBike? = null,
     layerVisibility: LayerVisibility = LayerVisibility(),
     /**
      * When `true` the live location puck is owned by `NavigationManager`
@@ -116,7 +119,7 @@ internal fun updateMarkers(
 
     // Parking markers — bulk spots are clustered natively; the highlighted spot
     // (selection / active navigation destination) is rendered un-clustered on top.
-    val (bulkFeatures, highlightFeatures) = buildParkingFeatures(spaces, state, layerVisibility)
+    val (bulkFeatures, highlightFeatures) = buildParkingFeatures(spaces, state, layerVisibility, parkedBike)
     upsertParkingSource(style, FeatureCollection.fromFeatures(bulkFeatures))
     ensureParkingLayer(style)
     ensureParkingClusterLayers(style, clusterStyle.circleColor, clusterStyle.textColor)
@@ -183,6 +186,22 @@ internal fun updateMarkers(
     }
     upsertSource(style, SOURCE_SAVED_PIN, savedGeoJson)
     ensureSavedPinLayer(style)
+
+    // Parked bike — a single persistent amber marker until the user picks it up.
+    val parkedBikeGeoJson = if (parkedBike != null) {
+        FeatureCollection.fromFeature(
+            Feature.fromGeometry(Point.fromLngLat(parkedBike.longitude, parkedBike.latitude)).also {
+                it.addStringProperty(PROP_PARKED_BIKE_ID, PARKED_BIKE_FEATURE_ID)
+            }
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    if (style.getImage(IMG_PARKED_BIKE) == null) {
+        style.addImage(IMG_PARKED_BIKE, drawableToBitmap(createParkedBikeIcon(display.context)))
+    }
+    upsertSource(style, SOURCE_PARKED_BIKE, parkedBikeGeoJson)
+    ensureParkedBikeLayer(style)
 }
 
 
@@ -191,13 +210,18 @@ internal fun updateMarkers(
 private fun buildParkingFeatures(
     spaces: List<BikeParkingSpace>,
     state: MarkerRenderState,
-    layerVisibility: LayerVisibility
+    layerVisibility: LayerVisibility,
+    parkedBike: ParkedBike?
 ): Pair<List<Feature>, List<Feature>> {
     // The selected spot and the active navigation destination are always kept
     // visible (un-clustered, on top) so they don't vanish into a cluster bubble.
     val highlightIds = setOfNotNull(state.selectedSpaceId, state.activeNavigationSpaceId)
     // Filter by layer visibility, but always keep the highlighted spots.
     val visibleSpaces = spaces.filter { space ->
+        // Hide the spot the bike is parked at: the amber parked-bike pin stands in
+        // for it (single, unambiguous marker — no overlap), and reappears once the
+        // bike is picked up.
+        if (parkedBike != null && isParkedAt(space, parkedBike)) return@filter false
         val isFavorite  = state.favoriteIds.contains(space.id)
         val alwaysShow  = space.id in highlightIds
         val categoryShow = if (isFavorite) layerVisibility.showFavorites else layerVisibility.showParking
@@ -214,6 +238,20 @@ private fun buildParkingFeatures(
     }
     return bulk to highlight
 }
+
+/** Distance (m) within which a parking spot counts as "the spot the bike is parked at". */
+private const val PARKED_BIKE_MATCH_METERS = 12.0
+
+/**
+ * Whether [space] is (essentially) the same location as the [parkedBike], so the
+ * spot marker should yield to the dedicated parked-bike pin. Auto-parking copies
+ * the spot's exact coordinates (distance ≈ 0); the small radius also absorbs GPS
+ * jitter when parking manually right at a rack.
+ */
+private fun isParkedAt(space: BikeParkingSpace, parkedBike: ParkedBike): Boolean =
+    GeoMath.distanceMeters(
+        space.latitude, space.longitude, parkedBike.latitude, parkedBike.longitude
+    ) < PARKED_BIKE_MATCH_METERS
 
 private fun resolveIconKey(space: BikeParkingSpace, state: MarkerRenderState): String {
     val isNavDest  = space.id == state.activeNavigationSpaceId

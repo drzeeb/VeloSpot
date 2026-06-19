@@ -39,6 +39,9 @@ internal fun MapBottomSheets(
     val customMapPin         by viewModel.customMapPin.collectAsStateWithLifecycle()
     val customMapPinAddress  by viewModel.customMapPinAddress.collectAsStateWithLifecycle()
     val selectedSavedPlace   by viewModel.selectedSavedPlace.collectAsStateWithLifecycle()
+    val parkedBike           by viewModel.parkedBike.collectAsStateWithLifecycle()
+    val isParkedBikeSheetVisible by viewModel.isParkedBikeSheetVisible.collectAsStateWithLifecycle()
+    val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
     val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
     val showProfileSheet     by viewModel.showProfileSheet.collectAsStateWithLifecycle()
@@ -194,7 +197,8 @@ internal fun MapBottomSheets(
                 onDismiss  = viewModel::dismissCustomMapPin,
                 onNavigate = viewModel::startNavigationToCustomPin,
                 onRemove   = viewModel::dismissCustomMapPin,
-                onSaveAsFavorite = { showSavePlaceDialog = true }
+                onSaveAsFavorite = { showSavePlaceDialog = true },
+                onParkBikeHere = { viewModel.parkBikeAt(pin.latitude, pin.longitude) }
             )
         }
     }
@@ -218,6 +222,18 @@ internal fun MapBottomSheets(
             onDismiss  = viewModel::dismissSelectedSavedPlace,
             onNavigate = viewModel::navigateToSavedPlace,
             onRemove   = viewModel::removeSavedPlace
+        )
+    }
+
+    // Parked-bike detail sheet (where the user left their bike).
+    val bike = parkedBike
+    if (isParkedBikeSheetVisible && bike != null) {
+        ParkedBikeSheet(
+            bike         = bike,
+            userLocation = userLocation,
+            onDismiss    = viewModel::dismissParkedBikeSheet,
+            onNavigate   = viewModel::navigateToParkedBike,
+            onPickUp     = viewModel::pickUpBike
         )
     }
 }

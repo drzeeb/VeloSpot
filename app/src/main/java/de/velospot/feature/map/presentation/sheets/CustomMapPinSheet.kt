@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.StarBorder
@@ -52,6 +53,7 @@ internal fun CustomMapPinSheet(
     onNavigate: () -> Unit,
     onRemove: () -> Unit,
     onSaveAsFavorite: () -> Unit,
+    onParkBikeHere: (() -> Unit)? = null,
     title: String = stringResource(R.string.custom_pin_title),
     subtitle: String? = stringResource(R.string.custom_pin_subtitle)
 ) {
@@ -138,6 +140,17 @@ internal fun CustomMapPinSheet(
                 onClick  = onSaveAsFavorite,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // ── Park bike here (only offered for the freely-placed custom pin) ─
+            onParkBikeHere?.let { park ->
+                Spacer(Modifier.height(8.dp))
+                SecondaryActionButton(
+                    text     = stringResource(R.string.parked_bike_park_here),
+                    icon     = Icons.AutoMirrored.Filled.DirectionsBike,
+                    onClick  = park,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Spacer(Modifier.height(8.dp))
 

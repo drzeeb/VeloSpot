@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
@@ -39,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -52,6 +54,8 @@ internal data class MapMenuCardState(
     val currentLanguageFlag: String,
     val isExpanded: Boolean,
     val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled,
+    /** Whether a bike is currently parked — switches the menu entry park ↔ show. */
+    val isBikeParked: Boolean = false,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -70,6 +74,8 @@ internal data class MapMenuCardActions(
     val onOpenNavigationView: () -> Unit = {},
     val onActivateOfflineRouting: () -> Unit = {},
     val onOpenProfileSheet: () -> Unit = {},
+    val onParkBikeHere: () -> Unit = {},
+    val onShowParkedBike: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {}
 )
 
@@ -443,6 +449,30 @@ internal fun MapMenuCard(
                         Icon(imageVector = Icons.Default.ViewInAr, contentDescription = null)
                     },
                     onClick = actions.onOpenNavigationView
+                )
+
+                // ── Parked bike (where the user left their bike) ──────────────
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(
+                                id = if (state.isBikeParked) R.string.menu_show_parked_bike
+                                     else R.string.menu_park_bike_here
+                            )
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                            contentDescription = null,
+                            tint = if (state.isBikeParked) Color(0xFFF57C00)
+                                   else MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    onClick = {
+                        actions.onDismiss()
+                        if (state.isBikeParked) actions.onShowParkedBike() else actions.onParkBikeHere()
+                    }
                 )
                 DropdownMenuItem(
                     text = {

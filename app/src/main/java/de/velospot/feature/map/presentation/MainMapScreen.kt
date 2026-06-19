@@ -74,6 +74,7 @@ fun MainMapScreen(
     val selectedSearchPin    by viewModel.selectedSearchPin.collectAsStateWithLifecycle()
     val customMapPin         by viewModel.customMapPin.collectAsStateWithLifecycle()
     val savedPlaces          by viewModel.savedPlaces.collectAsStateWithLifecycle()
+    val parkedBike           by viewModel.parkedBike.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
@@ -86,6 +87,18 @@ fun MainMapScreen(
         if (viewportLoadError != null) {
             Toast.makeText(context, viewportErrorText, Toast.LENGTH_SHORT).show()
             viewModel.clearViewportLoadError()
+        }
+    }
+
+    // One-shot user messages (e.g. "bike location saved") surfaced as a Toast.
+    val userMessageRes by viewModel.userMessageRes.collectAsStateWithLifecycle()
+    // Resolve the message via stringResource (composition scope) rather than
+    // context.getString — the latter trips the LocalContextGetResourceValueCall lint.
+    val userMessageText = userMessageRes?.let { stringResource(it) }
+    LaunchedEffect(userMessageText) {
+        userMessageText?.let { text ->
+            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+            viewModel.consumeUserMessage()
         }
     }
 
@@ -196,7 +209,7 @@ fun MainMapScreen(
         maplibreMap, uiState, favorites, selectedSpace,
         userLocation, activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
-        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility
+        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         if (uiState is MapUiState.Success) {
@@ -235,6 +248,7 @@ fun MainMapScreen(
                     searchPin    = selectedSearchPin,
                     customMapPin = customMapPin,
                     savedPlaces  = savedPlaces,
+                    parkedBike   = parkedBike,
                     layerVisibility = layerVisibility,
                     // While navigating, NavigationManager owns the location puck
                     // (animated heading arrow), so the renderer must not draw it.
@@ -386,6 +400,7 @@ fun MainMapScreen(
                     currentLanguageFlag = currentLanguageFlag,
                     isExpanded         = screenUiState.isMenuExpanded,
                     offlineRoutingUiState = offlineRoutingUiState,
+                    isBikeParked       = parkedBike != null,
                     // Debug-only GPS route simulator: always visible in debug
                     // builds, enabled once a route is available to drive along.
                     showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -402,6 +417,8 @@ fun MainMapScreen(
                     onOpenNavigationView  = screenUiState::openNavigationView,
                     onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
                     onOpenProfileSheet    = viewModel::openProfileSheet,
+                    onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
+                    onShowParkedBike      = viewModel::showParkedBike,
                     onToggleSimulation    = viewModel::toggleRouteSimulation
                 )
             )

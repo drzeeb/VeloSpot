@@ -128,4 +128,17 @@
     <string name="custom_pin_subtitle">Appuyez sur la carte pour déplacer le repère.</string>
     <string name="custom_pin_navigate">Naviguer ici</string>
     <string name="custom_pin_remove">Supprimer le repère</string>
+
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Garer le vélo ici</string>
+    <string name="menu_show_parked_bike">Mon vélo garé</string>
+    <string name="parked_bike_title">Mon vélo garé</string>
+    <string name="parked_bike_park_here">Garer le vélo ici</string>
+    <string name="parked_bike_navigate">Aller à mon vélo</string>
+    <string name="parked_bike_pick_up">J\'ai récupéré mon vélo</string>
+    <string name="parked_bike_saved">Position du vélo enregistrée</string>
+    <string name="parked_bike_arrived">Arrivé — vélo garé ici</string>
+    <string name="parked_bike_just_now">Tout juste garé</string>
+    <string name="parked_bike_parked_ago">Garé il y a %1$s</string>
+    <string name="parked_bike_distance_away">à %1$s</string>
 </resources>
