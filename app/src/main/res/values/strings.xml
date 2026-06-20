@@ -14,6 +14,28 @@
     <string name="menu_simulate_route_hint">▶ Simulate route (start navigation first)</string>
     <string name="menu_about">About</string>
 
+    <!-- Ride tracking ("My rides" timeline) -->
+    <string name="menu_my_rides">My rides</string>
+    <string name="rides_title">My rides</string>
+    <string name="rides_count">%1$d rides</string>
+    <string name="rides_empty_title">No rides yet</string>
+    <string name="rides_empty_text">Tap the red record button on the map to track a ride. It will appear here with distance, duration and speed.</string>
+    <string name="ride_recording">Recording ride</string>
+    <string name="ride_stop">Stop</string>
+    <string name="ride_discard">Discard</string>
+    <string name="ride_saved">Ride saved</string>
+    <string name="ride_too_short">Ride too short to save</string>
+    <string name="ride_stat_time">Time</string>
+    <string name="ride_stat_distance">Distance</string>
+    <string name="ride_stat_speed">Speed</string>
+    <string name="ride_stat_moving">Moving time</string>
+    <string name="ride_stat_max_speed">Max speed</string>
+    <string name="ride_stat_elevation_gain">Elevation gain</string>
+    <string name="ride_stat_elevation_loss">Elevation loss</string>
+    <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_speed_chart_title">Speed over time</string>
+    <string name="ride_delete">Delete ride</string>
+
     <!-- About sheet -->
     <string name="about_tagline">Find bike parking &amp; navigate there.</string>
     <string name="about_website">Website</string>

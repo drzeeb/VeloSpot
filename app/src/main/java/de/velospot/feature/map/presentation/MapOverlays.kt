@@ -1,6 +1,12 @@
 package de.velospot.feature.map.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -11,7 +17,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.CheckCircle
@@ -24,6 +32,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
@@ -39,8 +48,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -78,7 +89,8 @@ internal data class MapMenuCardActions(
     val onParkBikeHere: () -> Unit = {},
     val onShowParkedBike: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
-    val onOpenAbout: () -> Unit = {}
+    val onOpenAbout: () -> Unit = {},
+    val onOpenRides: () -> Unit = {}
 )
 
 @Composable
@@ -514,7 +526,16 @@ internal fun MapMenuCard(
                     onClick = { actions.onDismiss(); actions.onOpenAbout() }
                 )
 
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_my_rides)) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Timeline, contentDescription = null)
+                    },
+                    onClick = { actions.onDismiss(); actions.onOpenRides() }
+                )
+
                 HorizontalDivider()
+
 
                 // ── Offline routing ───────────────────────────────────────────
                 when (val offState = state.offlineRoutingUiState) {
@@ -602,6 +623,149 @@ internal fun BoxScope.MyLocationFab(onClick: () -> Unit) {
             imageVector = Icons.Default.MyLocation,
             contentDescription = stringResource(id = R.string.map_center_on_my_location),
             tint = MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
+
+/**
+ * Record/stop FAB — same size and right-edge placement as the [MyLocationFab],
+ * stacked directly above it. A red dot while idle (tap to start recording) that
+ * turns into a stop icon — gently pulsing — while a ride is being recorded.
+ * Hidden during active navigation, where the ride is auto-recorded and the
+ * navigation card already owns the bottom area.
+ */
+@Composable
+internal fun BoxScope.RecordRideFab(
+    isRecording: Boolean,
+    onClick: () -> Unit
+) {
+    val infinite = rememberInfiniteTransition(label = "recordPulse")
+    val pulse by infinite.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isRecording) 0.45f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "recordPulseAlpha"
+    )
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            // Same right inset as MyLocationFab, lifted one FAB height (56 dp) +
+            // 16 dp gap + 16 dp base inset so the two buttons stack neatly.
+            .padding(end = 16.dp, bottom = 88.dp),
+        containerColor = if (isRecording) MaterialTheme.colorScheme.errorContainer
+                         else MaterialTheme.colorScheme.surface
+    ) {
+        if (isRecording) {
+            Icon(
+                imageVector = Icons.Default.Stop,
+                contentDescription = stringResource(id = R.string.ride_stop),
+                tint = MaterialTheme.colorScheme.error.copy(alpha = pulse)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
+            )
+        }
+    }
+}
+
+/**
+ * Compact live-stats card shown at the top of the map while a ride is being
+ * recorded: running time, distance and current/avg speed, plus stop & discard
+ * actions. Suppressed during active navigation (the navigation card takes over,
+ * and the ride is auto-recorded in the background).
+ */
+@Composable
+internal fun BoxScope.RideTrackingOverlay(
+    stats: de.velospot.domain.model.LiveRideStats,
+    onStop: () -> Unit,
+    onDiscard: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 72.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+        ),
+        elevation = CardDefaults.cardElevation(6.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(id = R.string.ride_recording),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                RideStatCell(
+                    label = stringResource(id = R.string.ride_stat_time),
+                    value = formatRideDuration(stats.elapsedSeconds)
+                )
+                RideStatCell(
+                    label = stringResource(id = R.string.ride_stat_distance),
+                    value = formatRideDistance(stats.distanceMeters)
+                )
+                RideStatCell(
+                    label = stringResource(id = R.string.ride_stat_speed),
+                    value = formatRideSpeed(stats.currentSpeedMps)
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                SecondaryActionButton(
+                    text = stringResource(id = R.string.ride_discard),
+                    onClick = onDiscard,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(10.dp))
+                PrimaryActionButton(
+                    text = stringResource(id = R.string.ride_stop),
+                    onClick = onStop,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RideStatCell(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

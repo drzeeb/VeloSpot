@@ -107,6 +107,7 @@ private fun Location.toGeoCoordinate(): GeoCoordinate = GeoCoordinate(
     latitude  = latitude,
     longitude = longitude,
     bearing   = if (hasBearing()) bearing else null,
-    speedMetersPerSecond = if (hasSpeed()) speed else null
+    speedMetersPerSecond = if (hasSpeed()) speed else null,
+    altitudeMeters = if (hasAltitude()) altitude else null
 )
 

@@ -152,4 +152,25 @@
     <string name="parked_bike_just_now">Appena parcheggiata</string>
     <string name="parked_bike_parked_ago">Parcheggiata %1$s fa</string>
     <string name="parked_bike_distance_away">a %1$s</string>
+    <!-- Ride tracking ("I miei percorsi") -->
+    <string name="menu_my_rides">I miei percorsi</string>
+    <string name="rides_title">I miei percorsi</string>
+    <string name="rides_count">%1$d percorsi</string>
+    <string name="rides_empty_title">Ancora nessun percorso</string>
+    <string name="rides_empty_text">Tocca il pulsante rosso di registrazione sulla mappa per registrare un percorso. Apparirà qui con distanza, durata e velocità.</string>
+    <string name="ride_recording">Registrazione percorso</string>
+    <string name="ride_stop">Ferma</string>
+    <string name="ride_discard">Annulla</string>
+    <string name="ride_saved">Percorso salvato</string>
+    <string name="ride_too_short">Percorso troppo breve per salvarlo</string>
+    <string name="ride_stat_time">Tempo</string>
+    <string name="ride_stat_distance">Distanza</string>
+    <string name="ride_stat_speed">Velocità</string>
+    <string name="ride_stat_moving">Tempo in movimento</string>
+    <string name="ride_stat_max_speed">Vel. massima</string>
+    <string name="ride_stat_elevation_gain">Dislivello positivo</string>
+    <string name="ride_stat_elevation_loss">Dislivello negativo</string>
+    <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_speed_chart_title">Velocità nel tempo</string>
+    <string name="ride_delete">Elimina percorso</string>
 </resources>

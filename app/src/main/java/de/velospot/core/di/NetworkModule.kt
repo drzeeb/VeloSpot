@@ -19,19 +19,23 @@ import de.velospot.data.local.BikeParkingCacheDataSource
 import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.local.dao.BikeParkingSpaceDao
 import de.velospot.data.local.dao.FavoriteParkingSpaceDao
+import de.velospot.data.local.dao.RecordedRideDao
 import de.velospot.data.local.dao.SavedPlaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
+import de.velospot.data.local.database.RidesDatabase
 import de.velospot.data.local.database.SavedPlacesDatabase
 import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.api.OsrmApi
 import de.velospot.data.repository.BikeParkingRepositoryImpl
 import de.velospot.data.repository.FavoritesRepositoryImpl
 import de.velospot.data.repository.ParkedBikeRepositoryImpl
+import de.velospot.data.repository.RecordedRidesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.data.repository.SavedPlacesRepositoryImpl
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.ParkedBikeRepository
+import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import okhttp3.OkHttpClient
@@ -211,6 +215,29 @@ object NetworkModule {
         @ApplicationContext context: Context
     ): ParkedBikeRepository {
         return ParkedBikeRepositoryImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRidesDatabase(
+        @ApplicationContext context: Context
+    ): RidesDatabase {
+        return RidesDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecordedRideDao(database: RidesDatabase): RecordedRideDao {
+        return database.recordedRideDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecordedRidesRepository(
+        recordedRideDao: RecordedRideDao,
+        moshi: Moshi
+    ): RecordedRidesRepository {
+        return RecordedRidesRepositoryImpl(recordedRideDao, moshi)
     }
 }
 

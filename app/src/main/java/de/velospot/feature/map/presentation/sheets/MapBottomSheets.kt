@@ -41,6 +41,8 @@ internal fun MapBottomSheets(
     val selectedSavedPlace   by viewModel.selectedSavedPlace.collectAsStateWithLifecycle()
     val parkedBike           by viewModel.parkedBike.collectAsStateWithLifecycle()
     val isParkedBikeSheetVisible by viewModel.isParkedBikeSheetVisible.collectAsStateWithLifecycle()
+    val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
+    val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
     val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
     val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
@@ -125,6 +127,29 @@ internal fun MapBottomSheets(
 
     if (screenUiState.isAboutSheetVisible) {
         AboutSheet(onDismiss = screenUiState::closeAbout)
+    }
+
+    // "My rides" timeline (list of recorded rides).
+    if (screenUiState.isRidesSheetVisible) {
+        RidesSheet(
+            rides        = recordedRides,
+            onDismiss    = screenUiState::closeRides,
+            onSelectRide = { ride ->
+                screenUiState.closeRides()
+                viewModel.selectRecordedRide(ride)
+            }
+        )
+    }
+
+    // Detail view for a single recorded ride (stats + speed timeline).
+    selectedRide?.let { ride ->
+        RideDetailSheet(
+            ride      = ride,
+            onDismiss = viewModel::dismissSelectedRide,
+            onDelete  = { id ->
+                viewModel.deleteRecordedRide(id)
+            }
+        )
     }
 
     if (showOfflineSetupSheet) {
