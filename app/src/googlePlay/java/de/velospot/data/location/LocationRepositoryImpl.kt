@@ -126,6 +126,7 @@ private fun android.location.Location.toGeoCoordinate(): GeoCoordinate = GeoCoor
     latitude  = latitude,
     longitude = longitude,
     bearing   = if (hasBearing()) bearing else null,
-    speedMetersPerSecond = if (hasSpeed()) speed else null
+    speedMetersPerSecond = if (hasSpeed()) speed else null,
+    altitudeMeters = if (hasAltitude()) altitude else null
 )
 

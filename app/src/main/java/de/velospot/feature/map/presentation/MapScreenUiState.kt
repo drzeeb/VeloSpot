@@ -27,6 +27,9 @@ internal class MapScreenUiState {
     var isAboutSheetVisible by mutableStateOf(false)
         private set
 
+    var isRidesSheetVisible by mutableStateOf(false)
+        private set
+
     fun expandMenu() {
         isMenuExpanded = true
     }
@@ -78,6 +81,15 @@ internal class MapScreenUiState {
 
     fun closeAbout() {
         isAboutSheetVisible = false
+    }
+
+    fun openRides() {
+        isRidesSheetVisible = true
+        isMenuExpanded = false
+    }
+
+    fun closeRides() {
+        isRidesSheetVisible = false
     }
 }
 

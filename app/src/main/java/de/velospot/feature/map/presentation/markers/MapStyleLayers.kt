@@ -11,7 +11,10 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 
 /**
  * MapLibre style plumbing: source / layer / image IDs and the idempotent helpers
@@ -33,6 +36,9 @@ internal const val SOURCE_PARKED_BIKE = "velospot-parked-bike-source"
 /** Geometry of the already-travelled part of the route (drawn greyed-out). */
 internal const val SOURCE_ROUTE_TRAVELED = "velospot-route-traveled-source"
 
+/** Geometry of the live recorded ride track (or a reopened ride's track). */
+internal const val SOURCE_TRACK = "velospot-track-source"
+
 internal const val LAYER_ROUTE      = "velospot-route-layer"
 internal const val LAYER_PARKING    = "velospot-parking-layer"
 internal const val LAYER_PARKING_CLUSTER       = "velospot-parking-cluster-layer"
@@ -46,6 +52,9 @@ internal const val LAYER_PARKED_BIKE = "velospot-parked-bike-layer"
 
 /** Greyed-out "already travelled" portion of the route, drawn beneath [LAYER_ROUTE]. */
 internal const val LAYER_ROUTE_TRAVELED = "velospot-route-traveled-layer"
+
+/** Recorded ride track (live recording or a reopened ride). */
+internal const val LAYER_TRACK = "velospot-track-layer"
 
 /** 3D building extrusion layer (added on top of the vector style's flat buildings). */
 internal const val LAYER_BUILDINGS_3D = "velospot-buildings-3d-layer"
@@ -344,6 +353,36 @@ internal fun ensureParkedBikeLayer(style: Style) {
             PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
         )
     )
+}
+
+/**
+ * Idempotently registers the recorded-ride track line and replaces its geometry.
+ * Drawn as a dashed line in the supplied [colorInt] beneath the parking markers,
+ * so it never paints over a pin. Pass an empty list to clear it.
+ */
+internal fun updateTrackLayer(style: Style, points: List<Pair<Double, Double>>, colorInt: Int) {
+    val data = if (points.size > 1) {
+        FeatureCollection.fromFeature(
+            Feature.fromGeometry(
+                LineString.fromLngLats(points.map { Point.fromLngLat(it.second, it.first) })
+            )
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    upsertSource(style, SOURCE_TRACK, data)
+    if (style.getLayer(LAYER_TRACK) == null) {
+        val hex = "#%06X".format(0xFFFFFF and colorInt)
+        val layer = LineLayer(LAYER_TRACK, SOURCE_TRACK).withProperties(
+            PropertyFactory.lineColor(hex),
+            PropertyFactory.lineWidth(5f),
+            PropertyFactory.lineOpacity(0.9f),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
+        )
+        if (style.getLayer(LAYER_PARKING) != null) style.addLayerBelow(layer, LAYER_PARKING)
+        else style.addLayer(layer)
+    }
 }
 
 // â”€â”€ Icon registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

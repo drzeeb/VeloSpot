@@ -79,6 +79,8 @@ fun MainMapScreen(
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
+    val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
+    val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -367,6 +369,16 @@ fun MainMapScreen(
         }
     }
 
+    // ── Recorded-ride track polyline (live recording or a reopened ride) ──────
+    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints) {
+        val style = maplibreMap?.style ?: return@LaunchedEffect
+        de.velospot.feature.map.presentation.markers.updateTrackLayer(
+            style = style,
+            points = rideTrackPoints.map { it.latitude to it.longitude },
+            colorInt = markerStyleConfig.routeColor
+        )
+    }
+
 
     // ── UI layout ─────────────────────────────────────────────────────────────
     Box(modifier = Modifier.fillMaxSize()) {
@@ -431,7 +443,8 @@ fun MainMapScreen(
                     onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
                     onShowParkedBike      = viewModel::showParkedBike,
                     onToggleSimulation    = viewModel::toggleRouteSimulation,
-                    onOpenAbout           = screenUiState::openAbout
+                    onOpenAbout           = screenUiState::openAbout,
+                    onOpenRides           = screenUiState::openRides
                 )
             )
         }
@@ -440,6 +453,27 @@ fun MainMapScreen(
             is OfflineRoutingUiState.Downloading      -> OfflineSetupProgressOverlay(state = offState)
             is OfflineRoutingUiState.DownloadComplete -> OfflineSetupSuccessOverlay()
             else -> Unit
+        }
+
+        // ── Ride tracking — live stats card + record/stop FAB ────────────────
+        // Hidden during active navigation: the ride is auto-recorded there and the
+        // navigation card already owns the bottom area.
+        if (activeNavigation == null) {
+            val recording = rideTrackingState as? RideTrackingUiState.Recording
+            if (recording != null) {
+                RideTrackingOverlay(
+                    stats     = recording.stats,
+                    onStop    = viewModel::stopRideTracking,
+                    onDiscard = viewModel::discardRideTracking
+                )
+            }
+            RecordRideFab(
+                isRecording = recording != null,
+                onClick = {
+                    if (recording != null) viewModel.stopRideTracking()
+                    else viewModel.startRideTracking()
+                }
+            )
         }
 
         MyLocationFab(onClick = requestOrUseLocation)

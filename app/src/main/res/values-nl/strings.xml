@@ -150,4 +150,25 @@
     <string name="parked_bike_just_now">Net geparkeerd</string>
     <string name="parked_bike_parked_ago">%1$s geleden geparkeerd</string>
     <string name="parked_bike_distance_away">%1$s verderop</string>
+    <!-- Ride tracking ("Mijn ritten") -->
+    <string name="menu_my_rides">Mijn ritten</string>
+    <string name="rides_title">Mijn ritten</string>
+    <string name="rides_count">%1$d ritten</string>
+    <string name="rides_empty_title">Nog geen ritten</string>
+    <string name="rides_empty_text">Tik op de rode opnameknop op de kaart om een rit vast te leggen. Hij verschijnt hier met afstand, duur en snelheid.</string>
+    <string name="ride_recording">Rit wordt opgenomen</string>
+    <string name="ride_stop">Stoppen</string>
+    <string name="ride_discard">Verwijderen</string>
+    <string name="ride_saved">Rit opgeslagen</string>
+    <string name="ride_too_short">Rit te kort om op te slaan</string>
+    <string name="ride_stat_time">Tijd</string>
+    <string name="ride_stat_distance">Afstand</string>
+    <string name="ride_stat_speed">Snelheid</string>
+    <string name="ride_stat_moving">Bewegingstijd</string>
+    <string name="ride_stat_max_speed">Max. snelheid</string>
+    <string name="ride_stat_elevation_gain">Stijging</string>
+    <string name="ride_stat_elevation_loss">Daling</string>
+    <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_speed_chart_title">Snelheid over tijd</string>
+    <string name="ride_delete">Rit verwijderen</string>
 </resources>

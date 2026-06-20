@@ -151,4 +151,25 @@
     <string name="parked_bike_just_now">Tout juste garé</string>
     <string name="parked_bike_parked_ago">Garé il y a %1$s</string>
     <string name="parked_bike_distance_away">à %1$s</string>
+    <!-- Ride tracking ("Mes trajets") -->
+    <string name="menu_my_rides">Mes trajets</string>
+    <string name="rides_title">Mes trajets</string>
+    <string name="rides_count">%1$d trajets</string>
+    <string name="rides_empty_title">Aucun trajet</string>
+    <string name="rides_empty_text">Touchez le bouton rouge d\'enregistrement sur la carte pour enregistrer un trajet. Il apparaîtra ici avec la distance, la durée et la vitesse.</string>
+    <string name="ride_recording">Enregistrement du trajet</string>
+    <string name="ride_stop">Arrêter</string>
+    <string name="ride_discard">Abandonner</string>
+    <string name="ride_saved">Trajet enregistré</string>
+    <string name="ride_too_short">Trajet trop court pour être enregistré</string>
+    <string name="ride_stat_time">Durée</string>
+    <string name="ride_stat_distance">Distance</string>
+    <string name="ride_stat_speed">Vitesse</string>
+    <string name="ride_stat_moving">Temps en mouvement</string>
+    <string name="ride_stat_max_speed">Vitesse max</string>
+    <string name="ride_stat_elevation_gain">Dénivelé positif</string>
+    <string name="ride_stat_elevation_loss">Dénivelé négatif</string>
+    <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_speed_chart_title">Vitesse dans le temps</string>
+    <string name="ride_delete">Supprimer le trajet</string>
 </resources>

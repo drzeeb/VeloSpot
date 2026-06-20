@@ -150,4 +150,25 @@
     <string name="parked_bike_just_now">Just gepaarkt</string>
     <string name="parked_bike_parked_ago">Virun %1$s gepaarkt</string>
     <string name="parked_bike_distance_away">%1$s ewech</string>
+    <!-- Ride tracking ("Meng Touren") -->
+    <string name="menu_my_rides">Meng Touren</string>
+    <string name="rides_title">Meng Touren</string>
+    <string name="rides_count">%1$d Touren</string>
+    <string name="rides_empty_title">Nach keng Touren</string>
+    <string name="rides_empty_text">Tipp op de roude Knäppche op der Kaart fir eng Tour opzehuelen. Si erschéngt hei mat Distanz, Dauer a Vitesse.</string>
+    <string name="ride_recording">Tour gëtt opgeholl</string>
+    <string name="ride_stop">Stop</string>
+    <string name="ride_discard">Verwerfen</string>
+    <string name="ride_saved">Tour gespäichert</string>
+    <string name="ride_too_short">Tour ze kuerz fir ze späicheren</string>
+    <string name="ride_stat_time">Zäit</string>
+    <string name="ride_stat_distance">Distanz</string>
+    <string name="ride_stat_speed">Vitesse</string>
+    <string name="ride_stat_moving">Beweegungszäit</string>
+    <string name="ride_stat_max_speed">Max. Vitesse</string>
+    <string name="ride_stat_elevation_gain">Opstig</string>
+    <string name="ride_stat_elevation_loss">Ofstig</string>
+    <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_speed_chart_title">Vitesse iwwer Zäit</string>
+    <string name="ride_delete">Tour läschen</string>
 </resources>
