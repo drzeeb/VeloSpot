@@ -456,6 +456,10 @@ assign any_cycleroute
   assign rawcostfactor ( # can be <1, adjusted to >=1 in final step of calculation of costfactor, uphillcostfactor,downhillcostfactor
     switch and highway= not route=ferry  10000 #only highways unless ferry
     switch highway=motorway|motorway_link|proposed|abandoned  10000
+    # Keep the MTB off trunk roads / "Kraftfahrstrassen" (motorway feeders & ramps,
+    # e.g. around the A1): forbid where cycling is signed off, otherwise -- unless the
+    # trunk explicitly carries bike infrastructure -- strongly avoid it.
+    switch and highway=trunk|trunk_link not isbike  switch bicycle=no|private|dismount|use_sidepath 10000 200
 
     # all other exclusions below (access, steps, ferries,..) should not be deleted by the decoder, to be available in voice-hint-processing
     min 9999

@@ -264,7 +264,14 @@ assign costfactor
     switch or highway=motorway|motorway_link motorroad=yes      10000
     switch    and nobikeaccess nofootaccess                     10000
     switch    highway= switch not route=ferry                   10000 2
-    switch    highway=trunk|trunk_link switch any_cycleroute    20 80
+    # Keep gravel bikes off trunk roads / "Kraftfahrstrassen" (typical motorway
+    # feeders and on/off ramps, e.g. around the A1): only ride a trunk that
+    # explicitly carries bike infrastructure, otherwise strongly avoid it -- and
+    # treat it as forbidden where cycling is signed off (bicycle=no/dismount).
+    switch    highway=trunk|trunk_link
+                ( switch or any_cycleway or any_cycleroute bicycle=yes|designated
+                    ( switch any_cycleroute 20 60 )
+                    ( switch bicycle=no|private|dismount 10000 200 ) )
     switch    highway=bridleway|raceway switch not bicycle=yes  20 5
     switch    highway=pedestrian switch not bicycle=yes         8 3
     switch    highway=primary|primary_link                      4.8

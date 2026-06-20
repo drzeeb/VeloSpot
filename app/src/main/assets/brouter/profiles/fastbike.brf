@@ -245,6 +245,8 @@ assign costfactor
 
 
   switch or highway=motorway highway=motorway_link    switch allow_motorways 1.5 10000
+  # never cycle a trunk / "Kraftfahrstrasse" where cycling is signed off (e.g. A1 feeders)
+  switch and or highway=trunk highway=trunk_link bicycle=no|private|use_sidepath  10000
   switch or highway=trunk highway=trunk_link          switch allow_motorways 1.5 10
   switch or highway=primary highway=primary_link      1.2
   switch or highway=secondary highway=secondary_link  1.1

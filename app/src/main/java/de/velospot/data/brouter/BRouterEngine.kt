@@ -131,6 +131,18 @@ class BRouterEngine(
 
     companion object {
         private const val TAG = "BRouterEngine"
+
+        /**
+         * Bump this whenever a bundled `.brf` profile (or `lookups.dat`) changes so
+         * [ensureProfiles] refreshes the copies in internal storage on existing installs.
+         *
+         * History:
+         * - 1: initial bundled profiles.
+         * - 2: trunk-road hardening across the bundled profiles (gravel, mtb, trekking,
+         *      fastbike, shortest) — keep bikes off trunk roads / motorway feeders.
+         */
+        private const val PROFILES_VERSION = "2"
+        private const val PROFILES_VERSION_FILE = ".profiles_version"
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -140,6 +152,10 @@ class BRouterEngine(
      * [profilesDir] in internal storage so BRouter can read them at runtime.
      * Throws [BRouterProfilesMissingException] when the assets folder is empty,
      * i.e. the user hasn't placed the profile files yet.
+     *
+     * Profiles are re-copied whenever [PROFILES_VERSION] changes, so bundled
+     * profile tweaks (e.g. routing-cost fixes) actually reach existing installs
+     * — a plain "copy only when missing" check would keep stale copies forever.
      */
     private fun ensureProfiles() {
         profilesDir.mkdirs()
@@ -148,13 +164,18 @@ class BRouterEngine(
         if (profileAssets.isEmpty()) {
             throw BRouterProfilesMissingException()
         }
+        val versionFile = File(profilesDir, PROFILES_VERSION_FILE)
+        val isUpToDate = versionFile.takeIf { it.exists() }?.readText()?.trim() == PROFILES_VERSION
         for (asset in profileAssets) {
             val dest = File(profilesDir, asset)
-            if (!dest.exists()) {
+            if (!dest.exists() || !isUpToDate) {
                 assetManager.open("brouter/profiles/$asset").use { input ->
                     dest.outputStream().use { output -> input.copyTo(output) }
                 }
             }
+        }
+        if (!isUpToDate) {
+            runCatching { versionFile.writeText(PROFILES_VERSION) }
         }
     }
 
