@@ -81,6 +81,15 @@ class NavigationManager(private val context: Context) {
 
         /** Fallback average bike speed (m/s ≈ 16 km/h) used for the ETA when the route carries none. */
         const val DEFAULT_BIKE_SPEED_MPS = 4.5
+
+        /**
+         * Minimum distance (m) the snapped point must travel within the same route
+         * segment before the travelled/remaining polyline split is re-rendered.
+         * Below this the (potentially O(route)) rebuild is skipped, since moving the
+         * single split boundary a few metres along the line is visually imperceptible
+         * — the smoothly-eased puck (redrawn every frame) carries the motion instead.
+         */
+        const val RENDER_MIN_SNAP_MOVE_M = 12.0
     }
 
     private var map: MapLibreMap? = null
@@ -98,6 +107,16 @@ class NavigationManager(private val context: Context) {
     /** Snapped point of the most recent match — basis for the travelled/remaining split. */
     private var lastSnapLat = 0.0
     private var lastSnapLon = 0.0
+
+    /**
+     * The segment index and snapped position the route split was last *rendered* at.
+     * Used by [renderRouteSplit] to skip redundant rebuilds while the rider creeps
+     * along the same segment (see [RENDER_MIN_SNAP_MOVE_M]). `-1` forces the next
+     * render (set on [start]).
+     */
+    private var renderedSegment = -1
+    private var renderedSnapLat = 0.0
+    private var renderedSnapLon = 0.0
 
     /** Consecutive off-route fixes seen so far, and whether [onOffRoute] already fired. */
     private var consecutiveOffRoute = 0
@@ -167,7 +186,8 @@ class NavigationManager(private val context: Context) {
         if (active) {
             // Navigation is always 3D: re-assert buildings after a style reload.
             setBuildingExtrusionVisible(style, true)
-            renderRouteSplit()
+            // The reloaded style has empty sources — re-render unconditionally.
+            renderRouteSplit(force = true)
             if (initialized) writePuck()
         } else {
             // Reflect the saved 2D/3D preference on the idle map (also after a
@@ -208,12 +228,14 @@ class NavigationManager(private val context: Context) {
         offRouteFired = false
         active = true
         initialized = false
+        // Force the first split render for this route (invalidate the diff tracker).
+        renderedSegment = -1
         // Seed the split geometry at the route start (nothing travelled yet).
         lastSnapLat = routePoints.firstOrNull()?.latitude ?: 0.0
         lastSnapLon = routePoints.firstOrNull()?.longitude ?: 0.0
         // Navigation is always 3D.
         map?.style?.let { setBuildingExtrusionVisible(it, true) }
-        renderRouteSplit()
+        renderRouteSplit(force = true)
         lastFrameNanos = 0L
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         Choreographer.getInstance().postFrameCallback(frameCallback)
@@ -315,12 +337,29 @@ class NavigationManager(private val context: Context) {
      * "travelled" line ([SOURCE_ROUTE_TRAVELED]) and the coloured "remaining" line
      * ([SOURCE_ROUTE]), so the part behind the rider visually falls back. Cheap —
      * only runs on new GPS fixes, not every frame.
+     *
+     * Skips the rebuild entirely while the rider is still on the **same segment**
+     * and the snapped point has moved less than [RENDER_MIN_SNAP_MOVE_M]: in that
+     * case only the single split-boundary point would shift a few metres, which is
+     * imperceptible, so the (potentially O(route)) polyline reconstruction and
+     * GeoJSON re-upload are avoided. Pass [force] = `true` to render unconditionally
+     * (route start, style reload).
      */
-    private fun renderRouteSplit() {
+    private fun renderRouteSplit(force: Boolean = false) {
         val style = map?.style ?: return
         if (route.size < 2) return
 
         val seg = lastSegment.coerceIn(0, route.size - 2)
+
+        // Diff: nothing structural changed (same segment) and the boundary barely
+        // moved → skip the rebuild. The eased puck still carries the live motion.
+        if (!force &&
+            seg == renderedSegment &&
+            GeoMath.distanceMeters(lastSnapLat, lastSnapLon, renderedSnapLat, renderedSnapLon) < RENDER_MIN_SNAP_MOVE_M
+        ) {
+            return
+        }
+
         val snap = Point.fromLngLat(lastSnapLon, lastSnapLat)
 
         val traveled = ArrayList<Point>(seg + 2)
@@ -336,6 +375,11 @@ class NavigationManager(private val context: Context) {
         // Coloured line first (so it can be the anchor), then the grey line below it.
         ensureRouteLayer(style, routeColor)
         ensureTraveledRouteLayer(style)
+
+        // Remember what we just rendered so the next fix can be diffed against it.
+        renderedSegment = seg
+        renderedSnapLat = lastSnapLat
+        renderedSnapLon = lastSnapLon
     }
 
     /** Builds a single-LineString [FeatureCollection], or an empty one for < 2 points. */
