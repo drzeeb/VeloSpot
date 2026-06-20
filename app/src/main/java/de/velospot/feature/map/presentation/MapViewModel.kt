@@ -322,7 +322,8 @@ class MapViewModel @Inject constructor(
         _is3DNavigation.value = enabled
     }
 
-    fun onSearchQueryChanged(query: String) {        _searchQuery.value = query
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
         searchJob?.cancel()
         if (query.length < SEARCH_MIN_CHARS) {
             _searchResults.value = emptyList()
@@ -393,26 +394,34 @@ class MapViewModel @Inject constructor(
             address?.substringBefore(",")?.trim()
                 ?: context.getString(de.velospot.R.string.saved_place_title)
         }
+        persistSavedPlace(resolvedName, pin.latitude, pin.longitude, address)
+        dismissCustomMapPin()
+    }
+
+    /** Persists a new named [SavedPlace] with a fresh id and timestamp. */
+    private fun persistSavedPlace(
+        name: String,
+        latitude: Double,
+        longitude: Double,
+        address: String?
+    ) {
         viewModelScope.launch {
             savedPlacesRepository.savePlace(
                 SavedPlace(
                     id        = UUID.randomUUID().toString(),
-                    name      = resolvedName,
-                    latitude  = pin.latitude,
-                    longitude = pin.longitude,
+                    name      = name,
+                    latitude  = latitude,
+                    longitude = longitude,
                     address   = address,
                     addedAt   = System.currentTimeMillis()
                 )
             )
         }
-        dismissCustomMapPin()
     }
 
     /** Opens the detail sheet for a saved place and centres the camera on it. */
     fun selectSavedPlace(place: SavedPlace) {
-        _customMapPin.value      = null
-        _selectedSearchPin.value = null
-        _selectedSpace.value     = null
+        clearPlaceSelections()
         _selectedSavedPlace.value = place
         _mapCameraTarget.value = MapCameraTarget(
             latitude               = place.latitude,
@@ -427,6 +436,18 @@ class MapViewModel @Inject constructor(
     fun removeSavedPlace(id: String) {
         if (_selectedSavedPlace.value?.id == id) _selectedSavedPlace.value = null
         viewModelScope.launch { savedPlacesRepository.removePlace(id) }
+    }
+
+    /**
+     * Clears every transient map selection (parking space, search pin, custom pin,
+     * saved place) so opening one detail sheet always dismisses the others. Callers
+     * set their own selection immediately afterwards.
+     */
+    private fun clearPlaceSelections() {
+        _selectedSpace.value      = null
+        _selectedSearchPin.value  = null
+        _customMapPin.value       = null
+        _selectedSavedPlace.value = null
     }
 
     // ── Parked bike (where the user left their bike) ───────────────────────────
@@ -478,10 +499,7 @@ class MapViewModel @Inject constructor(
     /** Opens the parked-bike detail sheet and centres the camera on the marker. */
     fun showParkedBike() {
         val bike = _parkedBike.value ?: return
-        _selectedSpace.value      = null
-        _selectedSearchPin.value  = null
-        _customMapPin.value       = null
-        _selectedSavedPlace.value = null
+        clearPlaceSelections()
         _isParkedBikeSheetVisible.value = true
         _mapCameraTarget.value = MapCameraTarget(
             latitude               = bike.latitude,
@@ -499,20 +517,43 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { parkedBikeRepository.clear() }
     }
 
+    /**
+     * Builds a synthetic [BikeParkingSpace] used to route to a non-parking target
+     * (custom pin, address search result, saved place, parked bike). All such
+     * targets share the same "unknown facility" fields, so only the identifying
+     * data varies — centralising construction here keeps the four navigation
+     * entry points DRY and consistent with [SYNTHETIC_DESTINATION_IDS].
+     */
+    private fun syntheticSpace(
+        id: String,
+        latitude: Double,
+        longitude: Double,
+        name: String,
+        address: String?,
+        sourceLayer: String
+    ): BikeParkingSpace = BikeParkingSpace(
+        id          = id,
+        latitude    = latitude,
+        longitude   = longitude,
+        type        = BikeParkingType.UNKNOWN,
+        capacity    = null,
+        name        = name,
+        address     = address,
+        isCovered   = null,
+        imageUrl    = null,
+        operator    = null,
+        sourceLayer = sourceLayer
+    )
+
     /** Starts in-app navigation back to the parked bike. */
     fun navigateToParkedBike() {
         val bike = _parkedBike.value ?: return
-        val syntheticSpace = BikeParkingSpace(
+        val syntheticSpace = syntheticSpace(
             id          = ID_PARKED_BIKE,
             latitude    = bike.latitude,
             longitude   = bike.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = context.getString(de.velospot.R.string.parked_bike_title),
             address     = bike.address,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "parked_bike"
         )
         _isParkedBikeSheetVisible.value = false
@@ -521,17 +562,12 @@ class MapViewModel @Inject constructor(
 
     /** Starts in-app navigation to a saved place. */
     fun navigateToSavedPlace(place: SavedPlace) {
-        val syntheticSpace = BikeParkingSpace(
+        val syntheticSpace = syntheticSpace(
             id          = ID_SAVED_PLACE,
             latitude    = place.latitude,
             longitude   = place.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = place.name,
             address     = place.address,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "saved"
         )
         _selectedSavedPlace.value = null
@@ -543,18 +579,13 @@ class MapViewModel @Inject constructor(
         val pin     = _customMapPin.value ?: return
         val address = _customMapPinAddress.value
         // Pin stays on the map so the route end-point remains visible during navigation.
-        val syntheticSpace = BikeParkingSpace(
+        val syntheticSpace = syntheticSpace(
             id          = ID_CUSTOM_MAP_PIN,
             latitude    = pin.latitude,
             longitude   = pin.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = address?.substringBefore(",")?.trim()
                             ?: context.getString(de.velospot.R.string.custom_pin_title),
             address     = address,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "custom"
         )
         startInAppNavigation(syntheticSpace)
@@ -592,18 +623,7 @@ class MapViewModel @Inject constructor(
             address.substringBefore(",").trim()
                 .ifBlank { context.getString(de.velospot.R.string.saved_place_title) }
         }
-        viewModelScope.launch {
-            savedPlacesRepository.savePlace(
-                SavedPlace(
-                    id        = UUID.randomUUID().toString(),
-                    name      = resolvedName,
-                    latitude  = pin.latitude,
-                    longitude = pin.longitude,
-                    address   = address,
-                    addedAt   = System.currentTimeMillis()
-                )
-            )
-        }
+        persistSavedPlace(resolvedName, pin.latitude, pin.longitude, address)
         dismissSearchPin()
     }
 
@@ -611,17 +631,12 @@ class MapViewModel @Inject constructor(
     fun startNavigationToAddress(result: AddressSearchResult) {
         // Wrap the address as a synthetic BikeParkingSpace so the existing routing
         // and navigation overlay work without modification.
-        val syntheticSpace = BikeParkingSpace(
+        val syntheticSpace = syntheticSpace(
             id          = ID_ADDRESS_SEARCH_PIN,
             latitude    = result.latitude,
             longitude   = result.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = result.displayName.substringBefore(",").trim(),
             address     = result.displayName,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "search"
         )
         _selectedSearchPin.value = null
@@ -721,8 +736,22 @@ class MapViewModel @Inject constructor(
             altitudeMeters = altitude
         )
         _rideTrackingState.value = RideTrackingUiState.Recording(stats)
-        _rideTrackPoints.value = rideTracker.trackPoints.map { RoutePoint(it.latitude, it.longitude) }
+        // `addPoint` always appends exactly one TrackPoint, so we mirror only that
+        // single new point instead of re-mapping the entire (ever-growing) track on
+        // every GPS fix. This turns an O(n) full rebuild per fix — i.e. O(n²) and
+        // N fresh RoutePoint allocations over a whole ride — into a single append,
+        // sparing the GC and avoiding redundant Compose recompositions.
+        _rideTrackPoints.update { it + RoutePoint(location.latitude, location.longitude) }
     }
+
+    /**
+     * Cursor into the active route's point list marking the last elevation match.
+     * A rider advances monotonically along the route, so the next nearest point is
+     * almost always at or ahead of this index — letting [activeRouteElevationAt]
+     * resume the search here instead of rescanning from the start every GPS fix.
+     * Reset to 0 whenever a fresh route is set (start / reroute).
+     */
+    private var lastElevationIndex = 0
 
     /**
      * Terrain elevation (m) of the active route nearest to [location], or `null`
@@ -731,16 +760,22 @@ class MapViewModel @Inject constructor(
      */
     private fun activeRouteElevationAt(location: GeoCoordinate): Double? {
         val route = (_navigationUiState.value as? NavigationUiState.Active)?.route ?: return null
+        val points = route.points
+        if (lastElevationIndex >= points.size) lastElevationIndex = 0
+
         var best: Double? = null
         var bestDist = Double.MAX_VALUE
-        for (point in route.points) {
-            val elevation = point.elevationMeters ?: continue
+        // Resume from the last match: amortised ~O(1) per fix instead of O(route)
+        // because the nearest point rarely lies behind the previous one.
+        for (i in lastElevationIndex until points.size) {
+            val elevation = points[i].elevationMeters ?: continue
             val dist = GeoMath.distanceMeters(
-                location.latitude, location.longitude, point.latitude, point.longitude
+                location.latitude, location.longitude, points[i].latitude, points[i].longitude
             )
             if (dist < bestDist) {
                 bestDist = dist
                 best = elevation
+                lastElevationIndex = i
             }
         }
         return if (bestDist <= ROUTE_ELEVATION_MATCH_METERS) best else null
@@ -748,10 +783,7 @@ class MapViewModel @Inject constructor(
 
     /** Opens the detail sheet for a recorded ride and draws its track on the map. */
     fun selectRecordedRide(ride: RecordedRide) {
-        _selectedSpace.value = null
-        _selectedSearchPin.value = null
-        _customMapPin.value = null
-        _selectedSavedPlace.value = null
+        clearPlaceSelections()
         _selectedRide.value = ride
         if (!rideTracker.isRecording) {
             _rideTrackPoints.value = ride.points.map { RoutePoint(it.latitude, it.longitude) }
@@ -999,6 +1031,7 @@ class MapViewModel @Inject constructor(
                 )
             }.onSuccess {
                 _navigationUiState.value = NavigationUiState.Active(destination = space, route = it)
+                lastElevationIndex = 0
                 // Active navigation needs precise, frequent fixes.
                 setHighAccuracyLocation(true)
                 // Auto-record the ride for the whole navigation (unless the user is
@@ -1066,6 +1099,7 @@ class MapViewModel @Inject constructor(
                 if (current?.destination?.id == active.destination.id) {
                     _navigationUiState.value = NavigationUiState.Active(active.destination, newRoute)
                     _navigationProgress.value = null
+                    lastElevationIndex = 0
                 }
             }
             // On failure we silently keep the existing route; the next off-route
