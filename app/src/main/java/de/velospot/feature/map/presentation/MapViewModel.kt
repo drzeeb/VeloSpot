@@ -36,6 +36,8 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import de.velospot.feature.map.presentation.offline.OfflineRoutingController
+import de.velospot.feature.map.presentation.places.ParkedBikeController
+import de.velospot.feature.map.presentation.places.SavedPlacesController
 import de.velospot.feature.map.presentation.ride.RideTrackingController
 import de.velospot.feature.map.presentation.search.AddressSearchController
 import kotlinx.coroutines.Job
@@ -45,7 +47,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
@@ -83,9 +84,9 @@ class MapViewModel @Inject constructor(
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
     private val nominatimGeocoder: NominatimGeocoder,
-    private val savedPlacesRepository: SavedPlacesRepository,
-    private val parkedBikeRepository: ParkedBikeRepository,
-    private val recordedRidesRepository: RecordedRidesRepository,
+    savedPlacesRepository: SavedPlacesRepository,
+    parkedBikeRepository: ParkedBikeRepository,
+    recordedRidesRepository: RecordedRidesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -259,21 +260,29 @@ class MapViewModel @Inject constructor(
     private val _customMapPinAddress = MutableStateFlow<String?>(null)
     val customMapPinAddress: StateFlow<String?> = _customMapPinAddress.asStateFlow()
 
-    /** All user-saved custom places (manually placed pins saved as named favourites). */
-    private val _savedPlaces = MutableStateFlow<List<SavedPlace>>(emptyList())
-    val savedPlaces: StateFlow<List<SavedPlace>> = _savedPlaces.asStateFlow()
+    /** Owns the saved-places concern (persisted named pins + open detail sheet). */
+    private val savedPlacesController = SavedPlacesController(
+        scope = viewModelScope,
+        repository = savedPlacesRepository,
+        clearOtherSelections = { clearPlaceSelections() },
+        moveCamera = { target -> _mapCameraTarget.value = target }
+    )
+    val savedPlaces: StateFlow<List<SavedPlace>> = savedPlacesController.savedPlaces
+    val selectedSavedPlace: StateFlow<SavedPlace?> = savedPlacesController.selectedPlace
 
-    /** The saved place whose detail sheet is currently open (null when none). */
-    private val _selectedSavedPlace = MutableStateFlow<SavedPlace?>(null)
-    val selectedSavedPlace: StateFlow<SavedPlace?> = _selectedSavedPlace.asStateFlow()
-
-    /** Where the user parked their bike (null when no bike is currently parked). */
-    private val _parkedBike = MutableStateFlow<ParkedBike?>(null)
-    val parkedBike: StateFlow<ParkedBike?> = _parkedBike.asStateFlow()
-
-    /** True while the parked-bike detail sheet is open. */
-    private val _isParkedBikeSheetVisible = MutableStateFlow(false)
-    val isParkedBikeSheetVisible: StateFlow<Boolean> = _isParkedBikeSheetVisible.asStateFlow()
+    /** Owns the parked-bike concern (stored location + detail sheet). */
+    private val parkedBikeController = ParkedBikeController(
+        scope = viewModelScope,
+        repository = parkedBikeRepository,
+        currentLocation = { _userLocation.value },
+        reverseGeocode = { lat, lon -> nominatimGeocoder.reverseGeocode(lat, lon) },
+        onUserMessage = { res -> _userMessageRes.value = res },
+        onParked = { dismissCustomMapPin() },
+        clearOtherSelections = { clearPlaceSelections() },
+        moveCamera = { target -> _mapCameraTarget.value = target }
+    )
+    val parkedBike: StateFlow<ParkedBike?> = parkedBikeController.parkedBike
+    val isParkedBikeSheetVisible: StateFlow<Boolean> = parkedBikeController.isSheetVisible
 
     /**
      * One-shot, string-resource user message (e.g. "bike location saved").
@@ -342,12 +351,6 @@ class MapViewModel @Inject constructor(
 
     // ── Saved places (custom pins saved as named favourites) ───────────────────
 
-    private fun observeSavedPlaces() {
-        viewModelScope.launch {
-            savedPlacesRepository.getSavedPlacesFlow().collect { _savedPlaces.value = it }
-        }
-    }
-
     /**
      * Saves the current custom pin as a named favourite place and dismisses the
      * transient custom pin (it reappears as a persistent saved-place marker).
@@ -359,49 +362,15 @@ class MapViewModel @Inject constructor(
             address?.substringBefore(",")?.trim()
                 ?: context.getString(de.velospot.R.string.saved_place_title)
         }
-        persistSavedPlace(resolvedName, pin.latitude, pin.longitude, address)
+        savedPlacesController.persist(resolvedName, pin.latitude, pin.longitude, address)
         dismissCustomMapPin()
     }
 
-    /** Persists a new named [SavedPlace] with a fresh id and timestamp. */
-    private fun persistSavedPlace(
-        name: String,
-        latitude: Double,
-        longitude: Double,
-        address: String?
-    ) {
-        viewModelScope.launch {
-            savedPlacesRepository.savePlace(
-                SavedPlace(
-                    id        = UUID.randomUUID().toString(),
-                    name      = name,
-                    latitude  = latitude,
-                    longitude = longitude,
-                    address   = address,
-                    addedAt   = System.currentTimeMillis()
-                )
-            )
-        }
-    }
+    fun selectSavedPlace(place: SavedPlace) = savedPlacesController.select(place)
 
-    /** Opens the detail sheet for a saved place and centres the camera on it. */
-    fun selectSavedPlace(place: SavedPlace) {
-        clearPlaceSelections()
-        _selectedSavedPlace.value = place
-        _mapCameraTarget.value = MapCameraTarget(
-            latitude               = place.latitude,
-            longitude              = place.longitude,
-            zoom                   = 16.0,
-            verticalOffsetFraction = 1.0 / 6.0
-        )
-    }
+    fun dismissSelectedSavedPlace() = savedPlacesController.clearSelection()
 
-    fun dismissSelectedSavedPlace() { _selectedSavedPlace.value = null }
-
-    fun removeSavedPlace(id: String) {
-        if (_selectedSavedPlace.value?.id == id) _selectedSavedPlace.value = null
-        viewModelScope.launch { savedPlacesRepository.removePlace(id) }
-    }
+    fun removeSavedPlace(id: String) = savedPlacesController.remove(id)
 
     /**
      * Clears every transient map selection (parking space, search pin, custom pin,
@@ -412,75 +381,21 @@ class MapViewModel @Inject constructor(
         _selectedSpace.value      = null
         _selectedSearchPin.value  = null
         _customMapPin.value       = null
-        _selectedSavedPlace.value = null
+        savedPlacesController.clearSelection()
     }
 
     // ── Parked bike (where the user left their bike) ───────────────────────────
 
-    private fun observeParkedBike() {
-        viewModelScope.launch {
-            parkedBikeRepository.getParkedBikeFlow().collect { _parkedBike.value = it }
-        }
-    }
+    fun parkBikeAtCurrentLocation() = parkedBikeController.parkAtCurrentLocation()
 
-    /**
-     * Parks the bike at the user's current GPS position. Emits a one-shot user
-     * message indicating success — or that the location is unavailable when there
-     * is no GPS fix yet. The street address is reverse-geocoded in the background.
-     */
-    fun parkBikeAtCurrentLocation() {
-        val location = _userLocation.value ?: run {
-            _userMessageRes.value = de.velospot.R.string.error_location_unavailable
-            return
-        }
-        parkBikeAt(location.latitude, location.longitude)
-    }
+    fun parkBikeAt(latitude: Double, longitude: Double) =
+        parkedBikeController.parkAt(latitude, longitude)
 
-    /**
-     * Parks the bike at an explicit coordinate (e.g. a tapped custom pin). Any
-     * transient custom pin is dismissed; the persistent parked-bike marker takes
-     * its place.
-     */
-    fun parkBikeAt(latitude: Double, longitude: Double) {
-        val bike = ParkedBike(
-            latitude  = latitude,
-            longitude = longitude,
-            parkedAt  = System.currentTimeMillis(),
-            address   = null
-        )
-        viewModelScope.launch { parkedBikeRepository.park(bike) }
-        _customMapPin.value        = null
-        _customMapPinAddress.value = null
-        _userMessageRes.value      = de.velospot.R.string.parked_bike_saved
-        // Resolve the street address in the background and persist the enriched record.
-        viewModelScope.launch {
-            val address = runCatching { nominatimGeocoder.reverseGeocode(latitude, longitude) }.getOrNull()
-            if (address != null && _parkedBike.value?.parkedAt == bike.parkedAt) {
-                parkedBikeRepository.park(bike.copy(address = address))
-            }
-        }
-    }
+    fun showParkedBike() = parkedBikeController.showDetail()
 
-    /** Opens the parked-bike detail sheet and centres the camera on the marker. */
-    fun showParkedBike() {
-        val bike = _parkedBike.value ?: return
-        clearPlaceSelections()
-        _isParkedBikeSheetVisible.value = true
-        _mapCameraTarget.value = MapCameraTarget(
-            latitude               = bike.latitude,
-            longitude              = bike.longitude,
-            zoom                   = 17.0,
-            verticalOffsetFraction = 1.0 / 6.0
-        )
-    }
+    fun dismissParkedBikeSheet() = parkedBikeController.hideSheet()
 
-    fun dismissParkedBikeSheet() { _isParkedBikeSheetVisible.value = false }
-
-    /** The user collected their bike — clears the stored location and marker. */
-    fun pickUpBike() {
-        _isParkedBikeSheetVisible.value = false
-        viewModelScope.launch { parkedBikeRepository.clear() }
-    }
+    fun pickUpBike() = parkedBikeController.pickUp()
 
     /**
      * Builds a synthetic [BikeParkingSpace] used to route to a non-parking target
@@ -512,7 +427,7 @@ class MapViewModel @Inject constructor(
 
     /** Starts in-app navigation back to the parked bike. */
     fun navigateToParkedBike() {
-        val bike = _parkedBike.value ?: return
+        val bike = parkedBike.value ?: return
         val syntheticSpace = syntheticSpace(
             id          = ID_PARKED_BIKE,
             latitude    = bike.latitude,
@@ -521,7 +436,7 @@ class MapViewModel @Inject constructor(
             address     = bike.address,
             sourceLayer = "parked_bike"
         )
-        _isParkedBikeSheetVisible.value = false
+        parkedBikeController.hideSheet()
         startInAppNavigation(syntheticSpace)
     }
 
@@ -535,7 +450,7 @@ class MapViewModel @Inject constructor(
             address     = place.address,
             sourceLayer = "saved"
         )
-        _selectedSavedPlace.value = null
+        savedPlacesController.clearSelection()
         startInAppNavigation(syntheticSpace)
     }
 
@@ -588,7 +503,7 @@ class MapViewModel @Inject constructor(
             address.substringBefore(",").trim()
                 .ifBlank { context.getString(de.velospot.R.string.saved_place_title) }
         }
-        persistSavedPlace(resolvedName, pin.latitude, pin.longitude, address)
+        savedPlacesController.persist(resolvedName, pin.latitude, pin.longitude, address)
         dismissSearchPin()
     }
 
@@ -664,8 +579,6 @@ class MapViewModel @Inject constructor(
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
         observeUserLocation()
-        observeSavedPlaces()
-        observeParkedBike()
     }
 
     // ── Viewport / parking ────────────────────────────────────────────────────
