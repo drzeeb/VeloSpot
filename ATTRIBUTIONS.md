@@ -29,11 +29,11 @@ OSM data is available under the ODbL. This means:
 
 ## 🚲 Bike Parking Data
 
-### OpenStreetMap – Germany extract
-- **Source**: Geofabrik GmbH, https://download.geofabrik.de/europe/germany.html
+### OpenStreetMap – Germany, France & Luxembourg extracts
+- **Source**: Geofabrik GmbH — https://download.geofabrik.de/europe/germany.html, https://download.geofabrik.de/europe/france.html, https://download.geofabrik.de/europe/luxembourg.html
 - **Base data**: OpenStreetMap contributors (© OpenStreetMap contributors)
 - **License**: ODbL 1.0
-- **Format**: Pre-processed SQLite database (Room asset, ~20 MB), generated with `scripts/extract_osm_parking.py`
+- **Format**: Pre-processed SQLite databases (Room assets, one per country, ~20 MB for Germany), generated with `scripts/extract_osm_parking.py` and merged on first launch
 
 ---
 

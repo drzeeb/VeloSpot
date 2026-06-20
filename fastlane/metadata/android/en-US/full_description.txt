@@ -1,4 +1,4 @@
-VeloSpot helps cyclists find and navigate to bike parking facilities across all of Germany – fully offline, without proprietary services and without any tracking.
+VeloSpot helps cyclists find and navigate to bike parking facilities across Germany, France and Luxembourg – fully offline, without proprietary services and without any tracking.
 
 The app ships with over 100,000 bike parking spots from OpenStreetMap, bundled as a SQLite database directly inside the app. All spots are visible from the very first launch, no network connection required.
 

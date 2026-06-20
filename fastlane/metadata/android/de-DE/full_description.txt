@@ -1,4 +1,4 @@
-VeloSpot hilft Radfahrenden dabei, Fahrradabstellplätze in ganz Deutschland zu finden und dorthin zu navigieren – vollständig offline, ohne proprietäre Dienste und ohne Tracking.
+VeloSpot hilft Radfahrenden dabei, Fahrradabstellplätze in Deutschland, Frankreich und Luxemburg zu finden und dorthin zu navigieren – vollständig offline, ohne proprietäre Dienste und ohne Tracking.
 
 Die App enthält über 100.000 Fahrradparkplätze aus OpenStreetMap, die als SQLite-Datenbank direkt in der App gebündelt sind. Ab dem ersten Start sind alle Stellplätze ohne Netzverbindung sichtbar.
 
