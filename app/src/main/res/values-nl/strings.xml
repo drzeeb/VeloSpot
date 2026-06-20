@@ -9,6 +9,8 @@
     <string name="language_sheet_title">Taal kiezen</string>
 
     <string name="map_center_on_my_location">Kaart op mijn locatie centreren</string>
+    <string name="map_recenter_follow">Opnieuw centreren en mijn locatie volgen</string>
+    <string name="map_recenter_follow_short">Centreren</string>
     <string name="map_my_location">Mijn locatie</string>
     <string name="map_snippet_spaces_format">%1$d plaatsen</string>
     <string name="map_snippet_covered">overdekt</string>

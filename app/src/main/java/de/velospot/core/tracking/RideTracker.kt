@@ -30,6 +30,20 @@ class RideTracker {
     /** Smoothed altitude at the last point where a gain/loss step was recorded. */
     private var lastRegisteredAltitude: Double? = null
 
+    /**
+     * Sliding window of the most recent **accepted raw** positions, used to compute
+     * the moving-average (smoothed) coordinate that is actually stored and drawn.
+     * Smoothing only affects the displayed/stored geometry — distance, speed and
+     * moving time are still derived from the raw GPS deltas (see [lastRawLat]/
+     * [lastRawLon]) so the totals stay accurate.
+     */
+    private val windowLat = ArrayDeque<Double>(SMOOTHING_WINDOW)
+    private val windowLon = ArrayDeque<Double>(SMOOTHING_WINDOW)
+    /** Last **raw** accepted position — the honest basis for distance/speed. */
+    private var lastRawLat = 0.0
+    private var lastRawLon = 0.0
+    private var hasRaw = false
+
     /** Whether a recording is currently in progress. */
     var isRecording: Boolean = false
         private set
@@ -48,12 +62,25 @@ class RideTracker {
         elevationLoss = 0.0
         smoothedAltitude = null
         lastRegisteredAltitude = null
+        windowLat.clear()
+        windowLon.clear()
+        lastRawLat = 0.0
+        lastRawLon = 0.0
+        hasRaw = false
         isRecording = true
     }
 
     /**
-     * Adds a GPS sample and returns the updated [LiveRideStats]. Filters out
-     * implausible jumps (teleporting fixes) and sub-metre jitter so a bike left
+     * Adds a GPS sample and returns the updated [LiveRideStats]. Implausible fixes
+     * are **rejected outright** (not appended to the track, not drawn, not counted)
+     * so a single drifting fix can no longer add a spike to the polyline or inflate
+     * the max speed. A fix is rejected when:
+     *  - its reported horizontal accuracy is worse than [MAX_ACCURACY_METERS]
+     *    (typical of GPS multipath in urban canyons / 3D building shadow), or
+     *  - the implied segment speed from the previous accepted fix exceeds
+     *    [MAX_PLAUSIBLE_SPEED_MPS] (a "teleport" outlier).
+     *
+     * Accepted fixes still go through the sub-metre jitter dead-band so a bike left
      * standing does not silently accumulate distance.
      */
     fun addPoint(
@@ -61,30 +88,41 @@ class RideTracker {
         longitude: Double,
         timestamp: Long,
         speedMps: Float?,
-        altitudeMeters: Double?
+        altitudeMeters: Double?,
+        accuracyMeters: Float? = null
     ): LiveRideStats {
         if (!isRecording) return currentStats()
+
+        // Accuracy gate: drop low-quality fixes before they can pollute the track.
+        // A fix without a reported accuracy is given the benefit of the doubt.
+        if (accuracyMeters != null && accuracyMeters > MAX_ACCURACY_METERS) {
+            return currentStats()
+        }
 
         val previous = points.lastOrNull()
         var pointSpeed = speedMps
 
-        if (previous != null) {
+        if (previous != null && hasRaw) {
             val dtMillis = timestamp - previous.timestamp
             if (dtMillis in 1..MAX_GAP_MILLIS) {
+                // Distance/speed are measured between the *raw* fixes (not the
+                // smoothed coordinates) so the moving-average never shortens totals.
                 val segMeters = GeoMath.distanceMeters(
-                    previous.latitude, previous.longitude, latitude, longitude
+                    lastRawLat, lastRawLon, latitude, longitude
                 )
                 val segSpeed = segMeters / (dtMillis / 1000.0)
-                // Reject obviously bogus fixes (e.g. > 30 m/s ≈ 108 km/h for a bike).
-                if (segSpeed <= MAX_PLAUSIBLE_SPEED_MPS) {
-                    if (segMeters >= MIN_SEGMENT_METERS) {
-                        distanceMeters += segMeters
-                    }
-                    if (segSpeed >= MOVING_SPEED_THRESHOLD_MPS) {
-                        movingMillis += dtMillis
-                    }
-                    if (pointSpeed == null) pointSpeed = segSpeed.toFloat()
+                // Reject obviously bogus fixes outright (teleport outliers): don't
+                // append them, so they can't show up as a spike on the map either.
+                if (segSpeed > MAX_PLAUSIBLE_SPEED_MPS) {
+                    return currentStats()
                 }
+                if (segMeters >= MIN_SEGMENT_METERS) {
+                    distanceMeters += segMeters
+                }
+                if (segSpeed >= MOVING_SPEED_THRESHOLD_MPS) {
+                    movingMillis += dtMillis
+                }
+                if (pointSpeed == null) pointSpeed = segSpeed.toFloat()
             }
         }
 
@@ -113,13 +151,32 @@ class RideTracker {
             }
         }
 
+        // ── Moving-average position smoothing ────────────────────────────────
+        // The fix is accepted: record it as the new raw anchor (the distance/speed
+        // basis), then push it into the sliding window and store the window average
+        // as the displayed/persisted coordinate. This tames the residual side-to-
+        // side jitter of otherwise in-spec fixes (the zig-zag seen even with good
+        // accuracy) while the raw anchor keeps the totals honest.
+        lastRawLat = latitude
+        lastRawLon = longitude
+        hasRaw = true
+        windowLat.addLast(latitude)
+        windowLon.addLast(longitude)
+        while (windowLat.size > SMOOTHING_WINDOW) {
+            windowLat.removeFirst()
+            windowLon.removeFirst()
+        }
+        val smoothLat = windowLat.average()
+        val smoothLon = windowLon.average()
+
         points.add(
             TrackPoint(
-                latitude = latitude,
-                longitude = longitude,
+                latitude = smoothLat,
+                longitude = smoothLon,
                 timestamp = timestamp,
                 speedMps = pointSpeed,
-                altitudeMeters = altitudeMeters
+                altitudeMeters = altitudeMeters,
+                accuracyMeters = accuracyMeters
             )
         )
         return currentStats()
@@ -182,10 +239,25 @@ class RideTracker {
         private const val MIN_SEGMENT_METERS = 1.5
         /** Speed above which the rider counts as "moving" (~2.9 km/h). */
         private const val MOVING_SPEED_THRESHOLD_MPS = 0.8
-        /** Reject fixes implying a faster-than-plausible bike speed (~108 km/h). */
-        private const val MAX_PLAUSIBLE_SPEED_MPS = 30.0
+        /** Reject fixes implying a faster-than-plausible bike speed (~90 km/h). */
+        private const val MAX_PLAUSIBLE_SPEED_MPS = 25.0
+        /**
+         * Reject fixes whose reported horizontal accuracy (1σ radius) is worse than
+         * this. GPS multipath in urban canyons / under 3D building shadow — exactly
+         * where the drift spikes appear — produces fixes with tens of metres of
+         * error; dropping them is the single biggest win against drift. Generous
+         * enough not to starve the track on an honestly-weak signal.
+         */
+        private const val MAX_ACCURACY_METERS = 30.0
         /** Ignore fixes separated by more than this (GPS dropout) for distance. */
         private const val MAX_GAP_MILLIS = 60_000L
+        /**
+         * Length of the moving-average window applied to the stored/displayed
+         * positions. A small window (3) clearly smooths the residual side-to-side
+         * jitter of in-spec fixes without adding noticeable lag at the ~3 s GPS
+         * cadence. Only affects geometry — distance/speed use the raw fixes.
+         */
+        private const val SMOOTHING_WINDOW = 3
         /** Exponential smoothing factor applied to the noisy GPS altitude (0..1). */
         private const val ALT_SMOOTHING_ALPHA = 0.3
         /** Minimum *smoothed* altitude change counted as real ascent/descent. */

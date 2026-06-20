@@ -133,20 +133,28 @@ class RideTrackingController(
         // segment files) while navigating; raw GPS altitude is far too noisy. Falls
         // back to GPS altitude for manual rides or sources without elevation.
         val altitude = activeRouteElevationAt(location) ?: location.altitudeMeters
+        // Remember the accepted-point count so we can tell whether the tracker kept
+        // this fix or rejected it (poor accuracy / implausible teleport jump).
+        val pointsBefore = tracker.trackPoints.size
         val stats = tracker.addPoint(
             latitude = location.latitude,
             longitude = location.longitude,
             timestamp = System.currentTimeMillis(),
             speedMps = location.speedMetersPerSecond,
-            altitudeMeters = altitude
+            altitudeMeters = altitude,
+            accuracyMeters = location.accuracyMeters
         )
         _trackingState.value = RideTrackingUiState.Recording(stats)
-        // `addPoint` always appends exactly one TrackPoint, so we mirror only that
-        // single new point instead of re-mapping the entire (ever-growing) track on
-        // every GPS fix. This turns an O(n) full rebuild per fix — i.e. O(n²) and
-        // N fresh RoutePoint allocations over a whole ride — into a single append,
-        // sparing the GC and avoiding redundant Compose recompositions.
-        _trackPoints.update { it + RoutePoint(location.latitude, location.longitude) }
+        // Only mirror the fix onto the map polyline when the tracker actually
+        // accepted it. Drift fixes the tracker rejected must not be drawn, otherwise
+        // a single bad fix paints the long "spike" lines seen in urban canyons.
+        // The tracker appends at most one TrackPoint, so we mirror only that single
+        // new point instead of re-mapping the entire (ever-growing) track on every
+        // fix — turning an O(n) full rebuild per fix into a single append.
+        if (tracker.trackPoints.size > pointsBefore) {
+            val accepted = tracker.trackPoints.last()
+            _trackPoints.update { it + RoutePoint(accepted.latitude, accepted.longitude) }
+        }
     }
 
     /**
