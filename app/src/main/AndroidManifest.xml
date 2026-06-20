@@ -7,6 +7,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Foreground service that keeps recording a ride while the app is in the
+         background or closed, with a persistent notification to stop/save it. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Posting the recording notification (runtime-requested on Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:allowBackup="true"
         android:name=".BaseApplication"
@@ -30,6 +37,37 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Keeps a ride recording alive (GPS + stats) while the app is in the
+             background or closed, surfacing a stop/save notification. -->
+        <service
+            android:name=".core.tracking.RideRecordingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- Quick Settings tile to start/stop a ride recording. -->
+        <service
+            android:name=".core.tracking.RideRecordingTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_ride_recording"
+            android:label="@string/ride_record_start"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Home-screen widget to start/stop a ride recording. -->
+        <receiver
+            android:name=".core.tracking.RideRecordingWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/ride_recording_widget_info" />
+        </receiver>
     </application>
 
 </manifest>

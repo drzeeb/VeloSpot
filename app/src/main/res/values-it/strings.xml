@@ -175,4 +175,9 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Velocità nel tempo</string>
     <string name="ride_delete">Elimina percorso</string>
+    <string name="ride_stop_save">Ferma e salva</string>
+    <string name="ride_notification_channel_name">Registrazione del percorso</string>
+    <string name="ride_notification_channel_description">Continua a registrare il tuo percorso mentre l\'app è in background.</string>
+    <string name="ride_record_start">Avvia percorso</string>
+    <string name="widget_ride_recording_description">Avvia o ferma la registrazione di un percorso.</string>
 </resources>

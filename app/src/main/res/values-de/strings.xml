@@ -179,4 +179,9 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Geschwindigkeit über Zeit</string>
     <string name="ride_delete">Fahrt löschen</string>
+    <string name="ride_stop_save">Stoppen &amp; speichern</string>
+    <string name="ride_notification_channel_name">Streckenaufzeichnung</string>
+    <string name="ride_notification_channel_description">Zeichnet deine Fahrt weiter auf, während die App im Hintergrund läuft.</string>
+    <string name="ride_record_start">Fahrt starten</string>
+    <string name="widget_ride_recording_description">Aufzeichnung einer Fahrt starten oder stoppen.</string>
 </resources>
