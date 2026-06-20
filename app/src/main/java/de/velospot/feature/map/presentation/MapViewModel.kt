@@ -9,7 +9,6 @@ import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.navigation.NavigationModePreferences
-import de.velospot.core.navigation.RouteSimulator
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.domain.model.AddressSearchResult
@@ -17,16 +16,12 @@ import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeParkingType
 import de.velospot.domain.model.BoundingBox
-import de.velospot.domain.model.BRouterProfilesMissingException
-import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.LiveRideStats
 import de.velospot.domain.model.MapError
-import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
-import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
@@ -35,6 +30,7 @@ import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.feature.map.presentation.navigation.NavigationController
 import de.velospot.feature.map.presentation.offline.OfflineRoutingController
 import de.velospot.feature.map.presentation.places.ParkedBikeController
 import de.velospot.feature.map.presentation.places.SavedPlacesController
@@ -51,9 +47,6 @@ import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
 private const val VIEWPORT_DEBOUNCE_MS  = 300L
-
-/** Minimum gap between automatic off-route reroutes. */
-private const val REROUTE_COOLDOWN_MS   = 8_000L
 
 data class MapCameraTarget(
     val latitude: Double,
@@ -101,14 +94,6 @@ class MapViewModel @Inject constructor(
         const val ID_PARKED_BIKE = "parked_bike"
 
         /**
-         * Remaining route distance (m) below which the rider counts as "arrived".
-         * When navigating to a real bike parking spot, reaching this radius auto-parks
-         * the bike at the destination.
-         */
-        private const val ARRIVAL_THRESHOLD_METERS = 25.0
-
-
-        /**
          * Synthetic destination IDs that must NOT trigger auto-parking on arrival —
          * only navigation to a genuine bike parking spot from the map data should.
          */
@@ -135,96 +120,86 @@ class MapViewModel @Inject constructor(
     private val _mapCameraTarget = MutableStateFlow<MapCameraTarget?>(null)
     val mapCameraTarget: StateFlow<MapCameraTarget?> = _mapCameraTarget.asStateFlow()
 
-    private val _navigationUiState = MutableStateFlow<NavigationUiState>(NavigationUiState.Idle)
-    val navigationUiState: StateFlow<NavigationUiState> = _navigationUiState.asStateFlow()
+    /** Owns the in-app navigation concern (route calc, progress, reroute, auto-park, GPS simulator). */
+    private val navigationController = NavigationController(
+        scope = viewModelScope,
+        routingRepository = routingRepository,
+        currentLocation = { _userLocation.value },
+        customPinDestinationId = ID_CUSTOM_MAP_PIN,
+        syntheticDestinationIds = SYNTHETIC_DESTINATION_IDS,
+        // Method references (not inline lambdas) so the mutual reference between
+        // this controller and `rideTracking` doesn't trip Kotlin's property-init
+        // type-inference into a recursion (the referenced members carry explicit
+        // signatures, breaking the cycle).
+        onSimulatedFix = ::onSimulatedNavigationFix,
+        onArrivedAtParkingSpot = ::onArrivedAtParkingSpot,
+        onNavigationStarted = ::onNavigationStarted,
+        onNavigationStopped = ::onNavigationStopped,
+        onRerouted = ::onNavigationRerouted,
+        onCustomPinNavigationEnded = ::dismissCustomMapPin
+    )
+    val navigationUiState: StateFlow<NavigationUiState> = navigationController.uiState
 
     /**
      * Live route progress (remaining distance + ETA) emitted by the
      * `NavigationManager` on each GPS fix; `null` when not navigating. Drives the
      * dynamic distance/ETA readout in the navigation overlay.
      */
-    private val _navigationProgress = MutableStateFlow<de.velospot.core.navigation.NavigationProgress?>(null)
-    val navigationProgress: StateFlow<de.velospot.core.navigation.NavigationProgress?> = _navigationProgress.asStateFlow()
+    val navigationProgress: StateFlow<de.velospot.core.navigation.NavigationProgress?> = navigationController.progress
 
     /** Pushed from the UI layer's `NavigationManager.onProgress` callback. */
-    fun updateNavigationProgress(progress: de.velospot.core.navigation.NavigationProgress) {
-        _navigationProgress.value = progress
-        maybeAutoParkOnArrival(progress)
+    fun updateNavigationProgress(progress: de.velospot.core.navigation.NavigationProgress) =
+        navigationController.updateProgress(progress)
+
+    // ── Navigation cross-feature hooks (wired into NavigationController) ────────
+
+    /** Feeds a simulated GPS fix into the location pipeline + active recording. */
+    private fun onSimulatedNavigationFix(fix: GeoCoordinate) {
+        _userLocation.value = fix
+        if (rideTracking.isRecording) rideTracking.feed(fix)
     }
 
-    /**
-     * Guards against repeatedly auto-parking once the rider has reached a parking
-     * spot. Reset whenever a fresh navigation starts.
-     */
-    private var hasAutoParkedForCurrentRoute = false
-
-    /**
-     * Auto-parks the bike the moment the rider arrives at a real bike parking spot.
-     * The route tracking already reports the remaining distance on every GPS fix;
-     * once it drops below [ARRIVAL_THRESHOLD_METERS] for a genuine parking-spot
-     * destination, the bike is parked at the spot and navigation ends — so the
-     * persistent marker is dropped without any extra tap.
-     */
-    private fun maybeAutoParkOnArrival(progress: de.velospot.core.navigation.NavigationProgress) {
-        if (hasAutoParkedForCurrentRoute) return
-        val destination = (_navigationUiState.value as? NavigationUiState.Active)?.destination ?: return
-        // Only navigation to a genuine bike parking spot auto-parks; synthetic
-        // destinations (custom pin, address search, saved place, parked bike) don't.
-        if (destination.id in SYNTHETIC_DESTINATION_IDS) return
-        if (progress.isOffRoute) return
-        if (progress.remainingMeters > ARRIVAL_THRESHOLD_METERS) return
-
-        hasAutoParkedForCurrentRoute = true
-        parkBikeAt(destination.latitude, destination.longitude)
+    /** Parks the bike at a reached parking spot and shows an arrival confirmation. */
+    private fun onArrivedAtParkingSpot(latitude: Double, longitude: Double) {
+        parkBikeAt(latitude, longitude)
         // Override the generic "saved" toast with a clearer arrival confirmation.
         _userMessageRes.value = de.velospot.R.string.parked_bike_arrived
-        stopInAppNavigation()
+    }
+
+    /** On navigation start: reset elevation cursor, raise GPS accuracy, auto-record. */
+    private fun onNavigationStarted() {
+        rideTracking.onRouteChanged()
+        // Active navigation needs precise, frequent fixes.
+        setHighAccuracyLocation(true)
+        // Auto-record the ride for the whole navigation (unless already recording).
+        startRideTracking(autoStarted = true)
+    }
+
+    /** On navigation end: finish an auto-recorded ride, else relax GPS accuracy. */
+    private fun onNavigationStopped() {
+        // If this ride was auto-recorded by navigation, finish + save it now. A
+        // manually-started recording keeps running so the user controls it.
+        if (rideTracking.isAutoStartedByNavigation) rideTracking.stop()
+        else refreshLocationAccuracy()
+    }
+
+    /** On reroute: reset the elevation-match cursor for the fresh route. */
+    private fun onNavigationRerouted() {
+        rideTracking.onRouteChanged()
     }
 
     // ── GPS route simulator (debug couch-testing) ─────────────────────────────
 
-    private val routeSimulator = RouteSimulator()
-
     /** True while the GPS mock simulator is driving along the active route. */
-    private val _isSimulatingRoute = MutableStateFlow(false)
-    val isSimulatingRoute: StateFlow<Boolean> = _isSimulatingRoute.asStateFlow()
+    val isSimulatingRoute: StateFlow<Boolean> = navigationController.isSimulating
 
     /**
-     * Starts/stops the GPS mock simulator. When running it walks along the active
-     * navigation route at ~18 km/h, feeding synthetic fixes (with bearing + speed)
-     * into [_userLocation] exactly like real GPS — so the whole live-navigation
-     * pipeline (matching, camera, progress, off-route) can be tested on the couch.
-     * Real GPS updates are ignored while simulating.
+     * Starts/stops the GPS mock simulator along the active navigation route, so the
+     * whole live-navigation pipeline (matching, camera, progress, off-route) can be
+     * tested on the couch. Real GPS updates are ignored while simulating.
      */
-    fun toggleRouteSimulation() {
-        if (_isSimulatingRoute.value) {
-            stopRouteSimulation()
-            return
-        }
-        val route = (_navigationUiState.value as? NavigationUiState.Active)?.route ?: return
-        if (route.points.size < 2) return
+    fun toggleRouteSimulation() = navigationController.toggleSimulation()
 
-        _isSimulatingRoute.value = true
-        routeSimulator.start(
-            scope = viewModelScope,
-            route = route.points,
-            // Brisk couch-test pace (~50 km/h), emitting twice a second so the
-            // motion stays smooth despite the higher speed.
-            speedMps = 13.9,
-            intervalMs = 500L,
-            jitterMeters = 0.0,
-            onFix = { fix ->
-                _userLocation.value = fix
-                if (rideTracking.isRecording) rideTracking.feed(fix)
-            },
-            onFinished = { _isSimulatingRoute.value = false }
-        )
-    }
-
-    fun stopRouteSimulation() {
-        routeSimulator.stop()
-        _isSimulatingRoute.value = false
-    }
 
     /**
      * One-shot error event for failed viewport reloads (e.g. DB error while panning the map).
@@ -529,7 +504,7 @@ class MapViewModel @Inject constructor(
     private val rideTracking = RideTrackingController(
         scope = viewModelScope,
         repository = recordedRidesRepository,
-        activeRoute = { (_navigationUiState.value as? NavigationUiState.Active)?.route },
+        activeRoute = { navigationController.activeRoute },
         currentLocation = { _userLocation.value },
         onAccuracyChanged = { refreshLocationAccuracy() },
         onUserMessage = { res -> _userMessageRes.value = res },
@@ -558,7 +533,7 @@ class MapViewModel @Inject constructor(
         context = context,
         segmentManager = segmentManager,
         currentLocation = { _userLocation.value },
-        onDownloadError = { error -> _navigationUiState.value = NavigationUiState.Error(error) }
+        onDownloadError = { error -> navigationController.showError(error) }
     )
     val offlineRoutingUiState: StateFlow<OfflineRoutingUiState> = offlineRouting.uiState
     val showOfflineSetupSheet: StateFlow<Boolean> = offlineRouting.showSetupSheet
@@ -568,12 +543,6 @@ class MapViewModel @Inject constructor(
     // ── Init ──────────────────────────────────────────────────────────────────
 
     private var viewportJob: Job? = null
-
-    /** Active route calculation job – cancelled immediately when a new navigation starts. */
-    private var navigationJob: Job? = null
-
-    /** Timestamp (ms) of the last off-route reroute, used to throttle reroute spam. */
-    private var lastRerouteAtMs = 0L
 
     init {
         loadSpacesForViewport(BoundingBox.DEFAULT)
@@ -699,7 +668,7 @@ class MapViewModel @Inject constructor(
      */
     private fun refreshLocationAccuracy() {
         val needsHighAccuracy =
-            _navigationUiState.value is NavigationUiState.Active || rideTracking.isRecording
+            navigationController.isActive || rideTracking.isRecording
         setHighAccuracyLocation(needsHighAccuracy)
     }
 
@@ -721,7 +690,7 @@ class MapViewModel @Inject constructor(
             locationRepository.getCurrentLocationFlow().collect { location ->
                 // While the GPS mock simulator is running, ignore real fixes so the
                 // synthetic route drive isn't overwritten.
-                if (_isSimulatingRoute.value) return@collect
+                if (navigationController.isSimulating.value) return@collect
                 _userLocation.value = location
                 // Feed the ride tracker while a recording is running.
                 if (location != null && rideTracking.isRecording) rideTracking.feed(location)
@@ -751,102 +720,14 @@ class MapViewModel @Inject constructor(
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
-    fun startInAppNavigation(space: BikeParkingSpace) {
-        val location = _userLocation.value ?: run {
-            _navigationUiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
-            return
-        }
-        // Cancel any in-progress calculation – e.g. when the user taps a different
-        // parking spot while a route is still being computed.
-        navigationJob?.cancel()
-        _navigationUiState.value = NavigationUiState.Loading
-        _navigationProgress.value = null
-        hasAutoParkedForCurrentRoute = false
-        navigationJob = viewModelScope.launch {
-            runCatching {
-                routingRepository.getBikeRoute(
-                    from = location,
-                    to   = GeoCoordinate(space.latitude, space.longitude)
-                )
-            }.onSuccess {
-                _navigationUiState.value = NavigationUiState.Active(destination = space, route = it)
-                rideTracking.onRouteChanged()
-                // Active navigation needs precise, frequent fixes.
-                setHighAccuracyLocation(true)
-                // Auto-record the ride for the whole navigation (unless the user is
-                // already recording manually).
-                startRideTracking(autoStarted = true)
-            }.onFailure { throwable ->
-                _navigationUiState.value = NavigationUiState.Error(when (throwable) {
-                    is BRouterProfilesMissingException -> MapError.BRouterProfilesMissing
-                    is RoutingFailedException          -> MapError.RoutingFailed(throwable.code)
-                    is NoRouteFoundException           -> MapError.NoRouteFound
-                    is EmptyRouteGeometryException     -> MapError.EmptyRouteGeometry
-                    else                               -> MapError.Unknown(throwable.message)
-                })
-            }
-        }
-    }
+    fun startInAppNavigation(space: BikeParkingSpace) = navigationController.start(space)
 
-    fun stopInAppNavigation() {
-        navigationJob?.cancel()
-        navigationJob = null
-        stopRouteSimulation()
-        val wasCustomPin = (_navigationUiState.value as? NavigationUiState.Active)
-            ?.destination?.id == ID_CUSTOM_MAP_PIN
-        _navigationUiState.value = NavigationUiState.Idle
-        _navigationProgress.value = null
-        if (wasCustomPin) {
-            _customMapPin.value        = null
-            _customMapPinAddress.value = null
-        }
-        // If this ride was auto-recorded by navigation, finish + save it now. A
-        // manually-started recording keeps running so the user controls it.
-        if (rideTracking.isAutoStartedByNavigation) {
-            rideTracking.stop()
-        } else {
-            // Navigation ended → drop back to the battery-friendly balanced-power
-            // mode (unless a manual recording still needs precise fixes).
-            refreshLocationAccuracy()
-        }
-    }
+    fun stopInAppNavigation() = navigationController.stop()
 
-    /**
-     * Called by the `NavigationManager` when the rider has strayed off-route.
-     * Recomputes a fresh BRouter route from the current GPS position to the same
-     * destination and swaps it into the active navigation **without** flashing the
-     * loading state, so the 3D view keeps running. Throttled so a brief detour does
-     * not spawn a flurry of recalculations.
-     */
-    fun onUserWentOffRoute() {
-        val active = _navigationUiState.value as? NavigationUiState.Active ?: return
-        val location = _userLocation.value ?: return
-        val now = System.currentTimeMillis()
-        if (now - lastRerouteAtMs < REROUTE_COOLDOWN_MS) return
-        lastRerouteAtMs = now
+    /** Called by the `NavigationManager` when the rider has strayed off-route. */
+    fun onUserWentOffRoute() = navigationController.onUserWentOffRoute()
 
-        navigationJob?.cancel()
-        navigationJob = viewModelScope.launch {
-            runCatching {
-                routingRepository.getBikeRoute(
-                    from = location,
-                    to   = GeoCoordinate(active.destination.latitude, active.destination.longitude)
-                )
-            }.onSuccess { newRoute ->
-                // Only apply if we're still navigating to the same destination.
-                val current = _navigationUiState.value as? NavigationUiState.Active
-                if (current?.destination?.id == active.destination.id) {
-                    _navigationUiState.value = NavigationUiState.Active(active.destination, newRoute)
-                    _navigationProgress.value = null
-                    rideTracking.onRouteChanged()
-                }
-            }
-            // On failure we silently keep the existing route; the next off-route
-            // window (after the cooldown) will try again.
-        }
-    }
-
-    fun clearNavigationError() { if (_navigationUiState.value is NavigationUiState.Error) _navigationUiState.value = NavigationUiState.Idle }
+    fun clearNavigationError() = navigationController.clearError()
 
     // ── Offline routing ───────────────────────────────────────────────────────
 
@@ -867,7 +748,7 @@ class MapViewModel @Inject constructor(
      */
     fun selectRoutingProfile(profile: de.velospot.data.brouter.BRouterProfile) {
         offlineRouting.selectProfile(profile)
-        val currentDestination = (_navigationUiState.value as? NavigationUiState.Active)?.destination
+        val currentDestination = navigationController.activeDestination
         if (currentDestination != null) {
             startInAppNavigation(currentDestination)
         }
@@ -877,7 +758,7 @@ class MapViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        routeSimulator.stop()
+        navigationController.dispose()
         locationRepository.stopLocationUpdates()
     }
 }
