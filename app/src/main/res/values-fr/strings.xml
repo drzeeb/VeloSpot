@@ -174,6 +174,25 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Vitesse dans le temps</string>
     <string name="ride_delete">Supprimer le trajet</string>
+    <!-- Partager le trajet comme carte "VeloSpot Wrapped" -->
+    <string name="ride_share_action">Partager le trajet</string>
+    <string name="ride_share_dismiss">Fermer</string>
+    <string name="ride_share_dialog_title">Partager votre trajet</string>
+    <string name="ride_share_dialog_subtitle">Une carte stylée avec votre parcours et vos statistiques, parfaite pour WhatsApp, Telegram ou Instagram.</string>
+    <string name="ride_share_chooser_title">Partager le trajet</string>
+    <string name="ride_share_headline">Mon trajet</string>
+    <string name="ride_share_stat_duration">Durée</string>
+    <string name="ride_share_stat_avg_speed">Ø Vitesse</string>
+    <string name="ride_share_stat_elevation">Dénivelé</string>
+    <string name="ride_share_stat_max_speed">Vitesse max</string>
+    <string name="ride_share_footer">Enregistré avec VeloSpot</string>
+    <string name="ride_share_theme_label">Style</string>
+    <string name="ride_share_theme_aurora">Aurore</string>
+    <string name="ride_share_theme_sunset">Coucher de soleil</string>
+    <string name="ride_share_theme_forest">Forêt</string>
+    <string name="ride_share_theme_ocean">Océan</string>
+    <string name="ride_share_theme_berry">Baie</string>
+    <string name="ride_share_theme_midnight">Minuit</string>
     <string name="ride_stop_save">Arrêter et enregistrer</string>
     <string name="ride_notification_channel_name">Enregistrement du trajet</string>
     <string name="ride_notification_channel_description">Continue d\'enregistrer votre trajet lorsque l\'application est en arrière-plan.</string>

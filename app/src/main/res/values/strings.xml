@@ -35,6 +35,25 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Speed over time</string>
     <string name="ride_delete">Delete ride</string>
+    <!-- Share ride as a "VeloSpot Wrapped" card -->
+    <string name="ride_share_action">Share ride</string>
+    <string name="ride_share_dismiss">Close</string>
+    <string name="ride_share_dialog_title">Share your ride</string>
+    <string name="ride_share_dialog_subtitle">A cool card with your route and stats — perfect for WhatsApp, Telegram or Instagram.</string>
+    <string name="ride_share_chooser_title">Share ride</string>
+    <string name="ride_share_headline">My ride</string>
+    <string name="ride_share_stat_duration">Time</string>
+    <string name="ride_share_stat_avg_speed">Ø Speed</string>
+    <string name="ride_share_stat_elevation">Elevation</string>
+    <string name="ride_share_stat_max_speed">Max speed</string>
+    <string name="ride_share_footer">Recorded with VeloSpot</string>
+    <string name="ride_share_theme_label">Style</string>
+    <string name="ride_share_theme_aurora">Aurora</string>
+    <string name="ride_share_theme_sunset">Sunset</string>
+    <string name="ride_share_theme_forest">Forest</string>
+    <string name="ride_share_theme_ocean">Ocean</string>
+    <string name="ride_share_theme_berry">Berry</string>
+    <string name="ride_share_theme_midnight">Midnight</string>
     <string name="ride_stop_save">Stop &amp; save</string>
     <string name="ride_notification_channel_name">Ride recording</string>
     <string name="ride_notification_channel_description">Keeps recording your ride while the app is in the background.</string>

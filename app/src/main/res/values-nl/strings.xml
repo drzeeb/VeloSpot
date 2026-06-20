@@ -173,6 +173,25 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Snelheid over tijd</string>
     <string name="ride_delete">Rit verwijderen</string>
+    <!-- Rit delen als "VeloSpot Wrapped"-kaart -->
+    <string name="ride_share_action">Rit delen</string>
+    <string name="ride_share_dismiss">Sluiten</string>
+    <string name="ride_share_dialog_title">Deel je rit</string>
+    <string name="ride_share_dialog_subtitle">Een coole kaart met je route en statistieken – perfect voor WhatsApp, Telegram of Instagram.</string>
+    <string name="ride_share_chooser_title">Rit delen</string>
+    <string name="ride_share_headline">Mijn rit</string>
+    <string name="ride_share_stat_duration">Tijd</string>
+    <string name="ride_share_stat_avg_speed">Ø Snelheid</string>
+    <string name="ride_share_stat_elevation">Hoogtemeters</string>
+    <string name="ride_share_stat_max_speed">Max. snelheid</string>
+    <string name="ride_share_footer">Opgenomen met VeloSpot</string>
+    <string name="ride_share_theme_label">Stijl</string>
+    <string name="ride_share_theme_aurora">Aurora</string>
+    <string name="ride_share_theme_sunset">Zonsondergang</string>
+    <string name="ride_share_theme_forest">Bos</string>
+    <string name="ride_share_theme_ocean">Oceaan</string>
+    <string name="ride_share_theme_berry">Bes</string>
+    <string name="ride_share_theme_midnight">Middernacht</string>
     <string name="ride_stop_save">Stoppen en opslaan</string>
     <string name="ride_notification_channel_name">Ritregistratie</string>
     <string name="ride_notification_channel_description">Blijft je rit registreren terwijl de app op de achtergrond draait.</string>
