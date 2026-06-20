@@ -9,7 +9,9 @@ import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.feature.map.presentation.MapCameraTarget
 import de.velospot.feature.map.presentation.RideTrackingUiState
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,14 @@ class RideTrackingController(
     private val onUserMessage: (Int) -> Unit,
     private val clearOtherSelections: () -> Unit,
     private val moveCamera: (MapCameraTarget) -> Unit,
+    /**
+     * Dispatcher for the once-per-second live timer. Defaults to [Dispatchers.Default]
+     * so the wall-clock ticker runs off the main/UI scheduler: it stays bound to
+     * [scope]'s lifecycle (cancelled on stop/discard/clear) but does not drive a
+     * virtual test scheduler, which an intentionally endless `delay` loop would
+     * otherwise spin forever during `runTest`.
+     */
+    private val tickerDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val tracker = RideTracker()
 
@@ -187,7 +197,7 @@ class RideTrackingController(
      */
     private fun startTicker() {
         tickerJob?.cancel()
-        tickerJob = scope.launch {
+        tickerJob = scope.launch(tickerDispatcher) {
             while (isActive && tracker.isRecording) {
                 delay(1_000)
                 if (!tracker.isRecording) break
