@@ -50,7 +50,14 @@ import de.velospot.feature.map.presentation.sheets.MapBottomSheets
 import de.velospot.feature.map.presentation.sheets.languageFlagForCode
 import de.velospot.feature.map.presentation.sheets.resolveCurrentLanguageCode
 import kotlin.math.roundToInt
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
+
+
+/** Duration (ms) of the gentle camera glide that follows the live position while
+ *  recording a ride without navigation. */
+private const val CAMERA_FOLLOW_DURATION_MS = 600
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,8 +88,14 @@ fun MainMapScreen(
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
+    val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
+
+    // Whether a follow-capable session is running (active navigation OR a live ride
+    // recording). Drives the re-centre button + the recording follow camera.
+    val isRecordingRide  = rideTrackingState is RideTrackingUiState.Recording
+    val isFollowSession  = activeNavigation != null || isRecordingRide
 
     // Keep the screen awake while navigation is running, so the display does not
     // dim/lock mid-ride. The flag is cleared automatically when navigation ends
@@ -155,7 +168,9 @@ fun MainMapScreen(
             context       = context,
             onPermissionGranted = {
                 viewModel.onLocationPermissionGranted()
-                viewModel.centerMapOnUserLocation()
+                // Re-centre and, during a follow session, re-lock the camera onto
+                // the live position until the user pans away again.
+                viewModel.recenterOnUserLocation()
             },
             requestPermissions = permissionLauncher::launch
         )
@@ -335,6 +350,31 @@ fun MainMapScreen(
         viewModel.onMapCameraTargetHandled()
     }
 
+    // ── Follow camera: navigation ────────────────────────────────────────────
+    // Bridge the ViewModel's follow lock into the NavigationManager, which owns the
+    // per-frame camera while navigating. When unlocked the rider can pan freely; the
+    // heading arrow keeps tracking. Re-locking glides the camera back.
+    LaunchedEffect(isFollowingLocation, activeNavigation) {
+        if (activeNavigation != null) navigationManager.setFollowing(isFollowingLocation)
+    }
+
+    // ── Follow camera: ride recording (no navigation) ────────────────────────
+    // Navigation has its own follow camera (above); here we keep the map centred on
+    // the live position while a ride is being recorded without navigation. Panning
+    // the map clears the follow lock (handled in the ViewModel) so this stops
+    // chasing until the user taps the re-centre button.
+    LaunchedEffect(userLocation, isFollowingLocation, activeNavigation, isRecordingRide) {
+        val map = maplibreMap ?: return@LaunchedEffect
+        if (activeNavigation == null && isRecordingRide && isFollowingLocation) {
+            userLocation?.let { loc ->
+                map.animateCamera(
+                    CameraUpdateFactory.newLatLng(LatLng(loc.latitude, loc.longitude)),
+                    CAMERA_FOLLOW_DURATION_MS
+                )
+            }
+        }
+    }
+
     // ── Map initialisation (runs once when mapView is created) ────────────────
     // We keep a stable reference to spacesProvider so getMapAsync doesn't
     // capture a stale uiState snapshot.
@@ -476,7 +516,11 @@ fun MainMapScreen(
             )
         }
 
-        MyLocationFab(onClick = requestOrUseLocation)
+        MyLocationFab(
+            isFollowSession = isFollowSession,
+            isFollowing     = isFollowingLocation,
+            onClick         = requestOrUseLocation
+        )
     }
 
     // ── Bottom sheets & dialogs ───────────────────────────────────────────────

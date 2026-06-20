@@ -9,13 +9,16 @@ package de.velospot.domain.model
  * @property speedMps  Ground speed in m/s at this point (sensor value when
  *  available, otherwise derived from the segment), or `null` when unknown.
  * @property altitudeMeters Altitude in metres when the fix carried one, else `null`.
+ * @property accuracyMeters Horizontal accuracy (1σ radius) of the fix in metres
+ *  when known, else `null`. Kept so the track can be re-filtered or quality-scored.
  */
 data class TrackPoint(
     val latitude: Double,
     val longitude: Double,
     val timestamp: Long,
     val speedMps: Float? = null,
-    val altitudeMeters: Double? = null
+    val altitudeMeters: Double? = null,
+    val accuracyMeters: Float? = null
 )
 
 /**

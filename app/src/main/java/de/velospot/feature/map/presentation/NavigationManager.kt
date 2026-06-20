@@ -136,6 +136,15 @@ class NavigationManager(private val context: Context) {
     /** Whether the eased ("current") state has been seeded from the first fix after [start]. */
     private var initialized = false
 
+    /**
+     * Whether the camera is locked onto (following) the rider. When `false` the
+     * frame loop keeps easing/redrawing the heading-arrow puck and reporting
+     * progress, but stops moving the **camera**, so the user can pan/zoom the map
+     * freely mid-navigation. Re-enabling re-seeds the eased state from the user's
+     * current viewport so the camera glides smoothly back instead of snapping.
+     */
+    private var following = true
+
     // ── Eased ("current") camera/puck state ───────────────────────────────────
     private var curLat = 0.0
     private var curLon = 0.0
@@ -209,6 +218,34 @@ class NavigationManager(private val context: Context) {
     }
 
     /**
+     * Locks/unlocks the **follow camera** during active navigation. While unlocked
+     * the rider can pan/zoom the map by hand; the heading-arrow puck and route
+     * progress keep updating. Re-locking re-seeds the eased camera state from the
+     * current viewport so it glides back to the rider rather than jumping.
+     */
+    fun setFollowing(enabled: Boolean) {
+        if (following == enabled) return
+        following = enabled
+        if (enabled) reseedFromCurrentCamera()
+    }
+
+    /**
+     * Re-seeds the eased ("current") camera state from the map's present viewport,
+     * so the next frames interpolate from where the user left the map back to the
+     * live navigation target (used when the follow lock is re-enabled).
+     */
+    private fun reseedFromCurrentCamera() {
+        val cam = map?.cameraPosition ?: return
+        cam.target?.let {
+            curLat = it.latitude
+            curLon = it.longitude
+        }
+        curBearing = cam.bearing
+        curZoom = cam.zoom
+        curPitch = cam.tilt
+    }
+
+    /**
      * Begins navigation along [routePoints]. Pass the BRouter route's
      * [totalDistanceMeters] / [totalDurationSeconds] (for the ETA) and the themed
      * [routeColor] for the remaining-route line. Camera tilts in on the first fix.
@@ -228,6 +265,8 @@ class NavigationManager(private val context: Context) {
         offRouteFired = false
         active = true
         initialized = false
+        // A fresh navigation always starts locked onto the rider.
+        following = true
         // Force the first split render for this route (invalidate the diff tracker).
         renderedSegment = -1
         // Seed the split geometry at the route start (nothing travelled yet).
@@ -449,7 +488,10 @@ class NavigationManager(private val context: Context) {
         // idle 2D/3D preference.
         curPitch = GeoMath.lerp(curPitch, NavigationCamera.PITCH_DEGREES, aPitch)
 
-        applyCamera()
+        // Only drive the camera while the follow lock is on; the puck (heading
+        // arrow) always tracks the live position so the rider stays visible even
+        // while they pan the map by hand.
+        if (following) applyCamera()
         writePuck()
     }
 

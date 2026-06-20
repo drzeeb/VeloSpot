@@ -120,6 +120,51 @@ class MapViewModel @Inject constructor(
     private val _mapCameraTarget = MutableStateFlow<MapCameraTarget?>(null)
     val mapCameraTarget: StateFlow<MapCameraTarget?> = _mapCameraTarget.asStateFlow()
 
+    /**
+     * Whether the camera is currently **locked to** (following) the live user
+     * position. Turned on automatically when a follow session — active navigation
+     * **or** a running ride recording — starts, and turned off the moment the user
+     * pans the map by hand ([onMapPannedByUser]) so they can freely explore. The
+     * re-centre button ([recenterOnUserLocation]) locks it back on, and it is reset
+     * once neither navigation nor a recording is active ([updateFollowSession]).
+     */
+    private val _isFollowingLocation = MutableStateFlow(false)
+    val isFollowingLocation: StateFlow<Boolean> = _isFollowingLocation.asStateFlow()
+
+    /** Whether a follow-capable session (navigation or recording) is currently running. */
+    val isFollowSessionActive: Boolean
+        get() = navigationController.isActive || rideTracking.isRecording
+
+    /**
+     * Re-evaluates the follow session: clears the follow lock once neither
+     * navigation nor a recording is running, so the next session starts fresh and
+     * the re-centre button disappears on the idle map.
+     */
+    private fun updateFollowSession() {
+        if (!isFollowSessionActive) _isFollowingLocation.value = false
+    }
+
+    /**
+     * Called when the user pans/zooms the map by hand (a touch gesture). During a
+     * follow session this unlocks the camera so it stops chasing the position and
+     * the re-centre button appears. Ignored when no session is running (the idle
+     * map never follows in the first place).
+     */
+    fun onMapPannedByUser() {
+        if (isFollowSessionActive && _isFollowingLocation.value) {
+            _isFollowingLocation.value = false
+        }
+    }
+
+    /**
+     * Re-centres on the live position and, during a follow session, re-locks the
+     * camera so it keeps following until the user pans again or the session ends.
+     */
+    fun recenterOnUserLocation() {
+        if (isFollowSessionActive) _isFollowingLocation.value = true
+        centerMapOnUserLocation()
+    }
+
     /** Owns the in-app navigation concern (route calc, progress, reroute, auto-park, GPS simulator). */
     private val navigationController = NavigationController(
         scope = viewModelScope,
@@ -181,6 +226,8 @@ class MapViewModel @Inject constructor(
         // manually-started recording keeps running so the user controls it.
         if (rideTracking.isAutoStartedByNavigation) rideTracking.stop()
         else refreshLocationAccuracy()
+        // Drop the follow lock once nothing keeps it alive (no nav, no recording).
+        updateFollowSession()
     }
 
     /** On reroute: reset the elevation-match cursor for the fresh route. */
@@ -518,9 +565,19 @@ class MapViewModel @Inject constructor(
 
     val isRecordingRide: Boolean get() = rideTracking.isRecording
 
-    fun startRideTracking(autoStarted: Boolean = false) = rideTracking.start(autoStarted)
-    fun stopRideTracking() = rideTracking.stop()
-    fun discardRideTracking() = rideTracking.discard()
+    fun startRideTracking(autoStarted: Boolean = false) {
+        rideTracking.start(autoStarted)
+        // Lock the camera onto the rider for the whole recording (until they pan).
+        if (rideTracking.isRecording) _isFollowingLocation.value = true
+    }
+    fun stopRideTracking() {
+        rideTracking.stop()
+        updateFollowSession()
+    }
+    fun discardRideTracking() {
+        rideTracking.discard()
+        updateFollowSession()
+    }
     fun selectRecordedRide(ride: RecordedRide) = rideTracking.selectRide(ride)
     fun dismissSelectedRide() = rideTracking.dismissSelectedRide()
     fun deleteRecordedRide(id: String) = rideTracking.deleteRide(id)

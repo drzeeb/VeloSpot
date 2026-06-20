@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Menu
@@ -611,7 +612,17 @@ internal fun MapMenuCard(
 }
 
 @Composable
-internal fun BoxScope.MyLocationFab(onClick: () -> Unit) {
+internal fun BoxScope.MyLocationFab(
+    isFollowSession: Boolean = false,
+    isFollowing: Boolean = false,
+    onClick: () -> Unit
+) {
+    // During a follow session (navigation / recording) the button doubles as a
+    // "re-centre & lock" control: once the user has panned away (follow unlocked)
+    // it shows a filled GPS-lock icon to invite tapping it back into follow mode.
+    // Otherwise it is the plain "centre on me" button. The blue filled look is kept
+    // in both states so the control stays visually stable.
+    val unlocked = isFollowSession && !isFollowing
     FloatingActionButton(
         onClick = onClick,
         modifier = Modifier
@@ -620,8 +631,11 @@ internal fun BoxScope.MyLocationFab(onClick: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.primary
     ) {
         Icon(
-            imageVector = Icons.Default.MyLocation,
-            contentDescription = stringResource(id = R.string.map_center_on_my_location),
+            imageVector = if (unlocked) Icons.Default.GpsFixed else Icons.Default.MyLocation,
+            contentDescription = stringResource(
+                id = if (unlocked) R.string.map_recenter_follow
+                     else R.string.map_center_on_my_location
+            ),
             tint = MaterialTheme.colorScheme.onPrimary
         )
     }

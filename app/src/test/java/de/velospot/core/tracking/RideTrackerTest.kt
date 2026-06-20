@@ -92,6 +92,57 @@ class RideTrackerTest {
         // 1° latitude (~111 km) in 1 s → impossible for a bike, must be ignored.
         val stats = tracker.addPoint(1.0, baseLon, 1_000L, null, null)
         assertEquals(0.0, stats.distanceMeters, 0.001)
+        // The teleport fix is rejected outright, so it never enters the track and
+        // can't be drawn as a drift spike on the map.
+        assertEquals(1, stats.pointCount)
+    }
+
+    @Test
+    fun `low-accuracy drift fix is rejected entirely`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        tracker.addPoint(baseLat, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
+        // A ~111 m jump but the fix reports 60 m accuracy → classic urban-canyon
+        // drift. Must be dropped: no distance, no extra track point, no max speed.
+        val stats = tracker.addPoint(0.001, baseLon, 3_000L, speedMps = 40f, altitudeMeters = null, accuracyMeters = 60f)
+        assertEquals(0.0, stats.distanceMeters, 0.001)
+        assertEquals(1, stats.pointCount)
+        assertEquals(5.0, stats.maxSpeedMps, 0.001)
+    }
+
+    @Test
+    fun `accurate fix is accepted`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        tracker.addPoint(baseLat, baseLon, 0L, speedMps = null, altitudeMeters = null, accuracyMeters = 5f)
+        // ~111 m in 10 s with a good 8 m accuracy → genuine movement, kept.
+        val stats = tracker.addPoint(0.001, baseLon, 10_000L, speedMps = null, altitudeMeters = null, accuracyMeters = 8f)
+        assertTrue("distance should be ~111 m", stats.distanceMeters in 100.0..120.0)
+        assertEquals(2, stats.pointCount)
+    }
+
+    @Test
+    fun `stored positions are smoothed by the moving average while distance stays raw`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        // Three fixes marching north; the stored coordinate of each is the average
+        // of the (up to 3) most recent raw fixes, so the second point sits at the
+        // midpoint of the first two — visibly smoother than the raw zig-zag.
+        tracker.addPoint(0.000, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.001, baseLon, 5_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        val ride = run {
+            tracker.addPoint(0.002, baseLon, 10_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+            tracker.stop(10_000L)
+        }
+        requireNotNull(ride)
+        // Point 0: window [0.000] → 0.000. Point 1: window [0,0.001] → 0.0005.
+        // Point 2: window [0,0.001,0.002] → 0.001.
+        assertEquals(0.0000, ride.points[0].latitude, 1e-9)
+        assertEquals(0.0005, ride.points[1].latitude, 1e-9)
+        assertEquals(0.0010, ride.points[2].latitude, 1e-9)
+        // Distance is measured on the RAW fixes (0 → 0.001 → 0.002 ≈ 222 m), so the
+        // smoothing has not shortened it.
+        assertTrue("raw distance ~222 m", ride.distanceMeters in 210.0..235.0)
     }
 }
 

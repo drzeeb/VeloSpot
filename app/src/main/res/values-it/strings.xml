@@ -9,6 +9,7 @@
     <string name="language_sheet_title">Scegli lingua</string>
 
     <string name="map_center_on_my_location">Centra la mappa sulla mia posizione</string>
+    <string name="map_recenter_follow">Ricentra e segui la mia posizione</string>
     <string name="map_my_location">La mia posizione</string>
     <string name="map_snippet_spaces_format">%1$d posti</string>
     <string name="map_snippet_covered">coperto</string>
