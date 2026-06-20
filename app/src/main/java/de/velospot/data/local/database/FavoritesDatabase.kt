@@ -1,11 +1,13 @@
 package de.velospot.data.local.database
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import de.velospot.data.local.dao.FavoriteSpaceDao
 import de.velospot.data.local.entity.FavoriteSpaceEntity
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 /**
@@ -62,8 +64,15 @@ abstract class FavoritesDatabase : RoomDatabase() {
          * so it runs at most once. Failures (e.g. the legacy table never existed on
          * a clean install) are ignored — there is simply nothing to migrate.
          *
-         * Uses `ATTACH DATABASE` outside any transaction (legal here, unlike inside
-         * a Room migration callback) followed by an `INSERT OR IGNORE … SELECT`.
+         * The legacy rows are read through a **separate, read-only [SQLiteDatabase]
+         * connection** and inserted via the Room [FavoriteSpaceDao]. This deliberately
+         * avoids touching `db.openHelper.writableDatabase` / `ATTACH DATABASE`: opening
+         * the Room database through its low-level support connection bypasses Room's
+         * (2.7+) connection-pool initialisation, so the internal
+         * `room_table_modification_log` invalidation table is never created — which
+         * later crashes the first `Flow` observer with
+         * `no such table: room_table_modification_log`. Going through the DAO keeps the
+         * database opening exclusively on Room's normal path.
          */
         private fun migrateLegacyFavoritesIfNeeded(context: Context, db: FavoritesDatabase) {
             val prefs = context.getSharedPreferences(MIGRATION_PREFS, Context.MODE_PRIVATE)
@@ -72,20 +81,47 @@ abstract class FavoritesDatabase : RoomDatabase() {
             val legacyFile: File = context.getDatabasePath(LEGACY_PARKING_DB)
             if (legacyFile.exists()) {
                 runCatching {
-                    val writable = db.openHelper.writableDatabase
-                    // Triggers onCreate so favorite_parking_spaces exists before the copy.
-                    writable.execSQL("ATTACH DATABASE '${legacyFile.absolutePath}' AS legacy")
-                    try {
-                        writable.execSQL(
-                            "INSERT OR IGNORE INTO favorite_parking_spaces (parkingSpaceId, addedAt, notes) " +
-                                "SELECT parkingSpaceId, addedAt, notes FROM legacy.favorite_parking_spaces"
-                        )
-                    } finally {
-                        writable.execSQL("DETACH DATABASE legacy")
+                    val legacyFavorites = readLegacyFavorites(legacyFile)
+                    if (legacyFavorites.isNotEmpty()) {
+                        // A blocking insert is fine for this one-time, tiny copy; Room
+                        // runs the suspend DAO call on its own executor and, crucially,
+                        // initialises the connection pool + invalidation tracker first.
+                        runBlocking {
+                            val dao = db.favoriteSpaceDao()
+                            legacyFavorites.forEach { dao.addFavorite(it) }
+                        }
                     }
                 }
             }
             prefs.edit().putBoolean(KEY_FAVORITES_ISOLATED, true).apply()
+        }
+
+        /**
+         * Reads the favourite rows out of the legacy parking database via a
+         * standalone read-only connection (no `ATTACH`, no Room involvement).
+         * Returns an empty list when the table is missing or empty.
+         */
+        private fun readLegacyFavorites(legacyFile: File): List<FavoriteSpaceEntity> {
+            val favorites = mutableListOf<FavoriteSpaceEntity>()
+            SQLiteDatabase.openDatabase(
+                legacyFile.path, null, SQLiteDatabase.OPEN_READONLY
+            ).use { source ->
+                source.rawQuery(
+                    "SELECT parkingSpaceId, addedAt, notes FROM favorite_parking_spaces", null
+                ).use { c ->
+                    val idIdx = c.getColumnIndexOrThrow("parkingSpaceId")
+                    val addedAtIdx = c.getColumnIndexOrThrow("addedAt")
+                    val notesIdx = c.getColumnIndexOrThrow("notes")
+                    while (c.moveToNext()) {
+                        favorites += FavoriteSpaceEntity(
+                            parkingSpaceId = c.getString(idIdx),
+                            addedAt = c.getLong(addedAtIdx),
+                            notes = if (c.isNull(notesIdx)) null else c.getString(notesIdx)
+                        )
+                    }
+                }
+            }
+            return favorites
         }
     }
 }
