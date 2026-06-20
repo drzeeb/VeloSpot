@@ -1,7 +1,7 @@
 package de.velospot.data.repository
 
-import de.velospot.data.local.dao.FavoriteParkingSpaceDao
-import de.velospot.data.local.entity.FavoriteParkingSpaceEntity
+import de.velospot.data.local.dao.FavoriteSpaceDao
+import de.velospot.data.local.entity.FavoriteSpaceEntity
 import de.velospot.domain.repository.FavoritesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,7 +14,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class FavoritesRepositoryImpl @Inject constructor(
-    private val favoritesDao: FavoriteParkingSpaceDao
+    private val favoritesDao: FavoriteSpaceDao
 ) : FavoritesRepository {
 
     override fun getFavoritesFlow(): Flow<List<String>> {
@@ -29,7 +29,7 @@ class FavoritesRepositoryImpl @Inject constructor(
 
     override suspend fun addFavorite(parkingSpaceId: String) {
         favoritesDao.addFavorite(
-            FavoriteParkingSpaceEntity(parkingSpaceId = parkingSpaceId)
+            FavoriteSpaceEntity(parkingSpaceId = parkingSpaceId)
         )
     }
 

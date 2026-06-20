@@ -12,12 +12,16 @@ package de.velospot.domain.model
  * @property altitudeMeters Optional altitude above the WGS84 ellipsoid in metres.
  *  `null` when the fix carries no altitude. Used by the ride tracker to estimate
  *  elevation gain/loss.
+ * @property accuracyMeters Optional horizontal accuracy (1σ radius) of the fix in
+ *  metres. `null` when the fix carries no accuracy. Used by the ride tracker to
+ *  reject low-quality GPS fixes (drift) before they reach the track.
  */
 data class GeoCoordinate(
     val latitude: Double,
     val longitude: Double,
     val bearing: Float? = null,
     val speedMetersPerSecond: Float? = null,
-    val altitudeMeters: Double? = null
+    val altitudeMeters: Double? = null,
+    val accuracyMeters: Float? = null
 )
 

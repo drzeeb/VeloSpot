@@ -1,0 +1,3 @@
+• Offline-Fahrrad-Routing mit BRouter – Routen vollständig auf dem Gerät nach einmaligem Karten-Download (~200–250 MB)
+• Fünf Routing-Profile (Trekking, Schnell, Kürzeste, MTB, Gravel)
+• WLAN-Prüfung und Live-Download-Fortschritt; lesbare Daueranzeige

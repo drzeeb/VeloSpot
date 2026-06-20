@@ -1,0 +1,1 @@
+Wartung: CI-Workflows auf die Node-24-Action-Laufzeit migriert. Keine für Nutzer sichtbaren Änderungen.

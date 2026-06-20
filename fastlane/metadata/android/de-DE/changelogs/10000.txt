@@ -1,0 +1,7 @@
+Erste Veröffentlichung von VeloSpot.
+
+• 100.000+ Fahrradparkplätze aus OpenStreetMap für ganz Deutschland – offline ab dem ersten Start
+• Interaktive MapLibre-Karte, Favoriten und Stellplatzfotos
+• Standort-Unterstützung und verzögerte Nominatim-Rückwärtsgeokodierung
+• Dunkelmodus und 8 Sprachen
+• Keine proprietären Google-Dienste, keine Werbung, kein Tracking

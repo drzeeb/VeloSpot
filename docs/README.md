@@ -1,4 +1,4 @@
-# VeloSpot - Bike Parking Finder for Germany
+# VeloSpot - Bike Parking Finder for Germany, France & Luxembourg
 
 ## Overview
 
@@ -55,11 +55,11 @@ Update the CSS variables at the top of the `<style>` section:
 Update section titles, descriptions, and links as needed.
 
 Current website copy highlights:
-- Germany-wide coverage (100 000+ locations from OpenStreetMap, fully offline)
-- Viewport-based loading for smooth performance across the whole country
+- Multi-country coverage — Germany, France and Luxembourg (100 000+ locations from OpenStreetMap, fully offline)
+- Viewport-based loading for smooth performance across whole countries
 - Marker clustering that aggregates dense pins at low zoom
 - Lazy Nominatim reverse geocoding with permanent local cache
-- Address search whose result opens the same sheet as a custom pin (navigate, save, remove)
+- Address search across all covered countries whose result opens the same sheet as a custom pin (navigate, save, remove)
 - Favorites and direct navigation shortcuts
 - In-app bike navigation with route overlay and destination-focused marker styling
 - Live 3D turn-by-turn navigation (3D follow camera, snap-to-route map matching, 3D buildings, live ETA, off-route rerouting) and a 2D/3D map view switch

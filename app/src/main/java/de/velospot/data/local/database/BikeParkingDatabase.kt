@@ -8,7 +8,6 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import de.velospot.data.local.dao.BikeParkingSpaceDao
-import de.velospot.data.local.dao.FavoriteParkingSpaceDao
 import de.velospot.data.local.entity.BikeParkingSpaceEntity
 import de.velospot.data.local.entity.FavoriteParkingSpaceEntity
 import java.io.File
@@ -16,6 +15,13 @@ import java.io.File
 /**
  * Room database for storing bike parking space information locally.
  * Provides single-threaded access through a singleton pattern.
+ *
+ * The [FavoriteParkingSpaceEntity] table is still declared here so the on-device
+ * schema (and the bundled asset) stay byte-for-byte unchanged, but favourites are
+ * no longer read or written through this database: they now live in the isolated
+ * [FavoritesDatabase], which a parking-data destructive migration can never wipe.
+ * The legacy table is left untouched (a one-time copy in [FavoritesDatabase]
+ * migrates any pre-existing favourites out of it).
  */
 @Database(
     entities = [BikeParkingSpaceEntity::class, FavoriteParkingSpaceEntity::class],
@@ -29,10 +35,6 @@ abstract class BikeParkingDatabase : RoomDatabase() {
      */
     abstract fun bikeParkingSpaceDao(): BikeParkingSpaceDao
 
-    /**
-     * Returns the DAO for favorite parking space operations.
-     */
-    abstract fun favoriteParkingSpaceDao(): FavoriteParkingSpaceDao
 
     companion object {
         @Volatile

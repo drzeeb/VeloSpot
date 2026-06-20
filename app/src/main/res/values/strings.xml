@@ -68,6 +68,8 @@
     <string name="language_sheet_title">Choose language</string>
 
     <string name="map_center_on_my_location">Center map on my location</string>
+    <string name="map_recenter_follow">Re-centre and follow my location</string>
+    <string name="map_recenter_follow_short">Re-centre</string>
     <string name="map_my_location">My location</string>
     <string name="map_snippet_spaces_format">%1$d spaces</string>
     <string name="map_snippet_covered">covered</string>

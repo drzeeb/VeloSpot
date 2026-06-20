@@ -1,0 +1,3 @@
+• BRouter offline-routing engine upgraded 1.6.3 → 1.7.9 (slimmed on-device build)
+• Refreshed bundled routing profiles
+• Release workflow now auto-promotes the changelog

@@ -1,0 +1,3 @@
+• Neue Adresssuchleiste mit Live-Vorschlägen (Nominatim) und Ergebnis-Pin
+• Kartendarstellung auf MapLibre-Vektorkacheln umgestellt – überall scharf, kein API-Key
+• Release-Builds jetzt minimiert/obfuskiert (R8) mit gehärtetem Logging

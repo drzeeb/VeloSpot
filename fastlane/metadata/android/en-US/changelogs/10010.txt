@@ -1,0 +1,4 @@
+• F-Droid: BRouter is now built from source via an srclib instead of a bundled JAR
+• Completed missing translations (es, fr, it, lb, nl, pt)
+• Fixed a MapView memory leak and a location-callback leak
+• CI hardening: wrapper validation, Android Lint, dependency review

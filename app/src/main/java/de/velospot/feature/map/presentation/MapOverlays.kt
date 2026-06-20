@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Menu
@@ -40,6 +41,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.domain.model.MapError
@@ -625,6 +628,38 @@ internal fun BoxScope.MyLocationFab(onClick: () -> Unit) {
             tint = MaterialTheme.colorScheme.onPrimary
         )
     }
+}
+
+/**
+ * Dedicated "re-centre & follow" button that **appears** only while a follow
+ * session (navigation or ride recording) is running and the user has panned the
+ * map away (follow unlocked). Tapping it snaps the camera back onto the live
+ * position and resumes following until the user pans again. Stacked on the right
+ * edge above the location / record FABs ([bottomPadding] is chosen by the caller
+ * so it never overlaps them).
+ */
+@Composable
+internal fun BoxScope.RecenterFollowFab(
+    visible: Boolean,
+    bottomPadding: Dp,
+    onClick: () -> Unit
+) {
+    if (!visible) return
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(end = 16.dp, bottom = bottomPadding),
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.GpsFixed,
+                contentDescription = null
+            )
+        },
+        text = { Text(stringResource(id = R.string.map_recenter_follow_short)) }
+    )
 }
 
 /**

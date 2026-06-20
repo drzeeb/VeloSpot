@@ -1,0 +1,4 @@
+• In-App-Fahrrad-Navigation mit OSRM-Routenberechnung und Routenlinie auf der Karte
+• Navigations-Statuskarte mit Entfernung/Zeit und Stopp-Aktion
+• Fokusmodus blendet Nicht-Ziel-Marker ab
+• Dunkelmodus-Einstellung bleibt jetzt über Neustarts erhalten

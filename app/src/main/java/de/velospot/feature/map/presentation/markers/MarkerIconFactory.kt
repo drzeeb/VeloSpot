@@ -2,12 +2,15 @@ package de.velospot.feature.map.presentation.markers
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -72,60 +75,59 @@ internal fun createBikeMarkerIcon(context: Context, zoomBucket: Int, pinColor: I
     return BitmapDrawable(context.resources, bitmap)
 }
 
-internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Boolean): Drawable {
-    val size = if (isNavigationActive) 46 else 34
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-
-    canvas.drawCircle(size / 2f, size / 2f, if (isNavigationActive) 21f else 15f,
-        Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = if (isNavigationActive) "#00695C".toColorInt() else "#2196F3".toColorInt()
-            style = Paint.Style.FILL
-        })
-    if (isNavigationActive) {
-        canvas.drawCircle(size / 2f, size / 2f, 15f,
-            Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = "#A7FFEB".toColorInt(); style = Paint.Style.STROKE; strokeWidth = 4f
-            })
-    }
-    canvas.drawCircle(size / 2f, size / 2f, if (isNavigationActive) 8.5f else 7f,
-        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL })
-
-    return BitmapDrawable(context.resources, bitmap)
-}
-
 /**
- * A chevron/arrow heading puck for active 3D navigation: a coloured circle with
- * a white triangular arrow pointing "up" (north). The MapLibre layer rotates it
- * by the live bearing (see [PROP_BEARING]) so it points along the road.
+ * The live "my location" marker: a full-colour 2D cyclist avatar
+ * (`R.drawable.ic_cyclist_avatar`) rendered as a real little rider sitting on the
+ * map — no flat dot. A soft contact shadow underneath lifts it off the basemap
+ * for a 3D feel. The sprite points "up" (north before rotation); the
+ * [LAYER_LOCATION] layer rotates it by the per-feature [PROP_BEARING] and the
+ * map tilts during navigation, so the rider visibly leans into the heading.
+ * [isNavigationActive] simply renders the avatar a bit larger while navigating.
  */
-internal fun createNavigationArrowIcon(context: Context): Drawable {
-    val size = 54
+internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Boolean): Drawable {
+    val size = if (isNavigationActive) 184 else 148
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    val cx = size / 2f
-    val cy = size / 2f
+    val center = size / 2f
 
-    // Soft outer halo for contrast on any basemap.
-    canvas.drawCircle(cx, cy, 25f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0x33000000; style = Paint.Style.FILL
-    })
-    // Coloured disc.
-    canvas.drawCircle(cx, cy, 22f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = "#00695C".toColorInt(); style = Paint.Style.FILL
-    })
-    // White ring.
-    canvas.drawCircle(cx, cy, 22f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE; style = Paint.Style.STROKE; strokeWidth = 3f
-    })
-    // White arrow pointing up (towards the top = bearing 0 before rotation).
-    canvas.drawPath(Path().apply {
-        moveTo(cx, cy - 13f)          // tip
-        lineTo(cx - 10f, cy + 11f)    // bottom-left
-        lineTo(cx, cy + 5f)           // notch
-        lineTo(cx + 10f, cy + 11f)    // bottom-right
-        close()
-    }, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL })
+    // Soft contact shadow so the avatar reads as lifted off the map (3D feel).
+    val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x55000000
+        maskFilter = BlurMaskFilter(size * 0.06f, BlurMaskFilter.Blur.NORMAL)
+    }
+    canvas.drawOval(
+        center - size * 0.24f, center + size * 0.16f,
+        center + size * 0.24f, center + size * 0.42f,
+        shadowPaint
+    )
+
+    // Full-colour 2D cyclist avatar (3rd-person view).
+    val avatar = AppCompatResources.getDrawable(context, R.drawable.ic_cyclist_avatar)
+    if (avatar != null) {
+        // Render the avatar onto its own layer first so we can stamp a clean
+        // white keyline around it (like a map sticker) for contrast on any
+        // basemap, then composite the colour version on top.
+        val pad = (size * 0.10f).roundToInt()
+        val avatarBmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        avatar.setBounds(pad, pad, size - pad, size - pad)
+        avatar.draw(Canvas(avatarBmp))
+
+        val outline = size * 0.012f
+        val whitePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            colorFilter = PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+        }
+        var angle = 0.0
+        while (angle < 2 * Math.PI) {
+            canvas.drawBitmap(
+                avatarBmp,
+                (Math.cos(angle) * outline).toFloat(),
+                (Math.sin(angle) * outline).toFloat(),
+                whitePaint
+            )
+            angle += Math.PI / 8
+        }
+        canvas.drawBitmap(avatarBmp, 0f, 0f, null)
+    }
 
     return BitmapDrawable(context.resources, bitmap)
 }

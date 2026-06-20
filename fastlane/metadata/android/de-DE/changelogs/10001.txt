@@ -1,0 +1,3 @@
+• Flüssige Karten-Kameraanimationen (Easing) für natürliches Zoomen und Schwenken
+• Ausgewählter Marker in Orange hervorgehoben
+• Bessere Kartenpositionierung bei geöffnetem Bottom-Sheet

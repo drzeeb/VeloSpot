@@ -15,6 +15,10 @@
 .cxx
 local.properties
 
+# Pulled-from-device page screenshots (regenerated on demand, may show a real
+# device map view) — copy the curated ones into fastlane/docs manually instead.
+/screenshots
+
 # ---------------------------------------------------------------------------
 # Release signing secrets – NEVER commit these.
 # Losing the keystore makes reproducible F-Droid updates impossible (see

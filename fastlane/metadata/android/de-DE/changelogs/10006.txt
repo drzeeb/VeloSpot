@@ -1,0 +1,2 @@
+• Deutschlandweite Fahrradparkplatz-Abdeckung aus einem vorgebündelten OpenStreetMap-Datensatz
+• Kleinere Refactorings und Aufräumarbeiten

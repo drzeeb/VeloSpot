@@ -256,13 +256,13 @@ internal fun ensureLocationLayer(style: Style) {
             PropertyFactory.iconImage(Expression.get(PROP_ICON)),
             PropertyFactory.iconAllowOverlap(true),
             PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER),
-            // Rotate the heading arrow by the per-feature bearing. Defaults to 0
-            // for the plain location dot (which is rotation-invariant anyway).
-            PropertyFactory.iconRotate(Expression.get(PROP_BEARING)),
-            // Keep the arrow flat on the (tilted) map and rotating with it so it
-            // points along the road during 3D navigation.
-            PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
-            PropertyFactory.iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_MAP)
+            // Render the cyclist avatar as an upright billboard that always faces
+            // the camera, so the 3D map tilt during navigation never flattens /
+            // squishes it onto the ground plane. The navigation camera keeps the
+            // heading pointing "up", so the rider naturally appears from behind
+            // (true 3rd-person view) without any extra per-feature rotation.
+            PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_VIEWPORT),
+            PropertyFactory.iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT)
         )
     )
 }

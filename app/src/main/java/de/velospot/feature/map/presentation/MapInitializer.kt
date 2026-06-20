@@ -89,6 +89,15 @@ internal fun MapView.initVeloSpotMap(
             onZoomBucketChanged(map.cameraPosition.zoom.roundToInt())
         }
 
+        // User-initiated pan/zoom (a touch gesture, not our own programmatic camera
+        // moves) unlocks the follow camera during navigation / ride recording, so
+        // the rider can freely explore the map. A re-centre button then re-locks it.
+        map.addOnCameraMoveStartedListener { reason ->
+            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
+                viewModel.onMapPannedByUser()
+            }
+        }
+
         // Click → parked bike first (it may sit on top of a parking spot), then
         // parking spot, then cluster (zoom in), then saved place; otherwise drop
         // a custom pin.

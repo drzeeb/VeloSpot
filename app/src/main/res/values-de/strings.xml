@@ -9,6 +9,8 @@
     <string name="language_sheet_title">Sprache auswählen</string>
 
     <string name="map_center_on_my_location">Karte auf meinen Standort zentrieren</string>
+    <string name="map_recenter_follow">Erneut zentrieren und Standort folgen</string>
+    <string name="map_recenter_follow_short">Zentrieren</string>
     <string name="map_my_location">Mein Standort</string>
     <string name="map_snippet_spaces_format">%1$d Stellplätze</string>
     <string name="map_snippet_covered">überdacht</string>

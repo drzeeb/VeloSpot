@@ -1,0 +1,4 @@
+• In-app bike navigation with OSRM route calculation and a route line on the map
+• Navigation status card with distance/time and a stop action
+• Navigation focus mode dims non-destination markers
+• Dark mode preference now persists across restarts

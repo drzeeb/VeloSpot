@@ -1,0 +1,3 @@
+• Offline bike routing with BRouter – routes calculated fully on-device after a one-time map-segment download (~200–250 MB)
+• Five routing profiles (Trekking, Fast, Shortest, MTB, Gravel)
+• Wi-Fi check and live download progress; readable duration formatting

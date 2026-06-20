@@ -8,12 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
-import de.velospot.core.navigation.GeoMath
 import de.velospot.core.navigation.NavigationModePreferences
-import de.velospot.core.navigation.RouteSimulator
-import de.velospot.core.routing.OfflineRoutingPreferences
-import de.velospot.core.routing.isWifiConnected
-import de.velospot.core.tracking.RideTracker
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.domain.model.AddressSearchResult
@@ -21,17 +16,12 @@ import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeParkingType
 import de.velospot.domain.model.BoundingBox
-import de.velospot.domain.model.BRouterProfilesMissingException
-import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.LiveRideStats
 import de.velospot.domain.model.MapError
-import de.velospot.domain.model.NoInternetConnectionException
-import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
-import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
@@ -40,6 +30,12 @@ import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.feature.map.presentation.navigation.NavigationController
+import de.velospot.feature.map.presentation.offline.OfflineRoutingController
+import de.velospot.feature.map.presentation.places.ParkedBikeController
+import de.velospot.feature.map.presentation.places.SavedPlacesController
+import de.velospot.feature.map.presentation.ride.RideTrackingController
+import de.velospot.feature.map.presentation.search.AddressSearchController
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,20 +43,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
 private const val VIEWPORT_DEBOUNCE_MS  = 300L
-private const val SEARCH_DEBOUNCE_MS    = 400L
-private const val SEARCH_MIN_CHARS      = 3
-
-/** Minimum gap between automatic off-route reroutes. */
-private const val REROUTE_COOLDOWN_MS   = 8_000L
-
-// Default map center used when no GPS fix is available yet.
-private const val DEFAULT_LAT = 49.7596
-private const val DEFAULT_LON = 6.6441
 
 data class MapCameraTarget(
     val latitude: Double,
@@ -91,9 +77,9 @@ class MapViewModel @Inject constructor(
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
     private val nominatimGeocoder: NominatimGeocoder,
-    private val savedPlacesRepository: SavedPlacesRepository,
-    private val parkedBikeRepository: ParkedBikeRepository,
-    private val recordedRidesRepository: RecordedRidesRepository,
+    savedPlacesRepository: SavedPlacesRepository,
+    parkedBikeRepository: ParkedBikeRepository,
+    recordedRidesRepository: RecordedRidesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -106,19 +92,6 @@ class MapViewModel @Inject constructor(
         const val ID_SAVED_PLACE = "saved_place"
         /** ID used for the synthetic BikeParkingSpace created when navigating to the parked bike. */
         const val ID_PARKED_BIKE = "parked_bike"
-
-        /**
-         * Remaining route distance (m) below which the rider counts as "arrived".
-         * When navigating to a real bike parking spot, reaching this radius auto-parks
-         * the bike at the destination.
-         */
-        private const val ARRIVAL_THRESHOLD_METERS = 25.0
-
-        /**
-         * Maximum distance (m) from the active route at which its terrain elevation
-         * is trusted for the recorded ride; beyond this GPS altitude is used.
-         */
-        private const val ROUTE_ELEVATION_MATCH_METERS = 50.0
 
         /**
          * Synthetic destination IDs that must NOT trigger auto-parking on arrival —
@@ -147,96 +120,133 @@ class MapViewModel @Inject constructor(
     private val _mapCameraTarget = MutableStateFlow<MapCameraTarget?>(null)
     val mapCameraTarget: StateFlow<MapCameraTarget?> = _mapCameraTarget.asStateFlow()
 
-    private val _navigationUiState = MutableStateFlow<NavigationUiState>(NavigationUiState.Idle)
-    val navigationUiState: StateFlow<NavigationUiState> = _navigationUiState.asStateFlow()
+    /**
+     * Whether the camera is currently **locked to** (following) the live user
+     * position. Turned on automatically when a follow session — active navigation
+     * **or** a running ride recording — starts, and turned off the moment the user
+     * pans the map by hand ([onMapPannedByUser]) so they can freely explore. The
+     * re-centre button ([recenterOnUserLocation]) locks it back on, and it is reset
+     * once neither navigation nor a recording is active ([updateFollowSession]).
+     */
+    private val _isFollowingLocation = MutableStateFlow(false)
+    val isFollowingLocation: StateFlow<Boolean> = _isFollowingLocation.asStateFlow()
+
+    /** Whether a follow-capable session (navigation or recording) is currently running. */
+    val isFollowSessionActive: Boolean
+        get() = navigationController.isActive || rideTracking.isRecording
+
+    /**
+     * Re-evaluates the follow session: clears the follow lock once neither
+     * navigation nor a recording is running, so the next session starts fresh and
+     * the re-centre button disappears on the idle map.
+     */
+    private fun updateFollowSession() {
+        if (!isFollowSessionActive) _isFollowingLocation.value = false
+    }
+
+    /**
+     * Called when the user pans/zooms the map by hand (a touch gesture). During a
+     * follow session this unlocks the camera so it stops chasing the position and
+     * the re-centre button appears. Ignored when no session is running (the idle
+     * map never follows in the first place).
+     */
+    fun onMapPannedByUser() {
+        if (isFollowSessionActive && _isFollowingLocation.value) {
+            _isFollowingLocation.value = false
+        }
+    }
+
+    /**
+     * Re-centres on the live position and, during a follow session, re-locks the
+     * camera so it keeps following until the user pans again or the session ends.
+     */
+    fun recenterOnUserLocation() {
+        if (isFollowSessionActive) _isFollowingLocation.value = true
+        centerMapOnUserLocation()
+    }
+
+    /** Owns the in-app navigation concern (route calc, progress, reroute, auto-park, GPS simulator). */
+    private val navigationController = NavigationController(
+        scope = viewModelScope,
+        routingRepository = routingRepository,
+        currentLocation = { _userLocation.value },
+        customPinDestinationId = ID_CUSTOM_MAP_PIN,
+        syntheticDestinationIds = SYNTHETIC_DESTINATION_IDS,
+        // Method references (not inline lambdas) so the mutual reference between
+        // this controller and `rideTracking` doesn't trip Kotlin's property-init
+        // type-inference into a recursion (the referenced members carry explicit
+        // signatures, breaking the cycle).
+        onSimulatedFix = ::onSimulatedNavigationFix,
+        onArrivedAtParkingSpot = ::onArrivedAtParkingSpot,
+        onNavigationStarted = ::onNavigationStarted,
+        onNavigationStopped = ::onNavigationStopped,
+        onRerouted = ::onNavigationRerouted,
+        onCustomPinNavigationEnded = ::dismissCustomMapPin
+    )
+    val navigationUiState: StateFlow<NavigationUiState> = navigationController.uiState
 
     /**
      * Live route progress (remaining distance + ETA) emitted by the
      * `NavigationManager` on each GPS fix; `null` when not navigating. Drives the
      * dynamic distance/ETA readout in the navigation overlay.
      */
-    private val _navigationProgress = MutableStateFlow<de.velospot.core.navigation.NavigationProgress?>(null)
-    val navigationProgress: StateFlow<de.velospot.core.navigation.NavigationProgress?> = _navigationProgress.asStateFlow()
+    val navigationProgress: StateFlow<de.velospot.core.navigation.NavigationProgress?> = navigationController.progress
 
     /** Pushed from the UI layer's `NavigationManager.onProgress` callback. */
-    fun updateNavigationProgress(progress: de.velospot.core.navigation.NavigationProgress) {
-        _navigationProgress.value = progress
-        maybeAutoParkOnArrival(progress)
+    fun updateNavigationProgress(progress: de.velospot.core.navigation.NavigationProgress) =
+        navigationController.updateProgress(progress)
+
+    // ── Navigation cross-feature hooks (wired into NavigationController) ────────
+
+    /** Feeds a simulated GPS fix into the location pipeline + active recording. */
+    private fun onSimulatedNavigationFix(fix: GeoCoordinate) {
+        _userLocation.value = fix
+        if (rideTracking.isRecording) rideTracking.feed(fix)
     }
 
-    /**
-     * Guards against repeatedly auto-parking once the rider has reached a parking
-     * spot. Reset whenever a fresh navigation starts.
-     */
-    private var hasAutoParkedForCurrentRoute = false
-
-    /**
-     * Auto-parks the bike the moment the rider arrives at a real bike parking spot.
-     * The route tracking already reports the remaining distance on every GPS fix;
-     * once it drops below [ARRIVAL_THRESHOLD_METERS] for a genuine parking-spot
-     * destination, the bike is parked at the spot and navigation ends — so the
-     * persistent marker is dropped without any extra tap.
-     */
-    private fun maybeAutoParkOnArrival(progress: de.velospot.core.navigation.NavigationProgress) {
-        if (hasAutoParkedForCurrentRoute) return
-        val destination = (_navigationUiState.value as? NavigationUiState.Active)?.destination ?: return
-        // Only navigation to a genuine bike parking spot auto-parks; synthetic
-        // destinations (custom pin, address search, saved place, parked bike) don't.
-        if (destination.id in SYNTHETIC_DESTINATION_IDS) return
-        if (progress.isOffRoute) return
-        if (progress.remainingMeters > ARRIVAL_THRESHOLD_METERS) return
-
-        hasAutoParkedForCurrentRoute = true
-        parkBikeAt(destination.latitude, destination.longitude)
+    /** Parks the bike at a reached parking spot and shows an arrival confirmation. */
+    private fun onArrivedAtParkingSpot(latitude: Double, longitude: Double) {
+        parkBikeAt(latitude, longitude)
         // Override the generic "saved" toast with a clearer arrival confirmation.
         _userMessageRes.value = de.velospot.R.string.parked_bike_arrived
-        stopInAppNavigation()
+    }
+
+    /** On navigation start: reset elevation cursor, raise GPS accuracy, auto-record. */
+    private fun onNavigationStarted() {
+        rideTracking.onRouteChanged()
+        // Active navigation needs precise, frequent fixes.
+        setHighAccuracyLocation(true)
+        // Auto-record the ride for the whole navigation (unless already recording).
+        startRideTracking(autoStarted = true)
+    }
+
+    /** On navigation end: finish an auto-recorded ride, else relax GPS accuracy. */
+    private fun onNavigationStopped() {
+        // If this ride was auto-recorded by navigation, finish + save it now. A
+        // manually-started recording keeps running so the user controls it.
+        if (rideTracking.isAutoStartedByNavigation) rideTracking.stop()
+        else refreshLocationAccuracy()
+        // Drop the follow lock once nothing keeps it alive (no nav, no recording).
+        updateFollowSession()
+    }
+
+    /** On reroute: reset the elevation-match cursor for the fresh route. */
+    private fun onNavigationRerouted() {
+        rideTracking.onRouteChanged()
     }
 
     // ── GPS route simulator (debug couch-testing) ─────────────────────────────
 
-    private val routeSimulator = RouteSimulator()
-
     /** True while the GPS mock simulator is driving along the active route. */
-    private val _isSimulatingRoute = MutableStateFlow(false)
-    val isSimulatingRoute: StateFlow<Boolean> = _isSimulatingRoute.asStateFlow()
+    val isSimulatingRoute: StateFlow<Boolean> = navigationController.isSimulating
 
     /**
-     * Starts/stops the GPS mock simulator. When running it walks along the active
-     * navigation route at ~18 km/h, feeding synthetic fixes (with bearing + speed)
-     * into [_userLocation] exactly like real GPS — so the whole live-navigation
-     * pipeline (matching, camera, progress, off-route) can be tested on the couch.
-     * Real GPS updates are ignored while simulating.
+     * Starts/stops the GPS mock simulator along the active navigation route, so the
+     * whole live-navigation pipeline (matching, camera, progress, off-route) can be
+     * tested on the couch. Real GPS updates are ignored while simulating.
      */
-    fun toggleRouteSimulation() {
-        if (_isSimulatingRoute.value) {
-            stopRouteSimulation()
-            return
-        }
-        val route = (_navigationUiState.value as? NavigationUiState.Active)?.route ?: return
-        if (route.points.size < 2) return
+    fun toggleRouteSimulation() = navigationController.toggleSimulation()
 
-        _isSimulatingRoute.value = true
-        routeSimulator.start(
-            scope = viewModelScope,
-            route = route.points,
-            // Brisk couch-test pace (~50 km/h), emitting twice a second so the
-            // motion stays smooth despite the higher speed.
-            speedMps = 13.9,
-            intervalMs = 500L,
-            jitterMeters = 0.0,
-            onFix = { fix ->
-                _userLocation.value = fix
-                if (rideTracker.isRecording) feedRideTracker(fix)
-            },
-            onFinished = { _isSimulatingRoute.value = false }
-        )
-    }
-
-    fun stopRouteSimulation() {
-        routeSimulator.stop()
-        _isSimulatingRoute.value = false
-    }
 
     /**
      * One-shot error event for failed viewport reloads (e.g. DB error while panning the map).
@@ -250,16 +260,15 @@ class MapViewModel @Inject constructor(
 
     // ── Address search ────────────────────────────────────────────────────────
 
-    private val _searchQuery   = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
-    private val _searchResults = MutableStateFlow<List<AddressSearchResult>>(emptyList())
-    val searchResults: StateFlow<List<AddressSearchResult>> = _searchResults.asStateFlow()
-
-    private val _isSearching   = MutableStateFlow(false)
-    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
-
-    private var searchJob: Job? = null
+    /** Owns the debounced address-search concern (query, results, in-flight flag). */
+    private val addressSearch = AddressSearchController(
+        scope = viewModelScope,
+        geocoder = nominatimGeocoder,
+        currentLocation = { _userLocation.value }
+    )
+    val searchQuery: StateFlow<String> = addressSearch.query
+    val searchResults: StateFlow<List<AddressSearchResult>> = addressSearch.results
+    val isSearching: StateFlow<Boolean> = addressSearch.isSearching
 
     /** The address pin currently shown on the map (set when user taps a search result). */
     private val _selectedSearchPin = MutableStateFlow<AddressSearchResult?>(null)
@@ -273,21 +282,29 @@ class MapViewModel @Inject constructor(
     private val _customMapPinAddress = MutableStateFlow<String?>(null)
     val customMapPinAddress: StateFlow<String?> = _customMapPinAddress.asStateFlow()
 
-    /** All user-saved custom places (manually placed pins saved as named favourites). */
-    private val _savedPlaces = MutableStateFlow<List<SavedPlace>>(emptyList())
-    val savedPlaces: StateFlow<List<SavedPlace>> = _savedPlaces.asStateFlow()
+    /** Owns the saved-places concern (persisted named pins + open detail sheet). */
+    private val savedPlacesController = SavedPlacesController(
+        scope = viewModelScope,
+        repository = savedPlacesRepository,
+        clearOtherSelections = { clearPlaceSelections() },
+        moveCamera = { target -> _mapCameraTarget.value = target }
+    )
+    val savedPlaces: StateFlow<List<SavedPlace>> = savedPlacesController.savedPlaces
+    val selectedSavedPlace: StateFlow<SavedPlace?> = savedPlacesController.selectedPlace
 
-    /** The saved place whose detail sheet is currently open (null when none). */
-    private val _selectedSavedPlace = MutableStateFlow<SavedPlace?>(null)
-    val selectedSavedPlace: StateFlow<SavedPlace?> = _selectedSavedPlace.asStateFlow()
-
-    /** Where the user parked their bike (null when no bike is currently parked). */
-    private val _parkedBike = MutableStateFlow<ParkedBike?>(null)
-    val parkedBike: StateFlow<ParkedBike?> = _parkedBike.asStateFlow()
-
-    /** True while the parked-bike detail sheet is open. */
-    private val _isParkedBikeSheetVisible = MutableStateFlow(false)
-    val isParkedBikeSheetVisible: StateFlow<Boolean> = _isParkedBikeSheetVisible.asStateFlow()
+    /** Owns the parked-bike concern (stored location + detail sheet). */
+    private val parkedBikeController = ParkedBikeController(
+        scope = viewModelScope,
+        repository = parkedBikeRepository,
+        currentLocation = { _userLocation.value },
+        reverseGeocode = { lat, lon -> nominatimGeocoder.reverseGeocode(lat, lon) },
+        onUserMessage = { res -> _userMessageRes.value = res },
+        onParked = { dismissCustomMapPin() },
+        clearOtherSelections = { clearPlaceSelections() },
+        moveCamera = { target -> _mapCameraTarget.value = target }
+    )
+    val parkedBike: StateFlow<ParkedBike?> = parkedBikeController.parkedBike
+    val isParkedBikeSheetVisible: StateFlow<Boolean> = parkedBikeController.isSheetVisible
 
     /**
      * One-shot, string-resource user message (e.g. "bike location saved").
@@ -322,30 +339,10 @@ class MapViewModel @Inject constructor(
         _is3DNavigation.value = enabled
     }
 
-    fun onSearchQueryChanged(query: String) {        _searchQuery.value = query
-        searchJob?.cancel()
-        if (query.length < SEARCH_MIN_CHARS) {
-            _searchResults.value = emptyList()
-            return
-        }
-        searchJob = viewModelScope.launch {
-            delay(SEARCH_DEBOUNCE_MS)
-            _isSearching.value = true
-            val near = _userLocation.value
-            _searchResults.value = nominatimGeocoder.searchAddress(
-                query = query,
-                nearLatitude = near?.latitude,
-                nearLongitude = near?.longitude
-            )
-            _isSearching.value = false
-        }
-    }
+    fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
 
     fun onSearchCleared() {
-        searchJob?.cancel()
-        _searchQuery.value    = ""
-        _searchResults.value  = emptyList()
-        _isSearching.value    = false
+        addressSearch.clear()
         _selectedSearchPin.value = null
     }
 
@@ -376,12 +373,6 @@ class MapViewModel @Inject constructor(
 
     // ── Saved places (custom pins saved as named favourites) ───────────────────
 
-    private fun observeSavedPlaces() {
-        viewModelScope.launch {
-            savedPlacesRepository.getSavedPlacesFlow().collect { _savedPlaces.value = it }
-        }
-    }
-
     /**
      * Saves the current custom pin as a named favourite place and dismisses the
      * transient custom pin (it reappears as a persistent saved-place marker).
@@ -393,148 +384,95 @@ class MapViewModel @Inject constructor(
             address?.substringBefore(",")?.trim()
                 ?: context.getString(de.velospot.R.string.saved_place_title)
         }
-        viewModelScope.launch {
-            savedPlacesRepository.savePlace(
-                SavedPlace(
-                    id        = UUID.randomUUID().toString(),
-                    name      = resolvedName,
-                    latitude  = pin.latitude,
-                    longitude = pin.longitude,
-                    address   = address,
-                    addedAt   = System.currentTimeMillis()
-                )
-            )
-        }
+        savedPlacesController.persist(resolvedName, pin.latitude, pin.longitude, address)
         dismissCustomMapPin()
     }
 
-    /** Opens the detail sheet for a saved place and centres the camera on it. */
-    fun selectSavedPlace(place: SavedPlace) {
-        _customMapPin.value      = null
-        _selectedSearchPin.value = null
-        _selectedSpace.value     = null
-        _selectedSavedPlace.value = place
-        _mapCameraTarget.value = MapCameraTarget(
-            latitude               = place.latitude,
-            longitude              = place.longitude,
-            zoom                   = 16.0,
-            verticalOffsetFraction = 1.0 / 6.0
-        )
-    }
+    fun selectSavedPlace(place: SavedPlace) = savedPlacesController.select(place)
 
-    fun dismissSelectedSavedPlace() { _selectedSavedPlace.value = null }
+    fun dismissSelectedSavedPlace() = savedPlacesController.clearSelection()
 
-    fun removeSavedPlace(id: String) {
-        if (_selectedSavedPlace.value?.id == id) _selectedSavedPlace.value = null
-        viewModelScope.launch { savedPlacesRepository.removePlace(id) }
+    fun removeSavedPlace(id: String) = savedPlacesController.remove(id)
+
+    /**
+     * Clears every transient map selection (parking space, search pin, custom pin,
+     * saved place) so opening one detail sheet always dismisses the others. Callers
+     * set their own selection immediately afterwards.
+     */
+    private fun clearPlaceSelections() {
+        _selectedSpace.value      = null
+        _selectedSearchPin.value  = null
+        _customMapPin.value       = null
+        savedPlacesController.clearSelection()
     }
 
     // ── Parked bike (where the user left their bike) ───────────────────────────
 
-    private fun observeParkedBike() {
-        viewModelScope.launch {
-            parkedBikeRepository.getParkedBikeFlow().collect { _parkedBike.value = it }
-        }
-    }
+    fun parkBikeAtCurrentLocation() = parkedBikeController.parkAtCurrentLocation()
+
+    fun parkBikeAt(latitude: Double, longitude: Double) =
+        parkedBikeController.parkAt(latitude, longitude)
+
+    fun showParkedBike() = parkedBikeController.showDetail()
+
+    fun dismissParkedBikeSheet() = parkedBikeController.hideSheet()
+
+    fun pickUpBike() = parkedBikeController.pickUp()
 
     /**
-     * Parks the bike at the user's current GPS position. Emits a one-shot user
-     * message indicating success — or that the location is unavailable when there
-     * is no GPS fix yet. The street address is reverse-geocoded in the background.
+     * Builds a synthetic [BikeParkingSpace] used to route to a non-parking target
+     * (custom pin, address search result, saved place, parked bike). All such
+     * targets share the same "unknown facility" fields, so only the identifying
+     * data varies — centralising construction here keeps the four navigation
+     * entry points DRY and consistent with [SYNTHETIC_DESTINATION_IDS].
      */
-    fun parkBikeAtCurrentLocation() {
-        val location = _userLocation.value ?: run {
-            _userMessageRes.value = de.velospot.R.string.error_location_unavailable
-            return
-        }
-        parkBikeAt(location.latitude, location.longitude)
-    }
-
-    /**
-     * Parks the bike at an explicit coordinate (e.g. a tapped custom pin). Any
-     * transient custom pin is dismissed; the persistent parked-bike marker takes
-     * its place.
-     */
-    fun parkBikeAt(latitude: Double, longitude: Double) {
-        val bike = ParkedBike(
-            latitude  = latitude,
-            longitude = longitude,
-            parkedAt  = System.currentTimeMillis(),
-            address   = null
-        )
-        viewModelScope.launch { parkedBikeRepository.park(bike) }
-        _customMapPin.value        = null
-        _customMapPinAddress.value = null
-        _userMessageRes.value      = de.velospot.R.string.parked_bike_saved
-        // Resolve the street address in the background and persist the enriched record.
-        viewModelScope.launch {
-            val address = runCatching { nominatimGeocoder.reverseGeocode(latitude, longitude) }.getOrNull()
-            if (address != null && _parkedBike.value?.parkedAt == bike.parkedAt) {
-                parkedBikeRepository.park(bike.copy(address = address))
-            }
-        }
-    }
-
-    /** Opens the parked-bike detail sheet and centres the camera on the marker. */
-    fun showParkedBike() {
-        val bike = _parkedBike.value ?: return
-        _selectedSpace.value      = null
-        _selectedSearchPin.value  = null
-        _customMapPin.value       = null
-        _selectedSavedPlace.value = null
-        _isParkedBikeSheetVisible.value = true
-        _mapCameraTarget.value = MapCameraTarget(
-            latitude               = bike.latitude,
-            longitude              = bike.longitude,
-            zoom                   = 17.0,
-            verticalOffsetFraction = 1.0 / 6.0
-        )
-    }
-
-    fun dismissParkedBikeSheet() { _isParkedBikeSheetVisible.value = false }
-
-    /** The user collected their bike — clears the stored location and marker. */
-    fun pickUpBike() {
-        _isParkedBikeSheetVisible.value = false
-        viewModelScope.launch { parkedBikeRepository.clear() }
-    }
+    private fun syntheticSpace(
+        id: String,
+        latitude: Double,
+        longitude: Double,
+        name: String,
+        address: String?,
+        sourceLayer: String
+    ): BikeParkingSpace = BikeParkingSpace(
+        id          = id,
+        latitude    = latitude,
+        longitude   = longitude,
+        type        = BikeParkingType.UNKNOWN,
+        capacity    = null,
+        name        = name,
+        address     = address,
+        isCovered   = null,
+        imageUrl    = null,
+        operator    = null,
+        sourceLayer = sourceLayer
+    )
 
     /** Starts in-app navigation back to the parked bike. */
     fun navigateToParkedBike() {
-        val bike = _parkedBike.value ?: return
-        val syntheticSpace = BikeParkingSpace(
+        val bike = parkedBike.value ?: return
+        val syntheticSpace = syntheticSpace(
             id          = ID_PARKED_BIKE,
             latitude    = bike.latitude,
             longitude   = bike.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = context.getString(de.velospot.R.string.parked_bike_title),
             address     = bike.address,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "parked_bike"
         )
-        _isParkedBikeSheetVisible.value = false
+        parkedBikeController.hideSheet()
         startInAppNavigation(syntheticSpace)
     }
 
     /** Starts in-app navigation to a saved place. */
     fun navigateToSavedPlace(place: SavedPlace) {
-        val syntheticSpace = BikeParkingSpace(
+        val syntheticSpace = syntheticSpace(
             id          = ID_SAVED_PLACE,
             latitude    = place.latitude,
             longitude   = place.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = place.name,
             address     = place.address,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "saved"
         )
-        _selectedSavedPlace.value = null
+        savedPlacesController.clearSelection()
         startInAppNavigation(syntheticSpace)
     }
 
@@ -543,18 +481,13 @@ class MapViewModel @Inject constructor(
         val pin     = _customMapPin.value ?: return
         val address = _customMapPinAddress.value
         // Pin stays on the map so the route end-point remains visible during navigation.
-        val syntheticSpace = BikeParkingSpace(
+        val syntheticSpace = syntheticSpace(
             id          = ID_CUSTOM_MAP_PIN,
             latitude    = pin.latitude,
             longitude   = pin.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = address?.substringBefore(",")?.trim()
                             ?: context.getString(de.velospot.R.string.custom_pin_title),
             address     = address,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "custom"
         )
         startInAppNavigation(syntheticSpace)
@@ -567,7 +500,7 @@ class MapViewModel @Inject constructor(
     fun onSearchResultSelected(result: AddressSearchResult) {
         _customMapPin.value      = null
         _selectedSearchPin.value = result
-        _searchResults.value     = emptyList()   // collapse dropdown
+        addressSearch.collapseResults()   // collapse dropdown
         _mapCameraTarget.value   = MapCameraTarget(
             latitude             = result.latitude,
             longitude            = result.longitude,
@@ -592,18 +525,7 @@ class MapViewModel @Inject constructor(
             address.substringBefore(",").trim()
                 .ifBlank { context.getString(de.velospot.R.string.saved_place_title) }
         }
-        viewModelScope.launch {
-            savedPlacesRepository.savePlace(
-                SavedPlace(
-                    id        = UUID.randomUUID().toString(),
-                    name      = resolvedName,
-                    latitude  = pin.latitude,
-                    longitude = pin.longitude,
-                    address   = address,
-                    addedAt   = System.currentTimeMillis()
-                )
-            )
-        }
+        savedPlacesController.persist(resolvedName, pin.latitude, pin.longitude, address)
         dismissSearchPin()
     }
 
@@ -611,17 +533,12 @@ class MapViewModel @Inject constructor(
     fun startNavigationToAddress(result: AddressSearchResult) {
         // Wrap the address as a synthetic BikeParkingSpace so the existing routing
         // and navigation overlay work without modification.
-        val syntheticSpace = BikeParkingSpace(
+        val syntheticSpace = syntheticSpace(
             id          = ID_ADDRESS_SEARCH_PIN,
             latitude    = result.latitude,
             longitude   = result.longitude,
-            type        = BikeParkingType.UNKNOWN,
-            capacity    = null,
             name        = result.displayName.substringBefore(",").trim(),
             address     = result.displayName,
-            isCovered   = null,
-            imageUrl    = null,
-            operator    = null,
             sourceLayer = "search"
         )
         _selectedSearchPin.value = null
@@ -630,184 +547,64 @@ class MapViewModel @Inject constructor(
 
     // ── Ride tracking ("record my ride") ──────────────────────────────────────
 
-    private val rideTracker = RideTracker()
+    /** Owns the "record my ride" concern (recording lifecycle, stats, track, timeline). */
+    private val rideTracking = RideTrackingController(
+        scope = viewModelScope,
+        repository = recordedRidesRepository,
+        activeRoute = { navigationController.activeRoute },
+        currentLocation = { _userLocation.value },
+        onAccuracyChanged = { refreshLocationAccuracy() },
+        onUserMessage = { res -> _userMessageRes.value = res },
+        clearOtherSelections = { clearPlaceSelections() },
+        moveCamera = { target -> _mapCameraTarget.value = target }
+    )
+    val rideTrackingState: StateFlow<RideTrackingUiState> = rideTracking.trackingState
+    val recordedRides: StateFlow<List<RecordedRide>> = rideTracking.recordedRides
+    val selectedRide: StateFlow<RecordedRide?> = rideTracking.selectedRide
+    val rideTrackPoints: StateFlow<List<RoutePoint>> = rideTracking.trackPoints
 
-    private val _rideTrackingState = MutableStateFlow<RideTrackingUiState>(RideTrackingUiState.Idle)
-    val rideTrackingState: StateFlow<RideTrackingUiState> = _rideTrackingState.asStateFlow()
+    val isRecordingRide: Boolean get() = rideTracking.isRecording
 
-    /** All persisted rides, newest first (the "My rides" timeline). */
-    private val _recordedRides = MutableStateFlow<List<RecordedRide>>(emptyList())
-    val recordedRides: StateFlow<List<RecordedRide>> = _recordedRides.asStateFlow()
-
-    /** The ride whose detail sheet is currently open (null when none). */
-    private val _selectedRide = MutableStateFlow<RecordedRide?>(null)
-    val selectedRide: StateFlow<RecordedRide?> = _selectedRide.asStateFlow()
-
-    /**
-     * Polyline drawn on the map: the live track while recording, or the selected
-     * ride's track while its detail sheet is open. Empty otherwise.
-     */
-    private val _rideTrackPoints = MutableStateFlow<List<RoutePoint>>(emptyList())
-    val rideTrackPoints: StateFlow<List<RoutePoint>> = _rideTrackPoints.asStateFlow()
-
-    /** Whether the current recording was auto-started by navigation (vs. the FAB). */
-    private var rideAutoStartedByNavigation = false
-
-    val isRecordingRide: Boolean get() = rideTracker.isRecording
-
-    private fun observeRecordedRides() {
-        viewModelScope.launch {
-            recordedRidesRepository.getRidesFlow().collect { _recordedRides.value = it }
-        }
-    }
-
-    /**
-     * Starts recording a ride. No-op when a recording is already running so the
-     * manual FAB and the automatic navigation hook never fight over the tracker.
-     */
     fun startRideTracking(autoStarted: Boolean = false) {
-        if (rideTracker.isRecording) return
-        rideAutoStartedByNavigation = autoStarted
-        rideTracker.start(System.currentTimeMillis())
-        _selectedRide.value = null
-        _rideTrackPoints.value = emptyList()
-        _rideTrackingState.value = RideTrackingUiState.Recording(rideTracker.currentStats())
-        // Seed with the current fix so the track starts immediately.
-        _userLocation.value?.let { feedRideTracker(it) }
-        refreshLocationAccuracy()
+        rideTracking.start(autoStarted)
+        // Lock the camera onto the rider for the whole recording (until they pan).
+        if (rideTracking.isRecording) _isFollowingLocation.value = true
     }
-
-    /**
-     * Stops the active recording, persists it (when long enough) and opens its
-     * detail sheet. Short rides are discarded with a hint.
-     */
     fun stopRideTracking() {
-        if (!rideTracker.isRecording) return
-        val ride = rideTracker.stop(System.currentTimeMillis())
-        rideAutoStartedByNavigation = false
-        _rideTrackingState.value = RideTrackingUiState.Idle
-        _rideTrackPoints.value = emptyList()
-        if (ride != null) {
-            viewModelScope.launch { recordedRidesRepository.saveRide(ride) }
-            _userMessageRes.value = de.velospot.R.string.ride_saved
-            selectRecordedRide(ride)
-        } else {
-            _userMessageRes.value = de.velospot.R.string.ride_too_short
-        }
-        refreshLocationAccuracy()
+        rideTracking.stop()
+        updateFollowSession()
     }
-
-    /** Discards the active recording without saving anything. */
     fun discardRideTracking() {
-        if (!rideTracker.isRecording) return
-        rideTracker.discard()
-        rideAutoStartedByNavigation = false
-        _rideTrackingState.value = RideTrackingUiState.Idle
-        _rideTrackPoints.value = emptyList()
-        refreshLocationAccuracy()
+        rideTracking.discard()
+        updateFollowSession()
     }
-
-    /** Feeds a GPS fix into the tracker and republishes the live stats + track. */
-    private fun feedRideTracker(location: GeoCoordinate) {
-        // Prefer BRouter's accurate, smooth terrain elevation (from its SRTM-backed
-        // segment files) while navigating; raw GPS altitude is far too noisy. Falls
-        // back to GPS altitude for manual rides or sources without elevation.
-        val altitude = activeRouteElevationAt(location) ?: location.altitudeMeters
-        val stats = rideTracker.addPoint(
-            latitude = location.latitude,
-            longitude = location.longitude,
-            timestamp = System.currentTimeMillis(),
-            speedMps = location.speedMetersPerSecond,
-            altitudeMeters = altitude
-        )
-        _rideTrackingState.value = RideTrackingUiState.Recording(stats)
-        _rideTrackPoints.value = rideTracker.trackPoints.map { RoutePoint(it.latitude, it.longitude) }
-    }
-
-    /**
-     * Terrain elevation (m) of the active route nearest to [location], or `null`
-     * when not navigating, the route carries no elevation, or the rider is too far
-     * from the route to trust the match (then GPS altitude is used instead).
-     */
-    private fun activeRouteElevationAt(location: GeoCoordinate): Double? {
-        val route = (_navigationUiState.value as? NavigationUiState.Active)?.route ?: return null
-        var best: Double? = null
-        var bestDist = Double.MAX_VALUE
-        for (point in route.points) {
-            val elevation = point.elevationMeters ?: continue
-            val dist = GeoMath.distanceMeters(
-                location.latitude, location.longitude, point.latitude, point.longitude
-            )
-            if (dist < bestDist) {
-                bestDist = dist
-                best = elevation
-            }
-        }
-        return if (bestDist <= ROUTE_ELEVATION_MATCH_METERS) best else null
-    }
-
-    /** Opens the detail sheet for a recorded ride and draws its track on the map. */
-    fun selectRecordedRide(ride: RecordedRide) {
-        _selectedSpace.value = null
-        _selectedSearchPin.value = null
-        _customMapPin.value = null
-        _selectedSavedPlace.value = null
-        _selectedRide.value = ride
-        if (!rideTracker.isRecording) {
-            _rideTrackPoints.value = ride.points.map { RoutePoint(it.latitude, it.longitude) }
-        }
-        ride.points.firstOrNull()?.let { start ->
-            _mapCameraTarget.value = MapCameraTarget(
-                latitude = start.latitude,
-                longitude = start.longitude,
-                zoom = 14.0,
-                verticalOffsetFraction = 1.0 / 6.0
-            )
-        }
-    }
-
-    fun dismissSelectedRide() {
-        _selectedRide.value = null
-        if (!rideTracker.isRecording) _rideTrackPoints.value = emptyList()
-    }
-
-    fun deleteRecordedRide(id: String) {
-        if (_selectedRide.value?.id == id) dismissSelectedRide()
-        viewModelScope.launch { recordedRidesRepository.removeRide(id) }
-    }
+    fun selectRecordedRide(ride: RecordedRide) = rideTracking.selectRide(ride)
+    fun dismissSelectedRide() = rideTracking.dismissSelectedRide()
+    fun deleteRecordedRide(id: String) = rideTracking.deleteRide(id)
 
     // ── Offline routing ───────────────────────────────────────────────────────
 
-    private val _offlineRoutingUiState = MutableStateFlow(initialOfflineState())
-    val offlineRoutingUiState: StateFlow<OfflineRoutingUiState> = _offlineRoutingUiState.asStateFlow()
-    private val _showOfflineSetupSheet = MutableStateFlow(false)
-    val showOfflineSetupSheet: StateFlow<Boolean> = _showOfflineSetupSheet.asStateFlow()
-
-    /** True while the profile selection sheet should be visible. */
-    private val _showProfileSheet = MutableStateFlow(false)
-    val showProfileSheet: StateFlow<Boolean> = _showProfileSheet.asStateFlow()
-
-    /** True when download was requested but device is not on Wi-Fi. */
-    private val _showWifiWarning = MutableStateFlow(false)
-    val showWifiWarning: StateFlow<Boolean> = _showWifiWarning.asStateFlow()
+    /** Owns the offline-routing concern (download lifecycle, sheets, active profile). */
+    private val offlineRouting = OfflineRoutingController(
+        scope = viewModelScope,
+        context = context,
+        segmentManager = segmentManager,
+        currentLocation = { _userLocation.value },
+        onDownloadError = { error -> navigationController.showError(error) }
+    )
+    val offlineRoutingUiState: StateFlow<OfflineRoutingUiState> = offlineRouting.uiState
+    val showOfflineSetupSheet: StateFlow<Boolean> = offlineRouting.showSetupSheet
+    val showProfileSheet: StateFlow<Boolean> = offlineRouting.showProfileSheet
+    val showWifiWarning: StateFlow<Boolean> = offlineRouting.showWifiWarning
 
     // ── Init ──────────────────────────────────────────────────────────────────
 
     private var viewportJob: Job? = null
 
-    /** Active route calculation job – cancelled immediately when a new navigation starts. */
-    private var navigationJob: Job? = null
-
-    /** Timestamp (ms) of the last off-route reroute, used to throttle reroute spam. */
-    private var lastRerouteAtMs = 0L
-
     init {
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
         observeUserLocation()
-        observeSavedPlaces()
-        observeParkedBike()
-        observeRecordedRides()
     }
 
     // ── Viewport / parking ────────────────────────────────────────────────────
@@ -928,7 +725,7 @@ class MapViewModel @Inject constructor(
      */
     private fun refreshLocationAccuracy() {
         val needsHighAccuracy =
-            _navigationUiState.value is NavigationUiState.Active || rideTracker.isRecording
+            navigationController.isActive || rideTracking.isRecording
         setHighAccuracyLocation(needsHighAccuracy)
     }
 
@@ -950,10 +747,10 @@ class MapViewModel @Inject constructor(
             locationRepository.getCurrentLocationFlow().collect { location ->
                 // While the GPS mock simulator is running, ignore real fixes so the
                 // synthetic route drive isn't overwritten.
-                if (_isSimulatingRoute.value) return@collect
+                if (navigationController.isSimulating.value) return@collect
                 _userLocation.value = location
                 // Feed the ride tracker while a recording is running.
-                if (location != null && rideTracker.isRecording) feedRideTracker(location)
+                if (location != null && rideTracking.isRecording) rideTracking.feed(location)
                 // One-time startup centering: as soon as the first GPS fix arrives,
                 // move the camera to the user's position. Fires only once per ViewModel.
                 if (!hasCenteredOnStartup && location != null) {
@@ -980,192 +777,45 @@ class MapViewModel @Inject constructor(
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
-    fun startInAppNavigation(space: BikeParkingSpace) {
-        val location = _userLocation.value ?: run {
-            _navigationUiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
-            return
-        }
-        // Cancel any in-progress calculation – e.g. when the user taps a different
-        // parking spot while a route is still being computed.
-        navigationJob?.cancel()
-        _navigationUiState.value = NavigationUiState.Loading
-        _navigationProgress.value = null
-        hasAutoParkedForCurrentRoute = false
-        navigationJob = viewModelScope.launch {
-            runCatching {
-                routingRepository.getBikeRoute(
-                    from = location,
-                    to   = GeoCoordinate(space.latitude, space.longitude)
-                )
-            }.onSuccess {
-                _navigationUiState.value = NavigationUiState.Active(destination = space, route = it)
-                // Active navigation needs precise, frequent fixes.
-                setHighAccuracyLocation(true)
-                // Auto-record the ride for the whole navigation (unless the user is
-                // already recording manually).
-                startRideTracking(autoStarted = true)
-            }.onFailure { throwable ->
-                _navigationUiState.value = NavigationUiState.Error(when (throwable) {
-                    is BRouterProfilesMissingException -> MapError.BRouterProfilesMissing
-                    is RoutingFailedException          -> MapError.RoutingFailed(throwable.code)
-                    is NoRouteFoundException           -> MapError.NoRouteFound
-                    is EmptyRouteGeometryException     -> MapError.EmptyRouteGeometry
-                    else                               -> MapError.Unknown(throwable.message)
-                })
-            }
-        }
-    }
+    fun startInAppNavigation(space: BikeParkingSpace) = navigationController.start(space)
 
-    fun stopInAppNavigation() {
-        navigationJob?.cancel()
-        navigationJob = null
-        stopRouteSimulation()
-        val wasCustomPin = (_navigationUiState.value as? NavigationUiState.Active)
-            ?.destination?.id == ID_CUSTOM_MAP_PIN
-        _navigationUiState.value = NavigationUiState.Idle
-        _navigationProgress.value = null
-        if (wasCustomPin) {
-            _customMapPin.value        = null
-            _customMapPinAddress.value = null
-        }
-        // If this ride was auto-recorded by navigation, finish + save it now. A
-        // manually-started recording keeps running so the user controls it.
-        if (rideAutoStartedByNavigation) {
-            stopRideTracking()
-        } else {
-            // Navigation ended → drop back to the battery-friendly balanced-power
-            // mode (unless a manual recording still needs precise fixes).
-            refreshLocationAccuracy()
-        }
-    }
+    fun stopInAppNavigation() = navigationController.stop()
 
-    /**
-     * Called by the `NavigationManager` when the rider has strayed off-route.
-     * Recomputes a fresh BRouter route from the current GPS position to the same
-     * destination and swaps it into the active navigation **without** flashing the
-     * loading state, so the 3D view keeps running. Throttled so a brief detour does
-     * not spawn a flurry of recalculations.
-     */
-    fun onUserWentOffRoute() {
-        val active = _navigationUiState.value as? NavigationUiState.Active ?: return
-        val location = _userLocation.value ?: return
-        val now = System.currentTimeMillis()
-        if (now - lastRerouteAtMs < REROUTE_COOLDOWN_MS) return
-        lastRerouteAtMs = now
+    /** Called by the `NavigationManager` when the rider has strayed off-route. */
+    fun onUserWentOffRoute() = navigationController.onUserWentOffRoute()
 
-        navigationJob?.cancel()
-        navigationJob = viewModelScope.launch {
-            runCatching {
-                routingRepository.getBikeRoute(
-                    from = location,
-                    to   = GeoCoordinate(active.destination.latitude, active.destination.longitude)
-                )
-            }.onSuccess { newRoute ->
-                // Only apply if we're still navigating to the same destination.
-                val current = _navigationUiState.value as? NavigationUiState.Active
-                if (current?.destination?.id == active.destination.id) {
-                    _navigationUiState.value = NavigationUiState.Active(active.destination, newRoute)
-                    _navigationProgress.value = null
-                }
-            }
-            // On failure we silently keep the existing route; the next off-route
-            // window (after the cooldown) will try again.
-        }
-    }
-
-    fun clearNavigationError() { if (_navigationUiState.value is NavigationUiState.Error) _navigationUiState.value = NavigationUiState.Idle }
+    fun clearNavigationError() = navigationController.clearError()
 
     // ── Offline routing ───────────────────────────────────────────────────────
 
-    /** Opens the setup information sheet. */
-    fun requestOfflineRoutingSetup() { _showOfflineSetupSheet.value = true }
-    fun dismissOfflineSetupSheet()   { _showOfflineSetupSheet.value = false }
+    fun requestOfflineRoutingSetup() = offlineRouting.requestSetup()
+    fun dismissOfflineSetupSheet()   = offlineRouting.dismissSetupSheet()
 
-    fun openProfileSheet()    { _showProfileSheet.value = true }
-    fun dismissProfileSheet() { _showProfileSheet.value = false }
+    fun openProfileSheet()    = offlineRouting.openProfileSheet()
+    fun dismissProfileSheet() = offlineRouting.dismissProfileSheet()
 
-    fun dismissWifiWarning()          { _showWifiWarning.value = false }
-    fun confirmDownloadOnMobileData() { _showWifiWarning.value = false; startSegmentDownload() }
+    fun dismissWifiWarning()          = offlineRouting.dismissWifiWarning()
+    fun confirmDownloadOnMobileData() = offlineRouting.confirmDownloadOnMobileData()
+    fun confirmOfflineRoutingSetup()  = offlineRouting.confirmSetup()
 
     /**
-     * Called after the user taps "Jetzt herunterladen" in the setup sheet.
-     * Shows a Wi-Fi warning when the device is not on Wi-Fi.
+     * Switches the active routing profile. Persisting + state live in the offline
+     * controller; if navigation is active the route is immediately recalculated
+     * with the new profile.
      */
-    fun confirmOfflineRoutingSetup() {
-        _showOfflineSetupSheet.value = false
-        if (!isWifiConnected(context)) {
-            _showWifiWarning.value = true
-            return
-        }
-        startSegmentDownload()
-    }
-
-    private fun startSegmentDownload() {
-        val loc = _userLocation.value ?: GeoCoordinate(DEFAULT_LAT, DEFAULT_LON)
-        _offlineRoutingUiState.value = OfflineRoutingUiState.Downloading()
-        viewModelScope.launch {
-            runCatching {
-                segmentManager.downloadSegmentsForLocation(
-                    lat = loc.latitude,
-                    lon = loc.longitude,
-                    onProgress = { downloaded, total, fileIndex, totalFiles, fileName ->
-                        val progress = if (total > 0L) downloaded / total.toFloat() else -1f
-                        _offlineRoutingUiState.value = OfflineRoutingUiState.Downloading(
-                            fileProgress      = progress,
-                            currentFileIndex  = fileIndex,
-                            totalFiles        = totalFiles,
-                            downloadedBytes   = downloaded,
-                            totalBytes        = total,
-                            currentFile       = fileName
-                        )
-                    }
-                )
-            }.onSuccess {
-                val profile = OfflineRoutingPreferences.getSelectedProfile(context)
-                OfflineRoutingPreferences.setOfflineRoutingEnabled(context, true)
-                // Show success state briefly, then switch to Enabled
-                _offlineRoutingUiState.value = OfflineRoutingUiState.DownloadComplete(profile)
-                delay(2_500L)
-                _offlineRoutingUiState.value = OfflineRoutingUiState.Enabled(profile)
-            }.onFailure { throwable ->
-                _offlineRoutingUiState.value = OfflineRoutingUiState.Disabled
-                val error = when (throwable) {
-                    is NoInternetConnectionException -> MapError.NoInternetConnection
-                    else                             -> MapError.Unknown(throwable.message)
-                }
-                _navigationUiState.value = NavigationUiState.Error(error)
-            }
-        }
-    }
-
-    /** Switches the active routing profile without re-downloading. */
     fun selectRoutingProfile(profile: de.velospot.data.brouter.BRouterProfile) {
-        OfflineRoutingPreferences.setSelectedProfile(context, profile)
-        _offlineRoutingUiState.value = OfflineRoutingUiState.Enabled(profile)
-
-        // If navigation is currently active, immediately recalculate the route with the new profile.
-        val currentDestination = (_navigationUiState.value as? NavigationUiState.Active)?.destination
+        offlineRouting.selectProfile(profile)
+        val currentDestination = navigationController.activeDestination
         if (currentDestination != null) {
             startInAppNavigation(currentDestination)
         }
     }
 
-    /** Disables offline routing and wipes all downloaded segment files. */
-    fun disableOfflineRouting() {
-        OfflineRoutingPreferences.setOfflineRoutingEnabled(context, false)
-        _offlineRoutingUiState.value = OfflineRoutingUiState.Disabled
-        viewModelScope.launch { segmentManager.deleteAllSegments() }
-    }
-
-    private fun initialOfflineState(): OfflineRoutingUiState =
-        if (OfflineRoutingPreferences.isOfflineRoutingEnabled(context))
-            OfflineRoutingUiState.Enabled(OfflineRoutingPreferences.getSelectedProfile(context))
-        else
-            OfflineRoutingUiState.Disabled
+    fun disableOfflineRouting() = offlineRouting.disable()
 
     override fun onCleared() {
         super.onCleared()
-        routeSimulator.stop()
+        navigationController.dispose()
         locationRepository.stopLocationUpdates()
     }
 }

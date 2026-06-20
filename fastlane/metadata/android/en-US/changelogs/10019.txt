@@ -1,0 +1,5 @@
+• New cyclist avatar as your live-location marker – on the map and during navigation
+• Record your rides ("My rides") with time, distance, speed, elevation and a speed chart
+• Pan the map freely while navigating or recording, then tap re-centre to follow again
+• Smarter GPS filtering for cleaner tracks and realistic speeds
+• Favourites moved to their own isolated database for safer storage

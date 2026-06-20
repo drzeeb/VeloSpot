@@ -14,7 +14,7 @@ import de.velospot.feature.map.presentation.markers.PROP_ICON
 import de.velospot.feature.map.presentation.markers.SOURCE_LOCATION
 import de.velospot.feature.map.presentation.markers.SOURCE_ROUTE
 import de.velospot.feature.map.presentation.markers.SOURCE_ROUTE_TRAVELED
-import de.velospot.feature.map.presentation.markers.createNavigationArrowIcon
+import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
 import de.velospot.feature.map.presentation.markers.drawableToBitmap
 import de.velospot.feature.map.presentation.markers.ensureBuildingExtrusionLayer
 import de.velospot.feature.map.presentation.markers.ensureLocationLayer
@@ -81,6 +81,28 @@ class NavigationManager(private val context: Context) {
 
         /** Fallback average bike speed (m/s ≈ 16 km/h) used for the ETA when the route carries none. */
         const val DEFAULT_BIKE_SPEED_MPS = 4.5
+
+        /**
+         * Minimum distance (m) the snapped point must travel within the same route
+         * segment before the travelled/remaining polyline split is re-rendered.
+         * Below this the (potentially O(route)) rebuild is skipped, since moving the
+         * single split boundary a few metres along the line is visually imperceptible
+         * — the smoothly-eased puck (redrawn every frame) carries the motion instead.
+         */
+        const val RENDER_MIN_SNAP_MOVE_M = 12.0
+
+        /**
+         * Speed-up factor applied to the zoom/pitch time constants during the
+         * intro "tilt-in" when navigation starts, so the camera snaps into the 3D
+         * view quickly instead of drifting in slowly (`< 1` = faster).
+         */
+        const val INTRO_TAU_SCALE = 0.28
+
+        /** Pitch within this many degrees of the target ends the intro tilt-in. */
+        const val INTRO_PITCH_EPS_DEG = 2.0
+
+        /** Zoom within this of the target ends the intro tilt-in. */
+        const val INTRO_ZOOM_EPS = 0.25
     }
 
     private var map: MapLibreMap? = null
@@ -99,6 +121,16 @@ class NavigationManager(private val context: Context) {
     private var lastSnapLat = 0.0
     private var lastSnapLon = 0.0
 
+    /**
+     * The segment index and snapped position the route split was last *rendered* at.
+     * Used by [renderRouteSplit] to skip redundant rebuilds while the rider creeps
+     * along the same segment (see [RENDER_MIN_SNAP_MOVE_M]). `-1` forces the next
+     * render (set on [start]).
+     */
+    private var renderedSegment = -1
+    private var renderedSnapLat = 0.0
+    private var renderedSnapLon = 0.0
+
     /** Consecutive off-route fixes seen so far, and whether [onOffRoute] already fired. */
     private var consecutiveOffRoute = 0
     private var offRouteFired = false
@@ -116,6 +148,23 @@ class NavigationManager(private val context: Context) {
 
     /** Whether the eased ("current") state has been seeded from the first fix after [start]. */
     private var initialized = false
+
+    /**
+     * Whether the intro "tilt-in" glide is still running. During the intro the
+     * zoom/pitch ease in faster (see [INTRO_TAU_SCALE]) and map gestures are
+     * **disabled** so a stray touch can't fight the animation; both are restored
+     * the moment the camera has reached the 3D navigation view.
+     */
+    private var introActive = false
+
+    /**
+     * Whether the camera is locked onto (following) the rider. When `false` the
+     * frame loop keeps easing/redrawing the heading-arrow puck and reporting
+     * progress, but stops moving the **camera**, so the user can pan/zoom the map
+     * freely mid-navigation. Re-enabling re-seeds the eased state from the user's
+     * current viewport so the camera glides smoothly back instead of snapping.
+     */
+    private var following = true
 
     // ── Eased ("current") camera/puck state ───────────────────────────────────
     private var curLat = 0.0
@@ -142,6 +191,9 @@ class NavigationManager(private val context: Context) {
 
     private var lastFrameNanos = 0L
 
+    /** Guards against registering the gesture-cancels-intro listener more than once. */
+    private var gestureListenerRegistered = false
+
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (!active) return
@@ -160,14 +212,32 @@ class NavigationManager(private val context: Context) {
     fun attach(map: MapLibreMap, style: Style) {
         this.map = map
         if (style.getImage(IMG_LOCATION_NAV) == null) {
-            style.addImage(IMG_LOCATION_NAV, drawableToBitmap(createNavigationArrowIcon(context)))
+            // Use the larger cyclist avatar (not the old arrow puck) while navigating.
+            // The location layer still rotates it by PROP_BEARING, so the rider turns
+            // to face the live heading and leans with the tilted 3D map.
+            style.addImage(
+                IMG_LOCATION_NAV,
+                drawableToBitmap(createLocationMarkerIcon(context, isNavigationActive = true))
+            )
         }
         ensureLocationLayer(style)
         ensureBuildingExtrusionLayer(style)
+        // A user touch (pan/zoom) must take over the camera *instantly* — even mid
+        // intro. Registering directly on the map lets us cancel the intro and break
+        // follow synchronously, with none of the StateFlow → Compose round-trip lag.
+        if (!gestureListenerRegistered) {
+            map.addOnCameraMoveStartedListener { reason ->
+                if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
+                    onUserGesture()
+                }
+            }
+            gestureListenerRegistered = true
+        }
         if (active) {
             // Navigation is always 3D: re-assert buildings after a style reload.
             setBuildingExtrusionVisible(style, true)
-            renderRouteSplit()
+            // The reloaded style has empty sources — re-render unconditionally.
+            renderRouteSplit(force = true)
             if (initialized) writePuck()
         } else {
             // Reflect the saved 2D/3D preference on the idle map (also after a
@@ -186,6 +256,46 @@ class NavigationManager(private val context: Context) {
         this.is3D = is3D
         // Only the idle map reacts; during navigation we keep the 3D view intact.
         if (!active) applyIdleView()
+    }
+
+    /**
+     * Locks/unlocks the **follow camera** during active navigation. While unlocked
+     * the rider can pan/zoom the map by hand; the heading-arrow puck and route
+     * progress keep updating. Re-locking re-seeds the eased camera state from the
+     * current viewport so it glides back to the rider rather than jumping.
+     */
+    fun setFollowing(enabled: Boolean) {
+        if (following == enabled) return
+        following = enabled
+        if (enabled) reseedFromCurrentCamera()
+        else introActive = false   // re-locking aside, any unfollow ends the intro
+    }
+
+    /**
+     * Handles a raw user touch gesture (pan/zoom) on the map. Cancels the intro
+     * tilt-in immediately and breaks the follow lock so the gesture takes over the
+     * camera **instantly**, with no waiting for the intro to finish. Idempotent.
+     */
+    private fun onUserGesture() {
+        if (!active) return
+        introActive = false
+        following = false
+    }
+
+    /**
+     * Re-seeds the eased ("current") camera state from the map's present viewport,
+     * so the next frames interpolate from where the user left the map back to the
+     * live navigation target (used when the follow lock is re-enabled).
+     */
+    private fun reseedFromCurrentCamera() {
+        val cam = map?.cameraPosition ?: return
+        cam.target?.let {
+            curLat = it.latitude
+            curLon = it.longitude
+        }
+        curBearing = cam.bearing
+        curZoom = cam.zoom
+        curPitch = cam.tilt
     }
 
     /**
@@ -208,12 +318,19 @@ class NavigationManager(private val context: Context) {
         offRouteFired = false
         active = true
         initialized = false
+        // A fresh navigation always starts locked onto the rider.
+        following = true
+        // Begin the fast intro tilt-in. Gestures stay enabled: a touch instantly
+        // cancels the intro (see onUserGesture) so the map reacts without delay.
+        introActive = true
+        // Force the first split render for this route (invalidate the diff tracker).
+        renderedSegment = -1
         // Seed the split geometry at the route start (nothing travelled yet).
         lastSnapLat = routePoints.firstOrNull()?.latitude ?: 0.0
         lastSnapLon = routePoints.firstOrNull()?.longitude ?: 0.0
         // Navigation is always 3D.
         map?.style?.let { setBuildingExtrusionVisible(it, true) }
-        renderRouteSplit()
+        renderRouteSplit(force = true)
         lastFrameNanos = 0L
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         Choreographer.getInstance().postFrameCallback(frameCallback)
@@ -295,6 +412,8 @@ class NavigationManager(private val context: Context) {
     fun stop() {
         active = false
         initialized = false
+        // Cancel any in-flight intro tilt-in.
+        introActive = false
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         map?.style?.let { style ->
             // Clear the puck source so the normal location dot (owned by the
@@ -315,12 +434,29 @@ class NavigationManager(private val context: Context) {
      * "travelled" line ([SOURCE_ROUTE_TRAVELED]) and the coloured "remaining" line
      * ([SOURCE_ROUTE]), so the part behind the rider visually falls back. Cheap —
      * only runs on new GPS fixes, not every frame.
+     *
+     * Skips the rebuild entirely while the rider is still on the **same segment**
+     * and the snapped point has moved less than [RENDER_MIN_SNAP_MOVE_M]: in that
+     * case only the single split-boundary point would shift a few metres, which is
+     * imperceptible, so the (potentially O(route)) polyline reconstruction and
+     * GeoJSON re-upload are avoided. Pass [force] = `true` to render unconditionally
+     * (route start, style reload).
      */
-    private fun renderRouteSplit() {
+    private fun renderRouteSplit(force: Boolean = false) {
         val style = map?.style ?: return
         if (route.size < 2) return
 
         val seg = lastSegment.coerceIn(0, route.size - 2)
+
+        // Diff: nothing structural changed (same segment) and the boundary barely
+        // moved → skip the rebuild. The eased puck still carries the live motion.
+        if (!force &&
+            seg == renderedSegment &&
+            GeoMath.distanceMeters(lastSnapLat, lastSnapLon, renderedSnapLat, renderedSnapLon) < RENDER_MIN_SNAP_MOVE_M
+        ) {
+            return
+        }
+
         val snap = Point.fromLngLat(lastSnapLon, lastSnapLat)
 
         val traveled = ArrayList<Point>(seg + 2)
@@ -336,6 +472,11 @@ class NavigationManager(private val context: Context) {
         // Coloured line first (so it can be the anchor), then the grey line below it.
         ensureRouteLayer(style, routeColor)
         ensureTraveledRouteLayer(style)
+
+        // Remember what we just rendered so the next fix can be diffed against it.
+        renderedSegment = seg
+        renderedSnapLat = lastSnapLat
+        renderedSnapLon = lastSnapLon
     }
 
     /** Builds a single-LineString [FeatureCollection], or an empty one for < 2 points. */
@@ -394,8 +535,13 @@ class NavigationManager(private val context: Context) {
 
         val aPos = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_POSITION_S)
         val aBear = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_BEARING_S)
-        val aZoom = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_ZOOM_S)
-        val aPitch = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_PITCH_S)
+        // During the intro the zoom/pitch ease in faster so the 3D view snaps in.
+        val zoomTau = if (introActive) NavigationCamera.TAU_ZOOM_S * INTRO_TAU_SCALE
+                      else NavigationCamera.TAU_ZOOM_S
+        val pitchTau = if (introActive) NavigationCamera.TAU_PITCH_S * INTRO_TAU_SCALE
+                       else NavigationCamera.TAU_PITCH_S
+        val aZoom = NavigationCamera.smoothingAlpha(dt, zoomTau)
+        val aPitch = NavigationCamera.smoothingAlpha(dt, pitchTau)
 
         curLat = GeoMath.lerp(curLat, tgtLat, aPos)
         curLon = GeoMath.lerp(curLon, tgtLon, aPos)
@@ -405,8 +551,24 @@ class NavigationManager(private val context: Context) {
         // idle 2D/3D preference.
         curPitch = GeoMath.lerp(curPitch, NavigationCamera.PITCH_DEGREES, aPitch)
 
-        applyCamera()
+        // Only drive the camera while the follow lock is on; the puck (heading
+        // arrow) always tracks the live position so the rider stays visible even
+        // while they pan the map by hand.
+        if (following) applyCamera()
         writePuck()
+
+        // End the intro once the camera has tilted/zoomed into the 3D view, snapping
+        // the last imperceptible bit so the glide finishes crisply instead of
+        // lingering on the long tail of the exponential ease.
+        if (introActive &&
+            kotlin.math.abs(curPitch - NavigationCamera.PITCH_DEGREES) <= INTRO_PITCH_EPS_DEG &&
+            kotlin.math.abs(curZoom - tgtZoom) <= INTRO_ZOOM_EPS
+        ) {
+            curPitch = NavigationCamera.PITCH_DEGREES
+            curZoom = tgtZoom
+            if (following) applyCamera()
+            introActive = false
+        }
     }
 
     private fun applyCamera() {
@@ -424,12 +586,15 @@ class NavigationManager(private val context: Context) {
 
     private fun writePuck() {
         val style = map?.style ?: return
-        val source = style.getSource(SOURCE_LOCATION) as? GeoJsonSource ?: return
         val feature = Feature.fromGeometry(Point.fromLngLat(curLon, curLat)).apply {
             addStringProperty(PROP_ICON, IMG_LOCATION_NAV)
             addNumberProperty(PROP_BEARING, curBearing)
         }
-        source.setGeoJson(FeatureCollection.fromFeature(feature))
+        // Upsert (create-or-update) rather than only updating an existing source:
+        // a dark-mode style reload mid-navigation wipes SOURCE_LOCATION, and the
+        // normal renderer skips re-creating it while navigating (suppressLocationDot),
+        // so the puck would otherwise vanish until navigation ends.
+        upsertSource(style, SOURCE_LOCATION, FeatureCollection.fromFeature(feature))
     }
 }
 
