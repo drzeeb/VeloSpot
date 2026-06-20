@@ -196,6 +196,22 @@ CHANGELOGS: dict[int, dict[str, str]] = {
             "\u2022 2D/3D-Kartenansicht; Display bleibt w\u00e4hrend der Navigation an\n"
         ),
     },
+    10019: {
+        "en-US": (
+            "\u2022 New cyclist avatar as your live-location marker \u2013 on the map and during navigation\n"
+            "\u2022 Record your rides (\"My rides\") with time, distance, speed, elevation and a speed chart\n"
+            "\u2022 Pan the map freely while navigating or recording, then tap re-centre to follow again\n"
+            "\u2022 Smarter GPS filtering for cleaner tracks and realistic speeds\n"
+            "\u2022 Favourites moved to their own isolated database for safer storage\n"
+        ),
+        "de-DE": (
+            "\u2022 Neuer Fahrrad-Avatar als Marker f\u00fcr deinen Standort \u2013 auf der Karte und w\u00e4hrend der Navigation\n"
+            "\u2022 Fahrten aufzeichnen (\u201eMeine Fahrten\u201c) mit Zeit, Distanz, Tempo, H\u00f6henmetern und Tempo-Diagramm\n"
+            "\u2022 Karte w\u00e4hrend Navigation/Aufzeichnung frei verschieben, dann per Zentrieren-Button wieder folgen\n"
+            "\u2022 Bessere GPS-Filterung f\u00fcr saubere Tracks und realistische Geschwindigkeiten\n"
+            "\u2022 Favoriten in eigener, isolierter Datenbank \u2013 sicherer gespeichert\n"
+        ),
+    },
 }
 
 
