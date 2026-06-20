@@ -96,13 +96,13 @@ class NavigationManager(private val context: Context) {
          * intro "tilt-in" when navigation starts, so the camera snaps into the 3D
          * view quickly instead of drifting in slowly (`< 1` = faster).
          */
-        const val INTRO_TAU_SCALE = 0.4
+        const val INTRO_TAU_SCALE = 0.28
 
         /** Pitch within this many degrees of the target ends the intro tilt-in. */
-        const val INTRO_PITCH_EPS_DEG = 1.0
+        const val INTRO_PITCH_EPS_DEG = 2.0
 
         /** Zoom within this of the target ends the intro tilt-in. */
-        const val INTRO_ZOOM_EPS = 0.15
+        const val INTRO_ZOOM_EPS = 0.25
     }
 
     private var map: MapLibreMap? = null
@@ -191,6 +191,9 @@ class NavigationManager(private val context: Context) {
 
     private var lastFrameNanos = 0L
 
+    /** Guards against registering the gesture-cancels-intro listener more than once. */
+    private var gestureListenerRegistered = false
+
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (!active) return
@@ -213,6 +216,17 @@ class NavigationManager(private val context: Context) {
         }
         ensureLocationLayer(style)
         ensureBuildingExtrusionLayer(style)
+        // A user touch (pan/zoom) must take over the camera *instantly* — even mid
+        // intro. Registering directly on the map lets us cancel the intro and break
+        // follow synchronously, with none of the StateFlow → Compose round-trip lag.
+        if (!gestureListenerRegistered) {
+            map.addOnCameraMoveStartedListener { reason ->
+                if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
+                    onUserGesture()
+                }
+            }
+            gestureListenerRegistered = true
+        }
         if (active) {
             // Navigation is always 3D: re-assert buildings after a style reload.
             setBuildingExtrusionVisible(style, true)
@@ -248,6 +262,18 @@ class NavigationManager(private val context: Context) {
         if (following == enabled) return
         following = enabled
         if (enabled) reseedFromCurrentCamera()
+        else introActive = false   // re-locking aside, any unfollow ends the intro
+    }
+
+    /**
+     * Handles a raw user touch gesture (pan/zoom) on the map. Cancels the intro
+     * tilt-in immediately and breaks the follow lock so the gesture takes over the
+     * camera **instantly**, with no waiting for the intro to finish. Idempotent.
+     */
+    private fun onUserGesture() {
+        if (!active) return
+        introActive = false
+        following = false
     }
 
     /**
@@ -288,9 +314,9 @@ class NavigationManager(private val context: Context) {
         initialized = false
         // A fresh navigation always starts locked onto the rider.
         following = true
-        // Begin the fast intro tilt-in and lock out gestures until it completes.
+        // Begin the fast intro tilt-in. Gestures stay enabled: a touch instantly
+        // cancels the intro (see onUserGesture) so the map reacts without delay.
         introActive = true
-        setGesturesEnabled(false)
         // Force the first split render for this route (invalidate the diff tracker).
         renderedSegment = -1
         // Seed the split geometry at the route start (nothing travelled yet).
@@ -380,11 +406,8 @@ class NavigationManager(private val context: Context) {
     fun stop() {
         active = false
         initialized = false
-        // Make sure gestures are restored even if navigation ended mid-intro.
-        if (introActive) {
-            introActive = false
-            setGesturesEnabled(true)
-        }
+        // Cancel any in-flight intro tilt-in.
+        introActive = false
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         map?.style?.let { style ->
             // Clear the puck source so the normal location dot (owned by the
@@ -528,20 +551,18 @@ class NavigationManager(private val context: Context) {
         if (following) applyCamera()
         writePuck()
 
-        // End the intro once the camera has tilted/zoomed into the 3D view: restore
-        // gestures so the rider can pan/zoom (and break follow) again.
+        // End the intro once the camera has tilted/zoomed into the 3D view, snapping
+        // the last imperceptible bit so the glide finishes crisply instead of
+        // lingering on the long tail of the exponential ease.
         if (introActive &&
             kotlin.math.abs(curPitch - NavigationCamera.PITCH_DEGREES) <= INTRO_PITCH_EPS_DEG &&
             kotlin.math.abs(curZoom - tgtZoom) <= INTRO_ZOOM_EPS
         ) {
+            curPitch = NavigationCamera.PITCH_DEGREES
+            curZoom = tgtZoom
+            if (following) applyCamera()
             introActive = false
-            setGesturesEnabled(true)
         }
-    }
-
-    /** Enables/disables all MapLibre map gestures (used to lock input during the intro). */
-    private fun setGesturesEnabled(enabled: Boolean) {
-        map?.uiSettings?.setAllGesturesEnabled(enabled)
     }
 
     private fun applyCamera() {
