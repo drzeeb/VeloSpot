@@ -24,6 +24,7 @@ import de.velospot.data.local.dao.SavedPlaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
 import de.velospot.data.local.database.RidesDatabase
 import de.velospot.data.local.database.SavedPlacesDatabase
+import de.velospot.data.remote.NominatimRateLimitInterceptor
 import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.api.OsrmApi
 import de.velospot.data.repository.BikeParkingRepositoryImpl
@@ -74,6 +75,41 @@ object NetworkModule {
             .build()
     }
 
+    /**
+     * Dedicated client for Nominatim: carries the [NominatimRateLimitInterceptor]
+     * so the app can never exceed the OSM policy of 1 request/second. Slightly
+     * shorter connect timeout since the endpoint is normally fast.
+     */
+    @Provides
+    @Singleton
+    @Named("nominatim")
+    fun provideNominatimOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(NominatimRateLimitInterceptor())
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    /**
+     * Dedicated client for BRouter segment downloads, which can be 100+ MB. Uses a
+     * much longer read timeout so a slow-but-progressing download is not aborted,
+     * while keeping a sane connect timeout.
+     */
+    @Provides
+    @Singleton
+    @Named("segments")
+    fun provideSegmentsOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(5, TimeUnit.MINUTES)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
     @Provides
     @Singleton
     fun provideMoshi(): Moshi {
@@ -97,7 +133,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("nominatim")
-    fun provideNominatimRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    fun provideNominatimRetrofit(@Named("nominatim") okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NOMINATIM_BASE_URL)
             .client(okHttpClient)
@@ -159,7 +195,7 @@ object NetworkModule {
     @Singleton
     fun provideBRouterSegmentManager(
         @ApplicationContext context: Context,
-        okHttpClient: OkHttpClient
+        @Named("segments") okHttpClient: OkHttpClient
     ): BRouterSegmentManager = BRouterSegmentManager(context, okHttpClient)
 
     @Provides

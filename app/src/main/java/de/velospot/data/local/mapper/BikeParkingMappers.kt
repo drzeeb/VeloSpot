@@ -28,35 +28,10 @@ fun BikeParkingSpaceEntity.toDomainModel(): BikeParkingSpace {
 }
 
 /**
- * Convert a BikeParkingSpace (domain model) to BikeParkingSpaceEntity (database).
- */
-fun BikeParkingSpace.toEntity(): BikeParkingSpaceEntity {
-    return BikeParkingSpaceEntity(
-        id = id,
-        name = name,
-        latitude = latitude,
-        longitude = longitude,
-        address = address,
-        capacity = capacity,
-        isCovered = isCovered,
-        imageUrl = imageUrl,
-        operator = operator,
-        type = type.name,
-        sourceLayer = sourceLayer
-    )
-}
-
-/**
  * Convert a list of entities to domain models.
  */
 fun List<BikeParkingSpaceEntity>.toDomainModels(): List<BikeParkingSpace> {
     return map { it.toDomainModel() }
 }
 
-/**
- * Convert a list of domain models to entities.
- */
-fun List<BikeParkingSpace>.toEntities(): List<BikeParkingSpaceEntity> {
-    return map { it.toEntity() }
-}
 

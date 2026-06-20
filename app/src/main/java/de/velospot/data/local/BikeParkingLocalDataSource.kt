@@ -10,9 +10,6 @@ import de.velospot.domain.model.BoundingBox
  * implementation makes the data layer easier to test with fakes.
  */
 interface BikeParkingLocalDataSource {
-    suspend fun readSpaces(): List<BikeParkingSpace>
-    suspend fun writeSpaces(spaces: List<BikeParkingSpace>)
-    suspend fun lastSyncEpochMs(): Long
 
     /**
      * Retrieve all parking spaces within the given geographic bounding box.
