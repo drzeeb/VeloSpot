@@ -1,19 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Cloud / device-transfer backup rules (Android 12+ / API 31+).
+
+   Backup is disabled at the manifest level (android:allowBackup="false"), so these
+   rules are not active today. They are kept explicit (instead of an empty template)
+   as defense-in-depth: if backup is ever re-enabled, the user's private data must
+   still NEVER be uploaded to Google Drive. This keeps VeloSpot's privacy promise
+   ("all data you generate remains exclusively on your device") accurate.
+
+   Sensitive on-device data excluded below:
+     - velospot_rides.db        full GPS tracks of recorded rides (+ -wal/-shm)
+     - velospot_favorites.db    saved favourite parking spots
+     - velospot_saved_places.db custom saved locations
+     - sharedpref / DataStore   app settings (language, dark mode, layers, prefs)
+   The bundled parking dataset (velospot_osm.db) is re-seeded from the app asset,
+   so it never needs to be backed up either.
+
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Never upload any local app data to Google Drive. -->
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!-- Direct device-to-device transfer is local (no third party). It is moot
+             while allowBackup is false, but kept symmetric for clarity. -->
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
     </device-transfer>
-    -->
 </data-extraction-rules>
