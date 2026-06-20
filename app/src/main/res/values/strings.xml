@@ -35,6 +35,11 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Speed over time</string>
     <string name="ride_delete">Delete ride</string>
+    <string name="ride_stop_save">Stop &amp; save</string>
+    <string name="ride_notification_channel_name">Ride recording</string>
+    <string name="ride_notification_channel_description">Keeps recording your ride while the app is in the background.</string>
+    <string name="ride_record_start">Start ride</string>
+    <string name="widget_ride_recording_description">Start or stop a ride recording.</string>
 
     <!-- About sheet -->
     <string name="about_tagline">Find bike parking &amp; navigate there.</string>

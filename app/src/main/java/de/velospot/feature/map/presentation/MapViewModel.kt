@@ -11,6 +11,7 @@ import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.navigation.NavigationModePreferences
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.core.tracking.RideRecordingManager
 import de.velospot.domain.model.AddressSearchResult
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
@@ -77,6 +78,7 @@ class MapViewModel @Inject constructor(
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
     private val nominatimGeocoder: NominatimGeocoder,
+    private val recordingManager: RideRecordingManager,
     savedPlacesRepository: SavedPlacesRepository,
     parkedBikeRepository: ParkedBikeRepository,
     recordedRidesRepository: RecordedRidesRepository,
@@ -556,9 +558,8 @@ class MapViewModel @Inject constructor(
     private val rideTracking = RideTrackingController(
         scope = viewModelScope,
         repository = recordedRidesRepository,
-        activeRoute = { navigationController.activeRoute },
+        manager = recordingManager,
         currentLocation = { _userLocation.value },
-        onAccuracyChanged = { refreshLocationAccuracy() },
         onUserMessage = { res -> _userMessageRes.value = res },
         clearOtherSelections = { clearPlaceSelections() },
         moveCamera = { target -> _mapCameraTarget.value = target }
@@ -607,9 +608,26 @@ class MapViewModel @Inject constructor(
     private var viewportJob: Job? = null
 
     init {
+        // Wire the process-level recording manager to this (live) host: supply the
+        // navigation route for accurate elevation and let it re-evaluate the GPS
+        // power mode (against navigation) when a recording starts/stops.
+        recordingManager.routeElevationProvider = { navigationController.activeRoute }
+        recordingManager.onRecordingStateChanged = { refreshLocationAccuracy() }
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
         observeUserLocation()
+        observeRouteSimulation()
+    }
+
+    /**
+     * Keeps the recording manager's real-GPS suppression in sync with the debug
+     * route simulator so synthetic fixes (not real ones) drive an auto-recorded
+     * ride while simulating.
+     */
+    private fun observeRouteSimulation() {
+        viewModelScope.launch {
+            isSimulatingRoute.collect { recordingManager.suppressRealFixes = it }
+        }
     }
 
     // ── Viewport / parking ────────────────────────────────────────────────────
@@ -712,9 +730,12 @@ class MapViewModel @Inject constructor(
     private fun applyLocationStrategy() {
         if (isForeground) {
             locationRepository.startLocationUpdates(highAccuracy = highAccuracyLocation)
-        } else {
+        } else if (!recordingManager.isRecording) {
             locationRepository.stopLocationUpdates()
         }
+        // else: a recording is running in the background — the RideRecordingManager
+        // (kept alive by the foreground service) owns the GPS radio, so we must not
+        // stop it here or the background track would freeze.
     }
 
     private fun setHighAccuracyLocation(enabled: Boolean) {
@@ -743,7 +764,9 @@ class MapViewModel @Inject constructor(
     /** Called when the map screen leaves the foreground — stop the GPS to save battery. */
     fun onAppBackgrounded() {
         isForeground = false
-        locationRepository.stopLocationUpdates()
+        // Keep the GPS running when a recording is active: the foreground service +
+        // manager continue the background track. Otherwise stop it to save battery.
+        if (!recordingManager.isRecording) locationRepository.stopLocationUpdates()
     }
 
     private fun observeUserLocation() {
@@ -754,8 +777,9 @@ class MapViewModel @Inject constructor(
                 // synthetic route drive isn't overwritten.
                 if (navigationController.isSimulating.value) return@collect
                 _userLocation.value = location
-                // Feed the ride tracker while a recording is running.
-                if (location != null && rideTracking.isRecording) rideTracking.feed(location)
+                // Note: the running recording is fed by the RideRecordingManager,
+                // which observes the location flow itself so it keeps accumulating
+                // fixes even when this ViewModel is gone (app backgrounded/closed).
                 // One-time startup centering: as soon as the first GPS fix arrives,
                 // move the camera to the user's position. Fires only once per ViewModel.
                 if (!hasCenteredOnStartup && location != null) {
@@ -821,6 +845,12 @@ class MapViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         navigationController.dispose()
-        locationRepository.stopLocationUpdates()
+        // Detach this (dying) host so the manager stops calling back into it and
+        // takes over GPS management itself for any still-running background record.
+        recordingManager.onRecordingStateChanged = null
+        recordingManager.routeElevationProvider = null
+        // Only release the GPS when nothing is recording — a background recording
+        // must keep its fixes flowing via the foreground service.
+        if (!recordingManager.isRecording) locationRepository.stopLocationUpdates()
     }
 }

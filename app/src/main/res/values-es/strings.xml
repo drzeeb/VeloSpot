@@ -174,4 +174,9 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Velocidad en el tiempo</string>
     <string name="ride_delete">Eliminar ruta</string>
+    <string name="ride_stop_save">Detener y guardar</string>
+    <string name="ride_notification_channel_name">Grabación de ruta</string>
+    <string name="ride_notification_channel_description">Sigue grabando tu ruta mientras la aplicación está en segundo plano.</string>
+    <string name="ride_record_start">Iniciar ruta</string>
+    <string name="widget_ride_recording_description">Iniciar o detener la grabación de una ruta.</string>
 </resources>

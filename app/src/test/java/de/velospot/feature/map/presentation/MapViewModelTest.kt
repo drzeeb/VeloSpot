@@ -76,18 +76,26 @@ class MapViewModelTest {
         favoritesRepository: FavoritesRepository = FakeFavoritesRepository(),
         locationRepository: LocationRepository = FakeLocationRepository(),
         routingRepository: RoutingRepository = FakeRoutingRepository()
-    ) = MapViewModel(
-        bikeParkingRepository = bikeParkingRepository,
-        favoritesRepository   = favoritesRepository,
-        locationRepository    = locationRepository,
-        routingRepository     = routingRepository,
-        segmentManager        = mockSegmentManager,
-        nominatimGeocoder     = mockNominatimGeocoder,
-        savedPlacesRepository = FakeSavedPlacesRepository(),
-        parkedBikeRepository  = FakeParkedBikeRepository(),
-        recordedRidesRepository = FakeRecordedRidesRepository(),
-        context               = mockContext
-    )
+    ): MapViewModel {
+        val recordedRidesRepository = FakeRecordedRidesRepository()
+        return MapViewModel(
+            bikeParkingRepository = bikeParkingRepository,
+            favoritesRepository   = favoritesRepository,
+            locationRepository    = locationRepository,
+            routingRepository     = routingRepository,
+            segmentManager        = mockSegmentManager,
+            nominatimGeocoder     = mockNominatimGeocoder,
+            recordingManager      = de.velospot.core.tracking.RideRecordingManager(
+                context = mockContext,
+                locationRepository = locationRepository,
+                recordedRidesRepository = recordedRidesRepository
+            ),
+            savedPlacesRepository = FakeSavedPlacesRepository(),
+            parkedBikeRepository  = FakeParkedBikeRepository(),
+            recordedRidesRepository = recordedRidesRepository,
+            context               = mockContext
+        )
+    }
 
     @Test
     fun `loadParkingSpaces emits success when repository returns data`() = runTest {
