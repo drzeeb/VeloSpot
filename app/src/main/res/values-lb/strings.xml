@@ -173,4 +173,9 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Vitesse iwwer Zäit</string>
     <string name="ride_delete">Tour läschen</string>
+    <string name="ride_stop_save">Stoppen &amp; späicheren</string>
+    <string name="ride_notification_channel_name">Tour-Opzeechnung</string>
+    <string name="ride_notification_channel_description">Zeechent deng Tour weider op, wärend d\'App am Hannergrond leeft.</string>
+    <string name="ride_record_start">Tour starten</string>
+    <string name="widget_ride_recording_description">Eng Tour-Opzeechnung starten oder stoppen.</string>
 </resources>

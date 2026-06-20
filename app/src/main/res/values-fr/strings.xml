@@ -174,4 +174,9 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Vitesse dans le temps</string>
     <string name="ride_delete">Supprimer le trajet</string>
+    <string name="ride_stop_save">Arrêter et enregistrer</string>
+    <string name="ride_notification_channel_name">Enregistrement du trajet</string>
+    <string name="ride_notification_channel_description">Continue d\'enregistrer votre trajet lorsque l\'application est en arrière-plan.</string>
+    <string name="ride_record_start">Démarrer le trajet</string>
+    <string name="widget_ride_recording_description">Démarrer ou arrêter l\'enregistrement d\'un trajet.</string>
 </resources>

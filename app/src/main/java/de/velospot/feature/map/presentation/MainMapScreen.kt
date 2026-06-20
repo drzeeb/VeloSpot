@@ -2,7 +2,11 @@ package de.velospot.feature.map.presentation
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -179,6 +183,22 @@ fun MainMapScreen(
             onPermissionGranted = viewModel::onLocationPermissionGranted,
             requestPermissions  = permissionLauncher::launch
         )
+    }
+
+    // Notification permission (Android 13+) for the background-recording notification.
+    // The recording itself runs regardless; without the grant the notification simply
+    // isn't shown, so we start the ride either way after asking.
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { /* result ignored: recording proceeds with or without the notification */ }
+    val startRideRecording: () -> Unit = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        viewModel.startRideTracking()
     }
 
     // ── Battery: stop GPS in the background, re-arm it on return ───────────────
@@ -509,7 +529,7 @@ fun MainMapScreen(
                 isRecording = recording != null,
                 onClick = {
                     if (recording != null) viewModel.stopRideTracking()
-                    else viewModel.startRideTracking()
+                    else startRideRecording()
                 }
             )
         }

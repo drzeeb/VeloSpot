@@ -182,9 +182,15 @@ class RideTracker {
         return currentStats()
     }
 
-    /** Current live statistics snapshot. */
-    fun currentStats(): LiveRideStats {
-        val elapsedMillis = (points.lastOrNull()?.timestamp ?: startedAt) - startedAt
+    /**
+     * Current live statistics snapshot.
+     *
+     * @param now wall-clock timestamp used to derive the elapsed time, so the
+     *  on-screen timer ticks continuously between GPS fixes. Defaults to the last
+     *  accepted fix's timestamp (the behaviour used from [addPoint]).
+     */
+    fun currentStats(now: Long = points.lastOrNull()?.timestamp ?: startedAt): LiveRideStats {
+        val elapsedMillis = now - startedAt
         val movingSecs = movingMillis / 1000
         val avg = if (movingSecs > 0) distanceMeters / movingSecs else 0.0
         return LiveRideStats(
