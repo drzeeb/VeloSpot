@@ -156,4 +156,25 @@
     <!-- Zoom-out-Hinweis: erscheint wenn der Zoom-Level zu niedrig ist -->
     <string name="zoom_in_for_parking">Reinzoomen um Fahrradstellplätze zu sehen</string>
     <string name="error_loading_parking">Parkplatzdaten konnten nicht aktualisiert werden</string>
+    <!-- Ride tracking ("Meine Fahrten") -->
+    <string name="menu_my_rides">Meine Fahrten</string>
+    <string name="rides_title">Meine Fahrten</string>
+    <string name="rides_count">%1$d Fahrten</string>
+    <string name="rides_empty_title">Noch keine Fahrten</string>
+    <string name="rides_empty_text">Tippe auf den roten Aufnahme-Button auf der Karte, um eine Fahrt aufzuzeichnen. Sie erscheint hier mit Distanz, Dauer und Geschwindigkeit.</string>
+    <string name="ride_recording">Fahrt wird aufgezeichnet</string>
+    <string name="ride_stop">Stopp</string>
+    <string name="ride_discard">Verwerfen</string>
+    <string name="ride_saved">Fahrt gespeichert</string>
+    <string name="ride_too_short">Fahrt zu kurz zum Speichern</string>
+    <string name="ride_stat_time">Zeit</string>
+    <string name="ride_stat_distance">Distanz</string>
+    <string name="ride_stat_speed">Tempo</string>
+    <string name="ride_stat_moving">Bewegungszeit</string>
+    <string name="ride_stat_max_speed">Max. Tempo</string>
+    <string name="ride_stat_elevation_gain">Anstieg</string>
+    <string name="ride_stat_elevation_loss">Abstieg</string>
+    <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_speed_chart_title">Geschwindigkeit über Zeit</string>
+    <string name="ride_delete">Fahrt löschen</string>
 </resources>

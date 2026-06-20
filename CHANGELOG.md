@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Ride tracking — record your ride as a timeline ("My rides")** — riders can now record a ride and review it afterwards with full statistics:
+  - **One-tap recording** from a dedicated red record/stop FAB stacked above the *My location* button (keeps the already-busy menu uncluttered). While recording, a compact live-stats card at the top of the map shows the running **time, distance and current speed**, with **Stop** and **Discard** actions, and the travelled track is drawn live on the map as a coloured polyline (new `velospot-track` source/layer).
+  - **Automatic recording during navigation** — starting turn-by-turn navigation auto-starts a recording for the whole trip and saves it when navigation ends (or on auto-park arrival); a manually-started recording is never interrupted by navigation.
+  - **Persistent history** in a dedicated, isolated Room database (`RidesDatabase` / `recorded_rides`, independent of the parking and saved-places stores) — a new *"My rides"* menu entry opens a timeline list of past rides (date, distance, duration, average speed).
+  - **Ride detail with statistics + speed timeline** — tapping a ride redraws its track on the map and opens a sheet with moving time, max speed, elevation gain/loss and a Canvas-drawn **speed-over-time chart**, plus a delete action.
+  - **Elevation support** — elevation gain/loss now comes from **BRouter's accurate terrain data** (the SRTM elevation baked into its `.rd5` segment files, read per route node — `RoutePoint.elevationMeters`) whenever a ride is recorded while navigating offline; the rider's live position is snapped to the route and its terrain elevation is fed to the tracker instead of the very noisy raw GPS altitude. For manual rides (or the online OSRM fallback, which carries no elevation) it falls back to GPS altitude, now low-pass filtered with a 3 m dead-band so a parked bike no longer racks up phantom metres (`GeoCoordinate.altitudeMeters`, pure unit-tested `RideTracker`). GPS altitude is requested whenever navigation **or** a recording is active. Fully localised across all eight supported languages and covered by new `RideTracker` unit tests.
 
 
 ### Fixed

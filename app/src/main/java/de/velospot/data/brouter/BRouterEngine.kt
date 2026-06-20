@@ -107,7 +107,8 @@ class BRouterEngine(
             val points = track.nodes.map { node ->
                 RoutePoint(
                     latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
-                    longitude = node.getCoordField("ilon") / 1_000_000.0 - 180.0
+                    longitude = node.getCoordField("ilon") / 1_000_000.0 - 180.0,
+                    elevationMeters = node.getElevMetersOrNull()
                 )
             }
 
@@ -189,6 +190,24 @@ class BRouterEngine(
             }
         }
         error("Field '$fieldName' not found in ${javaClass.name} or any superclass")
+    }
+
+    /**
+     * Reads the node's terrain elevation in metres via BRouter's public
+     * `OsmPos.getElev()` (which returns `selev / 4.0`). Reflection is used so the
+     * engine stays decoupled from the exact `btools` class hierarchy. Returns
+     * `null` when no elevation is available (the sentinel short maps to an absurd
+     * value) so callers can fall back to GPS altitude.
+     */
+    private fun Any.getElevMetersOrNull(): Double? {
+        return try {
+            val m = javaClass.getMethod("getElev")
+            val v = (m.invoke(this) as? Number)?.toDouble() ?: return null
+            // BRouter uses a short sentinel for "no elevation"; reject absurd values.
+            if (v < -1_000.0 || v > 9_000.0) null else v
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /**

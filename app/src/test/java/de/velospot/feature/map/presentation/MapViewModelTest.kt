@@ -12,6 +12,7 @@ import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.ParkedBike
+import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.SavedPlace
@@ -19,6 +20,7 @@ import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.ParkedBikeRepository
+import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import kotlinx.coroutines.Dispatchers
@@ -83,6 +85,7 @@ class MapViewModelTest {
         nominatimGeocoder     = mockNominatimGeocoder,
         savedPlacesRepository = FakeSavedPlacesRepository(),
         parkedBikeRepository  = FakeParkedBikeRepository(),
+        recordedRidesRepository = FakeRecordedRidesRepository(),
         context               = mockContext
     )
 
@@ -524,6 +527,22 @@ private class FakeParkedBikeRepository : ParkedBikeRepository {
     override suspend fun park(bike: ParkedBike) { parkedBike.value = bike }
 
     override suspend fun clear() { parkedBike.value = null }
+}
+
+private class FakeRecordedRidesRepository : RecordedRidesRepository {
+    private val rides = MutableStateFlow<List<RecordedRide>>(emptyList())
+
+    override fun getRidesFlow(): Flow<List<RecordedRide>> = rides
+
+    override suspend fun saveRide(ride: RecordedRide) {
+        rides.value = rides.value.filterNot { it.id == ride.id } + ride
+    }
+
+    override suspend fun removeRide(id: String) {
+        rides.value = rides.value.filterNot { it.id == id }
+    }
+
+    override suspend fun clearAll() { rides.value = emptyList() }
 }
 
 private class FakeLocationRepository(

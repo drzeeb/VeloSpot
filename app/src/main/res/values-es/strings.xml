@@ -151,4 +151,25 @@
     <string name="custom_pin_subtitle">Toca el mapa para mover el marcador.</string>
     <string name="custom_pin_navigate">Navegar aquí</string>
     <string name="custom_pin_remove">Quitar marcador</string>
+    <!-- Ride tracking ("Mis rutas") -->
+    <string name="menu_my_rides">Mis rutas</string>
+    <string name="rides_title">Mis rutas</string>
+    <string name="rides_count">%1$d rutas</string>
+    <string name="rides_empty_title">Aún no hay rutas</string>
+    <string name="rides_empty_text">Toca el botón rojo de grabación en el mapa para registrar una ruta. Aparecerá aquí con distancia, duración y velocidad.</string>
+    <string name="ride_recording">Grabando ruta</string>
+    <string name="ride_stop">Detener</string>
+    <string name="ride_discard">Descartar</string>
+    <string name="ride_saved">Ruta guardada</string>
+    <string name="ride_too_short">Ruta demasiado corta para guardar</string>
+    <string name="ride_stat_time">Tiempo</string>
+    <string name="ride_stat_distance">Distancia</string>
+    <string name="ride_stat_speed">Velocidad</string>
+    <string name="ride_stat_moving">Tiempo en movimiento</string>
+    <string name="ride_stat_max_speed">Vel. máxima</string>
+    <string name="ride_stat_elevation_gain">Desnivel positivo</string>
+    <string name="ride_stat_elevation_loss">Desnivel negativo</string>
+    <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_speed_chart_title">Velocidad en el tiempo</string>
+    <string name="ride_delete">Eliminar ruta</string>
 </resources>

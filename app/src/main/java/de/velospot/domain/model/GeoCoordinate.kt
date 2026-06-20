@@ -9,11 +9,15 @@ package de.velospot.domain.model
  *  still or for last-known fixes). Used to point the navigation arrow.
  * @property speedMetersPerSecond Optional ground speed in m/s. `null` when the
  *  fix carries no speed. Drives the speed-dependent navigation zoom.
+ * @property altitudeMeters Optional altitude above the WGS84 ellipsoid in metres.
+ *  `null` when the fix carries no altitude. Used by the ride tracker to estimate
+ *  elevation gain/loss.
  */
 data class GeoCoordinate(
     val latitude: Double,
     val longitude: Double,
     val bearing: Float? = null,
-    val speedMetersPerSecond: Float? = null
+    val speedMetersPerSecond: Float? = null,
+    val altitudeMeters: Double? = null
 )
 

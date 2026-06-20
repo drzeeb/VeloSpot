@@ -1,0 +1,61 @@
+package de.velospot.domain.model
+
+/**
+ * A single GPS sample captured along a tracked ride.
+ *
+ * @property latitude  WGS84 latitude in degrees.
+ * @property longitude WGS84 longitude in degrees.
+ * @property timestamp Wall-clock time of the fix (`System.currentTimeMillis()`).
+ * @property speedMps  Ground speed in m/s at this point (sensor value when
+ *  available, otherwise derived from the segment), or `null` when unknown.
+ * @property altitudeMeters Altitude in metres when the fix carried one, else `null`.
+ */
+data class TrackPoint(
+    val latitude: Double,
+    val longitude: Double,
+    val timestamp: Long,
+    val speedMps: Float? = null,
+    val altitudeMeters: Double? = null
+)
+
+/**
+ * A completed, persisted ride — the full GPS track plus the aggregate statistics
+ * shown on the "My rides" timeline.
+ *
+ * @property elapsedSeconds  Wall-clock duration from first to last fix.
+ * @property movingSeconds   Time actually spent moving (standstills excluded).
+ * @property avgSpeedMps      Average moving speed (distance / moving time).
+ * @property maxSpeedMps      Peak speed reached.
+ * @property elevationGainMeters Cumulative ascent estimated from altitude deltas.
+ * @property elevationLossMeters Cumulative descent estimated from altitude deltas.
+ */
+data class RecordedRide(
+    val id: String,
+    val startedAt: Long,
+    val endedAt: Long,
+    val distanceMeters: Double,
+    val elapsedSeconds: Long,
+    val movingSeconds: Long,
+    val avgSpeedMps: Double,
+    val maxSpeedMps: Double,
+    val elevationGainMeters: Double,
+    val elevationLossMeters: Double,
+    val points: List<TrackPoint>
+)
+
+/**
+ * Live, in-progress statistics emitted by the ride tracker on every GPS fix while
+ * a recording is running. Drives the on-map live stats card.
+ */
+data class LiveRideStats(
+    val elapsedSeconds: Long = 0,
+    val movingSeconds: Long = 0,
+    val distanceMeters: Double = 0.0,
+    val currentSpeedMps: Float = 0f,
+    val avgSpeedMps: Double = 0.0,
+    val maxSpeedMps: Double = 0.0,
+    val elevationGainMeters: Double = 0.0,
+    val elevationLossMeters: Double = 0.0,
+    val pointCount: Int = 0
+)
+
