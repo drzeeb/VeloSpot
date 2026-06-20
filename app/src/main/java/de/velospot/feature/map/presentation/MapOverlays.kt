@@ -383,6 +383,14 @@ internal fun BoxScope.MapNavigationOverlay(
                         ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    progress?.currentSpeedMps?.let { speedMps ->
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = formatRideSpeed(speedMps),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     if (progress?.isOffRoute == true) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {

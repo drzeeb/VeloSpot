@@ -380,7 +380,8 @@ class NavigationManager(private val context: Context) {
                 remainingMeters = match.remainingMeters,
                 remainingSeconds = estimateRemainingSeconds(match.remainingMeters),
                 distanceFromRouteMeters = match.distanceFromRouteMeters,
-                isOffRoute = offRoute
+                isOffRoute = offRoute,
+                currentSpeedMps = location.speedMetersPerSecond
             )
         )
 

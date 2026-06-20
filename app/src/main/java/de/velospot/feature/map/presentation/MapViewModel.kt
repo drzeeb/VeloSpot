@@ -349,8 +349,13 @@ class MapViewModel @Inject constructor(
     /**
      * Called when the user taps on an empty map location.
      * Places a custom pin there and dismisses any open space/search-pin sheets.
+     *
+     * Ignored while a follow session (navigation or ride recording) is active, so
+     * the rider can't accidentally drop pins — and trigger reverse-geocoding /
+     * camera jumps — mid-trip.
      */
     fun onMapTapped(lat: Double, lon: Double) {
+        if (isFollowSessionActive) return
         _selectedSpace.value     = null
         _selectedSearchPin.value = null
         _customMapPin.value      = GeoCoordinate(lat, lon)
