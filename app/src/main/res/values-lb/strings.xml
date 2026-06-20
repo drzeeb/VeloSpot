@@ -173,6 +173,25 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Vitesse iwwer Zäit</string>
     <string name="ride_delete">Tour läschen</string>
+    <!-- Tour als "VeloSpot Wrapped"-Kaart deelen -->
+    <string name="ride_share_action">Tour deelen</string>
+    <string name="ride_share_dismiss">Zoumaachen</string>
+    <string name="ride_share_dialog_title">Deng Tour deelen</string>
+    <string name="ride_share_dialog_subtitle">Eng cool Kaart mat denger Streck an de Statistiken – perfekt fir WhatsApp, Telegram oder Instagram.</string>
+    <string name="ride_share_chooser_title">Tour deelen</string>
+    <string name="ride_share_headline">Meng Tour</string>
+    <string name="ride_share_stat_duration">Zäit</string>
+    <string name="ride_share_stat_avg_speed">Ø Tempo</string>
+    <string name="ride_share_stat_elevation">Héichtemeter</string>
+    <string name="ride_share_stat_max_speed">Max. Tempo</string>
+    <string name="ride_share_footer">Opgeholl mat VeloSpot</string>
+    <string name="ride_share_theme_label">Stil</string>
+    <string name="ride_share_theme_aurora">Aurora</string>
+    <string name="ride_share_theme_sunset">Sonnenënnergang</string>
+    <string name="ride_share_theme_forest">Bësch</string>
+    <string name="ride_share_theme_ocean">Ozean</string>
+    <string name="ride_share_theme_berry">Bei</string>
+    <string name="ride_share_theme_midnight">Mëtternuecht</string>
     <string name="ride_stop_save">Stoppen &amp; späicheren</string>
     <string name="ride_notification_channel_name">Tour-Opzeechnung</string>
     <string name="ride_notification_channel_description">Zeechent deng Tour weider op, wärend d\'App am Hannergrond leeft.</string>

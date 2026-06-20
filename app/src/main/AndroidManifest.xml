@@ -57,6 +57,18 @@
             </intent-filter>
         </service>
 
+        <!-- Exposes transient share images (e.g. the ride share card) to other
+             apps (WhatsApp, Telegram, Instagram, …) via a content:// URI. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Home-screen widget to start/stop a ride recording. -->
         <receiver
             android:name=".core.tracking.RideRecordingWidget"

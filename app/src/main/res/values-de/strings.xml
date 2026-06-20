@@ -179,6 +179,25 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Geschwindigkeit über Zeit</string>
     <string name="ride_delete">Fahrt löschen</string>
+    <!-- Fahrt als "VeloSpot Wrapped"-Kachel teilen -->
+    <string name="ride_share_action">Fahrt teilen</string>
+    <string name="ride_share_dismiss">Schließen</string>
+    <string name="ride_share_dialog_title">Fahrt teilen</string>
+    <string name="ride_share_dialog_subtitle">Eine coole Kachel mit deiner Strecke und den Statistiken – perfekt für WhatsApp, Telegram oder Instagram.</string>
+    <string name="ride_share_chooser_title">Fahrt teilen</string>
+    <string name="ride_share_headline">Meine Fahrt</string>
+    <string name="ride_share_stat_duration">Zeit</string>
+    <string name="ride_share_stat_avg_speed">Ø Tempo</string>
+    <string name="ride_share_stat_elevation">Höhenmeter</string>
+    <string name="ride_share_stat_max_speed">Max. Tempo</string>
+    <string name="ride_share_footer">Aufgezeichnet mit VeloSpot</string>
+    <string name="ride_share_theme_label">Stil</string>
+    <string name="ride_share_theme_aurora">Aurora</string>
+    <string name="ride_share_theme_sunset">Sonnenuntergang</string>
+    <string name="ride_share_theme_forest">Wald</string>
+    <string name="ride_share_theme_ocean">Ozean</string>
+    <string name="ride_share_theme_berry">Beere</string>
+    <string name="ride_share_theme_midnight">Mitternacht</string>
     <string name="ride_stop_save">Stoppen &amp; speichern</string>
     <string name="ride_notification_channel_name">Streckenaufzeichnung</string>
     <string name="ride_notification_channel_description">Zeichnet deine Fahrt weiter auf, während die App im Hintergrund läuft.</string>

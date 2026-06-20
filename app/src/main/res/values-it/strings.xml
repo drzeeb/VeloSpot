@@ -175,6 +175,25 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Velocità nel tempo</string>
     <string name="ride_delete">Elimina percorso</string>
+    <!-- Condividi il percorso come scheda "VeloSpot Wrapped" -->
+    <string name="ride_share_action">Condividi percorso</string>
+    <string name="ride_share_dismiss">Chiudi</string>
+    <string name="ride_share_dialog_title">Condividi il tuo percorso</string>
+    <string name="ride_share_dialog_subtitle">Una card accattivante con il tuo tracciato e le statistiche, perfetta per WhatsApp, Telegram o Instagram.</string>
+    <string name="ride_share_chooser_title">Condividi percorso</string>
+    <string name="ride_share_headline">Il mio percorso</string>
+    <string name="ride_share_stat_duration">Tempo</string>
+    <string name="ride_share_stat_avg_speed">Ø Velocità</string>
+    <string name="ride_share_stat_elevation">Dislivello</string>
+    <string name="ride_share_stat_max_speed">Vel. max</string>
+    <string name="ride_share_footer">Registrato con VeloSpot</string>
+    <string name="ride_share_theme_label">Stile</string>
+    <string name="ride_share_theme_aurora">Aurora</string>
+    <string name="ride_share_theme_sunset">Tramonto</string>
+    <string name="ride_share_theme_forest">Foresta</string>
+    <string name="ride_share_theme_ocean">Oceano</string>
+    <string name="ride_share_theme_berry">Bacca</string>
+    <string name="ride_share_theme_midnight">Mezzanotte</string>
     <string name="ride_stop_save">Ferma e salva</string>
     <string name="ride_notification_channel_name">Registrazione del percorso</string>
     <string name="ride_notification_channel_description">Continua a registrare il tuo percorso mentre l\'app è in background.</string>
