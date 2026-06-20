@@ -90,6 +90,19 @@ class NavigationManager(private val context: Context) {
          * — the smoothly-eased puck (redrawn every frame) carries the motion instead.
          */
         const val RENDER_MIN_SNAP_MOVE_M = 12.0
+
+        /**
+         * Speed-up factor applied to the zoom/pitch time constants during the
+         * intro "tilt-in" when navigation starts, so the camera snaps into the 3D
+         * view quickly instead of drifting in slowly (`< 1` = faster).
+         */
+        const val INTRO_TAU_SCALE = 0.4
+
+        /** Pitch within this many degrees of the target ends the intro tilt-in. */
+        const val INTRO_PITCH_EPS_DEG = 1.0
+
+        /** Zoom within this of the target ends the intro tilt-in. */
+        const val INTRO_ZOOM_EPS = 0.15
     }
 
     private var map: MapLibreMap? = null
@@ -135,6 +148,14 @@ class NavigationManager(private val context: Context) {
 
     /** Whether the eased ("current") state has been seeded from the first fix after [start]. */
     private var initialized = false
+
+    /**
+     * Whether the intro "tilt-in" glide is still running. During the intro the
+     * zoom/pitch ease in faster (see [INTRO_TAU_SCALE]) and map gestures are
+     * **disabled** so a stray touch can't fight the animation; both are restored
+     * the moment the camera has reached the 3D navigation view.
+     */
+    private var introActive = false
 
     /**
      * Whether the camera is locked onto (following) the rider. When `false` the
@@ -267,6 +288,9 @@ class NavigationManager(private val context: Context) {
         initialized = false
         // A fresh navigation always starts locked onto the rider.
         following = true
+        // Begin the fast intro tilt-in and lock out gestures until it completes.
+        introActive = true
+        setGesturesEnabled(false)
         // Force the first split render for this route (invalidate the diff tracker).
         renderedSegment = -1
         // Seed the split geometry at the route start (nothing travelled yet).
@@ -356,6 +380,11 @@ class NavigationManager(private val context: Context) {
     fun stop() {
         active = false
         initialized = false
+        // Make sure gestures are restored even if navigation ended mid-intro.
+        if (introActive) {
+            introActive = false
+            setGesturesEnabled(true)
+        }
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         map?.style?.let { style ->
             // Clear the puck source so the normal location dot (owned by the
@@ -477,8 +506,13 @@ class NavigationManager(private val context: Context) {
 
         val aPos = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_POSITION_S)
         val aBear = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_BEARING_S)
-        val aZoom = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_ZOOM_S)
-        val aPitch = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_PITCH_S)
+        // During the intro the zoom/pitch ease in faster so the 3D view snaps in.
+        val zoomTau = if (introActive) NavigationCamera.TAU_ZOOM_S * INTRO_TAU_SCALE
+                      else NavigationCamera.TAU_ZOOM_S
+        val pitchTau = if (introActive) NavigationCamera.TAU_PITCH_S * INTRO_TAU_SCALE
+                       else NavigationCamera.TAU_PITCH_S
+        val aZoom = NavigationCamera.smoothingAlpha(dt, zoomTau)
+        val aPitch = NavigationCamera.smoothingAlpha(dt, pitchTau)
 
         curLat = GeoMath.lerp(curLat, tgtLat, aPos)
         curLon = GeoMath.lerp(curLon, tgtLon, aPos)
@@ -493,6 +527,21 @@ class NavigationManager(private val context: Context) {
         // while they pan the map by hand.
         if (following) applyCamera()
         writePuck()
+
+        // End the intro once the camera has tilted/zoomed into the 3D view: restore
+        // gestures so the rider can pan/zoom (and break follow) again.
+        if (introActive &&
+            kotlin.math.abs(curPitch - NavigationCamera.PITCH_DEGREES) <= INTRO_PITCH_EPS_DEG &&
+            kotlin.math.abs(curZoom - tgtZoom) <= INTRO_ZOOM_EPS
+        ) {
+            introActive = false
+            setGesturesEnabled(true)
+        }
+    }
+
+    /** Enables/disables all MapLibre map gestures (used to lock input during the intro). */
+    private fun setGesturesEnabled(enabled: Boolean) {
+        map?.uiSettings?.setAllGesturesEnabled(enabled)
     }
 
     private fun applyCamera() {
