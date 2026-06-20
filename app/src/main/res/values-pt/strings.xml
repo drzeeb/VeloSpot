@@ -173,6 +173,25 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Velocidade ao longo do tempo</string>
     <string name="ride_delete">Eliminar percurso</string>
+    <!-- Partilhar percurso como cartão "VeloSpot Wrapped" -->
+    <string name="ride_share_action">Partilhar percurso</string>
+    <string name="ride_share_dismiss">Fechar</string>
+    <string name="ride_share_dialog_title">Partilhe o seu percurso</string>
+    <string name="ride_share_dialog_subtitle">Um cartão fixe com o seu trajeto e estatísticas — perfeito para WhatsApp, Telegram ou Instagram.</string>
+    <string name="ride_share_chooser_title">Partilhar percurso</string>
+    <string name="ride_share_headline">O meu percurso</string>
+    <string name="ride_share_stat_duration">Tempo</string>
+    <string name="ride_share_stat_avg_speed">Ø Velocidade</string>
+    <string name="ride_share_stat_elevation">Desnível</string>
+    <string name="ride_share_stat_max_speed">Vel. máx.</string>
+    <string name="ride_share_footer">Gravado com VeloSpot</string>
+    <string name="ride_share_theme_label">Estilo</string>
+    <string name="ride_share_theme_aurora">Aurora</string>
+    <string name="ride_share_theme_sunset">Pôr do sol</string>
+    <string name="ride_share_theme_forest">Floresta</string>
+    <string name="ride_share_theme_ocean">Oceano</string>
+    <string name="ride_share_theme_berry">Baga</string>
+    <string name="ride_share_theme_midnight">Meia-noite</string>
     <string name="ride_stop_save">Parar e guardar</string>
     <string name="ride_notification_channel_name">Gravação de percurso</string>
     <string name="ride_notification_channel_description">Continua a gravar o seu percurso enquanto a aplicação está em segundo plano.</string>

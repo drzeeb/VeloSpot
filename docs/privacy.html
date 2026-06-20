@@ -90,7 +90,7 @@
 
     <main>
         <h1>Privacy Policy for VeloSpot</h1>
-        <p class="updated">Last updated: June 20, 2026</p>
+        <p class="updated">Last updated: June 21, 2026</p>
 
         <p>This privacy policy explains how the <strong>VeloSpot</strong> app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires <strong>no user account</strong>, contains <strong>no advertising</strong>, and uses <strong>no tracking or analytics tools</strong>.</p>
 
@@ -128,6 +128,14 @@
         <h3>3.3 Map and Parking Data</h3>
         <p>The roughly 100,000 bike parking spots are included in the app as an <strong>offline database</strong> (OpenStreetMap data). Displaying the parking spots requires <strong>no internet connection</strong>, and no data is transmitted in the process.</p>
 
+        <h3>3.4 Ride Sharing (Share Card)</h3>
+        <ul>
+            <li><strong>Purpose:</strong> When you tap "Share ride" on a recorded ride, the app generates an image (a "share card") that shows a map cutout of that ride's route together with the date and ride statistics (distance, time, speed, elevation).</li>
+            <li><strong>Map cutout:</strong> To draw the map behind the route, the app loads map tiles for the ride's area from <strong>OpenFreeMap</strong> (see Section 4), just like the normal map view. If you are offline, a plain coloured background is used instead and no tiles are requested.</li>
+            <li><strong>Storage:</strong> The generated image is stored <strong>temporarily in the app's private cache</strong> on your device and is <strong>not</strong> transmitted anywhere by VeloSpot.</li>
+            <li><strong>Sharing is user-initiated:</strong> The image leaves your device only when <strong>you</strong> actively choose a target app (e.g. a messenger or social network) in the Android share dialog. From that point on, the image — including the route and statistics it contains — is handled by the app you selected, and <strong>that provider's own privacy policy applies</strong>. Please choose your sharing target consciously, as a route can reveal location information (for example a start or end point near your home).</li>
+        </ul>
+
         <h2>4. Network Connections to Third Parties</h2>
         <p>When you use certain features, the app establishes connections to external services. For technical reasons, this transmits your <strong>IP address</strong> to the respective service provider; depending on the feature, additional data listed below is transmitted. These providers are independent data controllers under data protection law.</p>
         <table>
@@ -135,7 +143,7 @@
                 <tr><th>Service</th><th>Purpose</th><th>Transmitted Data</th><th>Provider / Privacy</th></tr>
             </thead>
             <tbody>
-                <tr><td><strong>OpenFreeMap</strong></td><td>Loading vector map tiles</td><td>Requested map area, IP address</td><td><a href="https://openfreemap.org/">openfreemap.org</a></td></tr>
+                <tr><td><strong>OpenFreeMap</strong></td><td>Loading vector map tiles (map view &amp; ride-share map snapshot)</td><td>Requested map area, IP address</td><td><a href="https://openfreemap.org/">openfreemap.org</a></td></tr>
                 <tr><td><strong>Nominatim (OpenStreetMap)</strong></td><td>Address search &amp; address resolution (geocoding)</td><td>Search term or coordinates, IP address</td><td><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy">OSM Privacy Policy</a></td></tr>
                 <tr><td><strong>OSRM</strong></td><td>Calculating routes (online fallback, if used)</td><td>Start/destination coordinates, IP address</td><td><a href="https://project-osrm.org/">project-osrm.org</a></td></tr>
                 <tr><td><strong>BRouter</strong></td><td>One-time download of offline routing data (map-segment tiles)</td><td>Requested 5°×5° tile (≈ your region), IP address</td><td><a href="https://brouter.de/">brouter.de</a></td></tr>
@@ -145,6 +153,7 @@
         <ul>
             <li>These connections only occur <strong>when the respective feature is actively used</strong> (e.g. when panning the map, performing an address search, or tapping a parking spot without a stored address).</li>
             <li><strong>Bike navigation via BRouter</strong> computes routes <strong>entirely offline on your device</strong> — no start, destination or route is ever transmitted. Only the <strong>one-time download</strong> of the offline routing data fetches map-segment tiles from brouter.de; the requested tile name reveals only your approximate region.</li>
+            <li><strong>Ride-share card:</strong> Generating the share card loads OpenFreeMap tiles for the recorded ride's area (its bounding box) to draw the map cutout; this only happens while you preview the card and only when online. The card image itself is created locally — see Section 3.4 for how it is shared.</li>
             <li>The app transmits <strong>no personal identifiers</strong> (no advertising ID, no device ID) to these services.</li>
         </ul>
 

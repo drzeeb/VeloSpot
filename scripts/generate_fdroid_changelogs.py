@@ -212,6 +212,20 @@ CHANGELOGS: dict[int, dict[str, str]] = {
             "\u2022 Favoriten in eigener, isolierter Datenbank \u2013 sicherer gespeichert\n"
         ),
     },
+    10020: {
+        "en-US": (
+            "\u2022 Share your ride as a slick \"VeloSpot Wrapped\" card \u2013 your route on a map cutout with your stats, ready for WhatsApp, Telegram & Instagram, in six colour themes\n"
+            "\u2022 Ride recording now keeps running in the background \u2013 with a notification, a Quick Settings tile and a home-screen widget\n"
+            "\u2022 The ride timer keeps ticking smoothly; no accidental pins while navigating or recording\n"
+            "\u2022 Privacy disclosures and stability fixes\n"
+        ),
+        "de-DE": (
+            "\u2022 Teile deine Fahrt als schicke \u201eVeloSpot Wrapped\u201c-Kachel \u2013 Route auf einem Kartenausschnitt mit deinen Statistiken, perfekt f\u00fcr WhatsApp, Telegram & Instagram, in sechs Farbthemen\n"
+            "\u2022 Fahrtaufzeichnung l\u00e4uft jetzt im Hintergrund weiter \u2013 mit Benachrichtigung, Schnelleinstellungs-Kachel und Homescreen-Widget\n"
+            "\u2022 Der Timer l\u00e4uft fl\u00fcssig weiter; keine versehentlichen Pins w\u00e4hrend Navigation/Aufzeichnung\n"
+            "\u2022 Datenschutz-Hinweise und Stabilit\u00e4tsverbesserungen\n"
+        ),
+    },
 }
 
 
