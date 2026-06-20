@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Live speed during navigation** — the active turn-by-turn navigation card now shows your **current speed in km/h** (e.g. `18.4 km/h`), updated on every GPS fix, just like the ride-recording overlay already did. The speed is carried on the per-fix `NavigationProgress` (taken from the raw GPS fix, also honoured by the route simulator) and formatted with the shared `formatRideSpeed` helper for a consistent look; it's hidden gracefully when a fix carries no speed.
+
+### Fixed
+- **Private data no longer backed up to Google Drive (`allowBackup` hardening)** — `android:allowBackup` was `true` with empty backup-rule templates, so Android Auto Backup could upload **recorded GPS ride tracks**, favourites, saved places and settings to the user's Google Drive — undisclosed and at odds with VeloSpot's "all data stays exclusively on your device" promise. Backup is now disabled (`android:allowBackup="false"`), and the `data_extraction_rules.xml` / `backup_rules.xml` are filled with explicit `exclude` rules (covering the `database`, `sharedpref` and `file` domains — including Room's `-wal`/`-shm` sidecar files) as defense-in-depth should backup ever be re-enabled. No third party receives any user data. (#86)
+- **Ride-recording timer now ticks continuously** — the elapsed-time counter on the live recording card was derived from the *last GPS fix's* timestamp, so it only advanced when a new fix arrived (it would freeze at a red light or during a brief GPS dropout). The elapsed time is now wall-clock based (`RideTracker.currentStats(now)`) and a 1 Hz ticker in `RideTrackingController` republishes the live stats every second, so the timer counts up smoothly and honestly regardless of the GPS cadence.
+- **No accidental pins while navigating or recording** — tapping an empty spot on the map during turn-by-turn navigation or an active ride recording no longer drops a custom pin (which also triggered reverse-geocoding and a camera jump mid-trip). `MapViewModel.onMapTapped` now ignores empty-map taps while a follow session is active; tapping existing parking spots / saved places still works.
+
 ## [v1.0.19] - 2026-06-20
 
 ### Added
