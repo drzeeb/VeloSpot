@@ -11,8 +11,6 @@ import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.navigation.GeoMath
 import de.velospot.core.navigation.NavigationModePreferences
 import de.velospot.core.navigation.RouteSimulator
-import de.velospot.core.routing.OfflineRoutingPreferences
-import de.velospot.core.routing.isWifiConnected
 import de.velospot.core.tracking.RideTracker
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
@@ -26,7 +24,6 @@ import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.LiveRideStats
 import de.velospot.domain.model.MapError
-import de.velospot.domain.model.NoInternetConnectionException
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RecordedRide
@@ -40,6 +37,8 @@ import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.feature.map.presentation.offline.OfflineRoutingController
+import de.velospot.feature.map.presentation.search.AddressSearchController
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,15 +51,9 @@ import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
 private const val VIEWPORT_DEBOUNCE_MS  = 300L
-private const val SEARCH_DEBOUNCE_MS    = 400L
-private const val SEARCH_MIN_CHARS      = 3
 
 /** Minimum gap between automatic off-route reroutes. */
 private const val REROUTE_COOLDOWN_MS   = 8_000L
-
-// Default map center used when no GPS fix is available yet.
-private const val DEFAULT_LAT = 49.7596
-private const val DEFAULT_LON = 6.6441
 
 data class MapCameraTarget(
     val latitude: Double,
@@ -250,16 +243,15 @@ class MapViewModel @Inject constructor(
 
     // ── Address search ────────────────────────────────────────────────────────
 
-    private val _searchQuery   = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
-    private val _searchResults = MutableStateFlow<List<AddressSearchResult>>(emptyList())
-    val searchResults: StateFlow<List<AddressSearchResult>> = _searchResults.asStateFlow()
-
-    private val _isSearching   = MutableStateFlow(false)
-    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
-
-    private var searchJob: Job? = null
+    /** Owns the debounced address-search concern (query, results, in-flight flag). */
+    private val addressSearch = AddressSearchController(
+        scope = viewModelScope,
+        geocoder = nominatimGeocoder,
+        currentLocation = { _userLocation.value }
+    )
+    val searchQuery: StateFlow<String> = addressSearch.query
+    val searchResults: StateFlow<List<AddressSearchResult>> = addressSearch.results
+    val isSearching: StateFlow<Boolean> = addressSearch.isSearching
 
     /** The address pin currently shown on the map (set when user taps a search result). */
     private val _selectedSearchPin = MutableStateFlow<AddressSearchResult?>(null)
@@ -322,31 +314,10 @@ class MapViewModel @Inject constructor(
         _is3DNavigation.value = enabled
     }
 
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-        searchJob?.cancel()
-        if (query.length < SEARCH_MIN_CHARS) {
-            _searchResults.value = emptyList()
-            return
-        }
-        searchJob = viewModelScope.launch {
-            delay(SEARCH_DEBOUNCE_MS)
-            _isSearching.value = true
-            val near = _userLocation.value
-            _searchResults.value = nominatimGeocoder.searchAddress(
-                query = query,
-                nearLatitude = near?.latitude,
-                nearLongitude = near?.longitude
-            )
-            _isSearching.value = false
-        }
-    }
+    fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
 
     fun onSearchCleared() {
-        searchJob?.cancel()
-        _searchQuery.value    = ""
-        _searchResults.value  = emptyList()
-        _isSearching.value    = false
+        addressSearch.clear()
         _selectedSearchPin.value = null
     }
 
@@ -598,7 +569,7 @@ class MapViewModel @Inject constructor(
     fun onSearchResultSelected(result: AddressSearchResult) {
         _customMapPin.value      = null
         _selectedSearchPin.value = result
-        _searchResults.value     = emptyList()   // collapse dropdown
+        addressSearch.collapseResults()   // collapse dropdown
         _mapCameraTarget.value   = MapCameraTarget(
             latitude             = result.latitude,
             longitude            = result.longitude,
@@ -810,18 +781,18 @@ class MapViewModel @Inject constructor(
 
     // ── Offline routing ───────────────────────────────────────────────────────
 
-    private val _offlineRoutingUiState = MutableStateFlow(initialOfflineState())
-    val offlineRoutingUiState: StateFlow<OfflineRoutingUiState> = _offlineRoutingUiState.asStateFlow()
-    private val _showOfflineSetupSheet = MutableStateFlow(false)
-    val showOfflineSetupSheet: StateFlow<Boolean> = _showOfflineSetupSheet.asStateFlow()
-
-    /** True while the profile selection sheet should be visible. */
-    private val _showProfileSheet = MutableStateFlow(false)
-    val showProfileSheet: StateFlow<Boolean> = _showProfileSheet.asStateFlow()
-
-    /** True when download was requested but device is not on Wi-Fi. */
-    private val _showWifiWarning = MutableStateFlow(false)
-    val showWifiWarning: StateFlow<Boolean> = _showWifiWarning.asStateFlow()
+    /** Owns the offline-routing concern (download lifecycle, sheets, active profile). */
+    private val offlineRouting = OfflineRoutingController(
+        scope = viewModelScope,
+        context = context,
+        segmentManager = segmentManager,
+        currentLocation = { _userLocation.value },
+        onDownloadError = { error -> _navigationUiState.value = NavigationUiState.Error(error) }
+    )
+    val offlineRoutingUiState: StateFlow<OfflineRoutingUiState> = offlineRouting.uiState
+    val showOfflineSetupSheet: StateFlow<Boolean> = offlineRouting.showSetupSheet
+    val showProfileSheet: StateFlow<Boolean> = offlineRouting.showProfileSheet
+    val showWifiWarning: StateFlow<Boolean> = offlineRouting.showWifiWarning
 
     // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -1111,91 +1082,30 @@ class MapViewModel @Inject constructor(
 
     // ── Offline routing ───────────────────────────────────────────────────────
 
-    /** Opens the setup information sheet. */
-    fun requestOfflineRoutingSetup() { _showOfflineSetupSheet.value = true }
-    fun dismissOfflineSetupSheet()   { _showOfflineSetupSheet.value = false }
+    fun requestOfflineRoutingSetup() = offlineRouting.requestSetup()
+    fun dismissOfflineSetupSheet()   = offlineRouting.dismissSetupSheet()
 
-    fun openProfileSheet()    { _showProfileSheet.value = true }
-    fun dismissProfileSheet() { _showProfileSheet.value = false }
+    fun openProfileSheet()    = offlineRouting.openProfileSheet()
+    fun dismissProfileSheet() = offlineRouting.dismissProfileSheet()
 
-    fun dismissWifiWarning()          { _showWifiWarning.value = false }
-    fun confirmDownloadOnMobileData() { _showWifiWarning.value = false; startSegmentDownload() }
+    fun dismissWifiWarning()          = offlineRouting.dismissWifiWarning()
+    fun confirmDownloadOnMobileData() = offlineRouting.confirmDownloadOnMobileData()
+    fun confirmOfflineRoutingSetup()  = offlineRouting.confirmSetup()
 
     /**
-     * Called after the user taps "Jetzt herunterladen" in the setup sheet.
-     * Shows a Wi-Fi warning when the device is not on Wi-Fi.
+     * Switches the active routing profile. Persisting + state live in the offline
+     * controller; if navigation is active the route is immediately recalculated
+     * with the new profile.
      */
-    fun confirmOfflineRoutingSetup() {
-        _showOfflineSetupSheet.value = false
-        if (!isWifiConnected(context)) {
-            _showWifiWarning.value = true
-            return
-        }
-        startSegmentDownload()
-    }
-
-    private fun startSegmentDownload() {
-        val loc = _userLocation.value ?: GeoCoordinate(DEFAULT_LAT, DEFAULT_LON)
-        _offlineRoutingUiState.value = OfflineRoutingUiState.Downloading()
-        viewModelScope.launch {
-            runCatching {
-                segmentManager.downloadSegmentsForLocation(
-                    lat = loc.latitude,
-                    lon = loc.longitude,
-                    onProgress = { downloaded, total, fileIndex, totalFiles, fileName ->
-                        val progress = if (total > 0L) downloaded / total.toFloat() else -1f
-                        _offlineRoutingUiState.value = OfflineRoutingUiState.Downloading(
-                            fileProgress      = progress,
-                            currentFileIndex  = fileIndex,
-                            totalFiles        = totalFiles,
-                            downloadedBytes   = downloaded,
-                            totalBytes        = total,
-                            currentFile       = fileName
-                        )
-                    }
-                )
-            }.onSuccess {
-                val profile = OfflineRoutingPreferences.getSelectedProfile(context)
-                OfflineRoutingPreferences.setOfflineRoutingEnabled(context, true)
-                // Show success state briefly, then switch to Enabled
-                _offlineRoutingUiState.value = OfflineRoutingUiState.DownloadComplete(profile)
-                delay(2_500L)
-                _offlineRoutingUiState.value = OfflineRoutingUiState.Enabled(profile)
-            }.onFailure { throwable ->
-                _offlineRoutingUiState.value = OfflineRoutingUiState.Disabled
-                val error = when (throwable) {
-                    is NoInternetConnectionException -> MapError.NoInternetConnection
-                    else                             -> MapError.Unknown(throwable.message)
-                }
-                _navigationUiState.value = NavigationUiState.Error(error)
-            }
-        }
-    }
-
-    /** Switches the active routing profile without re-downloading. */
     fun selectRoutingProfile(profile: de.velospot.data.brouter.BRouterProfile) {
-        OfflineRoutingPreferences.setSelectedProfile(context, profile)
-        _offlineRoutingUiState.value = OfflineRoutingUiState.Enabled(profile)
-
-        // If navigation is currently active, immediately recalculate the route with the new profile.
+        offlineRouting.selectProfile(profile)
         val currentDestination = (_navigationUiState.value as? NavigationUiState.Active)?.destination
         if (currentDestination != null) {
             startInAppNavigation(currentDestination)
         }
     }
 
-    /** Disables offline routing and wipes all downloaded segment files. */
-    fun disableOfflineRouting() {
-        OfflineRoutingPreferences.setOfflineRoutingEnabled(context, false)
-        _offlineRoutingUiState.value = OfflineRoutingUiState.Disabled
-        viewModelScope.launch { segmentManager.deleteAllSegments() }
-    }
-
-    private fun initialOfflineState(): OfflineRoutingUiState =
-        if (OfflineRoutingPreferences.isOfflineRoutingEnabled(context))
-            OfflineRoutingUiState.Enabled(OfflineRoutingPreferences.getSelectedProfile(context))
-        else
-            OfflineRoutingUiState.Disabled
+    fun disableOfflineRouting() = offlineRouting.disable()
 
     override fun onCleared() {
         super.onCleared()
