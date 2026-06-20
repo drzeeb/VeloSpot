@@ -149,7 +149,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidxComposeIconsExtended)
-    implementation(libs.coilCompose)
 
     implementation(libs.hiltAndroid)
     ksp(libs.hiltAndroidCompiler)

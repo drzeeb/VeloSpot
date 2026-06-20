@@ -17,7 +17,6 @@ Die App enthält über 100.000 Fahrradparkplätze aus OpenStreetMap, die als SQL
 
 <b>Komfort</b>
 • Favoriten mit direktem Navigationsbutton
-• Parkplatzfotos mit automatischem Bild-Cache (Coil)
 • Aktueller Standort mit Kartenzentrierung
 • Dunkelmodus-Umschalter im In-App-Menü
 • 8 Sprachen mit persistenter Sprachauswahl: Deutsch, Englisch, Französisch, Italienisch, Portugiesisch, Luxemburgisch, Niederländisch, Spanisch

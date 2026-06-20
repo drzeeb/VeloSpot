@@ -98,10 +98,6 @@ OSM data is available under the ODbL. This means:
 - **License**: Apache License 2.0
 - **Source code**: https://github.com/square/moshi
 
-### Coil (image loading)
-- **Version**: 2.7.0
-- **License**: Apache License 2.0
-- **Source code**: https://github.com/coil-kt/coil
 
 ### Kotlin (language & standard library)
 - **Version**: 2.4.0

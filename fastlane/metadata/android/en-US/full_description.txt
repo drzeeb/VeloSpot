@@ -17,7 +17,6 @@ The app ships with over 100,000 bike parking spots from OpenStreetMap, bundled a
 
 <b>Usability</b>
 • Favourites with a dedicated navigation shortcut
-• Parking spot photos with automatic image caching (Coil)
 • Current location with map recentring
 • Dark mode toggle from the in-app menu
 • 8 languages with persistent language picker: German, English, French, Italian, Portuguese, Luxembourgish, Dutch, Spanish
