@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Live speed during navigation** — the active turn-by-turn navigation card now shows your **current speed in km/h** (e.g. `18.4 km/h`), updated on every GPS fix, just like the ride-recording overlay already did. The speed is carried on the per-fix `NavigationProgress` (taken from the raw GPS fix, also honoured by the route simulator) and formatted with the shared `formatRideSpeed` helper for a consistent look; it's hidden gracefully when a fix carries no speed.
+
 ## [v1.0.19] - 2026-06-20
 
 ### Added
