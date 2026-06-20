@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v1.0.19] - 2026-06-20
+
 ### Added
 - **Cyclist avatar as the live-location marker** — the plain blue location dot (and the green navigation heading-arrow puck) is replaced by a full-colour **2D cyclist sprite** shown both on the idle map and during turn-by-turn navigation. It's a clean 3rd-person / top-down rider (helmet, jersey shoulders, arms reaching to the handlebar, frame and two wheels with rims, legs on the pedals) drawn with a soft contact shadow and a thin white keyline so it pops on any basemap (new `R.drawable.ic_cyclist_avatar`, reworked `createLocationMarkerIcon` with a stamped outline). The sprite is rendered as an **upright billboard** (`iconRotationAlignment` / `iconPitchAlignment = viewport`) so the tilted 3D navigation map never flattens or squishes it; since the navigation camera keeps the heading pointing "up", the rider naturally appears from behind for a true 3rd-person feel. The now-unused `createNavigationArrowIcon` arrow puck was removed.
 - **Ride tracking — record your ride as a timeline ("My rides")** — riders can now record a ride and review it afterwards with full statistics:

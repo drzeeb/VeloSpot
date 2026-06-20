@@ -1,0 +1,3 @@
+• Smooth map camera animations (easing) for natural zoom and pan
+• Selected marker highlighted in orange
+• Better map positioning when a bottom sheet is open

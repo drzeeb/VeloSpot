@@ -1,0 +1,4 @@
+• F-Droid: BRouter wird jetzt per srclib aus dem Quellcode gebaut statt als JAR mitgeliefert
+• Fehlende Übersetzungen ergänzt (es, fr, it, lb, nl, pt)
+• MapView-Speicherleck und Location-Callback-Leck behoben
+• CI gehärtet: Wrapper-Prüfung, Android-Lint, Dependency-Review

@@ -1,0 +1,7 @@
+• Fahrradparkplätze jetzt auch für Frankreich 🇫🇷 und Luxemburg 🇱🇺
+• Mehrländer-Adresssuche mit Bias auf deine Umgebung
+• Neuer „Über“-Bereich (Website, Datenstände, Datenschutz, Unterstützung)
+• „Wo hab ich geparkt?“ – Abstellort merken, Auto-Parken bei Ankunft
+• Marker-Clustering für eine deutlich flüssigere Karte
+• Live-3D-Navigation mit Ankunftszeit und automatischer Neuberechnung
+• 2D/3D-Kartenansicht; Display bleibt während der Navigation an

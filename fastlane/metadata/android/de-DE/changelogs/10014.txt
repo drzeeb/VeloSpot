@@ -1,0 +1,2 @@
+• BRouter wird jetzt aus dem Quellcode gebaut – vollständig reproduzierbarer F-Droid-Build, ohne Binär-Blob und ohne Prebuild-Schritt
+• Reproduzierbares Release-Setup: Signierung über eine gitignorete keystore.properties / CI-Secrets
