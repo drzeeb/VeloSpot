@@ -18,10 +18,11 @@ import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.data.local.BikeParkingCacheDataSource
 import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.local.dao.BikeParkingSpaceDao
-import de.velospot.data.local.dao.FavoriteParkingSpaceDao
+import de.velospot.data.local.dao.FavoriteSpaceDao
 import de.velospot.data.local.dao.RecordedRideDao
 import de.velospot.data.local.dao.SavedPlaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
+import de.velospot.data.local.database.FavoritesDatabase
 import de.velospot.data.local.database.RidesDatabase
 import de.velospot.data.local.database.SavedPlacesDatabase
 import de.velospot.data.remote.NominatimRateLimitInterceptor
@@ -169,8 +170,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideFavoriteParkingSpaceDao(database: BikeParkingDatabase): FavoriteParkingSpaceDao {
-        return database.favoriteParkingSpaceDao()
+    fun provideFavoritesDatabase(
+        @ApplicationContext context: Context
+    ): FavoritesDatabase {
+        return FavoritesDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFavoriteSpaceDao(database: FavoritesDatabase): FavoriteSpaceDao {
+        return database.favoriteSpaceDao()
     }
 
     @Provides
@@ -218,7 +227,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideFavoritesRepository(
-        favoritesDao: FavoriteParkingSpaceDao
+        favoritesDao: FavoriteSpaceDao
     ): FavoritesRepository {
         return FavoritesRepositoryImpl(favoritesDao)
     }
