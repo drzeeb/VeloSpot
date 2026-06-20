@@ -14,7 +14,7 @@ import de.velospot.feature.map.presentation.markers.PROP_ICON
 import de.velospot.feature.map.presentation.markers.SOURCE_LOCATION
 import de.velospot.feature.map.presentation.markers.SOURCE_ROUTE
 import de.velospot.feature.map.presentation.markers.SOURCE_ROUTE_TRAVELED
-import de.velospot.feature.map.presentation.markers.createNavigationArrowIcon
+import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
 import de.velospot.feature.map.presentation.markers.drawableToBitmap
 import de.velospot.feature.map.presentation.markers.ensureBuildingExtrusionLayer
 import de.velospot.feature.map.presentation.markers.ensureLocationLayer
@@ -212,7 +212,13 @@ class NavigationManager(private val context: Context) {
     fun attach(map: MapLibreMap, style: Style) {
         this.map = map
         if (style.getImage(IMG_LOCATION_NAV) == null) {
-            style.addImage(IMG_LOCATION_NAV, drawableToBitmap(createNavigationArrowIcon(context)))
+            // Use the larger cyclist avatar (not the old arrow puck) while navigating.
+            // The location layer still rotates it by PROP_BEARING, so the rider turns
+            // to face the live heading and leans with the tilted 3D map.
+            style.addImage(
+                IMG_LOCATION_NAV,
+                drawableToBitmap(createLocationMarkerIcon(context, isNavigationActive = true))
+            )
         }
         ensureLocationLayer(style)
         ensureBuildingExtrusionLayer(style)
@@ -580,12 +586,15 @@ class NavigationManager(private val context: Context) {
 
     private fun writePuck() {
         val style = map?.style ?: return
-        val source = style.getSource(SOURCE_LOCATION) as? GeoJsonSource ?: return
         val feature = Feature.fromGeometry(Point.fromLngLat(curLon, curLat)).apply {
             addStringProperty(PROP_ICON, IMG_LOCATION_NAV)
             addNumberProperty(PROP_BEARING, curBearing)
         }
-        source.setGeoJson(FeatureCollection.fromFeature(feature))
+        // Upsert (create-or-update) rather than only updating an existing source:
+        // a dark-mode style reload mid-navigation wipes SOURCE_LOCATION, and the
+        // normal renderer skips re-creating it while navigating (suppressLocationDot),
+        // so the puck would otherwise vanish until navigation ends.
+        upsertSource(style, SOURCE_LOCATION, FeatureCollection.fromFeature(feature))
     }
 }
 
