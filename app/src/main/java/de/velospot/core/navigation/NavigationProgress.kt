@@ -14,11 +14,14 @@ package de.velospot.core.navigation
  * @property isOffRoute `true` while the rider is currently beyond the off-route
  *  threshold (a separate, debounced [de.velospot.feature.map.presentation.NavigationManager]
  *  callback fires the actual reroute trigger).
+ * @property currentSpeedMps Current ground speed in metres per second, taken from
+ *  the raw GPS fix (`null` when the fix carries no speed).
  */
 data class NavigationProgress(
     val remainingMeters: Double,
     val remainingSeconds: Double,
     val distanceFromRouteMeters: Double,
-    val isOffRoute: Boolean
+    val isOffRoute: Boolean,
+    val currentSpeedMps: Float? = null
 )
 
