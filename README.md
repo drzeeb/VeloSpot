@@ -50,7 +50,6 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - In-app dark mode toggle from the top-right menu — **including dark map tiles** that turn the whole vector map dark
 - **🆕 Toggle map layers** — show or hide pin categories (parking, favorites, saved places) from an intuitive layers sheet; the choice is persisted
 - **🆕 Saved places** — save any tapped location as a named favorite; it appears as a persistent green star marker and in the favorites list
-- **Parking space photos** with automatic caching via Coil for fast loading
 - **In-app bike route navigation** with live route overlay (no external map app handoff)
 - **🆕 Live 3D turn-by-turn navigation** — a Google-Maps-style 3D follow camera (60° pitch, heading-up, speed-dependent zoom), snap-to-route map matching, a rotating heading arrow, live remaining-distance/ETA, a greyed-out travelled path, 3D buildings, and automatic off-route rerouting
 - **🆕 2D / 3D map view switch** — choose a flat top-down map or a tilted 3D view (with extruded buildings) for the resting map; the choice is persisted. Navigation itself is always 3D
@@ -75,7 +74,6 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - 🧭 **My Location** - Center the map on your current position and display a live location marker
 - ❤️ **Favorites** - Save frequently used bike parking spots and use dedicated actions for navigation or spot details
 - ⭐ **Selected Highlight** - See your current selection highlighted with an orange marker
-- 📸 **Parking Photos** - View parking space photos with automatic smart caching for fast loading
 - 🌙 **Dark Mode Toggle** - Switch the app theme directly from the in-app menu — the map also switches to a bundled dark vector-tile style (reusing the same OpenFreeMap tiles) with higher-contrast markers
 - 🗂️ **Toggle Map Layers** - Show or hide each pin category independently (parking spots, favorites, saved places) via a layers sheet; the selection is remembered across restarts
 - ⭐ **Saved Places** - Save any tapped location as a named favorite; saved places appear as persistent green star markers and in the favorites list with navigate and show-on-map actions
@@ -85,7 +83,7 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - 🧭 **Live 3D Navigation** - A mit­laufende, Google-Maps-style 3D follow camera (fixed 60° pitch, heading-up rotation, speed- and turn-dependent zoom) with snap-to-route map matching, a rotating heading arrow, live remaining-distance + ETA, a greyed-out travelled path, extruded 3D buildings, and automatic off-route rerouting via BRouter
 - 🧱 **2D / 3D Map View** - Switch the resting map between a flat top-down view and a tilted 3D view with 3D buildings from a sleek segmented selector; the choice is remembered. Active navigation always uses the full 3D camera
 - 👁️ **Navigation Focus** - During active navigation, non-target markers are dimmed to keep the destination visually prominent
-- 📊 **Detailed Information** - View capacity, address, operator, and photos for each location
+- 📊 **Detailed Information** - View capacity, address, and operator for each location
 - 🎨 **Modern UI** - Clean and intuitive Jetpack Compose-based interface
 
 ## 📱 Target Platform
@@ -244,7 +242,7 @@ For more information about OpenStreetMap and ODbL, visit:
 ### Parking Details Sheet
 - Bottom sheet with parking information
 - Address auto-resolved via Nominatim if not present in OSM data
-- Capacity and operator details when available, plus a parking photo if present
+- Capacity and operator details when available
 - Full-width "Save as favourite" / "Remove from favourites" button
 - Quick-access navigation button
 

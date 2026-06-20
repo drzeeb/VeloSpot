@@ -20,7 +20,6 @@ room = "2.8.4"
 playServicesLocation = "21.3.0"
 coroutines = "1.11.0"
 ksp = "2.3.9"
-coil = "2.7.0"
 mockitoCore = "5.23.0"
 mockitoKotlin = "6.3.0"
 androidxTestUiautomator = "2.3.0"
@@ -59,7 +58,6 @@ roomKtx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 roomCompiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 playServicesLocation = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 kotlinxCoroutinesTest = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
-coilCompose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 mockitoCore = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }
 mockitoKotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidxTestUiautomator" }

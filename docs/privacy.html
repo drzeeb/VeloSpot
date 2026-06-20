@@ -90,7 +90,7 @@
 
     <main>
         <h1>Privacy Policy for VeloSpot</h1>
-        <p class="updated">Last updated: June 19, 2026</p>
+        <p class="updated">Last updated: June 20, 2026</p>
 
         <p>This privacy policy explains how the <strong>VeloSpot</strong> app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires <strong>no user account</strong>, contains <strong>no advertising</strong>, and uses <strong>no tracking or analytics tools</strong>.</p>
 
@@ -137,13 +137,14 @@
             <tbody>
                 <tr><td><strong>OpenFreeMap</strong></td><td>Loading vector map tiles</td><td>Requested map area, IP address</td><td><a href="https://openfreemap.org/">openfreemap.org</a></td></tr>
                 <tr><td><strong>Nominatim (OpenStreetMap)</strong></td><td>Address search &amp; address resolution (geocoding)</td><td>Search term or coordinates, IP address</td><td><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy">OSM Privacy Policy</a></td></tr>
-                <tr><td><strong>OSRM</strong></td><td>Calculating routes (if used)</td><td>Start/destination coordinates, IP address</td><td><a href="https://project-osrm.org/">project-osrm.org</a></td></tr>
+                <tr><td><strong>OSRM</strong></td><td>Calculating routes (online fallback, if used)</td><td>Start/destination coordinates, IP address</td><td><a href="https://project-osrm.org/">project-osrm.org</a></td></tr>
+                <tr><td><strong>BRouter</strong></td><td>One-time download of offline routing data (map-segment tiles)</td><td>Requested 5°×5° tile (≈ your region), IP address</td><td><a href="https://brouter.de/">brouter.de</a></td></tr>
             </tbody>
         </table>
         <p><strong>Notes:</strong></p>
         <ul>
             <li>These connections only occur <strong>when the respective feature is actively used</strong> (e.g. when panning the map, performing an address search, or tapping a parking spot without a stored address).</li>
-            <li><strong>Bike navigation via BRouter</strong> runs <strong>entirely offline on your device</strong>; no route data is transmitted to third parties.</li>
+            <li><strong>Bike navigation via BRouter</strong> computes routes <strong>entirely offline on your device</strong> — no start, destination or route is ever transmitted. Only the <strong>one-time download</strong> of the offline routing data fetches map-segment tiles from brouter.de; the requested tile name reveals only your approximate region.</li>
             <li>The app transmits <strong>no personal identifiers</strong> (no advertising ID, no device ID) to these services.</li>
         </ul>
 
@@ -151,7 +152,7 @@
         <table>
             <thead><tr><th>Permission</th><th>Purpose</th></tr></thead>
             <tbody>
-                <tr><td><code>INTERNET</code></td><td>Loading map tiles, address search/resolution, and parking photos</td></tr>
+                <tr><td><code>INTERNET</code></td><td>Loading map tiles, address search/resolution, and one-time offline-routing data download</td></tr>
                 <tr><td><code>ACCESS_NETWORK_STATE</code></td><td>Checking whether a network connection exists</td></tr>
                 <tr><td><code>ACCESS_FINE_LOCATION</code> / <code>ACCESS_COARSE_LOCATION</code></td><td>Displaying your own location and navigation (optional)</td></tr>
             </tbody>
