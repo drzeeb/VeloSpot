@@ -284,6 +284,12 @@ assign costfactor
   else if ( highway=proposed|abandoned|construction ) then   10000
 
   #
+  # never cycle a trunk road / "Kraftfahrstrasse" where cycling is signed off
+  # (typical motorway feeders & ramps, e.g. around the A1)
+  #
+  else if ( and highway=trunk|trunk_link bicycle=no|private|use_sidepath ) then 10000
+
+  #
   # all other exclusions below (access, steps, ferries,..)
   # should not be deleted by the decoder, to be available
   # in voice-hint-processing

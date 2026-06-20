@@ -138,7 +138,8 @@ class BRouterEngine(
          *
          * History:
          * - 1: initial bundled profiles.
-         * - 2: gravel profile — keep gravel bikes off trunk roads / motorway feeders.
+         * - 2: trunk-road hardening across the bundled profiles (gravel, mtb, trekking,
+         *      fastbike, shortest) — keep bikes off trunk roads / motorway feeders.
          */
         private const val PROFILES_VERSION = "2"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
