@@ -10,6 +10,7 @@
 
     <string name="map_center_on_my_location">Kaart op mäi Standuert zentréieren</string>
     <string name="map_recenter_follow">Nei zentréieren a mengem Standuert nogoen</string>
+    <string name="map_recenter_follow_short">Zentréieren</string>
     <string name="map_my_location">Mäi Standuert</string>
     <string name="map_snippet_spaces_format">%1$d Stellplazen</string>
     <string name="map_snippet_covered">iwwerdeckt</string>

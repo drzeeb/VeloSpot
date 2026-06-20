@@ -10,6 +10,7 @@
 
     <string name="map_center_on_my_location">Centrar el mapa en mi ubicación</string>
     <string name="map_recenter_follow">Volver a centrar y seguir mi ubicación</string>
+    <string name="map_recenter_follow_short">Centrar</string>
     <string name="map_my_location">Mi ubicación</string>
     <string name="map_snippet_spaces_format">%1$d plazas</string>
     <string name="map_snippet_covered">cubierto</string>

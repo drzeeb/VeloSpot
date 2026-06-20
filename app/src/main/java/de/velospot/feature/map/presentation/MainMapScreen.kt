@@ -168,9 +168,7 @@ fun MainMapScreen(
             context       = context,
             onPermissionGranted = {
                 viewModel.onLocationPermissionGranted()
-                // Re-centre and, during a follow session, re-lock the camera onto
-                // the live position until the user pans away again.
-                viewModel.recenterOnUserLocation()
+                viewModel.centerMapOnUserLocation()
             },
             requestPermissions = permissionLauncher::launch
         )
@@ -516,11 +514,18 @@ fun MainMapScreen(
             )
         }
 
-        MyLocationFab(
-            isFollowSession = isFollowSession,
-            isFollowing     = isFollowingLocation,
-            onClick         = requestOrUseLocation
+        // Dedicated "re-centre & follow" button — appears only during a follow
+        // session (navigation / recording) once the user has panned the map away.
+        // Stacked above the right-edge FABs: clear of the record FAB (88 dp) when
+        // it is shown (recording without navigation), otherwise just above the
+        // location FAB (88 dp), so it never overlaps them.
+        RecenterFollowFab(
+            visible       = isFollowSession && !isFollowingLocation,
+            bottomPadding = if (activeNavigation == null && isRecordingRide) 160.dp else 88.dp,
+            onClick       = viewModel::recenterOnUserLocation
         )
+
+        MyLocationFab(onClick = requestOrUseLocation)
     }
 
     // ── Bottom sheets & dialogs ───────────────────────────────────────────────
