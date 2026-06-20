@@ -173,4 +173,9 @@
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_speed_chart_title">Snelheid over tijd</string>
     <string name="ride_delete">Rit verwijderen</string>
+    <string name="ride_stop_save">Stoppen en opslaan</string>
+    <string name="ride_notification_channel_name">Ritregistratie</string>
+    <string name="ride_notification_channel_description">Blijft je rit registreren terwijl de app op de achtergrond draait.</string>
+    <string name="ride_record_start">Rit starten</string>
+    <string name="widget_ride_recording_description">Start of stop een ritregistratie.</string>
 </resources>
