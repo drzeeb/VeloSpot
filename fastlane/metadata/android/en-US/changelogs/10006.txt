@@ -1,0 +1,2 @@
+• Germany-wide bike-parking coverage from a pre-bundled OpenStreetMap dataset
+• Minor refactors and clean-ups

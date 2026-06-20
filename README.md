@@ -1,6 +1,6 @@
 # 🚲 VeloSpot
 
-**Find bike parking spaces across all of Germany**
+**Find bike parking spaces across Germany 🇩🇪, France 🇫🇷 and Luxembourg 🇱🇺**
 
 ![Platform](https://img.shields.io/badge/platform-Android%208.0%2B-0A2A66)
 ![Language](https://img.shields.io/badge/language-Kotlin-7F52FF)
@@ -12,16 +12,16 @@
 [![Release workflow](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml)
 [![Android Lint](https://github.com/drzeeb/VeloSpot/actions/workflows/android-lint.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/android-lint.yml)
 
-VeloSpot is an Android application that helps cyclists discover and navigate to bike parking facilities **anywhere in Germany**. Powered by a pre-bundled OpenStreetMap dataset with over **100 000 locations**, the app works fully offline from the very first launch — no network required to find parking.
+VeloSpot is an Android application that helps cyclists discover and navigate to bike parking facilities **across Germany, France and Luxembourg**. Powered by a pre-bundled OpenStreetMap dataset with over **100 000 locations**, the app works fully offline from the very first launch — no network required to find parking.
 
-## 🇩🇪 Germany-Wide Bike Parking Data
+## 🗺️ Multi-Country Bike Parking Data
 
-VeloSpot ships with a pre-bundled OpenStreetMap extract covering **all of Germany**.
+VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩🇪, France 🇫🇷 and Luxembourg 🇱🇺**.
 
-- **~100 000+ bicycle parking locations** extracted from the OSM Germany dataset
-- **Fully offline** — all data is bundled inside the app as a Room/SQLite asset
+- **~100 000+ bicycle parking locations** extracted from the OSM datasets for Germany, France and Luxembourg
+- **Fully offline** — all data is bundled inside the app as a Room/SQLite asset (one DB per country, merged on first launch)
 - **Instant startup** — no network call needed to see parking spots
-- **Viewport-based loading** — only the markers visible in the current map area are queried, keeping memory usage low even with 100 000 entries
+- **Viewport-based loading** — only the markers visible in the current map area are queried, keeping memory usage low even with 100 000+ entries
 - **Marker clustering** — at city-level zoom dense areas are aggregated into native MapLibre clusters for smooth panning and zooming; tapping a cluster zooms in to break it apart
 - **Lazy reverse geocoding** — when you tap a marker without a stored address, Nominatim is queried once, the result is cached locally and shown immediately in the details sheet
 - **Extraction script included** (`scripts/extract_osm_parking.py`) — regenerate the bundled database from a fresh Geofabrik PBF at any time
@@ -36,10 +36,10 @@ VeloSpot ships with a pre-bundled OpenStreetMap extract covering **all of German
 
 ## ✨ Highlights
 
-- **Germany-wide** bike parking data from OpenStreetMap (~100 000+ locations)
+- **Multi-country** bike parking data from OpenStreetMap (~100 000+ locations across Germany, France and Luxembourg)
 - **Fully offline** after install — no network calls required to find parking
 - OpenStreetMap-based map browsing with **MapLibre vector tiles** and custom bike markers
-- Viewport-based marker loading — smooth performance even across the entire country
+- Viewport-based marker loading — smooth performance even across whole countries
 - **Marker clustering** — nearby parking pins are merged into clusters at low zoom for a fast, uncluttered map; tap a cluster to zoom in
 - Lazy address resolution via Nominatim (cached permanently to local DB)
 - Red marker highlighting for favorite parking spots
@@ -56,17 +56,17 @@ VeloSpot ships with a pre-bundled OpenStreetMap extract covering **all of German
 - **🆕 2D / 3D map view switch** — choose a flat top-down map or a tilted 3D view (with extruded buildings) for the resting map; the choice is persisted. Navigation itself is always 3D
 - **Navigation focus mode**: non-target parking markers become smaller, lighter gray, and more transparent while navigation is active
 - **8 languages** with persistent in-app language picker (DE 🇩🇪 EN 🇬🇧 FR 🇫🇷 IT 🇮🇹 PT 🇵🇹 LB 🇱🇺 NL 🇳🇱 ES 🇪🇸)
-- **🆕 Address search** — type any German address into the floating search bar and jump straight to the location; tap a result to drop a pin and start in-app BRouter navigation, save it as a favourite, or remove the pin (same sheet as a custom pin)
+- **🆕 Address search** — type any address in Germany, France or Luxembourg into the floating search bar and jump straight to the location; results are biased toward your current surroundings. Tap a result to drop a pin and start in-app BRouter navigation, save it as a favourite, or remove the pin (same sheet as a custom pin)
 - **🆕 Tap-to-place custom pin** — tap any empty spot on the map to drop a blue pin; the address is resolved automatically via Nominatim reverse geocoding and a bottom sheet lets you start navigation directly to that point
 - **🆕 BRouter offline routing** — routes calculated entirely on-device with 5 cycling profiles; no internet needed after the one-time segment download
 
 ## 🌟 Features
 
-- 🔍 **Address Search** - Type any German address into the top search bar; get up to 5 geocoded suggestions and navigate directly to the result
+- 🔍 **Address Search** - Type any address in Germany, France or Luxembourg into the top search bar; get up to 5 geocoded suggestions (biased to your surroundings) and navigate directly to the result
 - 📌 **Tap-to-Place Pin** - Tap any empty spot on the map to drop a custom blue pin; Nominatim reverse geocoding resolves the address automatically and a bottom sheet lets you start navigation directly to that point
-- 🇩🇪 **All of Germany** - 100 000+ bike parking spots from OpenStreetMap, bundled offline
+- 🌍 **Germany, France & Luxembourg** - 100 000+ bike parking spots from OpenStreetMap, bundled offline
 - 📍 **Interactive Map** - Browse bike parking spaces on an interactive **MapLibre vector tile** map
-- ⚡ **Viewport Loading** - Only the visible map area is queried; scroll anywhere in Germany without slowdowns
+- ⚡ **Viewport Loading** - Only the visible map area is queried; scroll across whole countries without slowdowns
 - 🧊 **Marker Clustering** - At city-level zoom, dense parking pins are aggregated into clusters for a fast, uncluttered map; tap a cluster to zoom in and break it apart
 - 🏠 **Offline-First** - All parking data is available instantly, even without a network connection
 - 📬 **Address Lookup** - Missing addresses are resolved via Nominatim and cached locally on first tap
@@ -125,8 +125,10 @@ VeloSpot/
 ├── app/
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── assets/
-│   │   │   │   └── bike_parking_germany.db   # Pre-bundled OSM dataset (~20 MB)
+│   │   │   │   ├── assets/
+│   │   │   │   │   ├── bike_parking_germany.db     # Pre-bundled OSM dataset (~20 MB)
+│   │   │   │   │   ├── bike_parking_france.db      # Pre-bundled OSM dataset
+│   │   │   │   │   └── bike_parking_luxembourg.db  # Pre-bundled OSM dataset
 │   │   │   ├── java/de/velospot/
 │   │   │   │   ├── feature/          # Feature modules
 │   │   │   │   ├── domain/           # Business logic
@@ -137,7 +139,7 @@ VeloSpot/
 │   │   │   └── AndroidManifest.xml
 │   │   ├── test/                     # Unit tests
 │   │   └── androidTest/              # Instrumented tests
-│   ├── schemas/                      # Room schema exports (v3)
+│   ├── schemas/                      # Room schema exports (v4)
 │   ├── build.gradle.kts
 │   └── proguard-rules.pro
 ├── scripts/
@@ -201,15 +203,16 @@ pip install osmium requests
 cd scripts/
 python extract_osm_parking.py --pbf germany-latest.osm.pbf
 # → writes ../app/src/main/assets/bike_parking_germany.db
+# repeat with the France and Luxembourg PBFs to refresh those datasets
 ```
 
-See [`scripts/README.md`](scripts/README.md) for full details on the extraction pipeline, including how to download the PBF from Geofabrik.
+See [`scripts/README.md`](scripts/README.md) for full details on the extraction pipeline, including how to download the per-country PBFs from Geofabrik.
 
 ## 📊 Data Sources
 
 VeloSpot bundles bike parking data extracted from OpenStreetMap and displays it on OpenStreetMap tiles:
 
-- **Bike Parking Data**: OpenStreetMap contributors (Germany extract via [Geofabrik](https://download.geofabrik.de/europe/germany.html))
+- **Bike Parking Data**: OpenStreetMap contributors (Germany, France & Luxembourg extracts via [Geofabrik](https://download.geofabrik.de/europe.html))
 - **Data format**: Pre-processed SQLite asset (Room-compatible)
 - **Update frequency**: Bundled at build time; regenerate with `extract_osm_parking.py` for fresh data
 - **Reverse Geocoding**: [Nominatim](https://nominatim.openstreetmap.org/) (on-demand, cached, OSM-based)
@@ -345,7 +348,7 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 
 ### Address search returns no results
 - Make sure you have a network connection; forward geocoding queries Nominatim live
-- Results are restricted to Germany — international addresses will not appear
+- Results are restricted to the covered countries (Germany, France, Luxembourg) — addresses elsewhere will not appear
 - Try a more specific query (e.g. include the city name)
 
 ## 🤝 Contributing
@@ -382,9 +385,9 @@ For issues, suggestions, or questions:
 
 ## 🚴 Happy Cycling! 🚲
 
-Navigate with confidence and never miss a parking spot again — anywhere in Germany!
+Navigate with confidence and never miss a parking spot again — across Germany, France and Luxembourg!
 
 ---
 
-**Last Updated**: 2026-06-19  
+**Last Updated**: 2026-06-20  
 **Status**: Active Development

@@ -1,0 +1,2 @@
+• Fotos von Stellplätzen im Detail-Sheet
+• Automatisches Bild-Caching (Coil) für schnelles, offlinetaugliches Laden

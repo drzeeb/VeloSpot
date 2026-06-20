@@ -1,0 +1,1 @@
+Maintenance: strip the AGP "Dependency metadata" signing block from the APK so the F-Droid scanner accepts the build (kept in the AAB for Google Play). No user-facing changes.

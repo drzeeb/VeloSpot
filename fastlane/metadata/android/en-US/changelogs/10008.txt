@@ -1,0 +1,3 @@
+• New address search bar with live Nominatim suggestions and a result pin
+• Map rendering migrated to MapLibre vector tiles – smooth at every zoom, no API key
+• Release builds now minified/obfuscated (R8) with hardened logging

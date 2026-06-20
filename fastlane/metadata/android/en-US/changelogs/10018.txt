@@ -1,0 +1,7 @@
+• Bike parking now covers France 🇫🇷 and Luxembourg 🇱🇺 too
+• Multi-country address search, biased to your surroundings
+• New About screen (website, dataset dates, privacy, support)
+• "Where did I park?" – save your bike's spot, auto-parked on arrival
+• Marker clustering for a much smoother map
+• Live 3D turn-by-turn navigation with ETA and auto-reroute
+• 2D/3D map view switch; screen stays awake while navigating

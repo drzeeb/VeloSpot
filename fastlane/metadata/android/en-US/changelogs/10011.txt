@@ -1,0 +1,5 @@
+• Map layer toggles: show/hide parking, favourites and saved places
+• Dark map tiles in dark mode, with theme-aware markers
+• Save custom pins as named favourites (separate, isolated database)
+• One-time startup centering on your location
+• Modernised app icon

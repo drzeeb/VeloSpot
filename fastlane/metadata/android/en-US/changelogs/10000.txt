@@ -1,0 +1,7 @@
+First release of VeloSpot.
+
+• 100,000+ OpenStreetMap bike-parking spots across Germany – offline from first launch
+• Interactive MapLibre map, favourites and parking photos
+• Current-location support and lazy Nominatim reverse geocoding
+• Dark mode and 8 languages
+• No proprietary Google services, no ads, no tracking

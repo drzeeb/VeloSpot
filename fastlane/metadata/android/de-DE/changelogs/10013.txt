@@ -1,0 +1,1 @@
+Wartung: Der AGP-Signaturblock „Dependency metadata“ wird aus dem APK entfernt, damit der F-Droid-Scanner den Build akzeptiert (im AAB für Google Play bleibt er erhalten). Keine für Nutzer sichtbaren Änderungen.

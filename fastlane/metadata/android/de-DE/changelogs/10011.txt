@@ -1,0 +1,5 @@
+• Karten-Ebenen umschaltbar: Parkplätze, Favoriten und gespeicherte Orte ein-/ausblenden
+• Dunkle Kartenkacheln im Dunkelmodus, mit themengerechten Markern
+• Eigene Pins als benannte Favoriten speichern (eigene, isolierte Datenbank)
+• Einmaliges Zentrieren auf deinen Standort beim Start
+• Modernisiertes App-Icon

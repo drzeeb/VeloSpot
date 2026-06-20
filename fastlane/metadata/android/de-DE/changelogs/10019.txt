@@ -1,0 +1,5 @@
+• Neuer Fahrrad-Avatar als Marker für deinen Standort – auf der Karte und während der Navigation
+• Fahrten aufzeichnen („Meine Fahrten“) mit Zeit, Distanz, Tempo, Höhenmetern und Tempo-Diagramm
+• Karte während Navigation/Aufzeichnung frei verschieben, dann per Zentrieren-Button wieder folgen
+• Bessere GPS-Filterung für saubere Tracks und realistische Geschwindigkeiten
+• Favoriten in eigener, isolierter Datenbank – sicherer gespeichert
