@@ -10,10 +10,13 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.feature.map.presentation.MapCameraTarget
 import de.velospot.feature.map.presentation.RideTrackingUiState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -75,6 +78,13 @@ class RideTrackingController(
      */
     private var lastElevationIndex = 0
 
+    /**
+     * Drives the live timer between GPS fixes. The elapsed time is wall-clock based,
+     * so it must keep ticking even when no new fix arrives (e.g. waiting at a red
+     * light, or a temporary GPS dropout). Cancelled on stop/discard.
+     */
+    private var tickerJob: Job? = null
+
     init {
         scope.launch {
             repository.getRidesFlow().collect { _recordedRides.value = it }
@@ -94,6 +104,7 @@ class RideTrackingController(
         _trackingState.value = RideTrackingUiState.Recording(tracker.currentStats())
         // Seed with the current fix so the track starts immediately.
         currentLocation()?.let { feed(it) }
+        startTicker()
         onAccuracyChanged()
     }
 
@@ -105,6 +116,7 @@ class RideTrackingController(
         if (!tracker.isRecording) return
         val ride = tracker.stop(System.currentTimeMillis())
         isAutoStartedByNavigation = false
+        stopTicker()
         _trackingState.value = RideTrackingUiState.Idle
         _trackPoints.value = emptyList()
         if (ride != null) {
@@ -122,6 +134,7 @@ class RideTrackingController(
         if (!tracker.isRecording) return
         tracker.discard()
         isAutoStartedByNavigation = false
+        stopTicker()
         _trackingState.value = RideTrackingUiState.Idle
         _trackPoints.value = emptyList()
         onAccuracyChanged()
@@ -163,6 +176,30 @@ class RideTrackingController(
      */
     fun onRouteChanged() {
         lastElevationIndex = 0
+    }
+
+    /**
+     * Republishes the live stats once per second so the elapsed-time counter ticks
+     * continuously, independent of the GPS fix cadence. The wall clock drives the
+     * elapsed time via [RideTracker.currentStats]; all other figures are unchanged
+     * between fixes, so re-emitting is cheap and keeps the timer honest even during
+     * a GPS dropout.
+     */
+    private fun startTicker() {
+        tickerJob?.cancel()
+        tickerJob = scope.launch {
+            while (isActive && tracker.isRecording) {
+                delay(1_000)
+                if (!tracker.isRecording) break
+                _trackingState.value =
+                    RideTrackingUiState.Recording(tracker.currentStats(System.currentTimeMillis()))
+            }
+        }
+    }
+
+    private fun stopTicker() {
+        tickerJob?.cancel()
+        tickerJob = null
     }
 
     /**
@@ -230,4 +267,3 @@ class RideTrackingController(
         private const val ROUTE_ELEVATION_MATCH_METERS = 50.0
     }
 }
-
