@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Privacy policy: disclose the one-time BRouter offline-routing download** — the policy previously implied BRouter is *entirely* offline, but the **one-time download** of the offline routing data fetches map-segment tiles from `brouter.de` (the requested 5°×5° tile name reveals the rider's approximate region + IP). This connection is now listed in the third-party services table and the BRouter note is clarified across `PRIVACY.md`, `docs/PRIVACY.md` and `docs/privacy.html`; the `INTERNET` permission description was updated accordingly.
+
+### Removed
+- **Dead "parking photos" feature** — the parking-photo UI was never functional: the bundled OpenStreetMap dataset always stores `imageUrl = NULL` (the extraction script never populates it), so the `AsyncImage` block in `SelectedSpaceSheet` could never render and **no image request was ever made**. Removed the dead photo UI and the now-unused **Coil** image-loading dependency (`coil-compose`, plus its version-catalog and attribution entries), and stripped the misleading "parking photos" mentions from the README, the store descriptions and the privacy policy. The dormant `imageUrl` column is intentionally kept in the Room schema to avoid a destructive migration / regenerating the bundled databases.
+
 ## [v1.0.19] - 2026-06-20
 
 ### Added

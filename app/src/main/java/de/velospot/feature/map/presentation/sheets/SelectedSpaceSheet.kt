@@ -32,11 +32,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import de.velospot.R
 import de.velospot.core.map.NavigationHandler
 import de.velospot.domain.model.BikeParkingSpace
@@ -105,19 +103,6 @@ private fun SheetContent(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-        space.imageUrl?.let { imageUrl ->
-            SpotInfoCard {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = space.name ?: stringResource(id = R.string.type_bike_rack),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
 
         // --- Detail rows -------------------------------------------------------
         space.address?.let { DetailRow(label = stringResource(id = R.string.detail_address), value = it) }

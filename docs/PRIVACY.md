@@ -1,6 +1,6 @@
 # Privacy Policy for VeloSpot
 
-**Last updated: June 18, 2026**
+**Last updated: June 20, 2026**
 
 This privacy policy explains how the **VeloSpot** app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires **no user account**, contains **no advertising**, and uses **no tracking or analytics tools**.
 
@@ -63,11 +63,12 @@ When you use certain features, the app establishes connections to external servi
 | --- | --- | --- | --- |
 | **OpenFreeMap** | Loading vector map tiles | Requested map area, IP address | [openfreemap.org](https://openfreemap.org/) |
 | **Nominatim (OpenStreetMap)** | Address search & address resolution (geocoding) | Search term or coordinates, IP address | [OSM Privacy Policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) |
-| **OSRM** | Calculating routes (if used) | Start/destination coordinates, IP address | [project-osrm.org](https://project-osrm.org/) |
+| **OSRM** | Calculating routes (online fallback, if used) | Start/destination coordinates, IP address | [project-osrm.org](https://project-osrm.org/) |
+| **BRouter** | One-time download of offline routing data (map-segment tiles) | Requested 5°×5° tile (≈ your region), IP address | [brouter.de](https://brouter.de/) |
 
 **Notes:**
 - These connections only occur **when the respective feature is actively used** (e.g. when panning the map, performing an address search, or tapping a parking spot without a stored address).
-- **Bike navigation via BRouter** runs **entirely offline on your device**; no route data is transmitted to third parties.
+- **Bike navigation via BRouter** computes routes **entirely offline on your device** — no start, destination or route is ever transmitted. Only the **one-time download** of the offline routing data fetches map-segment tiles from brouter.de; the requested tile name reveals only your approximate region.
 - The app transmits **no personal identifiers** (no advertising ID, no device ID) to these services.
 
 ---
@@ -76,7 +77,7 @@ When you use certain features, the app establishes connections to external servi
 
 | Permission | Purpose |
 | --- | --- |
-| `INTERNET` | Loading map tiles, address search/resolution, and parking photos |
+| `INTERNET` | Loading map tiles, address search/resolution, and one-time offline-routing data download |
 | `ACCESS_NETWORK_STATE` | Checking whether a network connection exists |
 | `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Displaying your own location and navigation (optional) |
 
