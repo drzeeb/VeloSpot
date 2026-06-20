@@ -8,10 +8,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
-import de.velospot.core.navigation.GeoMath
 import de.velospot.core.navigation.NavigationModePreferences
 import de.velospot.core.navigation.RouteSimulator
-import de.velospot.core.tracking.RideTracker
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.domain.model.AddressSearchResult
@@ -38,6 +36,7 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import de.velospot.feature.map.presentation.offline.OfflineRoutingController
+import de.velospot.feature.map.presentation.ride.RideTrackingController
 import de.velospot.feature.map.presentation.search.AddressSearchController
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -107,11 +106,6 @@ class MapViewModel @Inject constructor(
          */
         private const val ARRIVAL_THRESHOLD_METERS = 25.0
 
-        /**
-         * Maximum distance (m) from the active route at which its terrain elevation
-         * is trusted for the recorded ride; beyond this GPS altitude is used.
-         */
-        private const val ROUTE_ELEVATION_MATCH_METERS = 50.0
 
         /**
          * Synthetic destination IDs that must NOT trigger auto-parking on arrival —
@@ -220,7 +214,7 @@ class MapViewModel @Inject constructor(
             jitterMeters = 0.0,
             onFix = { fix ->
                 _userLocation.value = fix
-                if (rideTracker.isRecording) feedRideTracker(fix)
+                if (rideTracking.isRecording) rideTracking.feed(fix)
             },
             onFinished = { _isSimulatingRoute.value = false }
         )
@@ -616,168 +610,30 @@ class MapViewModel @Inject constructor(
 
     // ── Ride tracking ("record my ride") ──────────────────────────────────────
 
-    private val rideTracker = RideTracker()
+    /** Owns the "record my ride" concern (recording lifecycle, stats, track, timeline). */
+    private val rideTracking = RideTrackingController(
+        scope = viewModelScope,
+        repository = recordedRidesRepository,
+        activeRoute = { (_navigationUiState.value as? NavigationUiState.Active)?.route },
+        currentLocation = { _userLocation.value },
+        onAccuracyChanged = { refreshLocationAccuracy() },
+        onUserMessage = { res -> _userMessageRes.value = res },
+        clearOtherSelections = { clearPlaceSelections() },
+        moveCamera = { target -> _mapCameraTarget.value = target }
+    )
+    val rideTrackingState: StateFlow<RideTrackingUiState> = rideTracking.trackingState
+    val recordedRides: StateFlow<List<RecordedRide>> = rideTracking.recordedRides
+    val selectedRide: StateFlow<RecordedRide?> = rideTracking.selectedRide
+    val rideTrackPoints: StateFlow<List<RoutePoint>> = rideTracking.trackPoints
 
-    private val _rideTrackingState = MutableStateFlow<RideTrackingUiState>(RideTrackingUiState.Idle)
-    val rideTrackingState: StateFlow<RideTrackingUiState> = _rideTrackingState.asStateFlow()
+    val isRecordingRide: Boolean get() = rideTracking.isRecording
 
-    /** All persisted rides, newest first (the "My rides" timeline). */
-    private val _recordedRides = MutableStateFlow<List<RecordedRide>>(emptyList())
-    val recordedRides: StateFlow<List<RecordedRide>> = _recordedRides.asStateFlow()
-
-    /** The ride whose detail sheet is currently open (null when none). */
-    private val _selectedRide = MutableStateFlow<RecordedRide?>(null)
-    val selectedRide: StateFlow<RecordedRide?> = _selectedRide.asStateFlow()
-
-    /**
-     * Polyline drawn on the map: the live track while recording, or the selected
-     * ride's track while its detail sheet is open. Empty otherwise.
-     */
-    private val _rideTrackPoints = MutableStateFlow<List<RoutePoint>>(emptyList())
-    val rideTrackPoints: StateFlow<List<RoutePoint>> = _rideTrackPoints.asStateFlow()
-
-    /** Whether the current recording was auto-started by navigation (vs. the FAB). */
-    private var rideAutoStartedByNavigation = false
-
-    val isRecordingRide: Boolean get() = rideTracker.isRecording
-
-    private fun observeRecordedRides() {
-        viewModelScope.launch {
-            recordedRidesRepository.getRidesFlow().collect { _recordedRides.value = it }
-        }
-    }
-
-    /**
-     * Starts recording a ride. No-op when a recording is already running so the
-     * manual FAB and the automatic navigation hook never fight over the tracker.
-     */
-    fun startRideTracking(autoStarted: Boolean = false) {
-        if (rideTracker.isRecording) return
-        rideAutoStartedByNavigation = autoStarted
-        rideTracker.start(System.currentTimeMillis())
-        _selectedRide.value = null
-        _rideTrackPoints.value = emptyList()
-        _rideTrackingState.value = RideTrackingUiState.Recording(rideTracker.currentStats())
-        // Seed with the current fix so the track starts immediately.
-        _userLocation.value?.let { feedRideTracker(it) }
-        refreshLocationAccuracy()
-    }
-
-    /**
-     * Stops the active recording, persists it (when long enough) and opens its
-     * detail sheet. Short rides are discarded with a hint.
-     */
-    fun stopRideTracking() {
-        if (!rideTracker.isRecording) return
-        val ride = rideTracker.stop(System.currentTimeMillis())
-        rideAutoStartedByNavigation = false
-        _rideTrackingState.value = RideTrackingUiState.Idle
-        _rideTrackPoints.value = emptyList()
-        if (ride != null) {
-            viewModelScope.launch { recordedRidesRepository.saveRide(ride) }
-            _userMessageRes.value = de.velospot.R.string.ride_saved
-            selectRecordedRide(ride)
-        } else {
-            _userMessageRes.value = de.velospot.R.string.ride_too_short
-        }
-        refreshLocationAccuracy()
-    }
-
-    /** Discards the active recording without saving anything. */
-    fun discardRideTracking() {
-        if (!rideTracker.isRecording) return
-        rideTracker.discard()
-        rideAutoStartedByNavigation = false
-        _rideTrackingState.value = RideTrackingUiState.Idle
-        _rideTrackPoints.value = emptyList()
-        refreshLocationAccuracy()
-    }
-
-    /** Feeds a GPS fix into the tracker and republishes the live stats + track. */
-    private fun feedRideTracker(location: GeoCoordinate) {
-        // Prefer BRouter's accurate, smooth terrain elevation (from its SRTM-backed
-        // segment files) while navigating; raw GPS altitude is far too noisy. Falls
-        // back to GPS altitude for manual rides or sources without elevation.
-        val altitude = activeRouteElevationAt(location) ?: location.altitudeMeters
-        val stats = rideTracker.addPoint(
-            latitude = location.latitude,
-            longitude = location.longitude,
-            timestamp = System.currentTimeMillis(),
-            speedMps = location.speedMetersPerSecond,
-            altitudeMeters = altitude
-        )
-        _rideTrackingState.value = RideTrackingUiState.Recording(stats)
-        // `addPoint` always appends exactly one TrackPoint, so we mirror only that
-        // single new point instead of re-mapping the entire (ever-growing) track on
-        // every GPS fix. This turns an O(n) full rebuild per fix — i.e. O(n²) and
-        // N fresh RoutePoint allocations over a whole ride — into a single append,
-        // sparing the GC and avoiding redundant Compose recompositions.
-        _rideTrackPoints.update { it + RoutePoint(location.latitude, location.longitude) }
-    }
-
-    /**
-     * Cursor into the active route's point list marking the last elevation match.
-     * A rider advances monotonically along the route, so the next nearest point is
-     * almost always at or ahead of this index — letting [activeRouteElevationAt]
-     * resume the search here instead of rescanning from the start every GPS fix.
-     * Reset to 0 whenever a fresh route is set (start / reroute).
-     */
-    private var lastElevationIndex = 0
-
-    /**
-     * Terrain elevation (m) of the active route nearest to [location], or `null`
-     * when not navigating, the route carries no elevation, or the rider is too far
-     * from the route to trust the match (then GPS altitude is used instead).
-     */
-    private fun activeRouteElevationAt(location: GeoCoordinate): Double? {
-        val route = (_navigationUiState.value as? NavigationUiState.Active)?.route ?: return null
-        val points = route.points
-        if (lastElevationIndex >= points.size) lastElevationIndex = 0
-
-        var best: Double? = null
-        var bestDist = Double.MAX_VALUE
-        // Resume from the last match: amortised ~O(1) per fix instead of O(route)
-        // because the nearest point rarely lies behind the previous one.
-        for (i in lastElevationIndex until points.size) {
-            val elevation = points[i].elevationMeters ?: continue
-            val dist = GeoMath.distanceMeters(
-                location.latitude, location.longitude, points[i].latitude, points[i].longitude
-            )
-            if (dist < bestDist) {
-                bestDist = dist
-                best = elevation
-                lastElevationIndex = i
-            }
-        }
-        return if (bestDist <= ROUTE_ELEVATION_MATCH_METERS) best else null
-    }
-
-    /** Opens the detail sheet for a recorded ride and draws its track on the map. */
-    fun selectRecordedRide(ride: RecordedRide) {
-        clearPlaceSelections()
-        _selectedRide.value = ride
-        if (!rideTracker.isRecording) {
-            _rideTrackPoints.value = ride.points.map { RoutePoint(it.latitude, it.longitude) }
-        }
-        ride.points.firstOrNull()?.let { start ->
-            _mapCameraTarget.value = MapCameraTarget(
-                latitude = start.latitude,
-                longitude = start.longitude,
-                zoom = 14.0,
-                verticalOffsetFraction = 1.0 / 6.0
-            )
-        }
-    }
-
-    fun dismissSelectedRide() {
-        _selectedRide.value = null
-        if (!rideTracker.isRecording) _rideTrackPoints.value = emptyList()
-    }
-
-    fun deleteRecordedRide(id: String) {
-        if (_selectedRide.value?.id == id) dismissSelectedRide()
-        viewModelScope.launch { recordedRidesRepository.removeRide(id) }
-    }
+    fun startRideTracking(autoStarted: Boolean = false) = rideTracking.start(autoStarted)
+    fun stopRideTracking() = rideTracking.stop()
+    fun discardRideTracking() = rideTracking.discard()
+    fun selectRecordedRide(ride: RecordedRide) = rideTracking.selectRide(ride)
+    fun dismissSelectedRide() = rideTracking.dismissSelectedRide()
+    fun deleteRecordedRide(id: String) = rideTracking.deleteRide(id)
 
     // ── Offline routing ───────────────────────────────────────────────────────
 
@@ -810,7 +666,6 @@ class MapViewModel @Inject constructor(
         observeUserLocation()
         observeSavedPlaces()
         observeParkedBike()
-        observeRecordedRides()
     }
 
     // ── Viewport / parking ────────────────────────────────────────────────────
@@ -931,7 +786,7 @@ class MapViewModel @Inject constructor(
      */
     private fun refreshLocationAccuracy() {
         val needsHighAccuracy =
-            _navigationUiState.value is NavigationUiState.Active || rideTracker.isRecording
+            _navigationUiState.value is NavigationUiState.Active || rideTracking.isRecording
         setHighAccuracyLocation(needsHighAccuracy)
     }
 
@@ -956,7 +811,7 @@ class MapViewModel @Inject constructor(
                 if (_isSimulatingRoute.value) return@collect
                 _userLocation.value = location
                 // Feed the ride tracker while a recording is running.
-                if (location != null && rideTracker.isRecording) feedRideTracker(location)
+                if (location != null && rideTracking.isRecording) rideTracking.feed(location)
                 // One-time startup centering: as soon as the first GPS fix arrives,
                 // move the camera to the user's position. Fires only once per ViewModel.
                 if (!hasCenteredOnStartup && location != null) {
@@ -1002,7 +857,7 @@ class MapViewModel @Inject constructor(
                 )
             }.onSuccess {
                 _navigationUiState.value = NavigationUiState.Active(destination = space, route = it)
-                lastElevationIndex = 0
+                rideTracking.onRouteChanged()
                 // Active navigation needs precise, frequent fixes.
                 setHighAccuracyLocation(true)
                 // Auto-record the ride for the whole navigation (unless the user is
@@ -1034,8 +889,8 @@ class MapViewModel @Inject constructor(
         }
         // If this ride was auto-recorded by navigation, finish + save it now. A
         // manually-started recording keeps running so the user controls it.
-        if (rideAutoStartedByNavigation) {
-            stopRideTracking()
+        if (rideTracking.isAutoStartedByNavigation) {
+            rideTracking.stop()
         } else {
             // Navigation ended → drop back to the battery-friendly balanced-power
             // mode (unless a manual recording still needs precise fixes).
@@ -1070,7 +925,7 @@ class MapViewModel @Inject constructor(
                 if (current?.destination?.id == active.destination.id) {
                     _navigationUiState.value = NavigationUiState.Active(active.destination, newRoute)
                     _navigationProgress.value = null
-                    lastElevationIndex = 0
+                    rideTracking.onRouteChanged()
                 }
             }
             // On failure we silently keep the existing route; the next off-route
