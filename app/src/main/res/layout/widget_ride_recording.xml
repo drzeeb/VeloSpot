@@ -15,7 +15,6 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:src="@drawable/ic_ride_recording"
-        android:tint="?android:attr/textColorPrimary"
         android:contentDescription="@string/ride_record_start" />
 
     <TextView

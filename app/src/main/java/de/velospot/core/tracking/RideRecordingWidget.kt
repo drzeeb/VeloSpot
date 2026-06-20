@@ -6,7 +6,9 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.util.TypedValue
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.MainActivity
 import de.velospot.R
@@ -83,8 +85,21 @@ class RideRecordingWidget : AppWidgetProvider() {
         }
         views.setTextViewText(R.id.widget_subtitle, subtitle)
 
+        // Tint the icon programmatically: app widgets use plain RemoteViews/ImageView,
+        // which ignore android:tint/app:tint, so we apply a colour filter here instead.
+        views.setInt(R.id.widget_icon, "setColorFilter", resolveTextColorPrimary(context))
+
         views.setOnClickPendingIntent(R.id.widget_root, togglePendingIntent(context))
         appWidgetManager.updateAppWidget(widgetId, views)
+    }
+
+    private fun resolveTextColorPrimary(context: Context): Int {
+        val tv = TypedValue()
+        return if (context.theme.resolveAttribute(android.R.attr.textColorPrimary, tv, true)) {
+            if (tv.resourceId != 0) ContextCompat.getColor(context, tv.resourceId) else tv.data
+        } else {
+            ContextCompat.getColor(context, android.R.color.white)
+        }
     }
 
     private fun togglePendingIntent(context: Context): PendingIntent {
