@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Comprehensive ride statistics dashboard in "My rides"** — the *My rides* sheet now leads with a rich, collapsible **Statistics** card that crunches your whole ride history into every metric a data nerd could want, all derived purely from the already-stored rides (no extra storage). It's **collapsed by default** (tap the header to expand) so the ride list stays uncluttered, and groups the numbers into five sections:
+  - **Totals** — ride count, total distance, total & moving time, cumulative elevation gain ↑ and loss ↓.
+  - **Averages** — Ø distance, Ø duration, Ø speed (distance-weighted across moving time) and Ø climb per ride.
+  - **Personal records** (highlighted chips) — top speed, longest ride, longest duration, best Ø speed and biggest single climb.
+  - **Activity** — first-ride date, distinct active days, current & longest day streak (consecutive calendar days), plus rides + distance this week and this month.
+  - **Fun facts** — CO₂ saved vs. an average car (~120 g/km), calories burned (~30 kcal/km) and your share of a full lap around the Earth (40,075 km).
+  - Pure, side-effect-free computation (`computeRideStatistics`) feeding a chip-based, wrapping flow layout (`RideStatisticsSection`). Fully localised across all eight supported languages.
 - **Share a recorded ride as a "VeloSpot Wrapped" card** — a new **Share ride** button in the ride detail sheet ("My rides" → tap a ride) opens a preview dialog that renders the ride as a bold, vertical **1080×1350 (4:5) social-media tile**, ready for WhatsApp, Telegram, Instagram and the like. The card shows a **real 2D map cutout** of the route behind a glowing GPS track, the headline distance, the date and the key ride statistics (time, Ø speed, elevation gain, max speed).
   - **Off-screen, deterministic rendering** — the card is drawn directly onto a `Bitmap` with the platform `Canvas` (no Compose lifecycle, no charting dependency) on a background thread (`RideShareCardRenderer`), so it is fully reproducible. The tile has slightly rounded corners.
   - **Map cutout that lines up with the route** — `RideRouteMapSnapshotter` uses MapLibre's `MapSnapshotter` to render the ride's bounding box off-screen (no on-screen `MapView`); track points are projected with the snapshot's own `pixelForLatLng`, so the polyline sits exactly on the streets. OSM attribution is drawn into the panel. If the snapshot can't be produced (offline, error or 8 s timeout), the card falls back to a clean themed-gradient panel, so sharing always works.
