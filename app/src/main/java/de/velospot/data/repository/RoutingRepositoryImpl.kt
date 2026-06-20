@@ -57,8 +57,12 @@ class RoutingRepositoryImpl @Inject constructor(
 /** Realistic average cycling speed used to recalculate OSRM duration (15 km/h). */
 private const val OSRM_CYCLING_SPEED_MS = 15.0 / 3.6
 
-/** Public OSRM demo server endpoint for bicycle routing. */
-private const val OSRM_BICYCLE_BASE_URL = "https://router.project-osrm.org/route/v1/bicycle/"
+/**
+ * Relative OSRM bicycle-routing path. Resolved by Retrofit against the OSRM base
+ * URL configured once in `NetworkModule`, so the host is defined in a single place
+ * (no constant drift).
+ */
+private const val OSRM_BICYCLE_PATH = "route/v1/bicycle/"
 
 internal suspend fun osrmFallbackRoute(
     osrmApi: OsrmApi,
@@ -66,15 +70,17 @@ internal suspend fun osrmFallbackRoute(
     to: GeoCoordinate
 ): BikeRoute {
     val url = buildString {
-        append(OSRM_BICYCLE_BASE_URL)
+        append(OSRM_BICYCLE_PATH)
         append(from.longitude); append(','); append(from.latitude)
         append(';')
         append(to.longitude); append(','); append(to.latitude)
         append("?overview=full&geometries=geojson&alternatives=false&steps=false")
     }
     val response = osrmApi.getBikeRoute(url)
-    if (response.code != "Ok") throw RoutingFailedException(response.code)
-    val bestRoute = response.routes.firstOrNull() ?: throw NoRouteFoundException()
+    if (!response.isSuccessful) throw RoutingFailedException(response.code().toString())
+    val body = response.body() ?: throw NoRouteFoundException()
+    if (body.code != "Ok") throw RoutingFailedException(body.code)
+    val bestRoute = body.routes.firstOrNull() ?: throw NoRouteFoundException()
     val points = bestRoute.geometry.coordinates.mapNotNull { coordinate ->
         if (coordinate.size < 2) null
         else RoutePoint(latitude = coordinate[1], longitude = coordinate[0])

@@ -14,8 +14,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - **Ride detail with statistics + speed timeline** — tapping a ride redraws its track on the map and opens a sheet with moving time, max speed, elevation gain/loss and a Canvas-drawn **speed-over-time chart**, plus a delete action.
   - **Elevation support** — elevation gain/loss now comes from **BRouter's accurate terrain data** (the SRTM elevation baked into its `.rd5` segment files, read per route node — `RoutePoint.elevationMeters`) whenever a ride is recorded while navigating offline; the rider's live position is snapped to the route and its terrain elevation is fed to the tracker instead of the very noisy raw GPS altitude. For manual rides (or the online OSRM fallback, which carries no elevation) it falls back to GPS altitude, now low-pass filtered with a 3 m dead-band so a parked bike no longer racks up phantom metres (`GeoCoordinate.altitudeMeters`, pure unit-tested `RideTracker`). GPS altitude is requested whenever navigation **or** a recording is active. Fully localised across all eight supported languages and covered by new `RideTracker` unit tests.
 
+### Changed
+- **Per-API HTTP clients with appropriate timeouts** — the single shared `OkHttpClient` was split into dedicated, `@Named` clients in `NetworkModule`: a **Nominatim** client (carrying the new rate limiter), a **segments** client with a 5-minute read timeout for the 100 MB+ BRouter offline-routing downloads (so a slow-but-progressing download is no longer aborted at 30 s), and the default client for OSRM/everything else.
+- **OSRM DTOs use Moshi code-gen adapters** — `OsrmRouteResponseDto` / `OsrmRouteDto` / `OsrmGeometryDto` now carry `@JsonClass(generateAdapter = true)`, matching the Nominatim DTOs (faster parsing, ProGuard-safe, no reflection fallback).
+- **Single source of truth for the OSRM host** — the OSRM bicycle URL is no longer duplicated; `OsrmApi.getBikeRoute` takes a relative path resolved against the one base URL configured in `NetworkModule`, removing the constant-drift risk between `NetworkModule` and `RoutingRepositoryImpl`.
+
+### Removed
+- **Dead Overpass live-fetch code** — the unused `OverpassApi`, `OverpassDto` and `OverpassMapper` (leftovers from the pre-bundled-database era), plus the never-called `writeSpaces`/`readSpaces`/`lastSyncEpochMs` cache methods and the now-orphaned `toEntity`/`toEntities` mappers. Parking data is served read-only from the bundled SQLite asset.
 
 ### Fixed
+- **Nominatim rate limiting (OSM usage policy)** — a new `NominatimRateLimitInterceptor` on the dedicated Nominatim client enforces the required ≤ 1 request/second, so rapid user actions (e.g. tapping several parking pins to resolve addresses) can no longer burst past the limit and risk an IP ban.
+- **OSRM HTTP errors handled gracefully** — `OsrmApi.getBikeRoute` now returns `Response<…>`; the fallback routing surfaces 4xx/5xx as a `RoutingFailedException` instead of throwing a raw exception.
 
 ## [v1.0.18] - 2026-06-19
 
