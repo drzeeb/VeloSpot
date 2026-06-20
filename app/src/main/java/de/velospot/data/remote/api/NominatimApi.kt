@@ -32,7 +32,11 @@ interface NominatimApi {
     /**
      * Forward geocoding: converts a free-text address query to a list of geo-coordinates.
      *
-     * Results are restricted to Germany (`countrycodes=de`) since VeloSpot covers DE only.
+     * Results are restricted to the covered countries (`countrycodes=de,fr,lu`).
+     *
+     * When the user's location is known, [viewBox] biases the ranking toward the
+     * surrounding area while [bounded] stays `0`, so results in the country the
+     * user is currently in are preferred without excluding the other countries.
      */
     @GET("search")
     @Headers("User-Agent: VeloSpot/1.0 (https://github.com/velospot)")
@@ -40,7 +44,9 @@ interface NominatimApi {
         @Query("q")            query: String,
         @Query("format")       format: String = "json",
         @Query("limit")        limit: Int = 5,
-        @Query("countrycodes") countryCodes: String = "de",
+        @Query("countrycodes") countryCodes: String = "de,fr,lu",
+        @Query("viewbox")      viewBox: String? = null,
+        @Query("bounded")      bounded: Int = 0,
         @Query("accept-language") language: String = "de"
     ): Response<List<NominatimSearchResultDto>>
 }

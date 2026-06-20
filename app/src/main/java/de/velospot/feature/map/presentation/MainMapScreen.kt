@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -38,6 +39,7 @@ import de.velospot.feature.map.presentation.markers.MarkerIconSet
 import de.velospot.feature.map.presentation.markers.MarkerRenderLabels
 import de.velospot.feature.map.presentation.markers.MarkerRenderState
 import de.velospot.feature.map.presentation.markers.MIN_ZOOM_PARKING_VISIBLE
+import de.velospot.feature.map.presentation.markers.ClusterRenderStyle
 import de.velospot.feature.map.presentation.markers.RouteRenderData
 import de.velospot.feature.map.presentation.markers.createBikeMarkerIcon
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
@@ -65,6 +67,7 @@ fun MainMapScreen(
     val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
     val mapCameraTarget      by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
+    val navigationProgress   by viewModel.navigationProgress.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
     val searchQuery          by viewModel.searchQuery.collectAsStateWithLifecycle()
     val searchResults        by viewModel.searchResults.collectAsStateWithLifecycle()
@@ -72,9 +75,22 @@ fun MainMapScreen(
     val selectedSearchPin    by viewModel.selectedSearchPin.collectAsStateWithLifecycle()
     val customMapPin         by viewModel.customMapPin.collectAsStateWithLifecycle()
     val savedPlaces          by viewModel.savedPlaces.collectAsStateWithLifecycle()
+    val parkedBike           by viewModel.parkedBike.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
+    val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
+    val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
+
+    // Keep the screen awake while navigation is running, so the display does not
+    // dim/lock mid-ride. The flag is cleared automatically when navigation ends
+    // or the screen leaves composition.
+    val isNavigating = activeNavigation != null
+    val currentView = LocalView.current
+    DisposableEffect(currentView, isNavigating) {
+        currentView.keepScreenOn = isNavigating
+        onDispose { currentView.keepScreenOn = false }
+    }
 
     val viewportLoadError by viewModel.viewportLoadError.collectAsStateWithLifecycle()
     val viewportErrorText = stringResource(R.string.error_loading_parking)
@@ -85,9 +101,25 @@ fun MainMapScreen(
         }
     }
 
+    // One-shot user messages (e.g. "bike location saved") surfaced as a Toast.
+    val userMessageRes by viewModel.userMessageRes.collectAsStateWithLifecycle()
+    // Resolve the message via stringResource (composition scope) rather than
+    // context.getString — the latter trips the LocalContextGetResourceValueCall lint.
+    val userMessageText = userMessageRes?.let { stringResource(it) }
+    LaunchedEffect(userMessageText) {
+        userMessageText?.let { text ->
+            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+            viewModel.consumeUserMessage()
+        }
+    }
+
     val mapView       = rememberMapViewWithLifecycle()
     val screenUiState = rememberMapScreenUiState()
     val markerStyleConfig = remember(isDarkTheme) { defaultMarkerStyleConfig(isDarkTheme) }
+
+    // Drives the live 3D navigation camera + heading arrow. Owned by the screen,
+    // bound to the MapLibreMap once a style is ready (see effects below).
+    val navigationManager = remember(context) { NavigationManager(context) }
 
     // The MapLibreMap is provided asynchronously via getMapAsync.
     // Using mutableStateOf triggers recomposition so LaunchedEffects below fire.
@@ -188,7 +220,7 @@ fun MainMapScreen(
         maplibreMap, uiState, favorites, selectedSpace,
         userLocation, activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
-        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility
+        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         if (uiState is MapUiState.Success) {
@@ -220,11 +252,71 @@ fun MainMapScreen(
                         color  = markerStyleConfig.routeColor,
                         points = activeNavigation?.route?.points.orEmpty()
                     ),
+                    clusterStyle = ClusterRenderStyle(
+                        circleColor = markerStyleConfig.normalPinColor,
+                        textColor   = android.graphics.Color.WHITE
+                    ),
                     searchPin    = selectedSearchPin,
                     customMapPin = customMapPin,
                     savedPlaces  = savedPlaces,
-                    layerVisibility = layerVisibility
+                    parkedBike   = parkedBike,
+                    layerVisibility = layerVisibility,
+                    // While navigating, NavigationManager owns the location puck
+                    // (animated heading arrow), so the renderer must not draw it.
+                    suppressLocationDot = activeNavigation != null,
+                    // …and it owns the route polyline (travelled/remaining split).
+                    suppressRoute = activeNavigation != null
                 )
+        }
+    }
+
+    // ── 3D navigation: bind manager + start/stop with the active route ────────
+    // Re-attach after every (re)loaded style so the arrow image / 3D building
+    // layer are re-registered (style reload wipes custom sources/layers/images).
+    LaunchedEffect(maplibreMap, styleVersion) {
+        val map = maplibreMap ?: return@LaunchedEffect
+        val style = map.style ?: return@LaunchedEffect
+        navigationManager.attach(map, style)
+    }
+
+    // Start navigation when a route becomes active, stop when it ends.
+    LaunchedEffect(activeNavigation?.route, maplibreMap, styleVersion) {
+        val route = activeNavigation?.route
+        if (route != null && route.points.size > 1) {
+            navigationManager.start(
+                routePoints          = route.points,
+                totalDistanceMeters  = route.distanceMeters,
+                totalDurationSeconds = route.durationSeconds,
+                routeColor           = markerStyleConfig.routeColor
+            )
+            // Immediately feed the last known fix so the camera tilts straight in.
+            userLocation?.let(navigationManager::onLocationUpdate)
+        } else {
+            navigationManager.stop()
+        }
+    }
+
+    // Feed every GPS fix into the manager while navigating.
+    LaunchedEffect(userLocation, activeNavigation) {
+        if (activeNavigation != null) {
+            userLocation?.let(navigationManager::onLocationUpdate)
+        }
+    }
+
+    // Apply the user's 2D/3D preference live (also re-applied after style reloads).
+    LaunchedEffect(is3DNavigation, maplibreMap, styleVersion) {
+        navigationManager.setMode(is3DNavigation)
+    }
+
+    DisposableEffect(navigationManager) {
+        // Live route progress (distance + ETA) and the off-route reroute trigger
+        // are forwarded to the ViewModel.
+        navigationManager.onProgress = viewModel::updateNavigationProgress
+        navigationManager.onOffRoute = viewModel::onUserWentOffRoute
+        onDispose {
+            navigationManager.onProgress = null
+            navigationManager.onOffRoute = null
+            navigationManager.stop()
         }
     }
 
@@ -232,7 +324,12 @@ fun MainMapScreen(
     LaunchedEffect(mapCameraTarget, maplibreMap) {
         val target = mapCameraTarget ?: return@LaunchedEffect
         val map    = maplibreMap    ?: return@LaunchedEffect
-        animateMapCameraToTarget(map = map, cameraTarget = target)
+        // During active navigation the NavigationManager owns the camera; ignore
+        // one-shot targets (startup centering, FAB) so they don't fight the
+        // per-frame 3D camera.
+        if (activeNavigation == null) {
+            animateMapCameraToTarget(map = map, cameraTarget = target)
+        }
         viewModel.onMapCameraTargetHandled()
     }
 
@@ -282,6 +379,7 @@ fun MainMapScreen(
         MapStatusOverlay(uiState = uiState)
         MapNavigationOverlay(
             navigationUiState = navigationUiState,
+            progress          = navigationProgress,
             onStopNavigation  = viewModel::stopInAppNavigation,
             onDismissError    = viewModel::clearNavigationError
         )
@@ -312,7 +410,13 @@ fun MainMapScreen(
                     isDarkTheme        = isDarkTheme,
                     currentLanguageFlag = currentLanguageFlag,
                     isExpanded         = screenUiState.isMenuExpanded,
-                    offlineRoutingUiState = offlineRoutingUiState
+                    offlineRoutingUiState = offlineRoutingUiState,
+                    isBikeParked       = parkedBike != null,
+                    // Debug-only GPS route simulator: always visible in debug
+                    // builds, enabled once a route is available to drive along.
+                    showSimulator      = de.velospot.BuildConfig.DEBUG,
+                    simulatorEnabled   = activeNavigation != null,
+                    isSimulating       = isSimulatingRoute
                 ),
                 actions = MapMenuCardActions(
                     onExpand              = screenUiState::expandMenu,
@@ -321,8 +425,13 @@ fun MainMapScreen(
                     onOpenLanguage        = screenUiState::openLanguage,
                     onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
                     onOpenLayers          = screenUiState::openLayers,
+                    onOpenNavigationView  = screenUiState::openNavigationView,
                     onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
-                    onOpenProfileSheet    = viewModel::openProfileSheet
+                    onOpenProfileSheet    = viewModel::openProfileSheet,
+                    onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
+                    onShowParkedBike      = viewModel::showParkedBike,
+                    onToggleSimulation    = viewModel::toggleRouteSimulation,
+                    onOpenAbout           = screenUiState::openAbout
                 )
             )
         }

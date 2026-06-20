@@ -6,6 +6,32 @@
     <string name="menu_enable_dark_mode">Enable dark mode</string>
     <string name="menu_disable_dark_mode">Disable dark mode</string>
     <string name="menu_layers">Layers</string>
+    <string name="menu_navigation_view">Map view (2D/3D)</string>
+    <string name="menu_park_bike_here">Park bike here</string>
+    <string name="menu_show_parked_bike">My parked bike</string>
+    <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
+    <string name="menu_simulate_route_stop">⏹ Stop route simulation</string>
+    <string name="menu_simulate_route_hint">▶ Simulate route (start navigation first)</string>
+    <string name="menu_about">About</string>
+
+    <!-- About sheet -->
+    <string name="about_tagline">Find bike parking &amp; navigate there.</string>
+    <string name="about_website">Website</string>
+    <string name="about_data_status">Dataset status</string>
+    <string name="about_country_germany">Germany</string>
+    <string name="about_country_france">France</string>
+    <string name="about_country_luxembourg">Luxembourg</string>
+    <string name="about_privacy">Privacy Policy</string>
+    <string name="about_support">Buy me a coffee</string>
+    <string name="about_open_link">Open link</string>
+
+    <!-- Navigation view sheet (2D / 3D perspective switch) -->
+    <string name="nav_view_title">Map view</string>
+    <string name="nav_view_subtitle">Choose how the map is shown during navigation.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Classic flat top-down map</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Tilted view with 3D buildings</string>
 
     <!-- Layers sheet (toggle pin categories) -->
     <string name="layers_title">Layers</string>
@@ -36,6 +62,7 @@
     <string name="navigation_start">Start navigation</string>
     <string name="navigation_stop">Stop navigation</string>
     <string name="navigation_route_loading">Calculating bike route...</string>
+    <string name="navigation_rerouting">Off route – recalculating…</string>
     <string name="navigation_downloading_segments">Downloading offline map data for this region…</string>
     <string name="error_brouter_profiles_missing">Routing profiles missing. Please add lookups.dat and *.brf files to assets/brouter/profiles/.</string>
     <string name="error_no_internet">No internet connection. Please check your Wi-Fi or mobile data and try again.</string>
@@ -129,6 +156,17 @@
     <string name="save_place_confirm">Save</string>
     <string name="saved_place_title">Saved place</string>
     <string name="favorites_saved_places_header">Saved places</string>
+
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="parked_bike_title">My parked bike</string>
+    <string name="parked_bike_park_here">Park bike here</string>
+    <string name="parked_bike_navigate">Navigate to my bike</string>
+    <string name="parked_bike_pick_up">I picked up my bike</string>
+    <string name="parked_bike_saved">Bike location saved</string>
+    <string name="parked_bike_arrived">You\'ve arrived — bike parked here</string>
+    <string name="parked_bike_just_now">Just parked</string>
+    <string name="parked_bike_parked_ago">Parked %1$s ago</string>
+    <string name="parked_bike_distance_away">%1$s away</string>
 
     <!-- Zoom-out hint: shown when zoom level is too low to display parking markers -->
     <string name="zoom_in_for_parking">Zoom in to see bike parking spots</string>

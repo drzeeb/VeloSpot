@@ -25,6 +25,7 @@
     <string name="navigation_start">Navigation starten</string>
     <string name="navigation_stop">Navigation beenden</string>
     <string name="navigation_route_loading">Fahrradroute wird berechnet...</string>
+    <string name="navigation_rerouting">Abseits der Route – wird neu berechnet…</string>
     <string name="navigation_downloading_segments">Offline-Kartendaten für diese Region werden heruntergeladen…</string>
     <string name="error_brouter_profiles_missing">Routing-Profile fehlen. Bitte lookups.dat und *.brf Dateien nach assets/brouter/profiles/ kopieren.</string>
     <string name="error_no_internet">Keine Internetverbindung. Bitte WLAN oder mobile Daten prüfen und erneut versuchen.</string>
@@ -106,8 +107,43 @@
     <string name="saved_place_title">Gespeicherter Ort</string>
     <string name="favorites_saved_places_header">Gespeicherte Orte</string>
 
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Fahrrad hier parken</string>
+    <string name="menu_show_parked_bike">Mein geparktes Fahrrad</string>
+    <string name="menu_about">Über</string>
+    <string name="about_tagline">Fahrradparkplätze finden &amp; dorthin navigieren.</string>
+    <string name="about_website">Webseite</string>
+    <string name="about_data_status">Datenstand</string>
+    <string name="about_country_germany">Deutschland</string>
+    <string name="about_country_france">Frankreich</string>
+    <string name="about_country_luxembourg">Luxemburg</string>
+    <string name="about_privacy">Datenschutz</string>
+    <string name="about_support">Spendier mir einen Kaffee</string>
+    <string name="about_open_link">Link öffnen</string>
+    <string name="parked_bike_title">Mein geparktes Fahrrad</string>
+    <string name="parked_bike_park_here">Fahrrad hier parken</string>
+    <string name="parked_bike_navigate">Zu meinem Fahrrad navigieren</string>
+    <string name="parked_bike_pick_up">Fahrrad abgeholt</string>
+    <string name="parked_bike_saved">Fahrrad-Standort gespeichert</string>
+    <string name="parked_bike_arrived">Angekommen — Fahrrad hier geparkt</string>
+    <string name="parked_bike_just_now">Gerade geparkt</string>
+    <string name="parked_bike_parked_ago">Geparkt vor %1$s</string>
+    <string name="parked_bike_distance_away">%1$s entfernt</string>
+
     <!-- Ebenen (Pin-Kategorien ein-/ausblenden) -->
     <string name="menu_layers">Ebenen</string>
+    <string name="menu_navigation_view">Kartenansicht (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Route simulieren (GPS-Mock)</string>
+    <string name="menu_simulate_route_stop">⏹ Routensimulation stoppen</string>
+    <string name="menu_simulate_route_hint">▶ Route simulieren (erst Navigation starten)</string>
+
+    <!-- Kartenansicht-Sheet (2D-/3D-Perspektive umschalten) -->
+    <string name="nav_view_title">Kartenansicht</string>
+    <string name="nav_view_subtitle">Lege fest, wie die Karte während der Navigation dargestellt wird.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Klassische flache Draufsicht</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Geneigte Ansicht mit 3D-Gebäuden</string>
     <string name="layers_title">Ebenen</string>
     <string name="layers_subtitle">Wähle, welche Pins auf der Karte angezeigt werden.</string>
     <string name="layers_parking_title">Abstellplätze</string>

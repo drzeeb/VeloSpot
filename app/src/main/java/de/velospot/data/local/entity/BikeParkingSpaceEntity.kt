@@ -1,13 +1,17 @@
 package de.velospot.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * Room database entity for storing bike parking spaces locally.
  * Maps to the "bike_parking_spaces" table in SQLite.
  */
-@Entity(tableName = "bike_parking_spaces")
+@Entity(
+    tableName = "bike_parking_spaces",
+    indices = [Index(name = "idx_parking_lat_lon", value = ["latitude", "longitude"])]
+)
 data class BikeParkingSpaceEntity(
     @PrimaryKey
     val id: String,

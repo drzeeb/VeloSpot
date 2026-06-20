@@ -94,6 +94,42 @@ internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Bool
     return BitmapDrawable(context.resources, bitmap)
 }
 
+/**
+ * A chevron/arrow heading puck for active 3D navigation: a coloured circle with
+ * a white triangular arrow pointing "up" (north). The MapLibre layer rotates it
+ * by the live bearing (see [PROP_BEARING]) so it points along the road.
+ */
+internal fun createNavigationArrowIcon(context: Context): Drawable {
+    val size = 54
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val cx = size / 2f
+    val cy = size / 2f
+
+    // Soft outer halo for contrast on any basemap.
+    canvas.drawCircle(cx, cy, 25f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x33000000; style = Paint.Style.FILL
+    })
+    // Coloured disc.
+    canvas.drawCircle(cx, cy, 22f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = "#00695C".toColorInt(); style = Paint.Style.FILL
+    })
+    // White ring.
+    canvas.drawCircle(cx, cy, 22f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.STROKE; strokeWidth = 3f
+    })
+    // White arrow pointing up (towards the top = bearing 0 before rotation).
+    canvas.drawPath(Path().apply {
+        moveTo(cx, cy - 13f)          // tip
+        lineTo(cx - 10f, cy + 11f)    // bottom-left
+        lineTo(cx, cy + 5f)           // notch
+        lineTo(cx + 10f, cy + 11f)    // bottom-right
+        close()
+    }, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL })
+
+    return BitmapDrawable(context.resources, bitmap)
+}
+
 internal fun createMutedMarkerIcon(
     context: Context, source: Drawable,
     scale: Float = 0.84f, alpha: Int = 130, brightenOffset: Float = 34f
@@ -231,13 +267,60 @@ internal fun createSavedPlaceIcon(): Drawable {
         close()
     }, pinPaint)
 
-    // White star
-    canvas.drawPath(
-        starPath(centerX = cx, centerY = cy, outerRadius = 15f, innerRadius = 6.2f),
-        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL }
-    )
-
     return BitmapDrawable(null, bitmap)
+}
+
+/**
+ * A bold amber dropped-pin icon carrying a white bike glyph, used to mark where
+ * the user parked their bike. Deliberately distinct from every other pin (green
+ * saved-place star, blue custom pin, red search pin) so the parked bike is
+ * instantly recognisable on the map.
+ */
+internal fun createParkedBikeIcon(context: Context): Drawable {
+    val width  = 104
+    val height = 137
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val cx = width / 2f
+    val cy = 45f
+
+    // Shadow
+    canvas.drawCircle(cx + 4f, 106f, 18f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x33000000; style = Paint.Style.FILL
+    })
+
+    // Pin body (amber circle)
+    val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = "#F57C00".toColorInt()
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(cx, cy, 40f, pinPaint)
+
+    // Pin tip
+    canvas.drawPath(Path().apply {
+        moveTo(cx, 128f)
+        lineTo(cx - 24f, 71f)
+        lineTo(cx + 24f, 71f)
+        close()
+    }, pinPaint)
+
+    // White inner disc so the bike glyph reads cleanly at any size.
+    canvas.drawCircle(cx, cy, 30f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.FILL
+    })
+
+    // Amber bike glyph centred on the white disc.
+    val bikeDrawable = AppCompatResources.getDrawable(context, R.drawable.ic_bike_marker)?.mutate()
+    if (bikeDrawable != null) {
+        DrawableCompat.setTint(bikeDrawable, "#E65100".toColorInt())
+        val iconSize = 40
+        val left = (cx - iconSize / 2f).roundToInt()
+        val top  = (cy - iconSize / 2f).roundToInt()
+        bikeDrawable.setBounds(left, top, left + iconSize, top + iconSize)
+        bikeDrawable.draw(canvas)
+    }
+
+    return BitmapDrawable(context.resources, bitmap)
 }
 
 /** Builds a five-pointed star [Path] centred at ([centerX], [centerY]). */

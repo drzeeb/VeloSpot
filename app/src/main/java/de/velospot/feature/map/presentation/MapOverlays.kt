@@ -13,13 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SignalWifiOff
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -48,7 +54,15 @@ internal data class MapMenuCardState(
     val isDarkTheme: Boolean,
     val currentLanguageFlag: String,
     val isExpanded: Boolean,
-    val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled
+    val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled,
+    /** Whether a bike is currently parked — switches the menu entry park ↔ show. */
+    val isBikeParked: Boolean = false,
+    /** Debug-only: show the GPS route-simulator entry (debug builds only). */
+    val showSimulator: Boolean = false,
+    /** Debug-only: whether a route is available to simulate (active navigation). */
+    val simulatorEnabled: Boolean = false,
+    /** Debug-only: whether the GPS route simulator is currently running. */
+    val isSimulating: Boolean = false
 )
 
 internal data class MapMenuCardActions(
@@ -58,8 +72,13 @@ internal data class MapMenuCardActions(
     val onOpenLanguage: () -> Unit,
     val onToggleDarkMode: () -> Unit,
     val onOpenLayers: () -> Unit = {},
+    val onOpenNavigationView: () -> Unit = {},
     val onActivateOfflineRouting: () -> Unit = {},
-    val onOpenProfileSheet: () -> Unit = {}
+    val onOpenProfileSheet: () -> Unit = {},
+    val onParkBikeHere: () -> Unit = {},
+    val onShowParkedBike: () -> Unit = {},
+    val onToggleSimulation: () -> Unit = {},
+    val onOpenAbout: () -> Unit = {}
 )
 
 @Composable
@@ -222,7 +241,8 @@ internal fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
 internal fun BoxScope.MapNavigationOverlay(
     navigationUiState: NavigationUiState,
     onStopNavigation: () -> Unit,
-    onDismissError: () -> Unit
+    onDismissError: () -> Unit,
+    progress: de.velospot.core.navigation.NavigationProgress? = null
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
@@ -304,8 +324,13 @@ internal fun BoxScope.MapNavigationOverlay(
         }
 
         is NavigationUiState.Active -> {
-            val distanceKm  = navigationUiState.route.distanceMeters / 1000.0
-            val totalMin    = (navigationUiState.route.durationSeconds / 60.0).roundToInt()
+            // Prefer the live, dynamically-shrinking distance + ETA from the
+            // NavigationManager; fall back to the static BRouter totals before the
+            // first GPS fix arrives.
+            val distanceMeters = progress?.remainingMeters ?: navigationUiState.route.distanceMeters
+            val durationSecs   = progress?.remainingSeconds ?: navigationUiState.route.durationSeconds
+            val distanceKm  = distanceMeters / 1000.0
+            val totalMin    = (durationSecs / 60.0).roundToInt()
             val durationText = if (totalMin < 60) {
                 stringResource(R.string.duration_minutes, totalMin)
             } else {
@@ -343,6 +368,22 @@ internal fun BoxScope.MapNavigationOverlay(
                         ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    if (progress?.isOffRoute == true) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(id = R.string.navigation_rerouting),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
                     PrimaryActionButton(
                         text = stringResource(id = R.string.navigation_stop),
@@ -405,6 +446,37 @@ internal fun MapMenuCard(
                     onClick = actions.onOpenLayers
                 )
                 DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_navigation_view)) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.ViewInAr, contentDescription = null)
+                    },
+                    onClick = actions.onOpenNavigationView
+                )
+
+                // ── Parked bike (where the user left their bike) ──────────────
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(
+                                id = if (state.isBikeParked) R.string.menu_show_parked_bike
+                                     else R.string.menu_park_bike_here
+                            )
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                            contentDescription = null,
+                            tint = if (state.isBikeParked) Color(0xFFF57C00)
+                                   else MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    onClick = {
+                        actions.onDismiss()
+                        if (state.isBikeParked) actions.onShowParkedBike() else actions.onParkBikeHere()
+                    }
+                )
+                DropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(
@@ -432,6 +504,14 @@ internal fun MapMenuCard(
                         Icon(imageVector = Icons.Default.DarkMode, contentDescription = null)
                     },
                     onClick = actions.onToggleDarkMode
+                )
+
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_about)) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Info, contentDescription = null)
+                    },
+                    onClick = { actions.onDismiss(); actions.onOpenAbout() }
                 )
 
                 HorizontalDivider()
@@ -475,6 +555,34 @@ internal fun MapMenuCard(
                             enabled = false
                         )
                     }
+                }
+
+                // ── Debug: GPS route simulator (couch testing) ────────────────
+                if (state.showSimulator) {
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        enabled = state.simulatorEnabled,
+                        text = {
+                            Text(
+                                stringResource(
+                                    when {
+                                        state.isSimulating     -> R.string.menu_simulate_route_stop
+                                        state.simulatorEnabled -> R.string.menu_simulate_route_start
+                                        else                   -> R.string.menu_simulate_route_hint
+                                    }
+                                )
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (state.isSimulating) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = if (state.isSimulating) MaterialTheme.colorScheme.error
+                                       else MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        onClick = { actions.onDismiss(); actions.onToggleSimulation() }
+                    )
                 }
             }
         }

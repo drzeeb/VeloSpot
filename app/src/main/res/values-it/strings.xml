@@ -25,6 +25,7 @@
     <string name="navigation_start">Avvia navigazione</string>
     <string name="navigation_stop">Termina navigazione</string>
     <string name="navigation_route_loading">Calcolo percorso bici...</string>
+    <string name="navigation_rerouting">Fuori percorso – ricalcolo…</string>
     <string name="navigation_downloading_segments">Download dati mappa offline per questa regione…</string>
     <string name="error_brouter_profiles_missing">Profili di routing mancanti.</string>
     <string name="error_no_internet">Nessuna connessione internet. Controlla Wi-Fi o dati mobili e riprova.</string>
@@ -97,6 +98,16 @@
     <string name="favorites_saved_places_header">Luoghi salvati</string>
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Livelli</string>
+    <string name="menu_navigation_view">Vista mappa (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Simula percorso (GPS finto)</string>
+    <string name="menu_simulate_route_stop">⏹ Ferma simulazione</string>
+    <string name="menu_simulate_route_hint">▶ Simula percorso (avvia prima la navigazione)</string>
+    <string name="nav_view_title">Vista mappa</string>
+    <string name="nav_view_subtitle">Scegli come viene mostrata la mappa durante la navigazione.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Mappa piatta classica dall\'alto</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Vista inclinata con edifici 3D</string>
     <string name="layers_title">Livelli</string>
     <string name="layers_subtitle">Scegli quali segnaposto mostrare sulla mappa.</string>
     <string name="layers_parking_title">Parcheggi</string>
@@ -119,4 +130,26 @@
     <string name="error_no_route_found">Nessun percorso ciclabile trovato per questa destinazione.</string>
     <string name="error_route_geometry_empty">Dati del percorso incompleti. Riprova.</string>
     <string name="error_unknown">Si è verificato un errore imprevisto. Riprova.</string>
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Parcheggia la bici qui</string>
+    <string name="menu_show_parked_bike">La mia bici parcheggiata</string>
+    <string name="menu_about">Informazioni</string>
+    <string name="about_tagline">Trova parcheggi per bici e naviga lì.</string>
+    <string name="about_website">Sito web</string>
+    <string name="about_data_status">Stato dei dati</string>
+    <string name="about_country_germany">Germania</string>
+    <string name="about_country_france">Francia</string>
+    <string name="about_country_luxembourg">Lussemburgo</string>
+    <string name="about_privacy">Privacy</string>
+    <string name="about_support">Offrimi un caffè</string>
+    <string name="about_open_link">Apri link</string>
+    <string name="parked_bike_title">La mia bici parcheggiata</string>
+    <string name="parked_bike_park_here">Parcheggia la bici qui</string>
+    <string name="parked_bike_navigate">Vai alla mia bici</string>
+    <string name="parked_bike_pick_up">Ho ripreso la bici</string>
+    <string name="parked_bike_saved">Posizione della bici salvata</string>
+    <string name="parked_bike_arrived">Arrivato — bici parcheggiata qui</string>
+    <string name="parked_bike_just_now">Appena parcheggiata</string>
+    <string name="parked_bike_parked_ago">Parcheggiata %1$s fa</string>
+    <string name="parked_bike_distance_away">a %1$s</string>
 </resources>

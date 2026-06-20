@@ -25,6 +25,7 @@
     <string name="navigation_start">Navigatie starten</string>
     <string name="navigation_stop">Navigatie stoppen</string>
     <string name="navigation_route_loading">Fietsroute wordt berekend...</string>
+    <string name="navigation_rerouting">Van route af – opnieuw berekenen…</string>
     <string name="navigation_downloading_segments">Offline kaartgegevens voor dit gebied downloaden…</string>
     <string name="error_brouter_profiles_missing">Routeringsprofielen ontbreken.</string>
     <string name="error_no_internet">Geen internetverbinding. Controleer je Wi-Fi of mobiele data en probeer opnieuw.</string>
@@ -104,6 +105,16 @@
     <string name="favorites_saved_places_header">Opgeslagen plekken</string>
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Lagen</string>
+    <string name="menu_navigation_view">Kaartweergave (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Route simuleren (nep-GPS)</string>
+    <string name="menu_simulate_route_stop">⏹ Routesimulatie stoppen</string>
+    <string name="menu_simulate_route_hint">▶ Route simuleren (start eerst navigatie)</string>
+    <string name="nav_view_title">Kaartweergave</string>
+    <string name="nav_view_subtitle">Kies hoe de kaart tijdens navigatie wordt weergegeven.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Klassieke platte bovenaanzicht</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Gekantelde weergave met 3D-gebouwen</string>
     <string name="layers_title">Lagen</string>
     <string name="layers_subtitle">Kies welke pins op de kaart worden getoond.</string>
     <string name="layers_parking_title">Stallingen</string>
@@ -117,4 +128,26 @@
     <string name="custom_pin_subtitle">Tik op de kaart om de speld te verplaatsen.</string>
     <string name="custom_pin_navigate">Navigeer hierheen</string>
     <string name="custom_pin_remove">Speld verwijderen</string>
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Fiets hier parkeren</string>
+    <string name="menu_show_parked_bike">Mijn geparkeerde fiets</string>
+    <string name="menu_about">Over</string>
+    <string name="about_tagline">Vind fietsenstallingen &amp; navigeer ernaartoe.</string>
+    <string name="about_website">Website</string>
+    <string name="about_data_status">Datastatus</string>
+    <string name="about_country_germany">Duitsland</string>
+    <string name="about_country_france">Frankrijk</string>
+    <string name="about_country_luxembourg">Luxemburg</string>
+    <string name="about_privacy">Privacy</string>
+    <string name="about_support">Trakteer me op een koffie</string>
+    <string name="about_open_link">Link openen</string>
+    <string name="parked_bike_title">Mijn geparkeerde fiets</string>
+    <string name="parked_bike_park_here">Fiets hier parkeren</string>
+    <string name="parked_bike_navigate">Navigeer naar mijn fiets</string>
+    <string name="parked_bike_pick_up">Ik heb mijn fiets opgehaald</string>
+    <string name="parked_bike_saved">Fietslocatie opgeslagen</string>
+    <string name="parked_bike_arrived">Aangekomen — fiets hier geparkeerd</string>
+    <string name="parked_bike_just_now">Net geparkeerd</string>
+    <string name="parked_bike_parked_ago">%1$s geleden geparkeerd</string>
+    <string name="parked_bike_distance_away">%1$s verderop</string>
 </resources>

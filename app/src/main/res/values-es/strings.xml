@@ -25,6 +25,7 @@
     <string name="navigation_start">Iniciar navegación</string>
     <string name="navigation_stop">Detener navegación</string>
     <string name="navigation_route_loading">Calculando ruta en bicicleta...</string>
+    <string name="navigation_rerouting">Fuera de ruta: recalculando…</string>
     <string name="navigation_downloading_segments">Descargando datos de mapa sin conexión para esta región…</string>
     <string name="error_brouter_profiles_missing">Faltan perfiles de enrutamiento.</string>
     <string name="error_no_internet">Sin conexión a internet. Comprueba tu Wi-Fi o datos móviles e inténtalo de nuevo.</string>
@@ -102,8 +103,41 @@
     <string name="save_place_confirm">Guardar</string>
     <string name="saved_place_title">Lugar guardado</string>
     <string name="favorites_saved_places_header">Lugares guardados</string>
+
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Aparcar la bici aquí</string>
+    <string name="menu_show_parked_bike">Mi bici aparcada</string>
+    <string name="menu_about">Acerca de</string>
+    <string name="about_tagline">Encuentra aparcabicis y navega hasta allí.</string>
+    <string name="about_website">Sitio web</string>
+    <string name="about_data_status">Estado de los datos</string>
+    <string name="about_country_germany">Alemania</string>
+    <string name="about_country_france">Francia</string>
+    <string name="about_country_luxembourg">Luxemburgo</string>
+    <string name="about_privacy">Privacidad</string>
+    <string name="about_support">Invítame a un café</string>
+    <string name="about_open_link">Abrir enlace</string>
+    <string name="parked_bike_title">Mi bici aparcada</string>
+    <string name="parked_bike_park_here">Aparcar la bici aquí</string>
+    <string name="parked_bike_navigate">Ir a mi bici</string>
+    <string name="parked_bike_pick_up">He recogido mi bici</string>
+    <string name="parked_bike_saved">Ubicación de la bici guardada</string>
+    <string name="parked_bike_arrived">Has llegado: bici aparcada aquí</string>
+    <string name="parked_bike_just_now">Recién aparcada</string>
+    <string name="parked_bike_parked_ago">Aparcada hace %1$s</string>
+    <string name="parked_bike_distance_away">a %1$s</string>
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Capas</string>
+    <string name="menu_navigation_view">Vista del mapa (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Simular ruta (GPS simulado)</string>
+    <string name="menu_simulate_route_stop">⏹ Detener simulación de ruta</string>
+    <string name="menu_simulate_route_hint">▶ Simular ruta (inicia la navegación primero)</string>
+    <string name="nav_view_title">Vista del mapa</string>
+    <string name="nav_view_subtitle">Elige cómo se muestra el mapa durante la navegación.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Mapa plano clásico cenital</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Vista inclinada con edificios 3D</string>
     <string name="layers_title">Capas</string>
     <string name="layers_subtitle">Elige qué marcadores se muestran en el mapa.</string>
     <string name="layers_parking_title">Aparcamientos</string>

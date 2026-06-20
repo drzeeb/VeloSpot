@@ -25,6 +25,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -60,6 +62,7 @@ fun SelectedSpaceSheet(
             onNavigate = onNavigate,
             isFavorite = isFavorite,
             onToggleFavorite = onToggleFavorite,
+            onDismiss = onDismiss,
             modifier = Modifier.navigationBarsPadding()
         )
     }
@@ -71,6 +74,7 @@ private fun SheetContent(
     onNavigate: NavigationHandler,
     isFavorite: Boolean = false,
     onToggleFavorite: (String) -> Unit = {},
+    onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -136,9 +140,7 @@ private fun SheetContent(
         PrimaryActionButton(
             text = stringResource(id = R.string.navigation_start),
             onClick = { onNavigate(space) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
+            modifier = Modifier.fillMaxWidth(),
             icon = Icons.AutoMirrored.Filled.ArrowForward
         )
 
@@ -153,10 +155,23 @@ private fun SheetContent(
             },
             icon = if (isFavorite) Icons.Default.Delete else Icons.Default.StarBorder,
             onClick = { onToggleFavorite(space.id) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
+            modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // --- Dismiss the sheet ("remove pin") — mirrors the bottom action of the
+        //     custom-pin / search-pin sheets so closing the detail view is
+        //     consistent across all map markers.
+        TextButton(
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(id = R.string.custom_pin_remove),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

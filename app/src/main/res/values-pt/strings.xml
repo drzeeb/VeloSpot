@@ -25,6 +25,7 @@
     <string name="navigation_start">Iniciar navegação</string>
     <string name="navigation_stop">Parar navegação</string>
     <string name="navigation_route_loading">A calcular rota de bicicleta...</string>
+    <string name="navigation_rerouting">Fora da rota – a recalcular…</string>
     <string name="navigation_downloading_segments">A descarregar dados de mapa offline para esta região…</string>
     <string name="error_brouter_profiles_missing">Perfis de roteamento ausentes.</string>
     <string name="error_no_internet">Sem ligação à internet. Verifique o Wi-Fi ou dados móveis e tente novamente.</string>
@@ -104,6 +105,16 @@
     <string name="favorites_saved_places_header">Locais guardados</string>
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Camadas</string>
+    <string name="menu_navigation_view">Vista do mapa (2D/3D)</string>
+    <string name="menu_simulate_route_start">▶ Simular rota (GPS falso)</string>
+    <string name="menu_simulate_route_stop">⏹ Parar simulação de rota</string>
+    <string name="menu_simulate_route_hint">▶ Simular rota (inicie a navegação primeiro)</string>
+    <string name="nav_view_title">Vista do mapa</string>
+    <string name="nav_view_subtitle">Escolha como o mapa é exibido durante a navegação.</string>
+    <string name="nav_view_2d_title">2D</string>
+    <string name="nav_view_2d_desc">Mapa plano clássico de cima</string>
+    <string name="nav_view_3d_title">3D</string>
+    <string name="nav_view_3d_desc">Vista inclinada com edifícios 3D</string>
     <string name="layers_title">Camadas</string>
     <string name="layers_subtitle">Escolhe que marcadores são mostrados no mapa.</string>
     <string name="layers_parking_title">Estacionamentos</string>
@@ -117,4 +128,26 @@
     <string name="custom_pin_subtitle">Toque no mapa para mover o marcador.</string>
     <string name="custom_pin_navigate">Navegar até aqui</string>
     <string name="custom_pin_remove">Remover marcador</string>
+    <!-- Parked bike (remember where you left your bike) -->
+    <string name="menu_park_bike_here">Estacionar a bici aqui</string>
+    <string name="menu_show_parked_bike">A minha bici estacionada</string>
+    <string name="menu_about">Sobre</string>
+    <string name="about_tagline">Encontre estacionamento para bicicletas e navegue até lá.</string>
+    <string name="about_website">Site</string>
+    <string name="about_data_status">Estado dos dados</string>
+    <string name="about_country_germany">Alemanha</string>
+    <string name="about_country_france">França</string>
+    <string name="about_country_luxembourg">Luxemburgo</string>
+    <string name="about_privacy">Privacidade</string>
+    <string name="about_support">Paga-me um café</string>
+    <string name="about_open_link">Abrir ligação</string>
+    <string name="parked_bike_title">A minha bici estacionada</string>
+    <string name="parked_bike_park_here">Estacionar a bici aqui</string>
+    <string name="parked_bike_navigate">Navegar até à minha bici</string>
+    <string name="parked_bike_pick_up">Já recolhi a minha bici</string>
+    <string name="parked_bike_saved">Localização da bici guardada</string>
+    <string name="parked_bike_arrived">Chegaste — bici estacionada aqui</string>
+    <string name="parked_bike_just_now">Acabou de estacionar</string>
+    <string name="parked_bike_parked_ago">Estacionada há %1$s</string>
+    <string name="parked_bike_distance_away">a %1$s</string>
 </resources>

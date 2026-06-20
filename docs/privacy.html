@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy Policy for the VeloSpot bike parking app — no account, no advertising, no tracking. GDPR-compliant data handling.">
+    <meta name="robots" content="index, follow">
+    <title>Privacy Policy — VeloSpot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #0A2A66;
+            --secondary-color: #7DB3FF;
+            --text-dark: #1a1a1a;
+            --text-light: #555;
+            --bg-light: #f5f5f5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: var(--text-dark);
+            background: #ffffff;
+        }
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0d3a8c 100%);
+            color: white;
+            padding: 1rem 0;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; }
+        nav a.home { color: white; text-decoration: none; opacity: 0.9; }
+        nav a.home:hover { opacity: 1; text-decoration: underline; }
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+        h1 { color: var(--primary-color); font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .updated { color: var(--text-light); margin-bottom: 2rem; font-style: italic; }
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.4rem;
+            margin: 2rem 0 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        h3 { color: var(--primary-color); font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
+        p, li { color: var(--text-dark); margin-bottom: 0.75rem; }
+        ul { margin: 0.5rem 0 1rem 1.5rem; }
+        a { color: #0d3a8c; }
+        code {
+            background: var(--bg-light);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.95rem;
+        }
+        th, td { border: 1px solid #e5e7eb; padding: 0.6rem 0.75rem; text-align: left; vertical-align: top; }
+        th { background: var(--bg-light); color: var(--primary-color); }
+        footer {
+            background: #1a1a1a;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+        }
+        footer a { color: var(--secondary-color); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">🚲 VeloSpot</div>
+            <a class="home" href="./index.html">← Back to home</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Privacy Policy for VeloSpot</h1>
+        <p class="updated">Last updated: June 19, 2026</p>
+
+        <p>This privacy policy explains how the <strong>VeloSpot</strong> app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires <strong>no user account</strong>, contains <strong>no advertising</strong>, and uses <strong>no tracking or analytics tools</strong>.</p>
+
+        <h2>1. Data Controller</h2>
+        <p>The party responsible for data processing in connection with this app is:</p>
+        <p><strong>Michael</strong> (developer of VeloSpot)<br>
+        Email: <a href="mailto:velospot@proton.me">velospot@proton.me</a><br>
+        Issues: <a href="https://github.com/drzeeb/VeloSpot/issues">github.com/drzeeb/VeloSpot/issues</a><br>
+        Repository: <a href="https://github.com/drzeeb/VeloSpot">github.com/drzeeb/VeloSpot</a></p>
+
+        <h2>2. Principle: No Central Data Collection</h2>
+        <p>VeloSpot operates <strong>no server of its own</strong> and stores <strong>no personal data</strong> on central systems. No user profiles are created, no accounts are set up, and no data is transmitted to the developer.</p>
+        <p>All data you generate (e.g. favorites and saved places) remains <strong>exclusively on your device</strong>.</p>
+
+        <h2>3. What Data Is Processed?</h2>
+        <h3>3.1 Location Data</h3>
+        <ul>
+            <li><strong>Purpose:</strong> Displaying your current position on the map, centering the map on your location, and as the starting point for bike navigation.</li>
+            <li><strong>Permissions:</strong> <code>ACCESS_FINE_LOCATION</code> and <code>ACCESS_COARSE_LOCATION</code>.</li>
+            <li><strong>Processing:</strong> Your location is processed <strong>only on the device</strong> and is <strong>not</strong> transmitted to the developer or third parties. Location detection only happens after you have granted the permission and actively use the feature (e.g. "My Location").</li>
+            <li><strong>Voluntariness:</strong> The location permission is optional. The app can also be used without sharing your location; only location-based features will then be unavailable.</li>
+            <li><strong>Note (Google Play version):</strong> The Google Play Services location APIs are used to determine your location. The <a href="https://policies.google.com/privacy">Google Privacy Policy</a> additionally applies.</li>
+        </ul>
+
+        <h3>3.2 Locally Stored Data</h3>
+        <p>The following data is stored <strong>exclusively locally on your device</strong> and is not transmitted:</p>
+        <ul>
+            <li>Favorites (marked bike parking spots)</li>
+            <li>Self-saved places (custom pins)</li>
+            <li>Addresses resolved via Nominatim and cached locally</li>
+            <li>App settings (e.g. selected language, dark mode, visible map layers)</li>
+        </ul>
+        <p>This data is deleted as soon as you uninstall the app or clear the app data in your Android settings.</p>
+
+        <h3>3.3 Map and Parking Data</h3>
+        <p>The roughly 100,000 bike parking spots are included in the app as an <strong>offline database</strong> (OpenStreetMap data). Displaying the parking spots requires <strong>no internet connection</strong>, and no data is transmitted in the process.</p>
+
+        <h2>4. Network Connections to Third Parties</h2>
+        <p>When you use certain features, the app establishes connections to external services. For technical reasons, this transmits your <strong>IP address</strong> to the respective service provider; depending on the feature, additional data listed below is transmitted. These providers are independent data controllers under data protection law.</p>
+        <table>
+            <thead>
+                <tr><th>Service</th><th>Purpose</th><th>Transmitted Data</th><th>Provider / Privacy</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>OpenFreeMap</strong></td><td>Loading vector map tiles</td><td>Requested map area, IP address</td><td><a href="https://openfreemap.org/">openfreemap.org</a></td></tr>
+                <tr><td><strong>Nominatim (OpenStreetMap)</strong></td><td>Address search &amp; address resolution (geocoding)</td><td>Search term or coordinates, IP address</td><td><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy">OSM Privacy Policy</a></td></tr>
+                <tr><td><strong>OSRM</strong></td><td>Calculating routes (if used)</td><td>Start/destination coordinates, IP address</td><td><a href="https://project-osrm.org/">project-osrm.org</a></td></tr>
+            </tbody>
+        </table>
+        <p><strong>Notes:</strong></p>
+        <ul>
+            <li>These connections only occur <strong>when the respective feature is actively used</strong> (e.g. when panning the map, performing an address search, or tapping a parking spot without a stored address).</li>
+            <li><strong>Bike navigation via BRouter</strong> runs <strong>entirely offline on your device</strong>; no route data is transmitted to third parties.</li>
+            <li>The app transmits <strong>no personal identifiers</strong> (no advertising ID, no device ID) to these services.</li>
+        </ul>
+
+        <h2>5. Permissions Overview</h2>
+        <table>
+            <thead><tr><th>Permission</th><th>Purpose</th></tr></thead>
+            <tbody>
+                <tr><td><code>INTERNET</code></td><td>Loading map tiles, address search/resolution, and parking photos</td></tr>
+                <tr><td><code>ACCESS_NETWORK_STATE</code></td><td>Checking whether a network connection exists</td></tr>
+                <tr><td><code>ACCESS_FINE_LOCATION</code> / <code>ACCESS_COARSE_LOCATION</code></td><td>Displaying your own location and navigation (optional)</td></tr>
+            </tbody>
+        </table>
+
+        <h2>6. No Advertising, No Tracking, No Analytics</h2>
+        <p>VeloSpot contains <strong>no</strong> advertising SDKs, <strong>no</strong> analytics or tracking tools (e.g. no Google Analytics, no Firebase Analytics), and performs <strong>no</strong> sharing of data for advertising purposes.</p>
+
+        <h2>7. Data Security</h2>
+        <p>Connections to external services use encrypted HTTPS wherever possible. Your locally stored data is protected by your Android device's security mechanisms.</p>
+
+        <h2>8. Legal Bases (GDPR)</h2>
+        <p>Insofar as personal data is processed, this is done on the basis of:</p>
+        <ul>
+            <li><strong>Art. 6(1)(a) GDPR</strong> (consent) – e.g. for using the location feature;</li>
+            <li><strong>Art. 6(1)(b) GDPR</strong> (provision of features) – e.g. for address search, map display, and routing at your request;</li>
+            <li><strong>Art. 6(1)(f) GDPR</strong> (legitimate interest) – in the technically flawless provision of the app.</li>
+        </ul>
+
+        <h2>9. Your Rights</h2>
+        <p>Because the developer does not store or process any personal data about you, generally no data relating to you is held that could be subject to rights of access, rectification, or erasure. You can delete all data stored locally in the app at any time yourself by clearing the app data or uninstalling the app.</p>
+        <p>Under the GDPR you are generally entitled to the following rights: access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20), and objection (Art. 21). You also have the right to lodge a complaint with a data protection supervisory authority.</p>
+
+        <h2>10. Children</h2>
+        <p>VeloSpot is not specifically directed at children and does not knowingly collect personal data from children.</p>
+
+        <h2>11. Changes to This Privacy Policy</h2>
+        <p>This privacy policy may be amended if the app or legal requirements change. The current version is kept in the project repository. The date stated above indicates the date of the last update.</p>
+
+        <h2>12. Contact</h2>
+        <p>If you have any questions about data protection, please contact the developer at <a href="mailto:velospot@proton.me">velospot@proton.me</a> or via the <a href="https://github.com/drzeeb/VeloSpot/issues">GitHub repository</a>.</p>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VeloSpot · <a href="./index.html">Home</a> · <a href="https://github.com/drzeeb/VeloSpot">GitHub</a></p>
+        <p>Map data © OpenStreetMap contributors (ODbL)</p>
+    </footer>
+</body>
+</html>
+

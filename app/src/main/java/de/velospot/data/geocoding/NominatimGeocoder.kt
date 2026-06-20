@@ -10,6 +10,13 @@ import javax.inject.Inject
 private const val TAG = "NominatimGeocoder"
 
 /**
+ * Half the side length (in degrees, ≈ 110 km) of the bias `viewbox` placed around the
+ * user's position. Large enough to comfortably cover the surrounding region/country so
+ * nearby (= same-country) results rank first, while distant matches still appear.
+ */
+private const val VIEWBOX_HALF_SPAN_DEG = 1.0
+
+/**
  * Coroutine-friendly reverse geocoder backed by the Nominatim REST API
  * (https://nominatim.openstreetmap.org/reverse).
  *
@@ -49,12 +56,24 @@ class NominatimGeocoder @Inject constructor(
         }.getOrNull()
 
     /**
-     * Forward geocoding: returns up to 5 address suggestions for [query], restricted to Germany.
+     * Forward geocoding: returns up to 5 address suggestions for [query], restricted to
+     * the covered countries (DE, FR, LU).
+     *
+     * When [nearLatitude]/[nearLongitude] are provided (the user's current position),
+     * the search is biased toward the surrounding area via a Nominatim `viewbox`, so
+     * results in the country the user is currently in are preferred — without excluding
+     * the other countries (`bounded=0`).
+     *
      * Returns an empty list on network error or if Nominatim returns no results.
      */
-    suspend fun searchAddress(query: String): List<AddressSearchResult> =
+    suspend fun searchAddress(
+        query: String,
+        nearLatitude: Double? = null,
+        nearLongitude: Double? = null
+    ): List<AddressSearchResult> =
         runCatching {
-            val response = api.search(query = query)
+            val viewBox = buildViewBox(nearLatitude, nearLongitude)
+            val response = api.search(query = query, viewBox = viewBox)
             if (!response.isSuccessful) {
                 if (BuildConfig.DEBUG) Log.w(TAG, "Nominatim search returned HTTP ${response.code()} for '$query'")
                 return@runCatching emptyList()
@@ -73,6 +92,20 @@ class NominatimGeocoder @Inject constructor(
     // ---------------------------------------------------------------------------
     // Private helpers
     // ---------------------------------------------------------------------------
+
+    /**
+     * Builds a Nominatim `viewbox` string (`lonMin,latMin,lonMax,latMax`) of roughly
+     * [VIEWBOX_HALF_SPAN_DEG]° around the user's position, or `null` if no position is
+     * known. Used purely to bias result ranking toward the user's surroundings.
+     */
+    private fun buildViewBox(latitude: Double?, longitude: Double?): String? {
+        if (latitude == null || longitude == null) return null
+        val lonMin = longitude - VIEWBOX_HALF_SPAN_DEG
+        val latMin = latitude - VIEWBOX_HALF_SPAN_DEG
+        val lonMax = longitude + VIEWBOX_HALF_SPAN_DEG
+        val latMax = latitude + VIEWBOX_HALF_SPAN_DEG
+        return "$lonMin,$latMin,$lonMax,$latMax"
+    }
 
     /**
      * Builds "Straßenname Hausnummer, PLZ Stadt" from a [NominatimAddressDto].
