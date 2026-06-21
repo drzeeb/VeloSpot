@@ -180,6 +180,7 @@ class MapViewModel @Inject constructor(
         // signatures, breaking the cycle).
         onSimulatedFix = ::onSimulatedNavigationFix,
         onArrivedAtParkingSpot = ::onArrivedAtParkingSpot,
+        onArrivedAtDestination = ::onArrivedAtDestination,
         onNavigationStarted = ::onNavigationStarted,
         onNavigationStopped = ::onNavigationStopped,
         onRerouted = ::onNavigationRerouted,
@@ -211,6 +212,15 @@ class MapViewModel @Inject constructor(
         parkBikeAt(latitude, longitude)
         // Override the generic "saved" toast with a clearer arrival confirmation.
         _userMessageRes.value = de.velospot.R.string.parked_bike_arrived
+    }
+
+    /**
+     * Shows a generic "you've arrived" confirmation when navigation to a
+     * non-parking destination (address search, saved place, custom pin, parked
+     * bike) finishes on arrival.
+     */
+    private fun onArrivedAtDestination() {
+        _userMessageRes.value = de.velospot.R.string.navigation_arrived
     }
 
     /** On navigation start: reset elevation cursor, raise GPS accuracy, auto-record. */

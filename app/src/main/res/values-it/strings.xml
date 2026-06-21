@@ -28,6 +28,7 @@
     <string name="navigation_stop">Termina navigazione</string>
     <string name="navigation_route_loading">Calcolo percorso bici...</string>
     <string name="navigation_rerouting">Fuori percorso – ricalcolo…</string>
+    <string name="navigation_arrived">Sei arrivato a destinazione</string>
     <string name="navigation_downloading_segments">Download dati mappa offline per questa regione…</string>
     <string name="error_brouter_profiles_missing">Profili di routing mancanti.</string>
     <string name="error_no_internet">Nessuna connessione internet. Controlla Wi-Fi o dati mobili e riprova.</string>
