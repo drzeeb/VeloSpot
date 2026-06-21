@@ -30,6 +30,14 @@ internal object NavigationCamera {
 
     /** Exponential-smoothing time constants (seconds): bigger = smoother/slower. */
     const val TAU_POSITION_S = 0.22
+
+    /**
+     * Tighter position time constant used while the on-route position is
+     * dead-reckoned: the target already moves smoothly along the route, so the
+     * camera/puck can hug it closely and not visibly cut corners on curves.
+     */
+    const val TAU_POSITION_PREDICT_S = 0.10
+
     const val TAU_BEARING_S = 0.28
     const val TAU_ZOOM_S = 0.55
     const val TAU_PITCH_S = 0.65

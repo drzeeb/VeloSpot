@@ -690,7 +690,13 @@ class NavigationManager(private val context: Context) {
                  else (frameTimeNanos - lastFrameNanos) / 1_000_000_000.0
         lastFrameNanos = frameTimeNanos
 
-        val aPos = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_POSITION_S)
+        val aPos = NavigationCamera.smoothingAlpha(
+            dt,
+            // Hug the route tightly while dead-reckoning (the target is already
+            // smooth) so curves aren't visibly cut; ease more gently otherwise.
+            if (predicting) NavigationCamera.TAU_POSITION_PREDICT_S
+            else NavigationCamera.TAU_POSITION_S
+        )
         val aBear = NavigationCamera.smoothingAlpha(dt, NavigationCamera.TAU_BEARING_S)
         // During the intro the zoom/pitch ease in faster so the 3D view snaps in.
         val zoomTau = if (introActive) NavigationCamera.TAU_ZOOM_S * INTRO_TAU_SCALE
