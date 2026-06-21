@@ -56,8 +56,8 @@ android {
         // The release workflow updates them via sed before committing the release tag,
         // so the tagged commit always contains the correct values.
         // WARNING: Do NOT replace these literals with dynamic expressions.
-        versionCode = 10019
-        versionName = "1.0.19"
+        versionCode = 10020
+        versionName = "1.0.20"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
