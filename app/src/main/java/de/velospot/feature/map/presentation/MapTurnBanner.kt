@@ -1,5 +1,6 @@
 package de.velospot.feature.map.presentation
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -46,7 +47,7 @@ internal fun BoxScope.MapTurnBanner(progress: NavigationProgress?) {
     val distance = progress?.nextTurnDistanceMeters
     val angle = progress?.nextTurnAngleDegrees
     val visible = distance != null && angle != null &&
-        distance <= TURN_BANNER_MAX_DISTANCE_M && !(progress.isOffRoute)
+        distance <= TURN_BANNER_MAX_DISTANCE_M && !progress.isOffRoute
 
     AnimatedVisibility(
         visible = visible,
@@ -96,6 +97,8 @@ internal fun BoxScope.MapTurnBanner(progress: NavigationProgress?) {
     }
 }
 
+/** Localised maneuver label from the signed turn angle (negative = left). */
+@StringRes
 private fun maneuverLabel(angle: Double): Int {
     val left = angle < 0
     val mag = abs(angle)
@@ -110,4 +113,3 @@ private fun maneuverLabel(angle: Double): Int {
 private fun formatTurnDistance(meters: Double): String =
     if (meters < 1000) "${(meters / 10).roundToInt() * 10} m"
     else "%.1f km".format(meters / 1000.0)
-

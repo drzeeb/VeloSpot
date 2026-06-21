@@ -169,23 +169,11 @@ class NavigationController(
         }
         // Cancel any in-progress calculation — e.g. when the user taps a different
         // parking spot while a route is still being computed.
-        navigationJob?.cancel()
-        _uiState.value = NavigationUiState.Loading
-        _progress.value = null
-        hasArrivedForCurrentRoute = false
-        consecutiveArrivalFixes = 0
-        navigationJob = scope.launch {
-            runCatching {
-                routingRepository.getBikeRoute(
-                    from = location,
-                    to   = GeoCoordinate(space.latitude, space.longitude)
-                )
-            }.onSuccess { route ->
-                _uiState.value = NavigationUiState.Active(destination = space, route = route)
-                onNavigationStarted()
-            }.onFailure { throwable ->
-                _uiState.value = NavigationUiState.Error(mapRoutingError(throwable))
-            }
+        beginRouting(space) {
+            routingRepository.getBikeRoute(
+                from = location,
+                to   = GeoCoordinate(space.latitude, space.longitude)
+            )
         }
     }
 
@@ -198,28 +186,41 @@ class NavigationController(
      * surfaces as a navigation error.
      */
     fun startRoundTrip(destination: BikeParkingSpace, targetDistanceMeters: Double) {
-        if (currentLocation() == null) {
+        val start = currentLocation() ?: run {
             _uiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
             return
         }
-        val start = currentLocation()!!
+        beginRouting(destination) {
+            routingRepository.getRoundTrip(
+                from = GeoCoordinate(start.latitude, start.longitude),
+                targetDistanceMeters = targetDistanceMeters
+            )
+        }
+    }
+
+    /**
+     * Shared launch path for [start] and [startRoundTrip]: cancels any pending
+     * calculation, flips to the loading state, then runs [compute] off the main
+     * thread and swaps in the [NavigationUiState.Active] route (or an error).
+     */
+    private fun beginRouting(
+        destination: BikeParkingSpace,
+        compute: suspend () -> BikeRoute
+    ) {
         navigationJob?.cancel()
         _uiState.value = NavigationUiState.Loading
         _progress.value = null
         hasArrivedForCurrentRoute = false
         consecutiveArrivalFixes = 0
         navigationJob = scope.launch {
-            runCatching {
-                routingRepository.getRoundTrip(
-                    from = GeoCoordinate(start.latitude, start.longitude),
-                    targetDistanceMeters = targetDistanceMeters
-                )
-            }.onSuccess { route ->
-                _uiState.value = NavigationUiState.Active(destination = destination, route = route)
-                onNavigationStarted()
-            }.onFailure { throwable ->
-                _uiState.value = NavigationUiState.Error(mapRoutingError(throwable))
-            }
+            runCatching { compute() }
+                .onSuccess { route ->
+                    _uiState.value = NavigationUiState.Active(destination = destination, route = route)
+                    onNavigationStarted()
+                }
+                .onFailure { throwable ->
+                    _uiState.value = NavigationUiState.Error(mapRoutingError(throwable))
+                }
         }
     }
 

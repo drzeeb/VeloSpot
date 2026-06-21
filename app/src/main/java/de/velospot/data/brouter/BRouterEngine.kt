@@ -3,6 +3,7 @@ package de.velospot.data.brouter
 import android.content.Context
 import android.util.Log
 import btools.router.OsmNodeNamed
+import btools.router.OsmTrack
 import btools.router.RoutingContext
 import btools.router.RoutingEngine
 import de.velospot.BuildConfig
@@ -72,7 +73,7 @@ class BRouterEngine(
     ): BikeRoute = withContext(Dispatchers.Default) {
         ensureProfiles()
 
-        val profilePath = File(profilesDir, "${profile.fileName}.brf").absolutePath
+        val profilePath = profilePathFor(profile)
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "segmentsDir = $segmentsDir  exists=${segmentsDir.exists()}")
             Log.d(TAG, "profilePath = $profilePath  exists=${File(profilePath).exists()}")
@@ -104,16 +105,7 @@ class BRouterEngine(
                 }
             }
 
-
-            val distanceMeters  = haversineDistanceMeters(points)
-            val durationSeconds = distanceMeters / profile.typicalSpeedMs
-
-            BikeRoute(
-                points          = points,
-                distanceMeters  = distanceMeters,
-                durationSeconds = durationSeconds,
-                source          = RoutingSource.BROUTER_OFFLINE
-            )
+            bikeRouteFrom(points, profile)
         } catch (e: NoRouteFoundException)      { throw e }
         catch (e: EmptyRouteGeometryException)  { throw e }
         catch (e: Exception) {
@@ -142,7 +134,7 @@ class BRouterEngine(
         directionDeg: Int? = null
     ): BikeRoute = withContext(Dispatchers.Default) {
         ensureProfiles()
-        val profilePath = File(profilesDir, "${profile.fileName}.brf").absolutePath
+        val profilePath = profilePathFor(profile)
 
         // BRouter's roundTripDistance is the *search radius* of the waypoint ring,
         // not the total length. Empirically the looped result is ~3× the radius, so
@@ -167,24 +159,7 @@ class BRouterEngine(
         )
         engine.doRoundTrip()
 
-        val track = engine.foundTrack ?: throw NoRouteFoundException()
-        if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
-
-        val points = track.nodes.map { node ->
-            RoutePoint(
-                latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
-                longitude = node.getCoordField("ilon") / 1_000_000.0 - 180.0,
-                elevationMeters = node.getElevMetersOrNull()
-            )
-        }
-        val distanceMeters  = haversineDistanceMeters(points)
-        val durationSeconds = distanceMeters / profile.typicalSpeedMs
-        BikeRoute(
-            points          = points,
-            distanceMeters  = distanceMeters,
-            durationSeconds = durationSeconds,
-            source          = RoutingSource.BROUTER_OFFLINE
-        )
+        bikeRouteFrom(decodeTrack(engine.foundTrack), profile)
     }
 
     companion object {
@@ -254,13 +229,20 @@ class BRouterEngine(
             /* rc          = */ rc
         )
         engine.doRun(0L)
+        return decodeTrack(engine.foundTrack)
+    }
 
-        val track = engine.foundTrack
+    /**
+     * Decodes BRouter's [OsmTrack] nodes into [RoutePoint]s (lat/lon + terrain
+     * elevation). Shared by the point-to-point and round-trip passes.
+     *
+     * @throws NoRouteFoundException when no track was produced.
+     * @throws EmptyRouteGeometryException when the track carries no nodes.
+     */
+    private fun decodeTrack(track: OsmTrack?): List<RoutePoint> {
         if (BuildConfig.DEBUG) Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
         if (track == null) throw NoRouteFoundException()
         if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
-
-
         return track.nodes.map { node ->
             RoutePoint(
                 latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
@@ -268,6 +250,21 @@ class BRouterEngine(
                 elevationMeters = node.getElevMetersOrNull()
             )
         }
+    }
+
+    /** Absolute path to a profile's `.brf` file in internal storage. */
+    private fun profilePathFor(profile: BRouterProfile): String =
+        File(profilesDir, "${profile.fileName}.brf").absolutePath
+
+    /** Wraps decoded [points] into a [BikeRoute], deriving distance + ETA from [profile]. */
+    private fun bikeRouteFrom(points: List<RoutePoint>, profile: BRouterProfile): BikeRoute {
+        val distanceMeters = haversineDistanceMeters(points)
+        return BikeRoute(
+            points          = points,
+            distanceMeters  = distanceMeters,
+            durationSeconds = distanceMeters / profile.typicalSpeedMs,
+            source          = RoutingSource.BROUTER_OFFLINE
+        )
     }
 
     /**

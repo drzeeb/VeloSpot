@@ -85,11 +85,13 @@ class RoutingRepositoryImpl @Inject constructor(
         }
         val profile = OfflineRoutingPreferences.getSelectedProfile(context)
 
-        val haveStartTile = segmentManager.hasAllSegments(
+        // The loop stays near the start, so the start tile alone is usually enough.
+        fun startTileReady() = segmentManager.hasAllSegments(
             fromLat = from.latitude, fromLon = from.longitude,
             toLat   = from.latitude, toLon   = from.longitude
         )
-        if (!haveStartTile && OfflineRoutingPreferences.isOnDemandDownloadEnabled(context)) {
+
+        if (!startTileReady() && OfflineRoutingPreferences.isOnDemandDownloadEnabled(context)) {
             runCatching {
                 segmentManager.ensureSegments(
                     fromLat = from.latitude, fromLon = from.longitude,
@@ -97,13 +99,7 @@ class RoutingRepositoryImpl @Inject constructor(
                 )
             }
         }
-        if (!segmentManager.hasAllSegments(
-                fromLat = from.latitude, fromLon = from.longitude,
-                toLat   = from.latitude, toLon   = from.longitude
-            )
-        ) {
-            throw RoutingFailedException("segments_missing")
-        }
+        if (!startTileReady()) throw RoutingFailedException("segments_missing")
         return brouterEngine.calculateRoundTrip(from, targetDistanceMeters, profile)
     }
 }

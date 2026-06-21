@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.navigation.GeoMath
@@ -46,12 +47,12 @@ internal fun RouteElevationProfile(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = stringRes(R.string.elevation_profile_ascent, profile.ascentMeters.roundToInt()),
+                text = stringResource(R.string.elevation_profile_ascent, profile.ascentMeters.roundToInt()),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringRes(R.string.elevation_profile_descent, profile.descentMeters.roundToInt()),
+                text = stringResource(R.string.elevation_profile_descent, profile.descentMeters.roundToInt()),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -104,9 +105,6 @@ internal fun RouteElevationProfile(
     }
 }
 
-@Composable
-private fun stringRes(id: Int, arg: Int): String =
-    androidx.compose.ui.res.stringResource(id, arg)
 
 private data class ElevationProfileData(
     val distances: List<Double>,
