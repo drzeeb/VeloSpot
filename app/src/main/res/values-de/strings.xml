@@ -27,6 +27,7 @@
     <string name="navigation_start">Navigation starten</string>
     <string name="navigation_stop">Navigation beenden</string>
     <string name="navigation_route_loading">Fahrradroute wird berechnet...</string>
+    <string name="navigation_elapsed_seconds">%1$d s</string>
     <string name="navigation_rerouting">Abseits der Route – wird neu berechnet…</string>
     <string name="navigation_arrived">Du hast dein Ziel erreicht</string>
     <string name="navigation_downloading_segments">Offline-Kartendaten für diese Region werden heruntergeladen…</string>

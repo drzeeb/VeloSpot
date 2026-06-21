@@ -27,6 +27,7 @@
     <string name="navigation_start">Navigatie starten</string>
     <string name="navigation_stop">Navigatie stoppen</string>
     <string name="navigation_route_loading">Fietsroute wordt berekend...</string>
+    <string name="navigation_elapsed_seconds">%1$d s</string>
     <string name="navigation_rerouting">Van route af – opnieuw berekenen…</string>
     <string name="navigation_arrived">Je bent op je bestemming aangekomen</string>
     <string name="navigation_downloading_segments">Offline kaartgegevens voor dit gebied downloaden…</string>

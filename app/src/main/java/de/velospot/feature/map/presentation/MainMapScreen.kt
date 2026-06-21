@@ -454,7 +454,8 @@ fun MainMapScreen(
             navigationUiState = navigationUiState,
             progress          = navigationProgress,
             onStopNavigation  = viewModel::stopInAppNavigation,
-            onDismissError    = viewModel::clearNavigationError
+            onDismissError    = viewModel::clearNavigationError,
+            onCancel          = viewModel::cancelRouteCalculation
         )
 
         // Turn-by-turn banner (top) — only during active navigation.

@@ -275,11 +275,21 @@ internal fun BoxScope.MapNavigationOverlay(
     navigationUiState: NavigationUiState,
     onStopNavigation: () -> Unit,
     onDismissError: () -> Unit,
-    progress: de.velospot.core.navigation.NavigationProgress? = null
+    progress: de.velospot.core.navigation.NavigationProgress? = null,
+    onCancel: () -> Unit = {}
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
         is NavigationUiState.Loading -> {
+            // Tick an elapsed-seconds counter while the (potentially long) route is
+            // computed, so the wait feels alive and the user can cancel it.
+            var elapsedSeconds by remember { mutableStateOf(0) }
+            LaunchedEffect(Unit) {
+                while (true) {
+                    kotlinx.coroutines.delay(1_000)
+                    elapsedSeconds++
+                }
+            }
             Card(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -290,13 +300,28 @@ internal fun BoxScope.MapNavigationOverlay(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                 )
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text(text = stringResource(id = R.string.navigation_route_loading))
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(id = R.string.navigation_route_loading),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = stringResource(id = R.string.navigation_elapsed_seconds, elapsedSeconds),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(12.dp))
+                    SecondaryActionButton(
+                        text = stringResource(id = R.string.common_cancel),
+                        onClick = onCancel,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

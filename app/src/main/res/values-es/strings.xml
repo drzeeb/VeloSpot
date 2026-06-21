@@ -27,6 +27,7 @@
     <string name="navigation_start">Iniciar navegación</string>
     <string name="navigation_stop">Detener navegación</string>
     <string name="navigation_route_loading">Calculando ruta en bicicleta...</string>
+    <string name="navigation_elapsed_seconds">%1$d s</string>
     <string name="navigation_rerouting">Fuera de ruta: recalculando…</string>
     <string name="navigation_arrived">Has llegado a tu destino</string>
     <string name="navigation_downloading_segments">Descargando datos de mapa sin conexión para esta región…</string>

@@ -27,6 +27,7 @@
     <string name="navigation_start">Avvia navigazione</string>
     <string name="navigation_stop">Termina navigazione</string>
     <string name="navigation_route_loading">Calcolo percorso bici...</string>
+    <string name="navigation_elapsed_seconds">%1$d s</string>
     <string name="navigation_rerouting">Fuori percorso – ricalcolo…</string>
     <string name="navigation_arrived">Sei arrivato a destinazione</string>
     <string name="navigation_downloading_segments">Download dati mappa offline per questa regione…</string>

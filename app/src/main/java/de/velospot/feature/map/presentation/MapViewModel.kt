@@ -840,6 +840,9 @@ class MapViewModel @Inject constructor(
 
     fun stopInAppNavigation() = navigationController.stop()
 
+    /** Cancels an in-progress route calculation (loading card "Cancel" button). */
+    fun cancelRouteCalculation() = navigationController.cancelRouteCalculation()
+
     /** Called by the `NavigationManager` when the rider has strayed off-route. */
     fun onUserWentOffRoute() = navigationController.onUserWentOffRoute()
 

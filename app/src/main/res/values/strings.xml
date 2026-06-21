@@ -172,6 +172,7 @@
     <string name="navigation_start">Start navigation</string>
     <string name="navigation_stop">Stop navigation</string>
     <string name="navigation_route_loading">Calculating bike route...</string>
+    <string name="navigation_elapsed_seconds">%1$d s</string>
     <string name="navigation_rerouting">Off route – recalculating…</string>
     <string name="navigation_arrived">You\'ve arrived at your destination</string>
     <string name="navigation_downloading_segments">Downloading offline map data for this region…</string>

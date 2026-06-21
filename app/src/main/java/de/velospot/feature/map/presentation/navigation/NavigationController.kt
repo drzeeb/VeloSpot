@@ -213,14 +213,31 @@ class NavigationController(
         hasArrivedForCurrentRoute = false
         consecutiveArrivalFixes = 0
         navigationJob = scope.launch {
-            runCatching { compute() }
-                .onSuccess { route ->
-                    _uiState.value = NavigationUiState.Active(destination = destination, route = route)
-                    onNavigationStarted()
-                }
-                .onFailure { throwable ->
-                    _uiState.value = NavigationUiState.Error(mapRoutingError(throwable))
-                }
+            try {
+                val route = compute()
+                _uiState.value = NavigationUiState.Active(destination = destination, route = route)
+                onNavigationStarted()
+            } catch (ce: kotlinx.coroutines.CancellationException) {
+                // Cancelled by the user (or a newer request) — leave the state to the
+                // caller (cancelRouteCalculation sets Idle); never show an error.
+                throw ce
+            } catch (throwable: Throwable) {
+                _uiState.value = NavigationUiState.Error(mapRoutingError(throwable))
+            }
+        }
+    }
+
+    /**
+     * Cancels an in-progress route calculation (from the loading card's "Cancel"
+     * button). Cancelling the job propagates into the BRouter engine, which aborts
+     * its search; the UI returns to idle.
+     */
+    fun cancelRouteCalculation() {
+        if (_uiState.value is NavigationUiState.Loading) {
+            navigationJob?.cancel()
+            navigationJob = null
+            _uiState.value = NavigationUiState.Idle
+            _progress.value = null
         }
     }
 

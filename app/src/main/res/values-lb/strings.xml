@@ -27,6 +27,7 @@
     <string name="navigation_start">Navigatioun starten</string>
     <string name="navigation_stop">Navigatioun stoppen</string>
     <string name="navigation_route_loading">Vëlosroute gëtt berechent...</string>
+    <string name="navigation_elapsed_seconds">%1$d s</string>
     <string name="navigation_rerouting">Niewent der Route – gëtt nei berechent…</string>
     <string name="navigation_arrived">Du bass un dengem Zil ukomm</string>
     <string name="navigation_downloading_segments">Offline-Kaartdaten fir dës Regioun ginn erofgelueden…</string>

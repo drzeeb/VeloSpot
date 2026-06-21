@@ -16,9 +16,12 @@ import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.coroutines.coroutineContext
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
@@ -125,7 +128,8 @@ class BRouterEngine(
             }
 
             bikeRouteFrom(points, profile)
-        } catch (e: NoRouteFoundException)      { throw e }
+        } catch (e: CancellationException)      { throw e }
+        catch (e: NoRouteFoundException)        { throw e }
         catch (e: EmptyRouteGeometryException)  { throw e }
         catch (e: Exception) {
             Log.e(TAG, "BRouter routing failed", e)
@@ -177,7 +181,7 @@ class BRouterEngine(
             /* waypoints   = */ mutableListOf(osmNodeNamed("start", start.longitude, start.latitude)),
             /* rc          = */ rc
         )
-        engine.doRoundTrip()
+        runEngine(engine, roundTrip = true)
 
         bikeRouteFrom(decodeTrack(engine.foundTrack), profile)
     }
@@ -219,6 +223,12 @@ class BRouterEngine(
         private const val MIN_MEMORY_CLASS_MB = 96
         private const val MAX_MEMORY_CLASS_MB = 256
 
+        // ── Cancellable engine run (see runEngine) ────────────────────────────
+        /** How often the worker thread is polled for coroutine cancellation. */
+        private const val ENGINE_POLL_MS = 50L
+        /** Grace period to let BRouter unwind after [RoutingEngine.terminate]. */
+        private const val ENGINE_TERMINATE_GRACE_MS = 2_000L
+
         // ── Round-trip generation (see calculateRoundTrip) ────────────────────
         /** Approximate ratio of looped trip length to BRouter's search radius. */
         private const val ROUND_TRIP_LENGTH_TO_RADIUS = 3.0
@@ -237,7 +247,7 @@ class BRouterEngine(
      * because BRouter mutates their matching state, so they must not be reused
      * across the two passes. Returns the decoded route points.
      */
-    private fun runBrouter(
+    private suspend fun runBrouter(
         profilePath: String,
         from: GeoCoordinate,
         to: GeoCoordinate,
@@ -261,8 +271,33 @@ class BRouterEngine(
             ),
             /* rc          = */ rc
         )
-        engine.doRun(0L)
+        runEngine(engine)
         return decodeTrack(engine.foundTrack)
+    }
+
+    /**
+     * Runs BRouter's blocking search ([RoutingEngine.doRun] / [RoutingEngine.doRoundTrip])
+     * on a daemon worker thread while observing coroutine cancellation. When the calling
+     * coroutine is cancelled (e.g. the user taps "Cancel"), [RoutingEngine.terminate] is
+     * signalled so BRouter aborts its A* search at the next loop check instead of running
+     * to completion, and the [CancellationException] is propagated.
+     */
+    private suspend fun runEngine(engine: RoutingEngine, roundTrip: Boolean = false) {
+        val worker = Thread(
+            { if (roundTrip) engine.doRoundTrip() else engine.doRun(0L) },
+            "brouter-route"
+        ).apply { isDaemon = true }
+        worker.start()
+        try {
+            while (worker.isAlive) {
+                coroutineContext.ensureActive()      // throws if the coroutine was cancelled
+                worker.join(ENGINE_POLL_MS)
+            }
+        } catch (ce: CancellationException) {
+            engine.terminate()                       // ask BRouter to stop its search
+            runCatching { worker.join(ENGINE_TERMINATE_GRACE_MS) }
+            throw ce
+        }
     }
 
     /**

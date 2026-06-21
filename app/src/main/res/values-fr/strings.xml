@@ -27,6 +27,7 @@
     <string name="navigation_start">Démarrer la navigation</string>
     <string name="navigation_stop">Arrêter la navigation</string>
     <string name="navigation_route_loading">Calcul de l\'itinéraire vélo...</string>
+    <string name="navigation_elapsed_seconds">%1$d s</string>
     <string name="navigation_rerouting">Hors itinéraire – recalcul…</string>
     <string name="navigation_arrived">Vous êtes arrivé à destination</string>
     <string name="navigation_downloading_segments">Téléchargement des données cartographiques hors ligne…</string>
