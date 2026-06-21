@@ -71,6 +71,37 @@ class BRouterSegmentManager(
         }
     }
 
+    /**
+     * Downloads **all** 5°×5° tiles covering Germany, France and Luxembourg
+     * ([COUNTRY_SEGMENTS]) so offline navigation works across the whole supported
+     * area without any further per-route downloads. Only missing tiles are fetched,
+     * so re-running this after a partial download resumes where it left off.
+     *
+     * This is the heavy "complete" download (~2.5 GB). The per-file progress lets
+     * the UI render an "x of y" indicator.
+     */
+    suspend fun downloadCountrySegments(
+        onProgress: (
+            downloaded: Long,
+            total: Long,
+            fileIndex: Int,
+            totalFiles: Int,
+            fileName: String
+        ) -> Unit = { _, _, _, _, _ -> }
+    ) = withContext(Dispatchers.IO) {
+        val missing = COUNTRY_SEGMENTS.filter { !File(segmentsDir, it).exists() }
+        val total   = missing.size
+        missing.forEachIndexed { index, name ->
+            downloadSegment(name) { dl, tot ->
+                onProgress(dl, tot, index + 1, total, name)
+            }
+        }
+    }
+
+    /** True when every tile needed for full DE/FR/LU coverage is already present. */
+    fun hasAllCountrySegments(): Boolean =
+        COUNTRY_SEGMENTS.all { File(segmentsDir, it).exists() }
+
     /** Returns true when at least one segment file exists on the device. */
     fun hasAnySegments(): Boolean =
         segmentsDir.listFiles()?.any { it.extension == "rd5" } == true
@@ -151,5 +182,32 @@ class BRouterSegmentManager(
           catch (e: java.net.ConnectException)       { throw NoInternetConnectionException(e) }
           catch (e: java.net.SocketTimeoutException) { throw NoInternetConnectionException(e) }
           catch (e: java.net.SocketException)        { throw NoInternetConnectionException(e) }
+    }
+
+    companion object {
+        /**
+         * The full set of BRouter 5°×5° tiles needed to cover the three supported
+         * countries — Germany 🇩🇪, France 🇫🇷 (incl. Corsica) and Luxembourg 🇱🇺.
+         *
+         * Tiles are named after their south-west corner (E/W longitude, N/S
+         * latitude, both multiples of 5). Only land tiles that actually contain
+         * DE/FR/LU territory are listed, so no request 404s on a pure-sea tile.
+         * Combined size is roughly 2–2.5 GB.
+         */
+        val COUNTRY_SEGMENTS: List<String> = listOf(
+            // Atlantic / western & southern France (incl. Pyrenees, Corsica)
+            "W5_N40.rd5",  // SW France Atlantic coast (Biarritz)
+            "W5_N45.rd5",  // Brittany, western France, Cotentin
+            "E0_N40.rd5",  // southern France (Toulouse, Pyrenees)
+            "E0_N45.rd5",  // central France (Paris, Loire)
+            "E0_N50.rd5",  // northern France (Lille, Channel coast)
+            "E5_N40.rd5",  // SE France (Côte d'Azur, Marseille, Corsica)
+            "E5_N45.rd5",  // Luxembourg, eastern France, SW Germany
+            "E5_N50.rd5",  // western & central Germany (Cologne, Rhine)
+            "E5_N55.rd5",  // northern German tip (Sylt)
+            "E10_N45.rd5", // southern Germany / Bavaria / Alps (Munich)
+            "E10_N50.rd5", // eastern & northern Germany (Berlin, Hamburg)
+            "E15_N50.rd5", // eastern German sliver (Görlitz / Saxony)
+        )
     }
 }

@@ -328,6 +328,14 @@ class NavigationManager(private val context: Context) {
         // Seed the split geometry at the route start (nothing travelled yet).
         lastSnapLat = routePoints.firstOrNull()?.latitude ?: 0.0
         lastSnapLon = routePoints.firstOrNull()?.longitude ?: 0.0
+        // Orient the puck/camera along the route's forward direction from the very
+        // first frame. This is bike navigation: at the start the rider just follows
+        // the route line, so the marker must point the way the route goes — never a
+        // spurious "make a U-turn" while standing still at the start.
+        initialRouteBearing(routePoints)?.let {
+            tgtBearing = it
+            curBearing = it
+        }
         // Navigation is always 3D.
         map?.style?.let { setBuildingExtrusionVisible(it, true) }
         renderRouteSplit(force = true)
@@ -354,7 +362,16 @@ class NavigationManager(private val context: Context) {
         if (offRoute) {
             tgtLat = location.latitude
             tgtLon = location.longitude
-            tgtBearing = location.bearing?.toDouble() ?: tgtBearing
+            // Point the marker along the route while standing still (no reliable GPS
+            // heading), and only switch to the true GPS facing once actually moving.
+            // This keeps the puck oriented "the way the route goes" at the start
+            // instead of suggesting a U-turn.
+            val moving = (location.speedMetersPerSecond ?: 0f) > 1.5f
+            tgtBearing = if (moving && location.bearing != null) {
+                location.bearing.toDouble()
+            } else {
+                match.bearing
+            }
             tgtZoom = NavigationCamera.targetZoom(location.speedMetersPerSecond, 0.0)
         } else {
             tgtLat = match.latitude
@@ -399,13 +416,36 @@ class NavigationManager(private val context: Context) {
     }
 
     /** ETA in seconds = remaining distance ÷ the route's average speed (BRouter-consistent). */
-    private fun estimateRemainingSeconds(remainingMeters: Double): Double {
-        val avgSpeed = if (totalDurationSeconds > 0.0 && totalDistanceMeters > 0.0) {
+    private fun estimateRemainingSeconds(remainingMeters: Double): Double {        val avgSpeed = if (totalDurationSeconds > 0.0 && totalDistanceMeters > 0.0) {
             totalDistanceMeters / totalDurationSeconds
         } else {
             DEFAULT_BIKE_SPEED_MPS
         }
         return remainingMeters / avgSpeed.coerceAtLeast(0.5)
+    }
+
+    /**
+     * Forward bearing of the route at its very start, sampled at a point roughly
+     * [lookaheadMeters] ahead so a tiny first segment (BRouter often emits a 1–2 m
+     * stub when snapping the start onto the road) doesn't yield a noisy heading.
+     * Returns `null` for a degenerate route with fewer than two points.
+     */
+    private fun initialRouteBearing(
+        points: List<RoutePoint>,
+        lookaheadMeters: Double = 25.0
+    ): Double? {
+        val origin = points.firstOrNull() ?: return null
+        var ahead = points.getOrNull(1) ?: return null
+        for (i in 1 until points.size) {
+            ahead = points[i]
+            if (GeoMath.distanceMeters(
+                    origin.latitude, origin.longitude, ahead.latitude, ahead.longitude
+                ) >= lookaheadMeters
+            ) break
+        }
+        return GeoMath.bearingDegrees(
+            origin.latitude, origin.longitude, ahead.latitude, ahead.longitude
+        )
     }
 
     /** Ends navigation: stops the frame loop, clears the puck and returns the

@@ -179,6 +179,8 @@
     <string name="wifi_warning_message">You are not connected to Wi-Fi. The download is approx. 200–250 MB and will use mobile data. Download anyway?</string>
     <string name="wifi_warning_confirm">Download anyway</string>
     <string name="offline_routing_confirm">Download now</string>
+    <string name="offline_routing_confirm_region">Download my region (~250 MB)</string>
+    <string name="offline_routing_confirm_full">Download all of Germany, France &amp; Luxembourg (~2.5 GB)</string>
     <string name="offline_routing_disable">Deactivate offline navigation</string>
 
     <!-- Offline routing progress overlay -->

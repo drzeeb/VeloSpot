@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Offline routing: full Germany/France/Luxembourg download + automatic on-demand tiles** — the offline-routing setup now offers two choices instead of silently grabbing one tile: **"Download my region"** (the single 5°×5° BRouter tile around your current position, ~250 MB) and **"Download all of Germany, France & Luxembourg"** (the curated set of 12 land tiles covering the three supported countries, ~2–2.5 GB), with a resumable per-file progress indicator (`BRouterSegmentManager.COUNTRY_SEGMENTS` / `downloadCountrySegments`, `OfflineRoutingController`, two-button `OfflineRoutingSetupSheet`). On top of that, offline navigation is no longer limited to the pre-downloaded tile: when you route to a destination whose tile is missing, the router now **downloads the needed tile(s) for that route on demand** (`RoutingRepositoryImpl` → `BRouterSegmentManager.ensureSegments`) and routes offline, only falling back to the online OSRM router when the download can't happen (no connectivity). Governed by a new `OfflineRoutingPreferences.isOnDemandDownloadEnabled` flag (default on). Fully localised across all eight supported languages.
+
+### Changed
+- **"Download my region" is bound to your actual position** — the single-tile download no longer falls back to a hard-coded default region when there's no GPS fix; it now requires a real location and surfaces `LocationUnavailable` otherwise, so it always fetches the tile you're actually in (`OfflineRoutingController`).
+- **BRouter cycling profiles de-prefer pavements and favour quiet streets in town** (`gravel.brf`, `trekking.brf`, `PROFILES_VERSION` 2 → 4) — footways/sidewalks with bike permission are made more expensive and quiet carriageways (residential / living-street / unclassified / service) cheaper, so urban routes stop hugging the pavement next to the road; dedicated cycleways stay preferred for safety.
+
+### Fixed
+- **Offline routes no longer open with a spurious "make a U-turn"** — BRouter used to connect the start waypoint to the nearest network node, which can sit *behind* the rider, opening the route with an out-and-back hairpin the online router never shows. The rider's live GPS heading is now passed to BRouter as a `startDirection` hint; for a start from a complete standstill (no heading) a lightweight **second pass** detects a start that heads away from the destination and re-runs BRouter with the route's own forward direction — BRouter then drops the spur itself, so the geometry stays real on-road (no path surgery) (`BRouterEngine`).
+- **Offline routes start on the carriageway, not the sidewalk** — BRouter was snapping the start/end onto the nearest way, which in town is often a `footway=sidewalk`, opening the route with a pavement + crossing detour before reaching the road. The cycling profiles now declare `noStartWay=footway,sidewalk`, so the start/end snaps to the carriageway like the online router does (and cycling on sidewalks isn't suggested) (`gravel.brf`, `trekking.brf`).
+- **Navigation marker/camera heading no longer skewed by sub-metre route stubs** — BRouter occasionally emits a tiny (~0.1 m) first segment, and the camera/marker took its heading from that single segment, pointing slightly off the route at the start. The route heading is now sampled ~15 m **ahead** along the polyline, so a degenerate stub can't skew it; the marker also seeds to the route's forward direction at the very start instead of a stale bearing (`RouteMatcher`, `NavigationManager`).
+
 ## [v1.0.20] - 2026-06-21
 
 ### Added

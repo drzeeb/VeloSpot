@@ -6,6 +6,7 @@ import btools.router.OsmNodeNamed
 import btools.router.RoutingContext
 import btools.router.RoutingEngine
 import de.velospot.BuildConfig
+import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BRouterProfilesMissingException
 import de.velospot.domain.model.EmptyRouteGeometryException
@@ -85,32 +86,24 @@ class BRouterEngine(
             Log.d(TAG, "to   ilon=${toPos.ilon}   ilat=${toPos.ilat}")
         }
 
-        val rc = RoutingContext().apply {
-            localFunction = profilePath          // path to .brf WITHOUT extension
-        }
-
         try {
-            val engine = RoutingEngine(
-                /* baseUrl       = */ null,
-                /* outfileBase   = */ null,
-                /* segmentDir    = */ segmentsDir,
-                /* waypoints     = */ listOf(fromPos, toPos),
-                /* rc            = */ rc
-            )
-            engine.doRun(0L)
+            // First pass. If the rider has a live GPS heading, hand it to BRouter as
+            // the start direction so it never opens the route with a hairpin "U-turn"
+            // (BRouter otherwise connects the start to the nearest network node, which
+            // can sit *behind* the rider, and routes out-and-back).
+            val gpsStartDir: Int? = from.bearing?.let { ((it.toInt() % 360) + 360) % 360 }
+            var points = runBrouter(profilePath, from, to, gpsStartDir)
 
-            val track = engine.foundTrack
-            if (BuildConfig.DEBUG) Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
-            if (track == null) throw NoRouteFoundException()
-            if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
-
-            val points = track.nodes.map { node ->
-                RoutePoint(
-                    latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
-                    longitude = node.getCoordField("ilon") / 1_000_000.0 - 180.0,
-                    elevationMeters = node.getElevMetersOrNull()
-                )
+            // Standstill start (no GPS heading): if the route still opens with a
+            // reversal, recompute once telling BRouter the route's own forward
+            // direction. BRouter then drops the spur itself — the geometry stays real
+            // on-road (we never edit the path), unlike a post-hoc trim.
+            if (gpsStartDir == null) {
+                startUTurnForwardDir(points, to)?.let { forwardDir ->
+                    points = runBrouter(profilePath, from, to, forwardDir)
+                }
             }
+
 
             val distanceMeters  = haversineDistanceMeters(points)
             val durationSeconds = distanceMeters / profile.typicalSpeedMs
@@ -140,12 +133,98 @@ class BRouterEngine(
          * - 1: initial bundled profiles.
          * - 2: trunk-road hardening across the bundled profiles (gravel, mtb, trekking,
          *      fastbike, shortest) — keep bikes off trunk roads / motorway feeders.
+         * - 3: de-prefer footways/sidewalks vs the carriageway in town and make quiet
+         *      streets cheaper (gravel, trekking), so urban routes stop hugging the
+         *      pavement next to the road. Dedicated cycleways stay preferred.
+         * - 4: don't snap the route start/end onto sidewalks (noStartWay=footway,sidewalk)
+         *      so the route starts on the carriageway instead of a pavement+crossing
+         *      detour (gravel, trekking).
          */
-        private const val PROFILES_VERSION = "2"
+        private const val PROFILES_VERSION = "4"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
+
+        // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
+        /** First segment vs destination-direction difference that counts as a start U-turn. */
+        private const val REVERSAL_MIN_ANGLE_DEG = 110.0
     }
 
+
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Runs one BRouter calculation from [from] to [to] with an optional
+     * [startDir] (compass degrees) hint. Fresh waypoint nodes are created per call
+     * because BRouter mutates their matching state, so they must not be reused
+     * across the two passes. Returns the decoded route points.
+     */
+    private fun runBrouter(
+        profilePath: String,
+        from: GeoCoordinate,
+        to: GeoCoordinate,
+        startDir: Int?
+    ): List<RoutePoint> {
+        val rc = RoutingContext().apply {
+            localFunction = profilePath          // path to .brf WITHOUT extension
+            if (startDir != null) {
+                startDirection = startDir
+                forceUseStartDirection = true
+            }
+        }
+        val engine = RoutingEngine(
+            /* baseUrl     = */ null,
+            /* outfileBase = */ null,
+            /* segmentDir  = */ segmentsDir,
+            /* waypoints   = */ listOf(
+                osmNodeNamed("from", from.longitude, from.latitude),
+                osmNodeNamed("to",   to.longitude,   to.latitude)
+            ),
+            /* rc          = */ rc
+        )
+        engine.doRun(0L)
+
+        val track = engine.foundTrack
+        if (BuildConfig.DEBUG) Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
+        if (track == null) throw NoRouteFoundException()
+        if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
+
+
+        return track.nodes.map { node ->
+            RoutePoint(
+                latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
+                longitude = node.getCoordField("ilon") / 1_000_000.0 - 180.0,
+                elevationMeters = node.getElevMetersOrNull()
+            )
+        }
+    }
+
+    /**
+     * Detects a hairpin/U-turn at the very start of [points] and returns the
+     * direction (compass degrees) to feed back as a `startDirection` hint, or
+     * `null` when the start is already clean.
+     *
+     * The reference for "forward" is the straight-line bearing from the start to
+     * the **destination** [to] — robust regardless of how long the spurious
+     * out-and-back spur is (an earlier attempt sampled a fixed distance ahead and
+     * missed spurs longer than that). A first segment heading more than
+     * [REVERSAL_MIN_ANGLE_DEG] away from the destination is the unmistakable signal
+     * BRouter opened the route by turning around. The hint is only a finite turn
+     * penalty, so a genuinely required backtrack (one-way, cul-de-sac) is still
+     * routed correctly — it just discourages a needless reversal.
+     */
+    private fun startUTurnForwardDir(points: List<RoutePoint>, to: GeoCoordinate): Int? {
+        if (points.size < 2) return null
+        val origin = points.first()
+        val firstBearing = GeoMath.bearingDegrees(
+            origin.latitude, origin.longitude, points[1].latitude, points[1].longitude
+        )
+        val destBearing = GeoMath.bearingDegrees(
+            origin.latitude, origin.longitude, to.latitude, to.longitude
+        )
+        if (GeoMath.angularDistance(firstBearing, destBearing) < REVERSAL_MIN_ANGLE_DEG) {
+            return null
+        }
+        return ((destBearing.toInt() % 360) + 360) % 360
+    }
 
     /**
      * Copies `.brf` profile files and `lookups.dat` from app assets to
@@ -230,6 +309,7 @@ class BRouterEngine(
             null
         }
     }
+
 
     /**
      * Calculates total great-circle distance along [points] using the

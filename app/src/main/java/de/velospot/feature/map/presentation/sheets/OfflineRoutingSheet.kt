@@ -29,6 +29,7 @@ import de.velospot.data.brouter.BRouterProfile
 @Composable
 fun OfflineRoutingSetupSheet(
     onConfirm: () -> Unit,
+    onConfirmFull: () -> Unit,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -120,7 +121,16 @@ fun OfflineRoutingSetupSheet(
             ) {
                 Icon(Icons.Default.Download, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(text = stringResource(R.string.offline_routing_confirm))
+                Text(text = stringResource(R.string.offline_routing_confirm_region))
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onConfirmFull,
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Icon(Icons.Default.Download, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(text = stringResource(R.string.offline_routing_confirm_full))
             }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(

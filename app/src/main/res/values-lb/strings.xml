@@ -56,6 +56,8 @@
     <string name="wifi_warning_message">Du bass net mat W-Lan verbonnen. De Download ass ca. 200–250 MB a benotzt mobill Daten. Trotzdem eroflueden?</string>
     <string name="wifi_warning_confirm">Trotzdem eroflueden</string>
     <string name="offline_routing_confirm">Elo eroflueden</string>
+    <string name="offline_routing_confirm_region">Meng Regioun eroflueden (~250 MB)</string>
+    <string name="offline_routing_confirm_full">Ganz Däitschland, Frankräich a Lëtzebuerg eroflueden (~2,5 GB)</string>
     <string name="offline_routing_disable">Offline Navigatioun deaktivéieren</string>
     <string name="offline_routing_downloading_title">Kaartdaten ginn erofgelueden…</string>
     <string name="offline_routing_file_of">Fichier %1$d vun %2$d</string>

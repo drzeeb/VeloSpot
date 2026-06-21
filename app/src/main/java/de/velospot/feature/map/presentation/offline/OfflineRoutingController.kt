@@ -45,6 +45,12 @@ class OfflineRoutingController(
     private val _showWifiWarning = MutableStateFlow(false)
     val showWifiWarning: StateFlow<Boolean> = _showWifiWarning.asStateFlow()
 
+    /**
+     * Which area the pending download covers. Remembered across the (optional)
+     * Wi-Fi warning so confirming on mobile data resumes the right download.
+     */
+    private var pendingFullDownload = false
+
     fun requestSetup()        { _showSetupSheet.value = true }
     fun dismissSetupSheet()   { _showSetupSheet.value = false }
     fun openProfileSheet()    { _showProfileSheet.value = true }
@@ -53,31 +59,40 @@ class OfflineRoutingController(
 
     fun confirmDownloadOnMobileData() {
         _showWifiWarning.value = false
-        startDownload()
+        startDownload(full = pendingFullDownload)
     }
 
     /**
-     * Confirms the setup sheet. Shows a Wi-Fi warning when the device is on
-     * metered data, otherwise starts the download immediately.
+     * Confirms the setup sheet. [full] selects between the small single-tile
+     * download for the current region and the complete DE/FR/LU download.
+     * Shows a Wi-Fi warning when the device is on metered data, otherwise starts
+     * the download immediately.
      */
-    fun confirmSetup() {
+    fun confirmSetup(full: Boolean = false) {
         _showSetupSheet.value = false
+        pendingFullDownload = full
         if (!isWifiConnected(context)) {
             _showWifiWarning.value = true
             return
         }
-        startDownload()
+        startDownload(full = full)
     }
 
-    private fun startDownload() {
-        val loc = currentLocation() ?: GeoCoordinate(DEFAULT_LAT, DEFAULT_LON)
+    private fun startDownload(full: Boolean) {
+        // "My region" is bound to the rider's actual position: without a GPS fix we
+        // can't know which tile to fetch, so abort instead of silently downloading
+        // some default region. The full DE/FR/LU download needs no location.
+        val loc = currentLocation()
+        if (!full && loc == null) {
+            _uiState.value = OfflineRoutingUiState.Disabled
+            onDownloadError(MapError.LocationUnavailable)
+            return
+        }
         _uiState.value = OfflineRoutingUiState.Downloading()
         scope.launch {
             runCatching {
-                segmentManager.downloadSegmentsForLocation(
-                    lat = loc.latitude,
-                    lon = loc.longitude,
-                    onProgress = { downloaded, total, fileIndex, totalFiles, fileName ->
+                val onProgress: (Long, Long, Int, Int, String) -> Unit =
+                    { downloaded, total, fileIndex, totalFiles, fileName ->
                         val progress = if (total > 0L) downloaded / total.toFloat() else -1f
                         _uiState.value = OfflineRoutingUiState.Downloading(
                             fileProgress      = progress,
@@ -88,7 +103,15 @@ class OfflineRoutingController(
                             currentFile       = fileName
                         )
                     }
-                )
+                if (full) {
+                    segmentManager.downloadCountrySegments(onProgress = onProgress)
+                } else {
+                    segmentManager.downloadSegmentsForLocation(
+                        lat = loc!!.latitude,
+                        lon = loc.longitude,
+                        onProgress = onProgress
+                    )
+                }
             }.onSuccess {
                 val profile = OfflineRoutingPreferences.getSelectedProfile(context)
                 OfflineRoutingPreferences.setOfflineRoutingEnabled(context, true)
@@ -131,10 +154,6 @@ class OfflineRoutingController(
     companion object {
         /** How long the "download complete" state lingers before switching to Enabled. */
         private const val DOWNLOAD_COMPLETE_DISPLAY_MS = 2_500L
-
-        // Default download centre used when no GPS fix is available yet.
-        private const val DEFAULT_LAT = 49.7596
-        private const val DEFAULT_LON = 6.6441
     }
 }
 

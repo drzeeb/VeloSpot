@@ -154,8 +154,9 @@ internal fun MapBottomSheets(
 
     if (showOfflineSetupSheet) {
         OfflineRoutingSetupSheet(
-            onConfirm = viewModel::confirmOfflineRoutingSetup,
-            onDismiss = viewModel::dismissOfflineSetupSheet
+            onConfirm     = viewModel::confirmOfflineRoutingSetup,
+            onConfirmFull = viewModel::confirmOfflineRoutingFullSetup,
+            onDismiss     = viewModel::dismissOfflineSetupSheet
         )
     }
 

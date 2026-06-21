@@ -835,7 +835,8 @@ class MapViewModel @Inject constructor(
 
     fun dismissWifiWarning()          = offlineRouting.dismissWifiWarning()
     fun confirmDownloadOnMobileData() = offlineRouting.confirmDownloadOnMobileData()
-    fun confirmOfflineRoutingSetup()  = offlineRouting.confirmSetup()
+    fun confirmOfflineRoutingSetup()  = offlineRouting.confirmSetup(full = false)
+    fun confirmOfflineRoutingFullSetup() = offlineRouting.confirmSetup(full = true)
 
     /**
      * Switches the active routing profile. Persisting + state live in the offline

@@ -56,6 +56,8 @@
     <string name="wifi_warning_message">Du bist nicht mit WLAN verbunden. Der Download ist ca. 200–250 MB und verbraucht mobile Daten. Trotzdem herunterladen?</string>
     <string name="wifi_warning_confirm">Trotzdem herunterladen</string>
     <string name="offline_routing_confirm">Jetzt herunterladen</string>
+    <string name="offline_routing_confirm_region">Meine Region herunterladen (~250 MB)</string>
+    <string name="offline_routing_confirm_full">Ganz Deutschland, Frankreich &amp; Luxemburg laden (~2,5 GB)</string>
     <string name="offline_routing_disable">Offline Navigation deaktivieren</string>
     <string name="offline_routing_downloading_title">Kartendaten werden heruntergeladen…</string>
     <string name="offline_routing_file_of">Datei %1$d von %2$d</string>
