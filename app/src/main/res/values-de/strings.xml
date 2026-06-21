@@ -104,6 +104,8 @@
     <string name="custom_pin_subtitle">Tippe auf die Karte, um den Pin zu verschieben.</string>
     <string name="custom_pin_navigate">Hierhin navigieren</string>
     <string name="custom_pin_remove">Pin entfernen</string>
+    <string name="custom_pin_share">Standort teilen</string>
+    <string name="share_location_chooser_title">Standort teilen über</string>
 
     <!-- Gespeicherte Orte (manuell gesetzte Pins als benannte Favoriten) -->
     <string name="save_place_as_favorite">Als Favorit speichern</string>

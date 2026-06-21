@@ -128,6 +128,8 @@
     <string name="custom_pin_subtitle">Tocca la mappa per spostare il segnaposto.</string>
     <string name="custom_pin_navigate">Naviga qui</string>
     <string name="custom_pin_remove">Rimuovi segnaposto</string>
+    <string name="custom_pin_share">Condividi posizione</string>
+    <string name="share_location_chooser_title">Condividi posizione tramite</string>
 
     <!-- Error messages -->
     <string name="error_network_unavailable">Impossibile caricare i parcheggi. Controlla la connessione.</string>

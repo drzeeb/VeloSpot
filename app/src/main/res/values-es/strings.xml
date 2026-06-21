@@ -177,6 +177,8 @@
     <string name="custom_pin_subtitle">Toca el mapa para mover el marcador.</string>
     <string name="custom_pin_navigate">Navegar aquí</string>
     <string name="custom_pin_remove">Quitar marcador</string>
+    <string name="custom_pin_share">Compartir ubicación</string>
+    <string name="share_location_chooser_title">Compartir ubicación con</string>
     <!-- Ride tracking ("Mis rutas") -->
     <string name="menu_my_rides">Mis rutas</string>
     <string name="rides_title">Mis rutas</string>

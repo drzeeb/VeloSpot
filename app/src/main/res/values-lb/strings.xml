@@ -134,6 +134,8 @@
     <string name="custom_pin_subtitle">Tipp op d\'Kaart, fir de Pin ze réckelen.</string>
     <string name="custom_pin_navigate">Hei hin navigéieren</string>
     <string name="custom_pin_remove">Pin ewechhuelen</string>
+    <string name="custom_pin_share">Standuert deelen</string>
+    <string name="share_location_chooser_title">Standuert deelen iwwer</string>
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Velo hei parken</string>
     <string name="menu_show_parked_bike">Mäi gepaarkte Velo</string>

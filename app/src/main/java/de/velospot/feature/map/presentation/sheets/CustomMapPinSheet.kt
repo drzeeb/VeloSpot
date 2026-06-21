@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,6 +54,7 @@ internal fun CustomMapPinSheet(
     onNavigate: () -> Unit,
     onRemove: () -> Unit,
     onSaveAsFavorite: () -> Unit,
+    onShare: (() -> Unit)? = null,
     onParkBikeHere: (() -> Unit)? = null,
     title: String = stringResource(R.string.custom_pin_title),
     subtitle: String? = stringResource(R.string.custom_pin_subtitle)
@@ -148,6 +150,17 @@ internal fun CustomMapPinSheet(
                     text     = stringResource(R.string.parked_bike_park_here),
                     icon     = Icons.AutoMirrored.Filled.DirectionsBike,
                     onClick  = park,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // ── Share location ───────────────────────────────────────────────
+            onShare?.let { share ->
+                Spacer(Modifier.height(8.dp))
+                SecondaryActionButton(
+                    text     = stringResource(R.string.custom_pin_share),
+                    icon     = Icons.Default.Share,
+                    onClick  = share,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

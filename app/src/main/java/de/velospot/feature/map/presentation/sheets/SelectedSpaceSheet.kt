@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Garage
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -47,7 +48,8 @@ fun SelectedSpaceSheet(
     onDismiss: () -> Unit,
     onNavigate: NavigationHandler,
     isFavorite: Boolean = false,
-    onToggleFavorite: (String) -> Unit = {}
+    onToggleFavorite: (String) -> Unit = {},
+    onShare: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -61,6 +63,7 @@ fun SelectedSpaceSheet(
             isFavorite = isFavorite,
             onToggleFavorite = onToggleFavorite,
             onDismiss = onDismiss,
+            onShare = onShare,
             modifier = Modifier.navigationBarsPadding()
         )
     }
@@ -73,6 +76,7 @@ private fun SheetContent(
     isFavorite: Boolean = false,
     onToggleFavorite: (String) -> Unit = {},
     onDismiss: () -> Unit = {},
+    onShare: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -142,6 +146,17 @@ private fun SheetContent(
             onClick = { onToggleFavorite(space.id) },
             modifier = Modifier.fillMaxWidth()
         )
+
+        // --- Share location ----------------------------------------------------
+        onShare?.let { share ->
+            Spacer(modifier = Modifier.height(8.dp))
+            SecondaryActionButton(
+                text = stringResource(id = R.string.custom_pin_share),
+                icon = Icons.Default.Share,
+                onClick = share,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
