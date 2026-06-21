@@ -5,6 +5,7 @@ import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillExtrusionLayer
+import org.maplibre.android.style.layers.HeatmapLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
@@ -22,7 +23,7 @@ import org.maplibre.geojson.Point
  * `MarkerIconFactory.kt`; stateâ†’feature orchestration in `MapMarkerRenderer.kt`.
  */
 
-// â”€â”€ Source / Layer IDs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Source / Layer IDs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 internal const val SOURCE_ROUTE      = "velospot-route-source"
 internal const val SOURCE_PARKING    = "velospot-parking-source"
@@ -38,6 +39,9 @@ internal const val SOURCE_ROUTE_TRAVELED = "velospot-route-traveled-source"
 
 /** Geometry of the live recorded ride track (or a reopened ride's track). */
 internal const val SOURCE_TRACK = "velospot-track-source"
+
+/** Aggregated weighted points of all recorded rides, feeding the heatmap overlay. */
+internal const val SOURCE_HEATMAP = "velospot-heatmap-source"
 
 internal const val LAYER_ROUTE      = "velospot-route-layer"
 internal const val LAYER_PARKING    = "velospot-parking-layer"
@@ -55,6 +59,12 @@ internal const val LAYER_ROUTE_TRAVELED = "velospot-route-traveled-layer"
 
 /** Recorded ride track (live recording or a reopened ride). */
 internal const val LAYER_TRACK = "velospot-track-layer"
+
+/** Heatmap of all recorded-ride GPS tracks (where you ride most). */
+internal const val LAYER_HEATMAP = "velospot-heatmap-layer"
+
+/** Feature property carrying a [0..1] heat weight for the heatmap points. */
+internal const val PROP_HEAT_WEIGHT = "weight"
 
 /** 3D building extrusion layer (added on top of the vector style's flat buildings). */
 internal const val LAYER_BUILDINGS_3D = "velospot-buildings-3d-layer"
@@ -113,7 +123,7 @@ internal const val IMG_MUTED_SELECTED = "vs-marker-muted-selected"
 internal const val IMG_LOCATION       = "vs-location"
 internal const val IMG_LOCATION_NAV   = "vs-location-nav"
 
-// â”€â”€ GeoJSON source upsert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ GeoJSON source upsert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 internal fun upsertSource(style: Style, id: String, data: FeatureCollection) {
     (style.getSource(id) as? GeoJsonSource)?.setGeoJson(data)
@@ -400,7 +410,84 @@ internal fun updateTrackLayer(style: Style, points: List<Pair<Double, Double>>, 
     }
 }
 
-// â”€â”€ Icon registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/**
+ * Idempotently registers and updates the recorded-ride **heatmap** overlay from a
+ * set of pre-aggregated, weighted [cells] (lat, lon, intensity in `0..1`). Each
+ * cell becomes a heatmap point carrying its weight via [PROP_HEAT_WEIGHT].
+ *
+ * The layer is inserted beneath the parking markers so pins stay tappable on top,
+ * and is shown/hidden via [visible] (also hidden when there are no cells, e.g. no
+ * rides recorded yet). Pass an empty list / `visible = false` to clear it.
+ */
+internal fun updateHeatmapLayer(
+    style: Style,
+    cells: List<Triple<Double, Double, Double>>,
+    visible: Boolean
+) {
+    val show = visible && cells.isNotEmpty()
+    val data = if (show) {
+        FeatureCollection.fromFeatures(
+            cells.map { (lat, lon, weight) ->
+                Feature.fromGeometry(Point.fromLngLat(lon, lat)).apply {
+                    addNumberProperty(PROP_HEAT_WEIGHT, weight)
+                }
+            }
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    upsertSource(style, SOURCE_HEATMAP, data)
+
+    if (style.getLayer(LAYER_HEATMAP) == null) {
+        val layer = HeatmapLayer(LAYER_HEATMAP, SOURCE_HEATMAP).withProperties(
+            // Per-point weight straight from the aggregated cell intensity (0..1).
+            PropertyFactory.heatmapWeight(
+                Expression.interpolate(
+                    Expression.linear(), Expression.get(PROP_HEAT_WEIGHT),
+                    Expression.stop(0.0, 0.1),
+                    Expression.stop(1.0, 1.0)
+                )
+            ),
+            // Grow the overall heat as you zoom in so streets read clearly.
+            PropertyFactory.heatmapIntensity(
+                Expression.interpolate(
+                    Expression.linear(), Expression.zoom(),
+                    Expression.stop(8, 0.6),
+                    Expression.stop(16, 2.2)
+                )
+            ),
+            // Cool → warm ramp, transparent at zero so the base map shows through.
+            PropertyFactory.heatmapColor(
+                Expression.interpolate(
+                    Expression.linear(), Expression.heatmapDensity(),
+                    Expression.stop(0.0, Expression.rgba(0, 0, 0, 0)),
+                    Expression.stop(0.2, Expression.rgba(0, 137, 255, 0.5)),
+                    Expression.stop(0.4, Expression.rgba(0, 230, 161, 0.7)),
+                    Expression.stop(0.6, Expression.rgba(255, 221, 0, 0.8)),
+                    Expression.stop(0.8, Expression.rgba(255, 138, 0, 0.9)),
+                    Expression.stop(1.0, Expression.rgba(255, 40, 40, 0.95))
+                )
+            ),
+            // Radius grows with zoom so cells blend into continuous lines up close.
+            PropertyFactory.heatmapRadius(
+                Expression.interpolate(
+                    Expression.linear(), Expression.zoom(),
+                    Expression.stop(8, 8f),
+                    Expression.stop(14, 18f),
+                    Expression.stop(17, 30f)
+                )
+            ),
+            PropertyFactory.heatmapOpacity(0.75f)
+        )
+        if (style.getLayer(LAYER_PARKING) != null) style.addLayerBelow(layer, LAYER_PARKING)
+        else style.addLayer(layer)
+    }
+    style.getLayer(LAYER_HEATMAP)?.setProperties(
+        PropertyFactory.visibility(if (show) Property.VISIBLE else Property.NONE)
+    )
+}
+
+// ── Icon registration ──────────────────────────────────────────────────────
 
 internal fun registerIcons(style: Style, icons: MarkerIconSet) {
     // These pin icons are zoom-bucket dependent (their pixel size scales with the
@@ -424,4 +511,3 @@ internal fun registerIcons(style: Style, icons: MarkerIconSet) {
     // and intentionally NOT registered here so it is never clobbered.
     style.addImage(IMG_LOCATION, drawableToBitmap(icons.location))
 }
-

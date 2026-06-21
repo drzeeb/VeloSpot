@@ -186,6 +186,8 @@
     <string name="layers_favorites_desc">Tus aparcamientos favoritos</string>
     <string name="layers_saved_title">Lugares guardados</string>
     <string name="layers_saved_desc">Tus marcadores guardados</string>
+    <string name="layers_heatmap_title">Mapa de calor de rutas</string>
+    <string name="layers_heatmap_desc">Por dónde circulas más, según tus rutas grabadas</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Ubicación personalizada</string>
     <string name="custom_pin_subtitle">Toca el mapa para mover el marcador.</string>

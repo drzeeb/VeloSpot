@@ -50,9 +50,13 @@ import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
 import de.velospot.feature.map.presentation.markers.createMutedMarkerIcon
 import de.velospot.feature.map.presentation.markers.defaultMarkerStyleConfig
 import de.velospot.feature.map.presentation.markers.updateMarkers
+import de.velospot.feature.map.presentation.markers.updateHeatmapLayer
+import de.velospot.core.map.RideHeatmap
 import de.velospot.feature.map.presentation.sheets.MapBottomSheets
 import de.velospot.feature.map.presentation.sheets.languageFlagForCode
 import de.velospot.feature.map.presentation.sheets.resolveCurrentLanguageCode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -93,6 +97,7 @@ fun MainMapScreen(
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
+    val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
     val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
@@ -325,6 +330,22 @@ fun MainMapScreen(
                     minimalNavMode = activeNavigation != null
                 )
         }
+    }
+
+    // ── Recorded-ride heatmap overlay ─────────────────────────────────────────
+    // Aggregate all recorded tracks into weighted cells (off the main thread) and
+    // (re)draw the heatmap layer whenever the rides change, the layer is toggled,
+    // or the style reloads. Hidden (and skipped) while the layer is off.
+    LaunchedEffect(maplibreMap, styleVersion, recordedRides, layerVisibility.showHeatmap) {
+        val style = maplibreMap?.style ?: return@LaunchedEffect
+        if (!layerVisibility.showHeatmap) {
+            updateHeatmapLayer(style, emptyList(), visible = false)
+            return@LaunchedEffect
+        }
+        val cells = withContext(Dispatchers.Default) {
+            RideHeatmap.build(recordedRides).map { Triple(it.latitude, it.longitude, it.intensity) }
+        }
+        updateHeatmapLayer(style, cells, visible = true)
     }
 
     // ── 3D navigation: bind manager + start/stop with the active route ────────

@@ -130,6 +130,8 @@
     <string name="layers_favorites_desc">Deng favoriséiert Plazen</string>
     <string name="layers_saved_title">Gespäichert Äerter</string>
     <string name="layers_saved_desc">Deng gespäichert Pinnen</string>
+    <string name="layers_heatmap_title">Tour-Heatmap</string>
+    <string name="layers_heatmap_desc">Wou s du am meeschte fiers – aus dengen opgeholl Touren</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Markéierten Uert</string>
     <string name="custom_pin_subtitle">Tipp op d\'Kaart, fir de Pin ze réckelen.</string>
