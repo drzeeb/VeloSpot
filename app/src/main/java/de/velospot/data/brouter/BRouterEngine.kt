@@ -1,5 +1,6 @@
 package de.velospot.data.brouter
 
+import android.app.ActivityManager
 import android.content.Context
 import android.util.Log
 import btools.router.OsmNodeNamed
@@ -56,6 +57,20 @@ class BRouterEngine(
      */
     private val profilesDir: File = File(context.filesDir, "brouter/profiles")
 
+    /**
+     * Size (MB) of BRouter's in-memory segment node cache (`RoutingContext.memoryclass`).
+     * BRouter defaults to a conservative 64 MB; on long routes that span more decoded
+     * segment data than fits, the cache thrashes (evict → re-read → re-decode from disk),
+     * which dominates the runtime. We raise it to a device-aware value (≈ half the app's
+     * heap budget, clamped), so long routes stop reloading segments — the single biggest
+     * win for 100 km+ trips — while staying clear of OOM on low-end devices.
+     */
+    private val nodesCacheMemoryMb: Int by lazy {
+        val heapMb = (context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)
+            ?.memoryClass ?: DEFAULT_MEMORY_CLASS_MB
+        (heapMb / 2).coerceIn(MIN_MEMORY_CLASS_MB, MAX_MEMORY_CLASS_MB)
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
@@ -99,7 +114,11 @@ class BRouterEngine(
             // reversal, recompute once telling BRouter the route's own forward
             // direction. BRouter then drops the spur itself — the geometry stays real
             // on-road (we never edit the path), unlike a post-hoc trim.
-            if (gpsStartDir == null) {
+            //
+            // Skip this on long routes: the second pass recomputes the *entire* route,
+            // which is very expensive on 100 km+ trips, while the start spur is
+            // negligible relative to the total distance — not worth doubling the work.
+            if (gpsStartDir == null && haversineDistanceMeters(points) <= START_UTURN_MAX_ROUTE_M) {
                 startUTurnForwardDir(points, to)?.let { forwardDir ->
                     points = runBrouter(profilePath, from, to, forwardDir)
                 }
@@ -144,6 +163,7 @@ class BRouterEngine(
 
         val rc = RoutingContext().apply {
             localFunction = profilePath
+            memoryclass = nodesCacheMemoryMb
             roundTripDistance = searchRadius
             roundTripPoints = ROUND_TRIP_POINTS
             if (directionDeg != null) {
@@ -187,6 +207,18 @@ class BRouterEngine(
         /** First segment vs destination-direction difference that counts as a start U-turn. */
         private const val REVERSAL_MIN_ANGLE_DEG = 110.0
 
+        /**
+         * Above this route length the start-U-turn fix is skipped: its second pass
+         * recomputes the whole route (expensive on long trips) to remove a spur that's
+         * negligible at this scale.
+         */
+        private const val START_UTURN_MAX_ROUTE_M = 30_000.0
+
+        // ── Node-cache sizing (RoutingContext.memoryclass, see nodesCacheMemoryMb) ──
+        private const val DEFAULT_MEMORY_CLASS_MB = 64
+        private const val MIN_MEMORY_CLASS_MB = 96
+        private const val MAX_MEMORY_CLASS_MB = 256
+
         // ── Round-trip generation (see calculateRoundTrip) ────────────────────
         /** Approximate ratio of looped trip length to BRouter's search radius. */
         private const val ROUND_TRIP_LENGTH_TO_RADIUS = 3.0
@@ -213,6 +245,7 @@ class BRouterEngine(
     ): List<RoutePoint> {
         val rc = RoutingContext().apply {
             localFunction = profilePath          // path to .brf WITHOUT extension
+            memoryclass = nodesCacheMemoryMb     // bigger node cache → fewer disk reloads
             if (startDir != null) {
                 startDirection = startDir
                 forceUseStartDirection = true
