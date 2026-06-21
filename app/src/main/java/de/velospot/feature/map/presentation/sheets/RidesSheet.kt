@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.domain.model.RecordedRide
+import de.velospot.feature.map.presentation.ride.RideStatisticsSection
+import de.velospot.feature.map.presentation.ride.computeRideStatistics
 import java.text.DateFormat
 import java.util.Date
 
@@ -49,6 +51,7 @@ internal fun RidesSheet(
 ) {
     val sheetState = rememberModalBottomSheetState()
     val dateFormat = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT) }
+    val statistics = remember(rides) { computeRideStatistics(rides) }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -91,6 +94,9 @@ internal fun RidesSheet(
                     modifier = Modifier.heightIn(max = 460.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    item(key = "ride-statistics") {
+                        RideStatisticsSection(stats = statistics)
+                    }
                     items(rides, key = { it.id }) { ride ->
                         RideListItem(
                             ride = ride,
