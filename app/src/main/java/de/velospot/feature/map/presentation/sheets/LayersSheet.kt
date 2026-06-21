@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,6 +42,7 @@ import de.velospot.core.map.MapLayerCategory
 private val ParkingColor = Color(0xFF1565C0)
 private val FavoriteColor = Color(0xFFD32F2F)
 private val SavedColor = Color(0xFF2E7D32)
+private val HeatmapColor = Color(0xFFE65100)
 
 /**
  * Bottom sheet to toggle which pin categories ("layers") are shown on the map.
@@ -104,6 +106,15 @@ internal fun LayersSheet(
                 checked = visibility.showSavedPlaces,
                 onCheckedChange = { onToggle(MapLayerCategory.SAVED_PLACES, it) }
             )
+            Spacer(modifier = Modifier.height(12.dp))
+            LayerToggleCard(
+                icon = Icons.Default.LocalFireDepartment,
+                accent = HeatmapColor,
+                title = stringResource(id = R.string.layers_heatmap_title),
+                description = stringResource(id = R.string.layers_heatmap_desc),
+                checked = visibility.showHeatmap,
+                onCheckedChange = { onToggle(MapLayerCategory.HEATMAP, it) }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -166,4 +177,3 @@ private fun LayerToggleCard(
         }
     }
 }
-

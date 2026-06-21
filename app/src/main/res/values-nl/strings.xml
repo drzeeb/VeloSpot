@@ -130,6 +130,8 @@
     <string name="layers_favorites_desc">Je favoriete stallingen</string>
     <string name="layers_saved_title">Opgeslagen plekken</string>
     <string name="layers_saved_desc">Je opgeslagen pins</string>
+    <string name="layers_heatmap_title">Rit-heatmap</string>
+    <string name="layers_heatmap_desc">Waar je het meest rijdt, op basis van je opgenomen ritten</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Aangepaste locatie</string>
     <string name="custom_pin_subtitle">Tik op de kaart om de speld te verplaatsen.</string>

@@ -164,6 +164,8 @@
     <string name="layers_favorites_desc">Your favourited parking spots</string>
     <string name="layers_saved_title">Saved places</string>
     <string name="layers_saved_desc">Your saved custom pins</string>
+    <string name="layers_heatmap_title">Ride heatmap</string>
+    <string name="layers_heatmap_desc">Where you ride most, from your recorded rides</string>
 
     <string name="language_sheet_title">Choose language</string>
 

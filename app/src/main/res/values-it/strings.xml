@@ -123,6 +123,8 @@
     <string name="layers_favorites_desc">I tuoi parcheggi preferiti</string>
     <string name="layers_saved_title">Luoghi salvati</string>
     <string name="layers_saved_desc">I tuoi segnaposto salvati</string>
+    <string name="layers_heatmap_title">Mappa di calore dei percorsi</string>
+    <string name="layers_heatmap_desc">Dove pedali di più, dai tuoi percorsi registrati</string>
 
     <!-- Custom map pin -->
     <string name="custom_pin_title">Posizione personalizzata</string>
