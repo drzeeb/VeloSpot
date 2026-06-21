@@ -561,7 +561,12 @@ fun MainMapScreen(
             onClick       = viewModel::recenterOnUserLocation
         )
 
-        MyLocationFab(onClick = requestOrUseLocation)
+        // My-location button — hidden during a follow session (active navigation
+        // or a ride recording): it's a no-op then, and the dedicated re-centre &
+        // follow button takes over once the rider pans the map away.
+        if (!isFollowSession) {
+            MyLocationFab(onClick = requestOrUseLocation)
+        }
     }
 
     // ── Bottom sheets & dialogs ───────────────────────────────────────────────
