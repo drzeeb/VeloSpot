@@ -87,7 +87,8 @@ class BRouterEngine(
     suspend fun calculateRoute(
         from: GeoCoordinate,
         to: GeoCoordinate,
-        profile: BRouterProfile = BRouterProfile.TREKKING
+        profile: BRouterProfile = BRouterProfile.TREKKING,
+        elevation: ElevationPreference = ElevationPreference.DEFAULT
     ): BikeRoute = withContext(Dispatchers.Default) {
         ensureProfiles()
 
@@ -111,7 +112,7 @@ class BRouterEngine(
             // (BRouter otherwise connects the start to the nearest network node, which
             // can sit *behind* the rider, and routes out-and-back).
             val gpsStartDir: Int? = from.bearing?.let { ((it.toInt() % 360) + 360) % 360 }
-            var points = runBrouter(profilePath, from, to, gpsStartDir)
+            var points = runBrouter(profilePath, from, to, gpsStartDir, elevation)
 
             // Standstill start (no GPS heading): if the route still opens with a
             // reversal, recompute once telling BRouter the route's own forward
@@ -123,7 +124,17 @@ class BRouterEngine(
             // negligible relative to the total distance — not worth doubling the work.
             if (gpsStartDir == null && haversineDistanceMeters(points) <= START_UTURN_MAX_ROUTE_M) {
                 startUTurnForwardDir(points, to)?.let { forwardDir ->
-                    points = runBrouter(profilePath, from, to, forwardDir)
+                    // The second pass forces a start direction, which BRouter may not be
+                    // able to satisfy (one-way nets, dead-ends). If it can't find a route
+                    // it returns an empty/absent track — don't let that discard the valid
+                    // first-pass result and fail the whole request ("route data
+                    // incomplete"); only adopt the recomputed route when it succeeded.
+                    runCatching { runBrouter(profilePath, from, to, forwardDir, elevation) }
+                        .onSuccess { recomputed -> if (recomputed.isNotEmpty()) points = recomputed }
+                        .onFailure { e ->
+                            if (e is CancellationException) throw e
+                            Log.w(TAG, "Start-U-turn second pass failed; keeping first-pass route", e)
+                        }
                 }
             }
 
@@ -154,7 +165,8 @@ class BRouterEngine(
         start: GeoCoordinate,
         targetDistanceMeters: Double,
         profile: BRouterProfile = BRouterProfile.TREKKING,
-        directionDeg: Int? = null
+        directionDeg: Int? = null,
+        elevation: ElevationPreference = ElevationPreference.DEFAULT
     ): BikeRoute = withContext(Dispatchers.Default) {
         ensureProfiles()
         val profilePath = profilePathFor(profile)
@@ -170,9 +182,16 @@ class BRouterEngine(
             memoryclass = nodesCacheMemoryMb
             roundTripDistance = searchRadius
             roundTripPoints = ROUND_TRIP_POINTS
-            if (directionDeg != null) {
-                startDirection = ((directionDeg % 360) + 360) % 360
-            }
+            keyValues = elevationKeyValues(elevation)
+            // Always hand BRouter a concrete start heading. When the caller doesn't pick
+            // one we choose a random direction ourselves rather than leaving it null:
+            // a null startDirection makes doRoundTrip() derive a heading via
+            // getRandomDirectionFromData(), which — for profiles that enable
+            // consider_elevation/forest/river (trekking, fastbike, mtb) — reads area-info
+            // data and parses a `dummy.brf` we don't bundle, so the loop silently
+            // produces no route ("route data incomplete"). Passing a direction skips that
+            // path entirely, so round trips work for every profile.
+            startDirection = (((directionDeg ?: (0 until 360).random()) % 360) + 360) % 360
         }
         val engine = RoutingEngine(
             /* baseUrl     = */ null,
@@ -203,8 +222,20 @@ class BRouterEngine(
          * - 4: don't snap the route start/end onto sidewalks (noStartWay=footway,sidewalk)
          *      so the route starts on the carriageway instead of a pavement+crossing
          *      detour (gravel, trekking).
+         * - 5: expose a uniform `uphill_extra` parameter across all profiles, added to
+         *      the final uphill cost so the "route hilliness" slider can favour flatter
+         *      routes (default 0 = unchanged).
+         * - 6: extend the start-on-carriageway guard (`check_start_way` +
+         *      `noStartWay=footway,sidewalk`) to the remaining profiles (fastbike, mtb,
+         *      shortest) so no profile opens the route on a sidewalk.
+         * - 7: penalise cycling a `footway=sidewalk` (even when bicycle=yes) in trekking
+         *      and shortest so they stop hugging the pavement next to the carriageway,
+         *      matching gravel/fastbike/mtb.
+         * - 8: extend that sidewalk penalty to fastbike and mtb — the MTB profile
+         *      heavily penalises paved roads, so a sidewalk used to be cheaper than the
+         *      carriageway; a strong `footway=sidewalk` surcharge keeps both on the road.
          */
-        private const val PROFILES_VERSION = "4"
+        private const val PROFILES_VERSION = "8"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
 
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
@@ -242,6 +273,21 @@ class BRouterEngine(
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**
+     * Builds BRouter profile parameters ([RoutingContext.keyValues]) for the chosen
+     * [elevation] preference. Passes the `uphill_extra` parameter (added to every
+     * bundled profile) so flatter levels penalise climbs.
+     *
+     * The map is **always** returned — even for [ElevationPreference.ANY], where it
+     * carries `uphill_extra = 0`. Returning `null` for ANY used to send routing down a
+     * different BRouter code path (no key-values injection, a different profile-cache
+     * key) than the non-ANY case, which left some profiles (e.g. gravel) unable to
+     * produce a route on ANY while every other level worked. Sending a uniform map
+     * makes ANY behave exactly like the working levels, just with a zero penalty.
+     */
+    private fun elevationKeyValues(elevation: ElevationPreference): MutableMap<String, String> =
+        hashMapOf("uphill_extra" to elevation.uphillExtraCost.coerceAtLeast(0).toString())
+
+    /**
      * Runs one BRouter calculation from [from] to [to] with an optional
      * [startDir] (compass degrees) hint. Fresh waypoint nodes are created per call
      * because BRouter mutates their matching state, so they must not be reused
@@ -251,11 +297,13 @@ class BRouterEngine(
         profilePath: String,
         from: GeoCoordinate,
         to: GeoCoordinate,
-        startDir: Int?
+        startDir: Int?,
+        elevation: ElevationPreference
     ): List<RoutePoint> {
         val rc = RoutingContext().apply {
             localFunction = profilePath          // path to .brf WITHOUT extension
             memoryclass = nodesCacheMemoryMb     // bigger node cache → fewer disk reloads
+            keyValues = elevationKeyValues(elevation)
             if (startDir != null) {
                 startDirection = startDir
                 forceUseStartDirection = true
@@ -470,4 +518,3 @@ class BRouterEngine(
         return total
     }
 }
-

@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
@@ -20,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.data.brouter.BRouterProfile
+import de.velospot.data.brouter.ElevationPreference
+import kotlin.math.roundToInt
 
 /**
  * Bottom sheet shown when the user taps "Offline Navigation aktivieren".
@@ -166,6 +169,8 @@ private fun OfflineBenefitRow(text: String) {    Row(
 fun RoutingProfileSheet(
     currentProfile: BRouterProfile,
     onSelectProfile: (BRouterProfile) -> Unit,
+    currentElevation: ElevationPreference,
+    onSelectElevation: (ElevationPreference) -> Unit,
     onDismiss: () -> Unit,
     onDisableOfflineRouting: () -> Unit
 ) {
@@ -221,6 +226,12 @@ fun RoutingProfileSheet(
                 HorizontalDivider()
             }
 
+            // ── Route hilliness slider ───────────────────────────────────────
+            ElevationPreferenceSlider(
+                current = currentElevation,
+                onSelect = onSelectElevation
+            )
+
             Spacer(Modifier.height(12.dp))
             OutlinedButton(
                 onClick = { onDisableOfflineRouting(); onDismiss() },
@@ -235,6 +246,59 @@ fun RoutingProfileSheet(
             }
         }
     }
+}
+
+/**
+ * Discrete slider letting the rider choose how strongly route calculation should
+ * avoid climbing ([ElevationPreference]). The current level's label is shown above
+ * the slider; only affects offline (BRouter) routes.
+ */
+@Composable
+private fun ElevationPreferenceSlider(
+    current: ElevationPreference,
+    onSelect: (ElevationPreference) -> Unit
+) {
+    val levels = ElevationPreference.entries
+    Spacer(Modifier.height(16.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.elevation_slider_title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = stringResource(current.labelRes),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+    Slider(
+        value = current.ordinal.toFloat(),
+        onValueChange = { value ->
+            val index = value.roundToInt().coerceIn(0, levels.lastIndex)
+            if (levels[index] != current) onSelect(levels[index])
+        },
+        valueRange = 0f..levels.lastIndex.toFloat(),
+        steps = (levels.size - 2).coerceAtLeast(0)
+    )
+    Text(
+        text = stringResource(R.string.elevation_slider_subtitle),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Spacer(Modifier.height(4.dp))
+    HorizontalDivider()
 }
 
 /**

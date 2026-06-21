@@ -66,6 +66,15 @@
     <string name="offline_routing_success_subtitle">Le rotte ora vengono calcolate sul dispositivo – percorsi migliori, senza internet.</string>
     <string name="offline_routing_profile_title">Profilo di routing</string>
     <string name="offline_routing_profile_subtitle">Tocca per cambiare. Disattiva sotto per tornare al routing online.</string>
+
+    <!-- Cursore del dislivello (routing offline) -->
+    <string name="elevation_slider_title">Dislivello del percorso</string>
+    <string name="elevation_slider_subtitle">Quanto evitare le salite. Solo routing offline.</string>
+    <string name="elevation_level_any">Indifferente</string>
+    <string name="elevation_level_gentle">Un po’ più piatto</string>
+    <string name="elevation_level_moderate">Più piatto</string>
+    <string name="elevation_level_low">Poca salita</string>
+    <string name="elevation_level_flattest">Il più piatto</string>
     <string name="common_cancel">Annulla</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d min</string>

@@ -14,6 +14,12 @@
 
   assign   add_beeline            false  # %add_beeline% | Enable beeline on distant start/end points | boolean
 
+  # Don't snap the route start/end onto a sidewalk (Gehweg): cycling there is
+  # generally not allowed, and BRouter otherwise matches the start to the nearest
+  # way — often the sidewalk — opening the route with a pavement + crossing detour
+  # instead of just starting on the carriageway like the online router does.
+  assign   check_start_way        true   # %check_start_way% | Avoid snapping the start/end onto sidewalks | boolean | noStartWay=footway,sidewalk
+
   assign   iswet                  0 # 0 as default, *) flag for weather conditions
   assign   turnInstructionMode  = 1 # 0=none, 1=auto-choose, 2=locus-style, 3=osmand-style
   assign   cycleroutes_pref       0.2 # also CRP *)  costfactor penalty for not being cycleroute
@@ -41,6 +47,9 @@
   # with engine defaults, long parts of routing to via points may be removed
   assign correctMisplacedViaPoints = false # %correctMisplacedViaPoints% | Set to true to remove detours due to via points (going back and forth on the same route) | boolean
   assign correctMisplacedViaPointsDistance = 400 # %correctMisplacedViaPointsDistance% | Only remove detours shorter than this (one-way) distance (in m) (engine defaults to 0 which removes detours whatever their length) | number
+
+  # Extra uphill cost added by VeloSpot's "route hilliness" slider (0 = unchanged).
+  assign   uphill_extra          0 # %uphill_extra% | Extra uphill cost to favour flatter routes | number
 
   # Internal parameters - not intended to be tweaked by end users, unless they know what they are doing.
 
@@ -83,6 +92,8 @@
 
   assign   downhillcost if ( consider_elevation  )  then  ( multiply ( sub 1.0 MTB_hillcostfactor  ) downhillcostvalue ) else 0
   assign   uphillcost   if ( consider_elevation  )  then  ( multiply ( sub 1.0 MTB_hillcostfactor  ) uphillcostvalue ) else 0
+  # Add the "route hilliness" slider's extra uphill cost (0 = unchanged).
+  assign   uphillcost   add uphillcost uphill_extra
   assign   uphillcutoff    if ( consider_elevation ) then (  multiply ( max 0.0 min 1.0 add 1.0 MTB_hillcostfactor  ) uphillcutoffvalue )   else 1.5
   assign   downhillcutoff  if ( consider_elevation ) then (  multiply ( max 0.0 min 1.0 add 1.0 MTB_hillcostfactor  ) downhillcutoffvalue ) else 1.5
 
@@ -453,6 +464,13 @@ assign any_cycleroute
 
   assign penaltymax = max roughness_penalty max tracktype_surface_penalty max wet_penalty trafficpenalty
 
+  # Cycling a sidewalk (Gehweg) is generally not allowed. This MTB profile makes
+  # paved roads expensive (path_preference), so without this a sidewalk would be
+  # cheaper than the carriageway and the route would hug the pavement in town. A
+  # big penalty keeps it on the road; it still falls back to a sidewalk only when
+  # there's no alternative.
+  assign sidewalk_penalty  switch footway=sidewalk 25 0
+
   assign rawcostfactor ( # can be <1, adjusted to >=1 in final step of calculation of costfactor, uphillcostfactor,downhillcostfactor
     switch and highway= not route=ferry  10000 #only highways unless ferry
     switch highway=motorway|motorway_link|proposed|abandoned  10000
@@ -487,7 +505,7 @@ assign any_cycleroute
 
     # can be <1, adjusted to >=1 in final step of calculation of costfactor, uphillcostfactor,downhillcostfactor
     assign rawcostfactor2  if isCFgt9997 then rawcostfactor
-      else add rawcostfactor add cycleroute_tweak add MTB_factor_for_road smallpaved_factor_for_road
+      else add sidewalk_penalty add rawcostfactor add cycleroute_tweak add MTB_factor_for_road smallpaved_factor_for_road
 
     assign access-penalty max onewaypenalty accesspenalty
 

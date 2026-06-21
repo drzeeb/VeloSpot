@@ -23,6 +23,12 @@ assign allow_steps           = true   # %allow_steps% | Set to false to disallow
 assign allow_ferries         = true   # %allow_ferries% | set to false to disallow ferries | boolean
 assign allow_motorways       = false  # %allow_motorways% | Set to true to allow motorways (useful in Asia / Oceania for example) | boolean
 
+# Don't snap the route start/end onto a sidewalk (Gehweg): cycling there is
+# generally not allowed, and BRouter otherwise matches the start to the nearest
+# way — often the sidewalk — opening the route with a pavement + crossing detour
+# instead of just starting on the carriageway like the online router does.
+assign check_start_way       = true   # %check_start_way% | Avoid snapping the start/end onto sidewalks | boolean | noStartWay=footway,sidewalk
+
 assign use_proposed_cycleroutes = false  # %use_proposed_cycleroutes% | Set to true to consider proposed and regular cycleroutes as equals | boolean
 
 assign consider_traffic      = 0.1      # %consider_traffic% | avoiding roads that usually have traffic is? | [1=very important, 0.5=pretty important, 0.3=important, 0.1=slightly preferred, 0.0=do not consider traffic]
@@ -39,8 +45,16 @@ assign downhillcutoff     = 1.5   # %downhillcutoff% | Gradients below this valu
 assign uphillcost         = 0     # %uphillcost% | Cost for going uphill | number
 assign uphillcutoff       = 1.5   # %uphillcutoff% | Gradients below this value in percents are not counted.  | number
 
+# Extra uphill cost added by VeloSpot's "route hilliness" slider (0 = unchanged).
+assign uphill_extra       = 0     # %uphill_extra% | Extra uphill cost to favour flatter routes (VeloSpot slider) | number
+
 assign downhillcost       = if consider_elevation then downhillcost else 0
 assign uphillcost         = if consider_elevation then uphillcost else 0
+
+# Apply the slider's extra uphill cost on top of the profile's own value, and
+# force elevation to be considered whenever the rider asked for flatter routes.
+assign consider_elevation = if uphill_extra then true else consider_elevation
+assign uphillcost         = add uphillcost uphill_extra
 
 # Kinematic model parameters (travel time computation)
 assign totalMass  = 90     # %totalMass% | Mass (in kg) of the bike + biker, for travel time computation | number
@@ -242,6 +256,10 @@ assign costfactor
   add no_forest_penalty
   add no_river_penalty
   add noise_penalty
+
+  # Cycling a sidewalk (Gehweg) is generally not allowed and should never be
+  # preferred over the carriageway next to it — keep the route off the pavement.
+  add ( switch footway=sidewalk 5 0 )
 
 
   switch or highway=motorway highway=motorway_link    switch allow_motorways 1.5 10000

@@ -66,6 +66,15 @@
     <string name="offline_routing_success_subtitle">Les itinéraires sont calculés sur l\'appareil – meilleures pistes, sans internet.</string>
     <string name="offline_routing_profile_title">Profil de routage</string>
     <string name="offline_routing_profile_subtitle">Appuyez pour changer. Désactivez ci-dessous pour revenir au routage en ligne.</string>
+
+    <!-- Curseur de dénivelé (routage hors ligne) -->
+    <string name="elevation_slider_title">Dénivelé de l’itinéraire</string>
+    <string name="elevation_slider_subtitle">À quel point éviter les montées. Routage hors ligne uniquement.</string>
+    <string name="elevation_level_any">Indifférent</string>
+    <string name="elevation_level_gentle">Un peu plus plat</string>
+    <string name="elevation_level_moderate">Plus plat</string>
+    <string name="elevation_level_low">Peu de montée</string>
+    <string name="elevation_level_flattest">Le plus plat</string>
     <string name="common_cancel">Annuler</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d min</string>
