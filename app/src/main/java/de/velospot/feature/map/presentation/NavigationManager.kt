@@ -442,13 +442,18 @@ class NavigationManager(private val context: Context) {
 
         // ── Route progress + ETA ──────────────────────────────────────────────
         renderRouteSplit()
+        // Upcoming turn for the turn-by-turn banner (suppressed while off-route,
+        // where the route ahead is no longer meaningful until a reroute lands).
+        val turn = if (offRoute) null else RouteMatcher.nextTurn(route, match.segmentIndex, match.t)
         onProgress?.invoke(
             NavigationProgress(
                 remainingMeters = match.remainingMeters,
                 remainingSeconds = estimateRemainingSeconds(match.remainingMeters),
                 distanceFromRouteMeters = match.distanceFromRouteMeters,
                 isOffRoute = offRoute,
-                currentSpeedMps = location.speedMetersPerSecond
+                currentSpeedMps = location.speedMetersPerSecond,
+                nextTurnDistanceMeters = turn?.distanceMeters,
+                nextTurnAngleDegrees = turn?.angleDegrees
             )
         )
 

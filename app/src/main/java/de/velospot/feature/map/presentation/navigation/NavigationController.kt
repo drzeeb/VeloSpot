@@ -169,23 +169,75 @@ class NavigationController(
         }
         // Cancel any in-progress calculation — e.g. when the user taps a different
         // parking spot while a route is still being computed.
+        beginRouting(space) {
+            routingRepository.getBikeRoute(
+                from = location,
+                to   = GeoCoordinate(space.latitude, space.longitude)
+            )
+        }
+    }
+
+    /**
+     * Starts a generated **round-trip** loop of roughly [targetDistanceMeters],
+     * beginning and ending at the rider's current position. [destination] is a
+     * synthetic space placed at the start (its id must be in
+     * [syntheticDestinationIds] so arrival neither auto-parks nor mis-fires). The
+     * loop is BRouter-only; a failure (offline routing off / segments missing)
+     * surfaces as a navigation error.
+     */
+    fun startRoundTrip(destination: BikeParkingSpace, targetDistanceMeters: Double) {
+        val start = currentLocation() ?: run {
+            _uiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
+            return
+        }
+        beginRouting(destination) {
+            routingRepository.getRoundTrip(
+                from = GeoCoordinate(start.latitude, start.longitude),
+                targetDistanceMeters = targetDistanceMeters
+            )
+        }
+    }
+
+    /**
+     * Shared launch path for [start] and [startRoundTrip]: cancels any pending
+     * calculation, flips to the loading state, then runs [compute] off the main
+     * thread and swaps in the [NavigationUiState.Active] route (or an error).
+     */
+    private fun beginRouting(
+        destination: BikeParkingSpace,
+        compute: suspend () -> BikeRoute
+    ) {
         navigationJob?.cancel()
         _uiState.value = NavigationUiState.Loading
         _progress.value = null
         hasArrivedForCurrentRoute = false
         consecutiveArrivalFixes = 0
         navigationJob = scope.launch {
-            runCatching {
-                routingRepository.getBikeRoute(
-                    from = location,
-                    to   = GeoCoordinate(space.latitude, space.longitude)
-                )
-            }.onSuccess { route ->
-                _uiState.value = NavigationUiState.Active(destination = space, route = route)
+            try {
+                val route = compute()
+                _uiState.value = NavigationUiState.Active(destination = destination, route = route)
                 onNavigationStarted()
-            }.onFailure { throwable ->
+            } catch (ce: kotlinx.coroutines.CancellationException) {
+                // Cancelled by the user (or a newer request) — leave the state to the
+                // caller (cancelRouteCalculation sets Idle); never show an error.
+                throw ce
+            } catch (throwable: Throwable) {
                 _uiState.value = NavigationUiState.Error(mapRoutingError(throwable))
             }
+        }
+    }
+
+    /**
+     * Cancels an in-progress route calculation (from the loading card's "Cancel"
+     * button). Cancelling the job propagates into the BRouter engine, which aborts
+     * its search; the UI returns to idle.
+     */
+    fun cancelRouteCalculation() {
+        if (_uiState.value is NavigationUiState.Loading) {
+            navigationJob?.cancel()
+            navigationJob = null
+            _uiState.value = NavigationUiState.Idle
+            _progress.value = null
         }
     }
 

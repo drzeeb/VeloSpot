@@ -141,6 +141,17 @@ internal fun MapBottomSheets(
         )
     }
 
+    // Round-trip generator (pick a target distance, loop back to start).
+    if (screenUiState.isRoundTripSheetVisible) {
+        RoundTripSheet(
+            onStart = { distanceMeters ->
+                screenUiState.closeRoundTrip()
+                viewModel.startRoundTrip(distanceMeters)
+            },
+            onDismiss = screenUiState::closeRoundTrip
+        )
+    }
+
     // Detail view for a single recorded ride (stats + speed timeline).
     selectedRide?.let { ride ->
         RideDetailSheet(
@@ -217,10 +228,13 @@ internal fun MapBottomSheets(
     }
 
     customMapPin?.let { pin ->
-        // Hide the sheet while actively navigating to this pin –
-        // the pin stays visible on the map as a route end-point.
+        // Hide the sheet while navigating to this pin – this covers both the
+        // route-calculation phase (Loading / DownloadingSegments) and the active
+        // navigation. The pin stays visible on the map as a route end-point.
         val navigatingToPin = activeNavigation?.destination?.id == MapViewModel.ID_CUSTOM_MAP_PIN
-        if (!navigatingToPin) {
+        val calculatingRoute = navigationUiState is NavigationUiState.Loading ||
+            navigationUiState is NavigationUiState.DownloadingSegments
+        if (!navigatingToPin && !calculatingRoute) {
             CustomMapPinSheet(
                 pin        = pin,
                 address    = customMapPinAddress,

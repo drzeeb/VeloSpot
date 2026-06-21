@@ -1,8 +1,10 @@
 package de.velospot.data.brouter
 
+import android.app.ActivityManager
 import android.content.Context
 import android.util.Log
 import btools.router.OsmNodeNamed
+import btools.router.OsmTrack
 import btools.router.RoutingContext
 import btools.router.RoutingEngine
 import de.velospot.BuildConfig
@@ -14,9 +16,12 @@ import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.coroutines.coroutineContext
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
@@ -55,6 +60,20 @@ class BRouterEngine(
      */
     private val profilesDir: File = File(context.filesDir, "brouter/profiles")
 
+    /**
+     * Size (MB) of BRouter's in-memory segment node cache (`RoutingContext.memoryclass`).
+     * BRouter defaults to a conservative 64 MB; on long routes that span more decoded
+     * segment data than fits, the cache thrashes (evict → re-read → re-decode from disk),
+     * which dominates the runtime. We raise it to a device-aware value (≈ half the app's
+     * heap budget, clamped), so long routes stop reloading segments — the single biggest
+     * win for 100 km+ trips — while staying clear of OOM on low-end devices.
+     */
+    private val nodesCacheMemoryMb: Int by lazy {
+        val heapMb = (context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)
+            ?.memoryClass ?: DEFAULT_MEMORY_CLASS_MB
+        (heapMb / 2).coerceIn(MIN_MEMORY_CLASS_MB, MAX_MEMORY_CLASS_MB)
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
@@ -72,7 +91,7 @@ class BRouterEngine(
     ): BikeRoute = withContext(Dispatchers.Default) {
         ensureProfiles()
 
-        val profilePath = File(profilesDir, "${profile.fileName}.brf").absolutePath
+        val profilePath = profilePathFor(profile)
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "segmentsDir = $segmentsDir  exists=${segmentsDir.exists()}")
             Log.d(TAG, "profilePath = $profilePath  exists=${File(profilePath).exists()}")
@@ -98,28 +117,73 @@ class BRouterEngine(
             // reversal, recompute once telling BRouter the route's own forward
             // direction. BRouter then drops the spur itself — the geometry stays real
             // on-road (we never edit the path), unlike a post-hoc trim.
-            if (gpsStartDir == null) {
+            //
+            // Skip this on long routes: the second pass recomputes the *entire* route,
+            // which is very expensive on 100 km+ trips, while the start spur is
+            // negligible relative to the total distance — not worth doubling the work.
+            if (gpsStartDir == null && haversineDistanceMeters(points) <= START_UTURN_MAX_ROUTE_M) {
                 startUTurnForwardDir(points, to)?.let { forwardDir ->
                     points = runBrouter(profilePath, from, to, forwardDir)
                 }
             }
 
-
-            val distanceMeters  = haversineDistanceMeters(points)
-            val durationSeconds = distanceMeters / profile.typicalSpeedMs
-
-            BikeRoute(
-                points          = points,
-                distanceMeters  = distanceMeters,
-                durationSeconds = durationSeconds,
-                source          = RoutingSource.BROUTER_OFFLINE
-            )
-        } catch (e: NoRouteFoundException)      { throw e }
+            bikeRouteFrom(points, profile)
+        } catch (e: CancellationException)      { throw e }
+        catch (e: NoRouteFoundException)        { throw e }
         catch (e: EmptyRouteGeometryException)  { throw e }
         catch (e: Exception) {
             Log.e(TAG, "BRouter routing failed", e)
             throw e
         }
+    }
+
+    /**
+     * Generates a circular **round-trip** route that starts and ends at [start],
+     * roughly [targetDistanceMeters] long, entirely on-device. BRouter builds a
+     * ring of waypoints around the start (radius derived from the target length)
+     * and routes through them back to the origin via [RoutingEngine.doRoundTrip].
+     *
+     * An optional [directionDeg] (compass degrees) biases which way the loop heads
+     * out; when `null` BRouter picks a direction itself. The resulting length is
+     * approximate — round-trip routing trades exactness for a pleasant loop.
+     *
+     * @throws NoRouteFoundException if BRouter cannot build a loop (e.g. missing
+     *  segment tiles around the start).
+     */
+    suspend fun calculateRoundTrip(
+        start: GeoCoordinate,
+        targetDistanceMeters: Double,
+        profile: BRouterProfile = BRouterProfile.TREKKING,
+        directionDeg: Int? = null
+    ): BikeRoute = withContext(Dispatchers.Default) {
+        ensureProfiles()
+        val profilePath = profilePathFor(profile)
+
+        // BRouter's roundTripDistance is the *search radius* of the waypoint ring,
+        // not the total length. Empirically the looped result is ~3× the radius, so
+        // derive the radius from the requested trip length.
+        val searchRadius = (targetDistanceMeters / ROUND_TRIP_LENGTH_TO_RADIUS)
+            .toInt().coerceIn(MIN_ROUND_TRIP_RADIUS_M, MAX_ROUND_TRIP_RADIUS_M)
+
+        val rc = RoutingContext().apply {
+            localFunction = profilePath
+            memoryclass = nodesCacheMemoryMb
+            roundTripDistance = searchRadius
+            roundTripPoints = ROUND_TRIP_POINTS
+            if (directionDeg != null) {
+                startDirection = ((directionDeg % 360) + 360) % 360
+            }
+        }
+        val engine = RoutingEngine(
+            /* baseUrl     = */ null,
+            /* outfileBase = */ null,
+            /* segmentDir  = */ segmentsDir,
+            /* waypoints   = */ mutableListOf(osmNodeNamed("start", start.longitude, start.latitude)),
+            /* rc          = */ rc
+        )
+        runEngine(engine, roundTrip = true)
+
+        bikeRouteFrom(decodeTrack(engine.foundTrack), profile)
     }
 
     companion object {
@@ -146,6 +210,32 @@ class BRouterEngine(
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
         /** First segment vs destination-direction difference that counts as a start U-turn. */
         private const val REVERSAL_MIN_ANGLE_DEG = 110.0
+
+        /**
+         * Above this route length the start-U-turn fix is skipped: its second pass
+         * recomputes the whole route (expensive on long trips) to remove a spur that's
+         * negligible at this scale.
+         */
+        private const val START_UTURN_MAX_ROUTE_M = 30_000.0
+
+        // ── Node-cache sizing (RoutingContext.memoryclass, see nodesCacheMemoryMb) ──
+        private const val DEFAULT_MEMORY_CLASS_MB = 64
+        private const val MIN_MEMORY_CLASS_MB = 96
+        private const val MAX_MEMORY_CLASS_MB = 256
+
+        // ── Cancellable engine run (see runEngine) ────────────────────────────
+        /** How often the worker thread is polled for coroutine cancellation. */
+        private const val ENGINE_POLL_MS = 50L
+        /** Grace period to let BRouter unwind after [RoutingEngine.terminate]. */
+        private const val ENGINE_TERMINATE_GRACE_MS = 2_000L
+
+        // ── Round-trip generation (see calculateRoundTrip) ────────────────────
+        /** Approximate ratio of looped trip length to BRouter's search radius. */
+        private const val ROUND_TRIP_LENGTH_TO_RADIUS = 3.0
+        /** Number of waypoints BRouter spreads around the ring. */
+        private const val ROUND_TRIP_POINTS = 5
+        private const val MIN_ROUND_TRIP_RADIUS_M = 500
+        private const val MAX_ROUND_TRIP_RADIUS_M = 40_000
     }
 
 
@@ -157,7 +247,7 @@ class BRouterEngine(
      * because BRouter mutates their matching state, so they must not be reused
      * across the two passes. Returns the decoded route points.
      */
-    private fun runBrouter(
+    private suspend fun runBrouter(
         profilePath: String,
         from: GeoCoordinate,
         to: GeoCoordinate,
@@ -165,6 +255,7 @@ class BRouterEngine(
     ): List<RoutePoint> {
         val rc = RoutingContext().apply {
             localFunction = profilePath          // path to .brf WITHOUT extension
+            memoryclass = nodesCacheMemoryMb     // bigger node cache → fewer disk reloads
             if (startDir != null) {
                 startDirection = startDir
                 forceUseStartDirection = true
@@ -180,14 +271,46 @@ class BRouterEngine(
             ),
             /* rc          = */ rc
         )
-        engine.doRun(0L)
+        runEngine(engine)
+        return decodeTrack(engine.foundTrack)
+    }
 
-        val track = engine.foundTrack
+    /**
+     * Runs BRouter's blocking search ([RoutingEngine.doRun] / [RoutingEngine.doRoundTrip])
+     * on a daemon worker thread while observing coroutine cancellation. When the calling
+     * coroutine is cancelled (e.g. the user taps "Cancel"), [RoutingEngine.terminate] is
+     * signalled so BRouter aborts its A* search at the next loop check instead of running
+     * to completion, and the [CancellationException] is propagated.
+     */
+    private suspend fun runEngine(engine: RoutingEngine, roundTrip: Boolean = false) {
+        val worker = Thread(
+            { if (roundTrip) engine.doRoundTrip() else engine.doRun(0L) },
+            "brouter-route"
+        ).apply { isDaemon = true }
+        worker.start()
+        try {
+            while (worker.isAlive) {
+                coroutineContext.ensureActive()      // throws if the coroutine was cancelled
+                worker.join(ENGINE_POLL_MS)
+            }
+        } catch (ce: CancellationException) {
+            engine.terminate()                       // ask BRouter to stop its search
+            runCatching { worker.join(ENGINE_TERMINATE_GRACE_MS) }
+            throw ce
+        }
+    }
+
+    /**
+     * Decodes BRouter's [OsmTrack] nodes into [RoutePoint]s (lat/lon + terrain
+     * elevation). Shared by the point-to-point and round-trip passes.
+     *
+     * @throws NoRouteFoundException when no track was produced.
+     * @throws EmptyRouteGeometryException when the track carries no nodes.
+     */
+    private fun decodeTrack(track: OsmTrack?): List<RoutePoint> {
         if (BuildConfig.DEBUG) Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
         if (track == null) throw NoRouteFoundException()
         if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
-
-
         return track.nodes.map { node ->
             RoutePoint(
                 latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
@@ -195,6 +318,21 @@ class BRouterEngine(
                 elevationMeters = node.getElevMetersOrNull()
             )
         }
+    }
+
+    /** Absolute path to a profile's `.brf` file in internal storage. */
+    private fun profilePathFor(profile: BRouterProfile): String =
+        File(profilesDir, "${profile.fileName}.brf").absolutePath
+
+    /** Wraps decoded [points] into a [BikeRoute], deriving distance + ETA from [profile]. */
+    private fun bikeRouteFrom(points: List<RoutePoint>, profile: BRouterProfile): BikeRoute {
+        val distanceMeters = haversineDistanceMeters(points)
+        return BikeRoute(
+            points          = points,
+            distanceMeters  = distanceMeters,
+            durationSeconds = distanceMeters / profile.typicalSpeedMs,
+            source          = RoutingSource.BROUTER_OFFLINE
+        )
     }
 
     /**

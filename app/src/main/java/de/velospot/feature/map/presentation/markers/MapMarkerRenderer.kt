@@ -95,7 +95,13 @@ internal fun updateMarkers(
      * renders the split travelled/remaining geometry. This renderer then leaves
      * [SOURCE_ROUTE] / [LAYER_ROUTE] untouched.
      */
-    suppressRoute: Boolean = false
+    suppressRoute: Boolean = false,
+    /**
+     * Minimal navigation mode: while actively navigating, hide every marker that
+     * isn't part of the trip (all other parking spots, saved places, search pins)
+     * so the map shows just the route, the destination and the live position.
+     */
+    minimalNavMode: Boolean = false
 ) {
     val style = map.style ?: return
 
@@ -119,7 +125,7 @@ internal fun updateMarkers(
 
     // Parking markers — bulk spots are clustered natively; the highlighted spot
     // (selection / active navigation destination) is rendered un-clustered on top.
-    val (bulkFeatures, highlightFeatures) = buildParkingFeatures(spaces, state, layerVisibility, parkedBike)
+    val (bulkFeatures, highlightFeatures) = buildParkingFeatures(spaces, state, layerVisibility, parkedBike, minimalNavMode)
     upsertParkingSource(style, FeatureCollection.fromFeatures(bulkFeatures))
     ensureParkingLayer(style)
     ensureParkingClusterLayers(style, clusterStyle.circleColor, clusterStyle.textColor)
@@ -211,7 +217,8 @@ private fun buildParkingFeatures(
     spaces: List<BikeParkingSpace>,
     state: MarkerRenderState,
     layerVisibility: LayerVisibility,
-    parkedBike: ParkedBike?
+    parkedBike: ParkedBike?,
+    minimalNavMode: Boolean
 ): Pair<List<Feature>, List<Feature>> {
     // The selected spot and the active navigation destination are always kept
     // visible (un-clustered, on top) so they don't vanish into a cluster bubble.
@@ -224,7 +231,11 @@ private fun buildParkingFeatures(
         if (parkedBike != null && isParkedAt(space, parkedBike)) return@filter false
         val isFavorite  = state.favoriteIds.contains(space.id)
         val alwaysShow  = space.id in highlightIds
-        val categoryShow = if (isFavorite) layerVisibility.showFavorites else layerVisibility.showParking
+        // Minimal navigation mode hides every non-trip spot (only the destination
+        // highlight survives via [alwaysShow]).
+        val categoryShow = if (minimalNavMode) false
+                           else if (isFavorite) layerVisibility.showFavorites
+                           else layerVisibility.showParking
         alwaysShow || categoryShow
     }
     val bulk = ArrayList<Feature>(visibleSpaces.size)

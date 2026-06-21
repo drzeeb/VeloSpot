@@ -1,12 +1,18 @@
 package de.velospot.feature.map.presentation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -43,6 +49,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -50,7 +57,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +73,12 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.domain.model.MapError
 import kotlin.math.roundToInt
+
+/**
+ * How long the navigation pill stays auto-expanded at the start of a trip (so the
+ * rider glimpses the route's elevation profile) before it smoothly collapses.
+ */
+private const val AUTO_COLLAPSE_DELAY_MS = 3_000L
 
 internal data class MapMenuCardState(
     val favoritesCount: Int,
@@ -93,7 +110,8 @@ internal data class MapMenuCardActions(
     val onShowParkedBike: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
-    val onOpenRides: () -> Unit = {}
+    val onOpenRides: () -> Unit = {},
+    val onOpenRoundTrip: () -> Unit = {}
 )
 
 @Composable
@@ -257,11 +275,21 @@ internal fun BoxScope.MapNavigationOverlay(
     navigationUiState: NavigationUiState,
     onStopNavigation: () -> Unit,
     onDismissError: () -> Unit,
-    progress: de.velospot.core.navigation.NavigationProgress? = null
+    progress: de.velospot.core.navigation.NavigationProgress? = null,
+    onCancel: () -> Unit = {}
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
         is NavigationUiState.Loading -> {
+            // Tick an elapsed-seconds counter while the (potentially long) route is
+            // computed, so the wait feels alive and the user can cancel it.
+            var elapsedSeconds by remember { mutableStateOf(0) }
+            LaunchedEffect(Unit) {
+                while (true) {
+                    kotlinx.coroutines.delay(1_000)
+                    elapsedSeconds++
+                }
+            }
             Card(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -272,13 +300,26 @@ internal fun BoxScope.MapNavigationOverlay(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                 )
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text(text = stringResource(id = R.string.navigation_route_loading))
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(id = R.string.navigation_route_loading),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = stringResource(id = R.string.navigation_elapsed_seconds, elapsedSeconds),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    SecondaryActionButton(
+                        text = stringResource(id = R.string.common_cancel),
+                        onClick = onCancel,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -358,39 +399,96 @@ internal fun BoxScope.MapNavigationOverlay(
             val destinationName = navigationUiState.destination.name
                 ?: navigationUiState.destination.type.label(context)
 
+            // Slim, glanceable pill that expands on tap (destination name).
+            // It starts **expanded** so the rider briefly sees the route's
+            // elevation profile before setting off, then auto-collapses smoothly
+            // after a short delay. Keyed on the destination so a fresh navigation
+            // (or a reroute to a new target) re-triggers the preview.
+            val destinationId = navigationUiState.destination.id
+            var expanded by remember(destinationId) { mutableStateOf(true) }
+            LaunchedEffect(destinationId) {
+                kotlinx.coroutines.delay(AUTO_COLLAPSE_DELAY_MS)
+                expanded = false
+            }
+
             Card(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .padding(horizontal = 16.dp, vertical = 20.dp)
                     .fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                )
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = destinationName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(
-                            id = R.string.navigation_route_summary,
-                            distanceKm,
-                            durationText
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    progress?.currentSpeedMps?.let { speedMps ->
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = formatRideSpeed(speedMps),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { expanded = !expanded }
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
                         )
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(
+                                    id = R.string.navigation_route_summary,
+                                    distanceKm,
+                                    durationText
+                                ),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1
+                            )
+                            progress?.currentSpeedMps?.let { speedMps ->
+                                Text(
+                                    text = formatRideSpeed(speedMps),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        FloatingActionButton(
+                            onClick = onStopNavigation,
+                            modifier = Modifier.size(46.dp),
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Stop,
+                                contentDescription = stringResource(id = R.string.navigation_stop)
+                            )
+                        }
                     }
+
+                    AnimatedVisibility(
+                        visible = expanded,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Column {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = destinationName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            RouteElevationProfile(points = navigationUiState.route.points)
+                        }
+                    }
+
                     if (progress?.isOffRoute == true) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -407,11 +505,6 @@ internal fun BoxScope.MapNavigationOverlay(
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    PrimaryActionButton(
-                        text = stringResource(id = R.string.navigation_stop),
-                        onClick = onStopNavigation
-                    )
                 }
             }
         }
@@ -424,198 +517,26 @@ internal fun MapMenuCard(
     state: MapMenuCardState,
     actions: MapMenuCardActions
 ) {
+    // The clutter that used to live in a dropdown now lives in a dedicated
+    // Settings sheet (see SettingsSheet). The top-bar carries just this single
+    // tidy menu button, matching the search field's pill shape and elevation.
     Card(
-        modifier = modifier,
+        modifier = modifier.size(52.dp),
+        shape = CircleShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Box {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(52.dp)) {
+            val badged = state.offlineRoutingUiState is OfflineRoutingUiState.Enabled
             IconButton(onClick = actions.onExpand) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = stringResource(id = R.string.menu_open),
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = if (badged) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurface
                 )
-            }
-
-            DropdownMenu(
-                expanded = state.isExpanded,
-                onDismissRequest = actions.onDismiss
-            ) {
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(
-                                id = R.string.menu_favorites_count,
-                                state.favoritesCount
-                            )
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = actions.onOpenFavorites
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(id = R.string.menu_layers)) },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Layers, contentDescription = null)
-                    },
-                    onClick = actions.onOpenLayers
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(id = R.string.menu_navigation_view)) },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.ViewInAr, contentDescription = null)
-                    },
-                    onClick = actions.onOpenNavigationView
-                )
-
-                // ── Parked bike (where the user left their bike) ──────────────
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(
-                                id = if (state.isBikeParked) R.string.menu_show_parked_bike
-                                     else R.string.menu_park_bike_here
-                            )
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
-                            contentDescription = null,
-                            tint = if (state.isBikeParked) Color(0xFFF57C00)
-                                   else MaterialTheme.colorScheme.onSurface
-                        )
-                    },
-                    onClick = {
-                        actions.onDismiss()
-                        if (state.isBikeParked) actions.onShowParkedBike() else actions.onParkBikeHere()
-                    }
-                )
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(
-                                id = R.string.menu_language_with_flag,
-                                state.currentLanguageFlag
-                            )
-                        )
-                    },
-                    leadingIcon = {
-                        Text(text = state.currentLanguageFlag)
-                    },
-                    onClick = actions.onOpenLanguage
-                )
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = if (state.isDarkTheme) {
-                                stringResource(id = R.string.menu_disable_dark_mode)
-                            } else {
-                                stringResource(id = R.string.menu_enable_dark_mode)
-                            }
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.DarkMode, contentDescription = null)
-                    },
-                    onClick = actions.onToggleDarkMode
-                )
-
-                DropdownMenuItem(
-                    text = { Text(stringResource(id = R.string.menu_about)) },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Info, contentDescription = null)
-                    },
-                    onClick = { actions.onDismiss(); actions.onOpenAbout() }
-                )
-
-                DropdownMenuItem(
-                    text = { Text(stringResource(id = R.string.menu_my_rides)) },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Timeline, contentDescription = null)
-                    },
-                    onClick = { actions.onDismiss(); actions.onOpenRides() }
-                )
-
-                HorizontalDivider()
-
-
-                // ── Offline routing ───────────────────────────────────────────
-                when (val offState = state.offlineRoutingUiState) {
-                    is OfflineRoutingUiState.Disabled -> {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.menu_offline_routing_activate)) },
-                            leadingIcon = { Icon(Icons.Default.SignalWifiOff, contentDescription = null) },
-                            onClick = { actions.onDismiss(); actions.onActivateOfflineRouting() }
-                        )
-                    }
-                    is OfflineRoutingUiState.Downloading -> {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.menu_offline_routing_downloading)) },
-                            leadingIcon = { CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp) },
-                            onClick = {},
-                            enabled = false
-                        )
-                    }
-                    is OfflineRoutingUiState.Enabled -> {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    stringResource(
-                                        R.string.menu_offline_routing_active,
-                                        stringResource(offState.profile.displayNameRes)
-                                    )
-                                )
-                            },
-                            leadingIcon = { Icon(Icons.Default.Wifi, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                            onClick = { actions.onDismiss(); actions.onOpenProfileSheet() }
-                        )
-                    }
-                    is OfflineRoutingUiState.DownloadComplete -> {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.offline_routing_success_title)) },
-                            leadingIcon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                            onClick = {},
-                            enabled = false
-                        )
-                    }
-                }
-
-                // ── Debug: GPS route simulator (couch testing) ────────────────
-                if (state.showSimulator) {
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        enabled = state.simulatorEnabled,
-                        text = {
-                            Text(
-                                stringResource(
-                                    when {
-                                        state.isSimulating     -> R.string.menu_simulate_route_stop
-                                        state.simulatorEnabled -> R.string.menu_simulate_route_start
-                                        else                   -> R.string.menu_simulate_route_hint
-                                    }
-                                )
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = if (state.isSimulating) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = if (state.isSimulating) MaterialTheme.colorScheme.error
-                                       else MaterialTheme.colorScheme.primary
-                            )
-                        },
-                        onClick = { actions.onDismiss(); actions.onToggleSimulation() }
-                    )
-                }
             }
         }
     }
@@ -812,4 +733,3 @@ private fun RideStatCell(label: String, value: String) {
         )
     }
 }
-

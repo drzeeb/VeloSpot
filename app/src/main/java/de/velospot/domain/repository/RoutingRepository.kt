@@ -3,7 +3,7 @@ package de.velospot.domain.repository
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.GeoCoordinate
 
-fun interface RoutingRepository {
+interface RoutingRepository {
     /**
      * Calculate a bike route between two geographic coordinates.
      *
@@ -15,5 +15,13 @@ fun interface RoutingRepository {
      * @throws de.velospot.domain.model.EmptyRouteGeometryException if route geometry is empty.
      */
     suspend fun getBikeRoute(from: GeoCoordinate, to: GeoCoordinate): BikeRoute
+
+    /**
+     * Generate a circular round-trip route starting and ending at [from], roughly
+     * [targetDistanceMeters] long. Offline-only (BRouter); throws
+     * [de.velospot.domain.model.RoutingFailedException] when offline routing is
+     * unavailable.
+     */
+    suspend fun getRoundTrip(from: GeoCoordinate, targetDistanceMeters: Double): BikeRoute
 }
 
