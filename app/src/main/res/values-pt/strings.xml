@@ -28,6 +28,7 @@
     <string name="navigation_stop">Parar navegação</string>
     <string name="navigation_route_loading">A calcular rota de bicicleta...</string>
     <string name="navigation_rerouting">Fora da rota – a recalcular…</string>
+    <string name="navigation_arrived">Chegaste ao teu destino</string>
     <string name="navigation_downloading_segments">A descarregar dados de mapa offline para esta região…</string>
     <string name="error_brouter_profiles_missing">Perfis de roteamento ausentes.</string>
     <string name="error_no_internet">Sem ligação à internet. Verifique o Wi-Fi ou dados móveis e tente novamente.</string>

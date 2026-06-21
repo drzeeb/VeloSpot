@@ -145,6 +145,7 @@
     <string name="navigation_stop">Stop navigation</string>
     <string name="navigation_route_loading">Calculating bike route...</string>
     <string name="navigation_rerouting">Off route – recalculating…</string>
+    <string name="navigation_arrived">You\'ve arrived at your destination</string>
     <string name="navigation_downloading_segments">Downloading offline map data for this region…</string>
     <string name="error_brouter_profiles_missing">Routing profiles missing. Please add lookups.dat and *.brf files to assets/brouter/profiles/.</string>
     <string name="error_no_internet">No internet connection. Please check your Wi-Fi or mobile data and try again.</string>

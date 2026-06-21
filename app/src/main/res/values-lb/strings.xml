@@ -28,6 +28,7 @@
     <string name="navigation_stop">Navigatioun stoppen</string>
     <string name="navigation_route_loading">Vëlosroute gëtt berechent...</string>
     <string name="navigation_rerouting">Niewent der Route – gëtt nei berechent…</string>
+    <string name="navigation_arrived">Du bass un dengem Zil ukomm</string>
     <string name="navigation_downloading_segments">Offline-Kaartdaten fir dës Regioun ginn erofgelueden…</string>
     <string name="error_brouter_profiles_missing">Routing-Profiler feelen.</string>
     <string name="error_no_internet">Keng Internetverbindung. Prüft W-Lan oder mobil Daten a probéiert nach eng Kéier.</string>

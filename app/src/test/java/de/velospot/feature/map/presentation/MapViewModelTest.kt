@@ -397,7 +397,9 @@ class MapViewModelTest {
         viewModel.updateNavigationProgress(progress(remainingMeters = 120.0))
         assertTrue(viewModel.parkedBike.value == null)
 
-        // Within the arrival radius: the bike is parked at the destination.
+        // Within the arrival radius: two consecutive fixes (debounced) park the
+        // bike at the destination and end navigation.
+        viewModel.updateNavigationProgress(progress(remainingMeters = 12.0))
         viewModel.updateNavigationProgress(progress(remainingMeters = 12.0))
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -409,8 +411,9 @@ class MapViewModelTest {
     }
 
     @Test
-    fun `arriving at a synthetic destination does not auto-park`() = runTest {
-        // A saved place is wrapped in a synthetic BikeParkingSpace and must never auto-park.
+    fun `arriving at a synthetic destination ends navigation without parking`() = runTest {
+        // A saved place is wrapped in a synthetic BikeParkingSpace: navigation must
+        // still end on arrival, but the bike must never be auto-parked.
         val viewModel = makeViewModel(
             locationRepository = FakeLocationRepository(
                 initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
@@ -430,10 +433,34 @@ class MapViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(viewModel.navigationUiState.value is NavigationUiState.Active)
 
+        // Two consecutive arrival fixes end navigation but leave the bike unparked.
+        viewModel.updateNavigationProgress(progress(remainingMeters = 5.0))
         viewModel.updateNavigationProgress(progress(remainingMeters = 5.0))
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(viewModel.parkedBike.value == null)
+        assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
+    }
+
+    @Test
+    fun `a single arrival fix does not yet end navigation`() = runTest {
+        val destination = sampleSpace(id = "rack-1")
+        val viewModel = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // A single noisy fix inside the radius is debounced — navigation continues.
+        viewModel.updateNavigationProgress(progress(remainingMeters = 12.0))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.parkedBike.value == null)
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Active)
     }
 
     @Test
