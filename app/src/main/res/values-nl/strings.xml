@@ -56,6 +56,8 @@
     <string name="wifi_warning_message">Je bent niet verbonden met Wi-Fi. De download is ca. 200–250 MB en zal mobiele data gebruiken. Toch downloaden?</string>
     <string name="wifi_warning_confirm">Toch downloaden</string>
     <string name="offline_routing_confirm">Nu downloaden</string>
+    <string name="offline_routing_confirm_region">Mijn regio downloaden (~250 MB)</string>
+    <string name="offline_routing_confirm_full">Heel Duitsland, Frankrijk en Luxemburg downloaden (~2,5 GB)</string>
     <string name="offline_routing_disable">Offline navigatie deactiveren</string>
     <string name="offline_routing_downloading_title">Kaartdata downloaden…</string>
     <string name="offline_routing_file_of">Bestand %1$d van %2$d</string>

@@ -56,6 +56,8 @@
     <string name="wifi_warning_message">Vous n\'êtes pas connecté au Wi-Fi. Le téléchargement est d\'env. 200–250 Mo et utilisera vos données mobiles. Télécharger quand même\u00a0?</string>
     <string name="wifi_warning_confirm">Télécharger quand même</string>
     <string name="offline_routing_confirm">Télécharger maintenant</string>
+    <string name="offline_routing_confirm_region">Télécharger ma région (~250 Mo)</string>
+    <string name="offline_routing_confirm_full">Télécharger toute l\'Allemagne, la France et le Luxembourg (~2,5 Go)</string>
     <string name="offline_routing_disable">Désactiver la navigation hors ligne</string>
     <string name="offline_routing_downloading_title">Téléchargement des données cartographiques…</string>
     <string name="offline_routing_file_of">Fichier %1$d sur %2$d</string>

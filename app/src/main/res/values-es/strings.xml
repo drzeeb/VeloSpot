@@ -56,6 +56,8 @@
     <string name="wifi_warning_message">No estás conectado al Wi-Fi. La descarga es de aprox. 200–250 MB y usará datos móviles. ¿Descargar de todos modos?</string>
     <string name="wifi_warning_confirm">Descargar de todos modos</string>
     <string name="offline_routing_confirm">Descargar ahora</string>
+    <string name="offline_routing_confirm_region">Descargar mi región (~250 MB)</string>
+    <string name="offline_routing_confirm_full">Descargar toda Alemania, Francia y Luxemburgo (~2,5 GB)</string>
     <string name="offline_routing_disable">Desactivar navegación sin conexión</string>
     <string name="offline_routing_downloading_title">Descargando datos del mapa…</string>
     <string name="offline_routing_file_of">Archivo %1$d de %2$d</string>

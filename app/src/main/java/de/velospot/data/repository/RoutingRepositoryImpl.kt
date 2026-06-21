@@ -20,7 +20,9 @@ import javax.inject.Inject
  * Routes bicycle trips.
  *
  * - **Offline routing enabled + segments present** → BRouter on-device.
- * - **Offline routing enabled + segments missing** → download then BRouter.
+ * - **Offline routing enabled + segments missing + on-demand on** → download the
+ *   tile(s) for this route, then BRouter. OSRM is used only if the download fails.
+ * - **Offline routing enabled + segments missing + on-demand off** → OSRM online.
  * - **Offline routing disabled** → OSRM online API.
  */
 class RoutingRepositoryImpl @Inject constructor(
@@ -42,13 +44,33 @@ class RoutingRepositoryImpl @Inject constructor(
             fromLat = from.latitude, fromLon = from.longitude,
             toLat   = to.latitude,   toLon   = to.longitude
         )
-        return if (segmentsReady) {
-            brouterEngine.calculateRoute(from, to, profile)
-        } else {
-            // Segments for this particular route segment are missing –
-            // fall back gracefully instead of blocking the user.
-            osrmFallbackRoute(osrmApi, from, to)
+        if (segmentsReady) {
+            return brouterEngine.calculateRoute(from, to, profile)
         }
+
+        // Segments for this route are missing. With on-demand enabled, fetch the
+        // tile(s) covering this route and then route offline. If the download
+        // can't happen (e.g. no connectivity), degrade gracefully to OSRM rather
+        // than blocking the user.
+        val onDemand = OfflineRoutingPreferences.isOnDemandDownloadEnabled(context)
+        if (onDemand) {
+            val downloaded = runCatching {
+                segmentManager.ensureSegments(
+                    fromLat = from.latitude, fromLon = from.longitude,
+                    toLat   = to.latitude,   toLon   = to.longitude
+                )
+            }.isSuccess
+            if (downloaded && segmentManager.hasAllSegments(
+                    fromLat = from.latitude, fromLon = from.longitude,
+                    toLat   = to.latitude,   toLon   = to.longitude
+                )
+            ) {
+                return brouterEngine.calculateRoute(from, to, profile)
+            }
+        }
+
+        // On-demand disabled, or the download failed – fall back gracefully.
+        return osrmFallbackRoute(osrmApi, from, to)
     }
 }
 

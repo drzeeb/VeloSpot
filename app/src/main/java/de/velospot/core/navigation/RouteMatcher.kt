@@ -43,6 +43,15 @@ internal object RouteMatcher {
     const val TURN_LOOKAHEAD_METERS = 35.0
 
     /**
+     * Look-ahead distance for the camera/marker heading. The route heading is
+     * taken from the snapped point towards a vertex at least this far along the
+     * route, instead of from the single matched segment — so a degenerate sub-metre
+     * stub (BRouter occasionally emits one at the start) can't yield a skewed
+     * heading. Small enough not to noticeably anticipate real turns.
+     */
+    private const val BEARING_LOOKAHEAD_METERS = 15.0
+
+    /**
      * Only segments within `[fromSegment, fromSegment + SEARCH_WINDOW]` are
      * considered, plus a small look-back, so matching stays forward-biased and
      * O(window) instead of O(route length) on every fix.
@@ -85,9 +94,7 @@ internal object RouteMatcher {
             }
         }
 
-        val a = points[bestIdx]
-        val b = points[bestIdx + 1]
-        val bearing = GeoMath.bearingDegrees(a.latitude, a.longitude, b.latitude, b.longitude)
+        val bearing = forwardBearing(points, bestIdx, bestProj.latitude, bestProj.longitude)
 
         return Match(
             latitude = bestProj.latitude,
@@ -99,6 +106,44 @@ internal object RouteMatcher {
             remainingMeters = remainingMeters(points, bestIdx, bestProj.t),
             turnSharpnessDegrees = turnSharpness(points, bestIdx, bestProj.t)
         )
+    }
+
+    /**
+     * Stable forward heading from the snapped point ([snapLat]/[snapLon] on
+     * segment [index]). Walks the route until a vertex at least
+     * [BEARING_LOOKAHEAD_METERS] ahead and returns the bearing to it, so tiny
+     * (sub-metre) segments don't skew the heading. Falls back to the matched
+     * segment's own bearing for a degenerate route end.
+     */
+    private fun forwardBearing(
+        points: List<RoutePoint>,
+        index: Int,
+        snapLat: Double,
+        snapLon: Double
+    ): Double {
+        var prevLat = snapLat
+        var prevLon = snapLon
+        var cumulative = 0.0
+        var targetLat = points[index + 1].latitude
+        var targetLon = points[index + 1].longitude
+        var i = index + 1
+        while (i < points.size) {
+            targetLat = points[i].latitude
+            targetLon = points[i].longitude
+            cumulative += GeoMath.distanceMeters(prevLat, prevLon, targetLat, targetLon)
+            if (cumulative >= BEARING_LOOKAHEAD_METERS) break
+            prevLat = targetLat
+            prevLon = targetLon
+            i++
+        }
+        // Guard against a zero-length result (snapped right on the target vertex).
+        if (GeoMath.distanceMeters(snapLat, snapLon, targetLat, targetLon) < 0.5) {
+            return GeoMath.bearingDegrees(
+                points[index].latitude, points[index].longitude,
+                points[index + 1].latitude, points[index + 1].longitude
+            )
+        }
+        return GeoMath.bearingDegrees(snapLat, snapLon, targetLat, targetLon)
     }
 
     /** Distance from the snapped point (segment [index], fraction [t]) to the route end. */

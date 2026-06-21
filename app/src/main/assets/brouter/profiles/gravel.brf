@@ -10,6 +10,12 @@ assign turnInstructionMode 1 # %turnInstructionMode% | Mode for the generated tu
 
 assign add_beeline         false  # %add_beeline% | Enable beeline on distant start/end points | boolean
 
+# Don't snap the route start/end onto a sidewalk (Gehweg): cycling there is
+# generally not allowed, and BRouter otherwise matches the start to the nearest
+# way — often the sidewalk — opening the route with a pavement + crossing detour
+# instead of just starting on the carriageway like the online router does.
+assign check_start_way = true # %check_start_way% | Avoid snapping the start/end onto sidewalks | boolean | noStartWay=footway,sidewalk
+
 #assign processUnusedTags true
 assign pass1coefficient 4
 assign validForBikes true
@@ -130,8 +136,8 @@ assign smoothnesspenalty
 
 assign footwaypenalty
     switch bicycle=yes|designated
-        switch segregated=yes      1.8
-                                   2.6
+        switch segregated=yes      2.4
+                                   3.2
     switch not footway=sidewalk    3.2
                                    4.9
 
@@ -279,10 +285,10 @@ assign costfactor
     switch    highway=tertiary|tertiary_link                    3.6
     switch    highway=corridor                                  3.2
     switch    highway=road                                      2.8
-    switch    highway=unclassified switch not any_cycleroute    2.6 1.4
-    switch    highway=living_street                             2.5
-    switch    highway=service switch service=                   2.4 3.0
-    switch    highway=residential switch not maxspeed=30        2.2 1.8
+    switch    highway=unclassified switch not any_cycleroute    2.0 1.3
+    switch    highway=living_street                             2.0
+    switch    highway=service switch service=                   2.2 2.8
+    switch    highway=residential switch not maxspeed=30        1.7 1.4
     switch    highway=track                                     1.0
     switch    highway=path                                      pathpenalty
     switch    highway=steps                                     stepspenalty
