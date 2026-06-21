@@ -134,6 +134,8 @@
     <string name="custom_pin_subtitle">Tik op de kaart om de speld te verplaatsen.</string>
     <string name="custom_pin_navigate">Navigeer hierheen</string>
     <string name="custom_pin_remove">Speld verwijderen</string>
+    <string name="custom_pin_share">Locatie delen</string>
+    <string name="share_location_chooser_title">Locatie delen via</string>
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Fiets hier parkeren</string>
     <string name="menu_show_parked_bike">Mijn geparkeerde fiets</string>

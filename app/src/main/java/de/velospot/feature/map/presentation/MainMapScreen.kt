@@ -96,6 +96,7 @@ fun MainMapScreen(
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
+
     // Whether a follow-capable session is running (active navigation OR a live ride
     // recording). Drives the re-centre button + the recording follow camera.
     val isRecordingRide  = rideTrackingState is RideTrackingUiState.Recording

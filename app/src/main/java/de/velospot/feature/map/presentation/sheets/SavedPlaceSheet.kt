@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +41,8 @@ internal fun SavedPlaceSheet(
     place: SavedPlace,
     onDismiss: () -> Unit,
     onNavigate: (SavedPlace) -> Unit,
-    onRemove: (String) -> Unit
+    onRemove: (String) -> Unit,
+    onShare: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -84,6 +86,17 @@ internal fun SavedPlaceSheet(
                 onClick  = { onNavigate(place) },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // ── Share location ───────────────────────────────────────────────
+            onShare?.let { share ->
+                Spacer(Modifier.height(8.dp))
+                SecondaryActionButton(
+                    text     = stringResource(R.string.custom_pin_share),
+                    icon     = Icons.Default.Share,
+                    onClick  = share,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Spacer(Modifier.height(8.dp))
 

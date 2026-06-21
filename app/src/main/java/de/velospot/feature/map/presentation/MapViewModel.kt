@@ -390,7 +390,9 @@ class MapViewModel @Inject constructor(
         _customMapPinAddress.value = null
     }
 
+
     // ── Saved places (custom pins saved as named favourites) ───────────────────
+
 
     /**
      * Saves the current custom pin as a named favourite place and dismisses the

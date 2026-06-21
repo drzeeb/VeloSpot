@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
 import de.velospot.core.map.NavigationHandler
+import de.velospot.core.share.LocationSharer
 import de.velospot.domain.model.GeoCoordinate
 
 /**
@@ -57,6 +58,9 @@ internal fun MapBottomSheets(
     var showSavePlaceDialog by remember { mutableStateOf(false) }
     // Controls the "name this favourite" dialog opened from the search pin sheet.
     var showSaveSearchPinDialog by remember { mutableStateOf(false) }
+
+    // Title for the system share sheet when sharing a pin's location.
+    val shareLocationChooserTitle = stringResource(R.string.share_location_chooser_title)
 
     val configuration       = LocalConfiguration.current
     val currentLanguageCode = remember(configuration) {
@@ -195,7 +199,16 @@ internal fun MapBottomSheets(
             onDismiss       = { viewModel.selectSpace(null) },
             onNavigate      = startNavigationHandler,
             isFavorite      = favorites.contains(space.id),
-            onToggleFavorite = viewModel::toggleFavorite
+            onToggleFavorite = viewModel::toggleFavorite,
+            onShare         = {
+                LocationSharer.shareLocation(
+                    context      = context,
+                    latitude     = space.latitude,
+                    longitude    = space.longitude,
+                    label        = space.name ?: space.address,
+                    chooserTitle = shareLocationChooserTitle
+                )
+            }
         )
     }
 
@@ -209,6 +222,15 @@ internal fun MapBottomSheets(
             onNavigate       = { viewModel.startNavigationToAddress(pin) },
             onRemove         = viewModel::dismissSearchPin,
             onSaveAsFavorite = { showSaveSearchPinDialog = true },
+            onShare          = {
+                LocationSharer.shareLocation(
+                    context      = context,
+                    latitude     = pin.latitude,
+                    longitude    = pin.longitude,
+                    label        = pin.displayName,
+                    chooserTitle = shareLocationChooserTitle
+                )
+            },
             title            = stringResource(R.string.search_result_pin_title),
             subtitle         = null
         )
@@ -242,6 +264,15 @@ internal fun MapBottomSheets(
                 onNavigate = viewModel::startNavigationToCustomPin,
                 onRemove   = viewModel::dismissCustomMapPin,
                 onSaveAsFavorite = { showSavePlaceDialog = true },
+                onShare = {
+                    LocationSharer.shareLocation(
+                        context      = context,
+                        latitude     = pin.latitude,
+                        longitude    = pin.longitude,
+                        label        = customMapPinAddress,
+                        chooserTitle = shareLocationChooserTitle
+                    )
+                },
                 onParkBikeHere = { viewModel.parkBikeAt(pin.latitude, pin.longitude) }
             )
         }
@@ -265,7 +296,16 @@ internal fun MapBottomSheets(
             place      = place,
             onDismiss  = viewModel::dismissSelectedSavedPlace,
             onNavigate = viewModel::navigateToSavedPlace,
-            onRemove   = viewModel::removeSavedPlace
+            onRemove   = viewModel::removeSavedPlace,
+            onShare    = {
+                LocationSharer.shareLocation(
+                    context      = context,
+                    latitude     = place.latitude,
+                    longitude    = place.longitude,
+                    label        = place.name,
+                    chooserTitle = shareLocationChooserTitle
+                )
+            }
         )
     }
 

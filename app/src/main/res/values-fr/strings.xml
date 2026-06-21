@@ -134,6 +134,8 @@
     <string name="custom_pin_subtitle">Appuyez sur la carte pour déplacer le repère.</string>
     <string name="custom_pin_navigate">Naviguer ici</string>
     <string name="custom_pin_remove">Supprimer le repère</string>
+    <string name="custom_pin_share">Partager le lieu</string>
+    <string name="share_location_chooser_title">Partager le lieu via</string>
 
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Garer le vélo ici</string>

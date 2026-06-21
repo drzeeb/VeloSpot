@@ -262,6 +262,8 @@
     <string name="custom_pin_subtitle">Tap on the map to move the pin.</string>
     <string name="custom_pin_navigate">Navigate here</string>
     <string name="custom_pin_remove">Remove pin</string>
+    <string name="custom_pin_share">Share location</string>
+    <string name="share_location_chooser_title">Share location via</string>
 
     <!-- Saved places (custom pins saved as named favourites) -->
     <string name="save_place_as_favorite">Save as favourite</string>

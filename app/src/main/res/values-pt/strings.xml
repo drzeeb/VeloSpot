@@ -134,6 +134,8 @@
     <string name="custom_pin_subtitle">Toque no mapa para mover o marcador.</string>
     <string name="custom_pin_navigate">Navegar até aqui</string>
     <string name="custom_pin_remove">Remover marcador</string>
+    <string name="custom_pin_share">Partilhar localização</string>
+    <string name="share_location_chooser_title">Partilhar localização via</string>
     <!-- Parked bike (remember where you left your bike) -->
     <string name="menu_park_bike_here">Estacionar a bici aqui</string>
     <string name="menu_show_parked_bike">A minha bici estacionada</string>
