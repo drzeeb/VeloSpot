@@ -1,13 +1,18 @@
 package de.velospot.feature.map.presentation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -52,6 +57,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +73,12 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.domain.model.MapError
 import kotlin.math.roundToInt
+
+/**
+ * How long the navigation pill stays auto-expanded at the start of a trip (so the
+ * rider glimpses the route's elevation profile) before it smoothly collapses.
+ */
+private const val AUTO_COLLAPSE_DELAY_MS = 3_000L
 
 internal data class MapMenuCardState(
     val favoritesCount: Int,
@@ -365,7 +377,16 @@ internal fun BoxScope.MapNavigationOverlay(
                 ?: navigationUiState.destination.type.label(context)
 
             // Slim, glanceable pill that expands on tap (destination name).
-            var expanded by remember { mutableStateOf(false) }
+            // It starts **expanded** so the rider briefly sees the route's
+            // elevation profile before setting off, then auto-collapses smoothly
+            // after a short delay. Keyed on the destination so a fresh navigation
+            // (or a reroute to a new target) re-triggers the preview.
+            val destinationId = navigationUiState.destination.id
+            var expanded by remember(destinationId) { mutableStateOf(true) }
+            LaunchedEffect(destinationId) {
+                kotlinx.coroutines.delay(AUTO_COLLAPSE_DELAY_MS)
+                expanded = false
+            }
 
             Card(
                 modifier = Modifier
@@ -428,15 +449,21 @@ internal fun BoxScope.MapNavigationOverlay(
                         }
                     }
 
-                    if (expanded) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = destinationName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.height(10.dp))
-                        RouteElevationProfile(points = navigationUiState.route.points)
+                    AnimatedVisibility(
+                        visible = expanded,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Column {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = destinationName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            RouteElevationProfile(points = navigationUiState.route.points)
+                        }
                     }
 
                     if (progress?.isOffRoute == true) {
@@ -683,4 +710,3 @@ private fun RideStatCell(label: String, value: String) {
         )
     }
 }
-
