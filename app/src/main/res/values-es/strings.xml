@@ -168,6 +168,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Capas</string>
     <string name="menu_navigation_view">Vista del mapa (2D/3D)</string>
+    <string name="menu_voice_guidance">Guía por voz</string>
     <string name="menu_simulate_route_start">▶ Simular ruta (GPS simulado)</string>
     <string name="menu_simulate_route_stop">⏹ Detener simulación de ruta</string>
     <string name="menu_simulate_route_hint">▶ Simular ruta (inicia la navegación primero)</string>

@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Spoken turn-by-turn voice guidance (TTS)** — navigation can now read the upcoming-turn instructions aloud via Android `TextToSpeech`, building on the existing on-screen turn banner. It speaks an early *prepare* cue when a turn comes within ~150 m ("In 150 m, turn left"), a final *imminent* cue within ~30 m ("Now turn left") and an *arrival* cue at the destination; each cue fires once per turn (re-arming after you pass it), and off-route situations are suppressed until a reroute lands. A new **"Voice guidance"** switch in the Settings sheet (*Appearance & map*) toggles it — **disabled by default** (opt-in) and persisted across sessions. The decision logic (`NavigationVoiceCues`) is pure and unit-tested, the engine wrapper (`NavigationVoiceGuide`) matches the app locale and uses navigation-guidance audio attributes, and the flag lives in `VoiceGuidancePreferences`. Fully localised across all eight supported languages.
+
 ## [v1.0.21] - 2026-06-21
 
 ### Added

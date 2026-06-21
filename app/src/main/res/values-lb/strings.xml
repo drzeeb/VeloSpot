@@ -112,6 +112,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Ebenen</string>
     <string name="menu_navigation_view">Kaartenusiicht (2D/3D)</string>
+    <string name="menu_voice_guidance">Sproochansoen</string>
     <string name="menu_simulate_route_start">▶ Route simuléieren (GPS-Mock)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatioun stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simuléieren (fir d\'éischt Navigatioun starten)</string>

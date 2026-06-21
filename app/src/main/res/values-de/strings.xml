@@ -174,6 +174,7 @@
     <!-- Ebenen (Pin-Kategorien ein-/ausblenden) -->
     <string name="menu_layers">Ebenen</string>
     <string name="menu_navigation_view">Kartenansicht (2D/3D)</string>
+    <string name="menu_voice_guidance">Sprachansagen</string>
     <string name="menu_simulate_route_start">▶ Route simulieren (GPS-Mock)</string>
     <string name="menu_simulate_route_stop">⏹ Routensimulation stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simulieren (erst Navigation starten)</string>

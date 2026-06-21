@@ -112,6 +112,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Camadas</string>
     <string name="menu_navigation_view">Vista do mapa (2D/3D)</string>
+    <string name="menu_voice_guidance">Orientação por voz</string>
     <string name="menu_simulate_route_start">▶ Simular rota (GPS falso)</string>
     <string name="menu_simulate_route_stop">⏹ Parar simulação de rota</string>
     <string name="menu_simulate_route_hint">▶ Simular rota (inicie a navegação primeiro)</string>
