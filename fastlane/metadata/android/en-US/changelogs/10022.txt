@@ -1,0 +1,5 @@
+• Ride heatmap overlay turns your recorded rides into a colour heatmap of where you cycle most
+• Spoken turn-by-turn voice guidance reads upcoming turns aloud (opt-in)
+• New "Route hilliness" slider trades a little distance for flatter offline routes
+• Routes no longer start on the sidewalk, and round trips work with every cycling profile
+• Several offline-routing fixes for more reliable route calculation

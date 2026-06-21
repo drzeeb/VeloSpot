@@ -242,6 +242,38 @@ CHANGELOGS: dict[int, dict[str, str]] = {
             "\u2022 Fl\u00fcssigere Live-Navigation und mehrere Offline-Routing-Korrekturen\n"
         ),
     },
+    10022: {
+        "en-US": (
+            "\u2022 Ride heatmap overlay turns your recorded rides into a colour heatmap of where you cycle most\n"
+            "\u2022 Spoken turn-by-turn voice guidance reads upcoming turns aloud (opt-in)\n"
+            "\u2022 New \"Route hilliness\" slider trades a little distance for flatter offline routes\n"
+            "\u2022 Routes no longer start on the sidewalk, and round trips work with every cycling profile\n"
+            "\u2022 Several offline-routing fixes for more reliable route calculation\n"
+        ),
+        "de-DE": (
+            "\u2022 Fahrten-Heatmap zeigt als farbige Heatmap, wo du am h\u00e4ufigsten f\u00e4hrst\n"
+            "\u2022 Gesprochene Abbiegeansagen lesen die n\u00e4chsten Abbiegungen vor (optional)\n"
+            "\u2022 Neuer Schieberegler \u201eH\u00fcgeligkeit der Route\u201c f\u00fcr flachere Offline-Routen\n"
+            "\u2022 Routen starten nicht mehr auf dem Gehweg, und Rundtouren funktionieren mit jedem Radprofil\n"
+            "\u2022 Fl\u00fcssigere Live-Navigation und mehrere Offline-Routing-Korrekturen\n"
+        ),
+    },
+    10022: {
+        "en-US": (
+            "\u2022 Ride heatmap overlay turns your recorded rides into a colour heatmap of where you cycle most\n"
+            "\u2022 Spoken turn-by-turn voice guidance reads upcoming turns aloud (opt-in)\n"
+            "\u2022 New \"Route hilliness\" slider trades a little distance for flatter offline routes\n"
+            "\u2022 Routes no longer start on the sidewalk, and round trips work with every cycling profile\n"
+            "\u2022 Several offline-routing fixes for more reliable route calculation\n"
+        ),
+        "de-DE": (
+            "\u2022 Fahrten-Heatmap zeigt als farbige Heatmap, wo du am h\u00e4ufigsten f\u00e4hrst\n"
+            "\u2022 Gesprochene Abbiegeansagen lesen die n\u00e4chsten Abbiegungen vor (optional)\n"
+            "\u2022 Neuer Schieberegler \u201eH\u00fcgeligkeit der Route\u201c f\u00fcr flachere Offline-Routen\n"
+            "\u2022 Routen starten nicht mehr auf dem Gehweg, und Rundtouren funktionieren mit jedem Radprofil\n"
+            "\u2022 Mehrere Offline-Routing-Korrekturen f\u00fcr zuverl\u00e4ssigere Routenberechnung\n"
+        ),
+    },
 }
 
 
