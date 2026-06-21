@@ -14,6 +14,12 @@
 
   assign   add_beeline            false  # %add_beeline% | Enable beeline on distant start/end points | boolean
 
+  # Don't snap the route start/end onto a sidewalk (Gehweg): cycling there is
+  # generally not allowed, and BRouter otherwise matches the start to the nearest
+  # way — often the sidewalk — opening the route with a pavement + crossing detour
+  # instead of just starting on the carriageway like the online router does.
+  assign   check_start_way        true   # %check_start_way% | Avoid snapping the start/end onto sidewalks | boolean | noStartWay=footway,sidewalk
+
   assign   iswet                  0 # 0 as default, *) flag for weather conditions
   assign   turnInstructionMode  = 1 # 0=none, 1=auto-choose, 2=locus-style, 3=osmand-style
   assign   cycleroutes_pref       0.2 # also CRP *)  costfactor penalty for not being cycleroute

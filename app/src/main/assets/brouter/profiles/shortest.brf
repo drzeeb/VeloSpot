@@ -14,6 +14,12 @@ assign uphillcost add uphillcost uphill_extra
 assign   turnInstructionMode  = 1  # %turnInstructionMode% | Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
 assign   validForFoot        1
 
+# Don't snap the route start/end onto a sidewalk (Gehweg): cycling there is
+# generally not allowed, and BRouter otherwise matches the start to the nearest
+# way — often the sidewalk — opening the route with a pavement + crossing detour
+# instead of just starting on the carriageway like the online router does.
+assign   check_start_way     true  # %check_start_way% | Avoid snapping the start/end onto sidewalks | boolean | noStartWay=footway,sidewalk
+
 assign use_proposed_cycleroutes = false  # %use_proposed_cycleroutes% | Set to true to consider proposed and regular cycleroutes as equals | boolean
 
 ---context:way   # following code refers to way-tags

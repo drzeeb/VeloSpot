@@ -225,8 +225,11 @@ class BRouterEngine(
          * - 5: expose a uniform `uphill_extra` parameter across all profiles, added to
          *      the final uphill cost so the "route hilliness" slider can favour flatter
          *      routes (default 0 = unchanged).
+         * - 6: extend the start-on-carriageway guard (`check_start_way` +
+         *      `noStartWay=footway,sidewalk`) to the remaining profiles (fastbike, mtb,
+         *      shortest) so no profile opens the route on a sidewalk.
          */
-        private const val PROFILES_VERSION = "5"
+        private const val PROFILES_VERSION = "6"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
 
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
