@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **GitHub community health files** — added the standard community documents to meet the GitHub Community Standards and make the project easier and safer to contribute to: a **Code of Conduct** (`CODE_OF_CONDUCT.md`, Contributor Covenant v2.1), a **Contributing guide** (`CONTRIBUTING.md`, tailored to VeloSpot's `googlePlay`/`fdroid` flavours, JDK 17, BRouter submodule and the real Gradle build/test commands), a **Security policy** (`SECURITY.md`, private vulnerability reporting via GitHub Security Advisories), structured **issue templates** (`.github/ISSUE_TEMPLATE/` — bug report, feature request and a chooser config), a **pull request template** (`.github/PULL_REQUEST_TEMPLATE.md`) and a **funding link** (`.github/FUNDING.yml`, Buy Me a Coffee).
 - **Comprehensive ride statistics dashboard in "My rides"** — the *My rides* sheet now leads with a rich, collapsible **Statistics** card that crunches your whole ride history into every metric a data nerd could want, all derived purely from the already-stored rides (no extra storage). It's **collapsed by default** (tap the header to expand) so the ride list stays uncluttered, and groups the numbers into five sections:
   - **Totals** — ride count, total distance, total & moving time, cumulative elevation gain ↑ and loss ↓.
   - **Averages** — Ø distance, Ø duration, Ø speed (distance-weighted across moving time) and Ø climb per ride.
