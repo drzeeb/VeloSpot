@@ -257,6 +257,10 @@ assign costfactor
   add no_river_penalty
   add noise_penalty
 
+  # Cycling a sidewalk (Gehweg) is generally not allowed and should never be
+  # preferred over the carriageway next to it — keep the route off the pavement.
+  add ( switch footway=sidewalk 5 0 )
+
 
   switch or highway=motorway highway=motorway_link    switch allow_motorways 1.5 10000
   # never cycle a trunk / "Kraftfahrstrasse" where cycling is signed off (e.g. A1 feeders)

@@ -53,19 +53,29 @@ class BRouterNoStartWayProbeTest {
             )
         }
     }
+
+
     @Test
-    fun `every bundled profile penalises cycling a sidewalk`() {
+    fun `every bundled profile prefers the carriageway over a sidewalk`() {
         val (list, lookup) = profiles()
-        // Cycling a bicycle-allowed sidewalk must cost clearly more than a quiet road,
-        // so the route prefers the carriageway. 3.0 sits well above residential (~1.1).
-        val minSidewalkCost = 3.0f
+        // The real invariant: cycling a sidewalk (footway=sidewalk) must cost MORE than
+        // the parallel carriageway, otherwise the route hugs the pavement. We compare
+        // against a tertiary road (the priciest ordinary town road) so the guarantee
+        // holds even for the MTB profile, which heavily penalises paved roads.
         list.forEach { p ->
-            val way = newWayContext(p, lookup)
-            val cost = costfactor(way, listOf("highway=footway", "footway=sidewalk", "bicycle=yes"))
-            assertTrue(
-                "${p.name} rides bicycle=yes sidewalks too cheaply (costfactor=$cost)",
-                cost >= minSidewalkCost
+            val road = costfactor(newWayContext(p, lookup), listOf("highway=tertiary", "surface=asphalt"))
+            val sidewalkVariants = listOf(
+                listOf("highway=footway", "footway=sidewalk"),
+                listOf("highway=footway", "footway=sidewalk", "bicycle=yes"),
+                listOf("highway=footway", "footway=sidewalk", "bicycle=yes", "surface=paving_stones"),
             )
+            sidewalkVariants.forEach { tags ->
+                val sidewalk = costfactor(newWayContext(p, lookup), tags)
+                assertTrue(
+                    "${p.name}: sidewalk ($tags = $sidewalk) is not dearer than a tertiary road ($road)",
+                    sidewalk > road
+                )
+            }
         }
     }
 }

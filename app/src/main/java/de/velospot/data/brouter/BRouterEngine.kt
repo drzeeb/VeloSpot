@@ -231,8 +231,11 @@ class BRouterEngine(
          * - 7: penalise cycling a `footway=sidewalk` (even when bicycle=yes) in trekking
          *      and shortest so they stop hugging the pavement next to the carriageway,
          *      matching gravel/fastbike/mtb.
+         * - 8: extend that sidewalk penalty to fastbike and mtb — the MTB profile
+         *      heavily penalises paved roads, so a sidewalk used to be cheaper than the
+         *      carriageway; a strong `footway=sidewalk` surcharge keeps both on the road.
          */
-        private const val PROFILES_VERSION = "7"
+        private const val PROFILES_VERSION = "8"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
 
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────

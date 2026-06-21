@@ -464,6 +464,13 @@ assign any_cycleroute
 
   assign penaltymax = max roughness_penalty max tracktype_surface_penalty max wet_penalty trafficpenalty
 
+  # Cycling a sidewalk (Gehweg) is generally not allowed. This MTB profile makes
+  # paved roads expensive (path_preference), so without this a sidewalk would be
+  # cheaper than the carriageway and the route would hug the pavement in town. A
+  # big penalty keeps it on the road; it still falls back to a sidewalk only when
+  # there's no alternative.
+  assign sidewalk_penalty  switch footway=sidewalk 25 0
+
   assign rawcostfactor ( # can be <1, adjusted to >=1 in final step of calculation of costfactor, uphillcostfactor,downhillcostfactor
     switch and highway= not route=ferry  10000 #only highways unless ferry
     switch highway=motorway|motorway_link|proposed|abandoned  10000
@@ -498,7 +505,7 @@ assign any_cycleroute
 
     # can be <1, adjusted to >=1 in final step of calculation of costfactor, uphillcostfactor,downhillcostfactor
     assign rawcostfactor2  if isCFgt9997 then rawcostfactor
-      else add rawcostfactor add cycleroute_tweak add MTB_factor_for_road smallpaved_factor_for_road
+      else add sidewalk_penalty add rawcostfactor add cycleroute_tweak add MTB_factor_for_road smallpaved_factor_for_road
 
     assign access-penalty max onewaypenalty accesspenalty
 
