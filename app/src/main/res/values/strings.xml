@@ -7,6 +7,7 @@
     <string name="menu_disable_dark_mode">Disable dark mode</string>
     <string name="menu_layers">Layers</string>
     <string name="menu_navigation_view">Map view (2D/3D)</string>
+    <string name="menu_voice_guidance">Voice guidance</string>
     <string name="menu_park_bike_here">Park bike here</string>
     <string name="menu_show_parked_bike">My parked bike</string>
     <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
@@ -41,6 +42,19 @@
     <string name="nav_turn_slight_right">Slight right</string>
     <string name="nav_turn_sharp_left">Sharp left</string>
     <string name="nav_turn_sharp_right">Sharp right</string>
+
+    <!-- Spoken turn-by-turn voice guidance (Text-to-Speech) -->
+    <string name="nav_voice_prepare">In %1$s, %2$s</string>
+    <string name="nav_voice_now">Now %1$s</string>
+    <string name="nav_voice_maneuver_left">turn left</string>
+    <string name="nav_voice_maneuver_right">turn right</string>
+    <string name="nav_voice_maneuver_slight_left">keep slightly left</string>
+    <string name="nav_voice_maneuver_slight_right">keep slightly right</string>
+    <string name="nav_voice_maneuver_sharp_left">turn sharp left</string>
+    <string name="nav_voice_maneuver_sharp_right">turn sharp right</string>
+    <string name="nav_voice_distance_m">%1$d metres</string>
+    <string name="nav_voice_distance_km">%1$s kilometres</string>
+    <string name="nav_voice_arrived">You have reached your destination</string>
 
     <!-- Ride tracking ("My rides" timeline) -->
     <string name="menu_my_rides">My rides</string>

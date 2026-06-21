@@ -88,6 +88,8 @@ internal data class MapMenuCardState(
     val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled,
     /** Whether a bike is currently parked — switches the menu entry park ↔ show. */
     val isBikeParked: Boolean = false,
+    /** Whether spoken turn-by-turn voice guidance (TTS) is enabled. */
+    val voiceGuidanceEnabled: Boolean = false,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -108,6 +110,7 @@ internal data class MapMenuCardActions(
     val onOpenProfileSheet: () -> Unit = {},
     val onParkBikeHere: () -> Unit = {},
     val onShowParkedBike: () -> Unit = {},
+    val onToggleVoiceGuidance: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
     val onOpenRides: () -> Unit = {},

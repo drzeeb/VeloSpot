@@ -112,6 +112,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Lagen</string>
     <string name="menu_navigation_view">Kaartweergave (2D/3D)</string>
+    <string name="menu_voice_guidance">Spraakbegeleiding</string>
     <string name="menu_simulate_route_start">▶ Route simuleren (nep-GPS)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatie stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simuleren (start eerst navigatie)</string>
@@ -160,6 +161,19 @@
     <string name="nav_turn_slight_right">Flauw rechts</string>
     <string name="nav_turn_sharp_left">Scherp links</string>
     <string name="nav_turn_sharp_right">Scherp rechts</string>
+
+    <!-- Gesproken navigatie-instructies (tekst-naar-spraak) -->
+    <string name="nav_voice_prepare">Over %1$s, %2$s</string>
+    <string name="nav_voice_now">Nu %1$s</string>
+    <string name="nav_voice_maneuver_left">linksaf slaan</string>
+    <string name="nav_voice_maneuver_right">rechtsaf slaan</string>
+    <string name="nav_voice_maneuver_slight_left">houd licht links aan</string>
+    <string name="nav_voice_maneuver_slight_right">houd licht rechts aan</string>
+    <string name="nav_voice_maneuver_sharp_left">scherp linksaf slaan</string>
+    <string name="nav_voice_maneuver_sharp_right">scherp rechtsaf slaan</string>
+    <string name="nav_voice_distance_m">%1$d meter</string>
+    <string name="nav_voice_distance_km">%1$s kilometer</string>
+    <string name="nav_voice_arrived">U hebt uw bestemming bereikt</string>
     <string name="about_tagline">Vind fietsenstallingen &amp; navigeer ernaartoe.</string>
     <string name="about_website">Website</string>
     <string name="about_data_status">Datastatus</string>

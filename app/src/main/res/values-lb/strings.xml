@@ -112,6 +112,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Ebenen</string>
     <string name="menu_navigation_view">Kaartenusiicht (2D/3D)</string>
+    <string name="menu_voice_guidance">Sproochansoen</string>
     <string name="menu_simulate_route_start">▶ Route simuléieren (GPS-Mock)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatioun stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simuléieren (fir d\'éischt Navigatioun starten)</string>
@@ -160,6 +161,19 @@
     <string name="nav_turn_slight_right">Liicht riets</string>
     <string name="nav_turn_sharp_left">Staark lénks</string>
     <string name="nav_turn_sharp_right">Staark riets</string>
+
+    <!-- Geschwate Navigatiounshiweiser (Text-to-Speech) -->
+    <string name="nav_voice_prepare">An %1$s, %2$s</string>
+    <string name="nav_voice_now">Elo %1$s</string>
+    <string name="nav_voice_maneuver_left">lénks ofbéien</string>
+    <string name="nav_voice_maneuver_right">riets ofbéien</string>
+    <string name="nav_voice_maneuver_slight_left">liicht lénks halen</string>
+    <string name="nav_voice_maneuver_slight_right">liicht riets halen</string>
+    <string name="nav_voice_maneuver_sharp_left">staark lénks ofbéien</string>
+    <string name="nav_voice_maneuver_sharp_right">staark riets ofbéien</string>
+    <string name="nav_voice_distance_m">%1$d Meter</string>
+    <string name="nav_voice_distance_km">%1$s Kilometer</string>
+    <string name="nav_voice_arrived">Dir hutt Är Destinatioun erreecht</string>
     <string name="about_tagline">Fannt Vëlosparkplazen &amp; navigéiert dohin.</string>
     <string name="about_website">Websäit</string>
     <string name="about_data_status">Datestand</string>

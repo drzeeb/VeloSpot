@@ -112,6 +112,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Calques</string>
     <string name="menu_navigation_view">Vue de la carte (2D/3D)</string>
+    <string name="menu_voice_guidance">Guidage vocal</string>
     <string name="menu_simulate_route_start">▶ Simuler l\'itinéraire (GPS fictif)</string>
     <string name="menu_simulate_route_stop">⏹ Arrêter la simulation</string>
     <string name="menu_simulate_route_hint">▶ Simuler l\'itinéraire (démarrer la navigation d\'abord)</string>
@@ -161,6 +162,19 @@
     <string name="nav_turn_slight_right">Légèrement à droite</string>
     <string name="nav_turn_sharp_left">Fortement à gauche</string>
     <string name="nav_turn_sharp_right">Fortement à droite</string>
+
+    <!-- Guidage vocal (synthèse vocale) -->
+    <string name="nav_voice_prepare">Dans %1$s, %2$s</string>
+    <string name="nav_voice_now">Maintenant, %1$s</string>
+    <string name="nav_voice_maneuver_left">tournez à gauche</string>
+    <string name="nav_voice_maneuver_right">tournez à droite</string>
+    <string name="nav_voice_maneuver_slight_left">serrez légèrement à gauche</string>
+    <string name="nav_voice_maneuver_slight_right">serrez légèrement à droite</string>
+    <string name="nav_voice_maneuver_sharp_left">tournez franchement à gauche</string>
+    <string name="nav_voice_maneuver_sharp_right">tournez franchement à droite</string>
+    <string name="nav_voice_distance_m">%1$d mètres</string>
+    <string name="nav_voice_distance_km">%1$s kilomètres</string>
+    <string name="nav_voice_arrived">Vous êtes arrivé à destination</string>
     <string name="about_tagline">Trouvez des stationnements vélo &amp; naviguez-y.</string>
     <string name="about_website">Site web</string>
     <string name="about_data_status">État des données</string>

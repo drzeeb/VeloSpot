@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
@@ -34,6 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -141,6 +143,17 @@ internal fun SettingsSheet(
                 onClick = actions.onOpenNavigationView
             )
             SettingsRow(
+                icon = Icons.AutoMirrored.Filled.VolumeUp,
+                title = stringResource(R.string.menu_voice_guidance),
+                onClick = actions.onToggleVoiceGuidance,
+                trailing = {
+                    Switch(
+                        checked = state.voiceGuidanceEnabled,
+                        onCheckedChange = { actions.onToggleVoiceGuidance() }
+                    )
+                }
+            )
+            SettingsRow(
                 icon = Icons.Default.Layers,
                 title = stringResource(R.string.menu_layers),
                 onClick = actions.onOpenLayers
@@ -229,7 +242,8 @@ private fun SettingsRow(
     icon: ImageVector? = null,
     iconTint: Color? = null,
     enabled: Boolean = true,
-    leading: (@Composable () -> Unit)? = null
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null
 ) {
     val contentColor = if (enabled) MaterialTheme.colorScheme.onSurface
                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -256,13 +270,12 @@ private fun SettingsRow(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
             color = contentColor,
-            modifier = Modifier.padding(end = 8.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp)
         )
+        if (trailing != null) {
+            trailing()
+        }
     }
 }
-
-
-
-
-
-

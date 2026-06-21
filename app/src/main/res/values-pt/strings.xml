@@ -112,6 +112,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Camadas</string>
     <string name="menu_navigation_view">Vista do mapa (2D/3D)</string>
+    <string name="menu_voice_guidance">Orientação por voz</string>
     <string name="menu_simulate_route_start">▶ Simular rota (GPS falso)</string>
     <string name="menu_simulate_route_stop">⏹ Parar simulação de rota</string>
     <string name="menu_simulate_route_hint">▶ Simular rota (inicie a navegação primeiro)</string>
@@ -160,6 +161,19 @@
     <string name="nav_turn_slight_right">Ligeiramente à direita</string>
     <string name="nav_turn_sharp_left">Acentuada à esquerda</string>
     <string name="nav_turn_sharp_right">Acentuada à direita</string>
+
+    <!-- Orientação por voz (síntese de fala) -->
+    <string name="nav_voice_prepare">Em %1$s, %2$s</string>
+    <string name="nav_voice_now">Agora, %1$s</string>
+    <string name="nav_voice_maneuver_left">vire à esquerda</string>
+    <string name="nav_voice_maneuver_right">vire à direita</string>
+    <string name="nav_voice_maneuver_slight_left">mantenha-se ligeiramente à esquerda</string>
+    <string name="nav_voice_maneuver_slight_right">mantenha-se ligeiramente à direita</string>
+    <string name="nav_voice_maneuver_sharp_left">vire acentuadamente à esquerda</string>
+    <string name="nav_voice_maneuver_sharp_right">vire acentuadamente à direita</string>
+    <string name="nav_voice_distance_m">%1$d metros</string>
+    <string name="nav_voice_distance_km">%1$s quilómetros</string>
+    <string name="nav_voice_arrived">Chegou ao seu destino</string>
     <string name="about_tagline">Encontre estacionamento para bicicletas e navegue até lá.</string>
     <string name="about_website">Site</string>
     <string name="about_data_status">Estado dos dados</string>

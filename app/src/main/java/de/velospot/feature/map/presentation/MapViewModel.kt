@@ -9,6 +9,7 @@ import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.navigation.NavigationModePreferences
+import de.velospot.core.navigation.VoiceGuidancePreferences
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.core.tracking.RideRecordingManager
@@ -351,6 +352,20 @@ class MapViewModel @Inject constructor(
     fun setNavigation3DEnabled(enabled: Boolean) {
         NavigationModePreferences.set3DEnabled(context, enabled)
         _is3DNavigation.value = enabled
+    }
+
+    /**
+     * Whether spoken turn-by-turn voice guidance (Text-to-Speech) is enabled.
+     * Persisted across sessions; defaults to disabled (opt-in).
+     */
+    private val _voiceGuidanceEnabled =
+        MutableStateFlow(VoiceGuidancePreferences.isVoiceGuidanceEnabled(context))
+    val voiceGuidanceEnabled: StateFlow<Boolean> = _voiceGuidanceEnabled.asStateFlow()
+
+    /** Toggles spoken voice guidance on/off and persists the choice. */
+    fun setVoiceGuidanceEnabled(enabled: Boolean) {
+        VoiceGuidancePreferences.setVoiceGuidanceEnabled(context, enabled)
+        _voiceGuidanceEnabled.value = enabled
     }
 
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)

@@ -89,6 +89,7 @@ fun MainMapScreen(
     val parkedBike           by viewModel.parkedBike.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
+    val voiceGuidanceEnabled by viewModel.voiceGuidanceEnabled.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
@@ -140,6 +141,23 @@ fun MainMapScreen(
     // Drives the live 3D navigation camera + heading arrow. Owned by the screen,
     // bound to the MapLibreMap once a style is ready (see effects below).
     val navigationManager = remember(context) { NavigationManager(context) }
+
+    // Speaks turn-by-turn instructions (TTS) when voice guidance is enabled. The
+    // engine is released when the screen leaves composition.
+    val voiceGuide = remember(context) { NavigationVoiceGuide(context) }
+    DisposableEffect(voiceGuide) { onDispose { voiceGuide.shutdown() } }
+    LaunchedEffect(voiceGuidanceEnabled) { voiceGuide.setEnabled(voiceGuidanceEnabled) }
+    // Re-arm the announcement state when a navigation session starts; silence it
+    // when navigation ends.
+    LaunchedEffect(isNavigating) {
+        if (isNavigating) voiceGuide.reset() else voiceGuide.stop()
+    }
+    // Feed every progress snapshot to the voice guide; it decides what (if anything)
+    // to speak based on the upcoming turn / arrival.
+    LaunchedEffect(navigationProgress) {
+        val progress = navigationProgress
+        if (isNavigating && progress != null) voiceGuide.onProgress(progress)
+    }
 
     // The MapLibreMap is provided asynchronously via getMapAsync.
     // Using mutableStateOf triggers recomposition so LaunchedEffects below fire.
@@ -473,6 +491,7 @@ fun MainMapScreen(
             isExpanded         = screenUiState.isSettingsSheetVisible,
             offlineRoutingUiState = offlineRoutingUiState,
             isBikeParked       = parkedBike != null,
+            voiceGuidanceEnabled = voiceGuidanceEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -491,6 +510,7 @@ fun MainMapScreen(
             onOpenProfileSheet    = viewModel::openProfileSheet,
             onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
             onShowParkedBike      = viewModel::showParkedBike,
+            onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,

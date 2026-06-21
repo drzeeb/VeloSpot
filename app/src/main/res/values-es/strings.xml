@@ -134,6 +134,19 @@
     <string name="nav_turn_slight_right">Leve a la derecha</string>
     <string name="nav_turn_sharp_left">Cerrada a la izquierda</string>
     <string name="nav_turn_sharp_right">Cerrada a la derecha</string>
+
+    <!-- Guía por voz (síntesis de voz) -->
+    <string name="nav_voice_prepare">En %1$s, %2$s</string>
+    <string name="nav_voice_now">Ahora, %1$s</string>
+    <string name="nav_voice_maneuver_left">gire a la izquierda</string>
+    <string name="nav_voice_maneuver_right">gire a la derecha</string>
+    <string name="nav_voice_maneuver_slight_left">manténgase ligeramente a la izquierda</string>
+    <string name="nav_voice_maneuver_slight_right">manténgase ligeramente a la derecha</string>
+    <string name="nav_voice_maneuver_sharp_left">gire cerrado a la izquierda</string>
+    <string name="nav_voice_maneuver_sharp_right">gire cerrado a la derecha</string>
+    <string name="nav_voice_distance_m">%1$d metros</string>
+    <string name="nav_voice_distance_km">%1$s kilómetros</string>
+    <string name="nav_voice_arrived">Ha llegado a su destino</string>
     <string name="about_tagline">Encuentra aparcabicis y navega hasta allí.</string>
     <string name="about_website">Sitio web</string>
     <string name="about_data_status">Estado de los datos</string>
@@ -155,6 +168,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Capas</string>
     <string name="menu_navigation_view">Vista del mapa (2D/3D)</string>
+    <string name="menu_voice_guidance">Guía por voz</string>
     <string name="menu_simulate_route_start">▶ Simular ruta (GPS simulado)</string>
     <string name="menu_simulate_route_stop">⏹ Detener simulación de ruta</string>
     <string name="menu_simulate_route_hint">▶ Simular ruta (inicia la navegación primero)</string>

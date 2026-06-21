@@ -105,6 +105,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Livelli</string>
     <string name="menu_navigation_view">Vista mappa (2D/3D)</string>
+    <string name="menu_voice_guidance">Guida vocale</string>
     <string name="menu_simulate_route_start">▶ Simula percorso (GPS finto)</string>
     <string name="menu_simulate_route_stop">⏹ Ferma simulazione</string>
     <string name="menu_simulate_route_hint">▶ Simula percorso (avvia prima la navigazione)</string>
@@ -162,6 +163,19 @@
     <string name="nav_turn_slight_right">Leggermente a destra</string>
     <string name="nav_turn_sharp_left">Decisa a sinistra</string>
     <string name="nav_turn_sharp_right">Decisa a destra</string>
+
+    <!-- Guida vocale a voce (sintesi vocale) -->
+    <string name="nav_voice_prepare">Tra %1$s, %2$s</string>
+    <string name="nav_voice_now">Ora %1$s</string>
+    <string name="nav_voice_maneuver_left">svolta a sinistra</string>
+    <string name="nav_voice_maneuver_right">svolta a destra</string>
+    <string name="nav_voice_maneuver_slight_left">tieni leggermente la sinistra</string>
+    <string name="nav_voice_maneuver_slight_right">tieni leggermente la destra</string>
+    <string name="nav_voice_maneuver_sharp_left">svolta decisamente a sinistra</string>
+    <string name="nav_voice_maneuver_sharp_right">svolta decisamente a destra</string>
+    <string name="nav_voice_distance_m">%1$d metri</string>
+    <string name="nav_voice_distance_km">%1$s chilometri</string>
+    <string name="nav_voice_arrived">Sei arrivato a destinazione</string>
     <string name="about_tagline">Trova parcheggi per bici e naviga lì.</string>
     <string name="about_website">Sito web</string>
     <string name="about_data_status">Stato dei dati</string>
