@@ -296,9 +296,24 @@ internal fun ensureBuildingExtrusionLayer(style: Style) {
             )
         )
     }
-    // Insert beneath our own symbol overlays so markers stay on top, but above
-    // the flat base building fill.
-    style.addLayer(layer)
+    // Insert beneath all of our own overlays so the extruded volumes never paint
+    // over a marker (the live-location cyclist, parking pins) or the route line.
+    // MapLibre draws symbol/line layers without a depth test against the 3D
+    // fill-extrusion, so visibility is purely a question of paint order: adding
+    // the buildings on top (the previous `style.addLayer`) made them occlude the
+    // cyclist avatar wherever a footprint overlapped it on screen — the "marker
+    // disappears behind buildings" bug. Slotting the layer below the lowest of our
+    // overlays (preferring the route line, falling back through the markers) keeps
+    // every overlay reliably in the foreground while the volumes still rise above
+    // the flat base building fill of the underlying vector style.
+    val overlayLayersBottomUp = listOf(
+        LAYER_ROUTE_TRAVELED, LAYER_ROUTE, LAYER_TRACK,
+        LAYER_PARKING, LAYER_PARKING_CLUSTER, LAYER_PARKING_CLUSTER_COUNT,
+        LAYER_PARKING_HIGHLIGHT, LAYER_LOCATION,
+        LAYER_SEARCH_PIN, LAYER_CUSTOM_PIN, LAYER_SAVED_PIN, LAYER_PARKED_BIKE
+    )
+    val anchorBelow = overlayLayersBottomUp.firstOrNull { style.getLayer(it) != null }
+    if (anchorBelow != null) style.addLayerBelow(layer, anchorBelow) else style.addLayer(layer)
     layer.setProperties(PropertyFactory.visibility(Property.NONE))
 }
 
