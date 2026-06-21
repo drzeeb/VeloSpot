@@ -314,8 +314,6 @@ internal fun BoxScope.MapNavigationOverlay(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Spacer(Modifier.height(10.dp))
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(12.dp))
                     SecondaryActionButton(
                         text = stringResource(id = R.string.common_cancel),
