@@ -1,0 +1,5 @@
+• Fahrten-Heatmap zeigt als farbige Heatmap, wo du am häufigsten fährst
+• Gesprochene Abbiegeansagen lesen die nächsten Abbiegungen vor (optional)
+• Neuer Schieberegler „Hügeligkeit der Route“ für flachere Offline-Routen
+• Routen starten nicht mehr auf dem Gehweg, und Rundtouren funktionieren mit jedem Radprofil
+• Mehrere Offline-Routing-Korrekturen für zuverlässigere Routenberechnung
