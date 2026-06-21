@@ -139,6 +139,19 @@
     <string name="nav_turn_slight_right">Leicht rechts</string>
     <string name="nav_turn_sharp_left">Scharf links</string>
     <string name="nav_turn_sharp_right">Scharf rechts</string>
+
+    <!-- Gesprochene Abbiegehinweise (Text-to-Speech) -->
+    <string name="nav_voice_prepare">In %1$s %2$s</string>
+    <string name="nav_voice_now">Jetzt %1$s</string>
+    <string name="nav_voice_maneuver_left">links abbiegen</string>
+    <string name="nav_voice_maneuver_right">rechts abbiegen</string>
+    <string name="nav_voice_maneuver_slight_left">leicht links halten</string>
+    <string name="nav_voice_maneuver_slight_right">leicht rechts halten</string>
+    <string name="nav_voice_maneuver_sharp_left">scharf links abbiegen</string>
+    <string name="nav_voice_maneuver_sharp_right">scharf rechts abbiegen</string>
+    <string name="nav_voice_distance_m">%1$d Metern</string>
+    <string name="nav_voice_distance_km">%1$s Kilometern</string>
+    <string name="nav_voice_arrived">Sie haben Ihr Ziel erreicht</string>
     <string name="about_tagline">Fahrradparkplätze finden &amp; dorthin navigieren.</string>
     <string name="about_website">Webseite</string>
     <string name="about_data_status">Datenstand</string>
