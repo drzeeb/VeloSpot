@@ -28,6 +28,7 @@
     <string name="navigation_stop">Arrêter la navigation</string>
     <string name="navigation_route_loading">Calcul de l\'itinéraire vélo...</string>
     <string name="navigation_rerouting">Hors itinéraire – recalcul…</string>
+    <string name="navigation_arrived">Vous êtes arrivé à destination</string>
     <string name="navigation_downloading_segments">Téléchargement des données cartographiques hors ligne…</string>
     <string name="error_brouter_profiles_missing">Profils de routage manquants.</string>
     <string name="error_no_internet">Pas de connexion internet. Vérifiez votre Wi-Fi ou données mobiles et réessayez.</string>

@@ -1,5 +1,6 @@
 package de.velospot.feature.map.presentation.navigation
 
+import de.velospot.core.navigation.GeoMath
 import de.velospot.core.navigation.NavigationProgress
 import de.velospot.core.navigation.RouteSimulator
 import de.velospot.domain.model.BikeParkingSpace
@@ -31,6 +32,8 @@ import kotlinx.coroutines.launch
  *  - [onNavigationStarted] / [onNavigationStopped] / [onRerouted] let the host
  *    react to lifecycle transitions (e.g. auto-record a ride, adjust GPS accuracy),
  *  - [onArrivedAtParkingSpot] parks the bike when a genuine spot is reached,
+ *  - [onArrivedAtDestination] signals arrival at any (synthetic) destination so
+ *    the host can show an "you've arrived" confirmation,
  *  - [onCustomPinNavigationEnded] cleans up a transient custom-pin destination,
  *  - [onSimulatedFix] feeds a synthetic GPS fix back into the location pipeline.
  */
@@ -42,6 +45,7 @@ class NavigationController(
     private val syntheticDestinationIds: Set<String>,
     private val onSimulatedFix: (GeoCoordinate) -> Unit,
     private val onArrivedAtParkingSpot: (Double, Double) -> Unit,
+    private val onArrivedAtDestination: () -> Unit,
     private val onNavigationStarted: () -> Unit,
     private val onNavigationStopped: () -> Unit,
     private val onRerouted: () -> Unit,
@@ -69,10 +73,17 @@ class NavigationController(
     private var lastRerouteAtMs = 0L
 
     /**
-     * Guards against repeatedly auto-parking once the rider has reached a parking
-     * spot. Reset whenever a fresh navigation starts.
+     * Guards against repeatedly handling arrival once the rider has reached the
+     * destination. Reset whenever a fresh navigation starts.
      */
-    private var hasAutoParkedForCurrentRoute = false
+    private var hasArrivedForCurrentRoute = false
+
+    /**
+     * Consecutive fixes seen within the arrival radius. Requiring a couple in a
+     * row debounces a single noisy GPS sample that briefly snaps onto the
+     * destination from far away.
+     */
+    private var consecutiveArrivalFixes = 0
 
     val isActive: Boolean get() = _uiState.value is NavigationUiState.Active
     val activeRoute: BikeRoute? get() = (_uiState.value as? NavigationUiState.Active)?.route
@@ -81,27 +92,74 @@ class NavigationController(
     /** Pushed from the UI layer's `NavigationManager.onProgress` callback. */
     fun updateProgress(progress: NavigationProgress) {
         _progress.value = progress
-        maybeAutoParkOnArrival(progress)
+        maybeHandleArrival(progress)
     }
 
     /**
-     * Auto-parks the bike the moment the rider arrives at a real bike parking spot.
-     * Once the remaining distance drops below [ARRIVAL_THRESHOLD_METERS] for a
-     * genuine parking-spot destination, the bike is parked at the spot and
-     * navigation ends — so the persistent marker is dropped without any extra tap.
-     * Synthetic destinations (custom pin, address search, saved place, parked bike)
-     * never auto-park.
+     * Ends navigation the moment the rider reaches the destination — for **every**
+     * destination, not just bike parking spots. Arrival is detected robustly by
+     * combining two independent signals, so the navigation reliably finishes even
+     * when GPS is noisy or the BRouter route stops a few metres short of the door:
+     *
+     *  1. the along-route remaining distance dropping below [ARRIVAL_THRESHOLD_METERS]
+     *     while on-route (precise as long as the rider follows the line), and
+     *  2. a straight-line (crow-flies) distance from the raw GPS fix to the actual
+     *     destination coordinate below [ARRIVAL_THRESHOLD_METERS] — this works even
+     *     when the rider is slightly **off-route** at the destination (e.g. pulled
+     *     onto the pavement), which previously suppressed arrival entirely.
+     *
+     * A short debounce ([ARRIVAL_CONSECUTIVE_FIXES]) rejects a single stray fix.
+     * When the destination is a genuine bike parking spot the bike is auto-parked
+     * at it; otherwise a generic "you've arrived" confirmation is surfaced.
      */
-    private fun maybeAutoParkOnArrival(progress: NavigationProgress) {
-        if (hasAutoParkedForCurrentRoute) return
+    private fun maybeHandleArrival(progress: NavigationProgress) {
+        if (hasArrivedForCurrentRoute) return
         val destination = activeDestination ?: return
-        if (destination.id in syntheticDestinationIds) return
-        if (progress.isOffRoute) return
-        if (progress.remainingMeters > ARRIVAL_THRESHOLD_METERS) return
 
-        hasAutoParkedForCurrentRoute = true
-        onArrivedAtParkingSpot(destination.latitude, destination.longitude)
+        if (!isWithinArrivalRadius(progress, destination)) {
+            consecutiveArrivalFixes = 0
+            return
+        }
+
+        consecutiveArrivalFixes++
+        if (consecutiveArrivalFixes < ARRIVAL_CONSECUTIVE_FIXES) return
+
+        hasArrivedForCurrentRoute = true
+        if (destination.id in syntheticDestinationIds) {
+            // Address search, saved place, parked bike, custom pin: no auto-park,
+            // just confirm arrival and end navigation.
+            onArrivedAtDestination()
+        } else {
+            // Genuine bike parking spot: park the bike at the destination.
+            onArrivedAtParkingSpot(destination.latitude, destination.longitude)
+        }
         stop()
+    }
+
+    /**
+     * `true` once the rider is close enough to the [destination] to count as
+     * arrived, combining the along-route remaining distance with a crow-flies
+     * fallback so a few metres of off-route GPS noise at the destination still
+     * registers (see [maybeHandleArrival]).
+     */
+    private fun isWithinArrivalRadius(
+        progress: NavigationProgress,
+        destination: BikeParkingSpace
+    ): Boolean {
+        // On-route: trust the precise along-route remaining distance.
+        if (!progress.isOffRoute) {
+            return progress.remainingMeters <= ARRIVAL_THRESHOLD_METERS
+        }
+        // Off-route (e.g. pulled onto the pavement at the door, or the route ends a
+        // few metres short): fall back to the direct distance to the real
+        // destination coordinate, independent of the route line — this used to
+        // suppress arrival entirely.
+        val location = currentLocation() ?: return false
+        val crowFliesMeters = GeoMath.distanceMeters(
+            location.latitude, location.longitude,
+            destination.latitude, destination.longitude
+        )
+        return crowFliesMeters <= ARRIVAL_THRESHOLD_METERS
     }
 
     fun start(space: BikeParkingSpace) {
@@ -114,7 +172,8 @@ class NavigationController(
         navigationJob?.cancel()
         _uiState.value = NavigationUiState.Loading
         _progress.value = null
-        hasAutoParkedForCurrentRoute = false
+        hasArrivedForCurrentRoute = false
+        consecutiveArrivalFixes = 0
         navigationJob = scope.launch {
             runCatching {
                 routingRepository.getBikeRoute(
@@ -234,9 +293,16 @@ class NavigationController(
     companion object {
         /**
          * Remaining route distance (m) below which the rider counts as "arrived".
-         * Reaching this radius at a real bike parking spot auto-parks the bike.
+         * Reaching this radius ends navigation; at a real bike parking spot it also
+         * auto-parks the bike.
          */
         private const val ARRIVAL_THRESHOLD_METERS = 25.0
+
+        /**
+         * Consecutive fixes that must register inside the arrival radius before
+         * navigation ends, debouncing a single noisy GPS sample.
+         */
+        private const val ARRIVAL_CONSECUTIVE_FIXES = 2
 
         /** Minimum gap between automatic off-route reroutes. */
         private const val REROUTE_COOLDOWN_MS = 8_000L

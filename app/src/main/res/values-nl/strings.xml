@@ -28,6 +28,7 @@
     <string name="navigation_stop">Navigatie stoppen</string>
     <string name="navigation_route_loading">Fietsroute wordt berekend...</string>
     <string name="navigation_rerouting">Van route af – opnieuw berekenen…</string>
+    <string name="navigation_arrived">Je bent op je bestemming aangekomen</string>
     <string name="navigation_downloading_segments">Offline kaartgegevens voor dit gebied downloaden…</string>
     <string name="error_brouter_profiles_missing">Routeringsprofielen ontbreken.</string>
     <string name="error_no_internet">Geen internetverbinding. Controleer je Wi-Fi of mobiele data en probeer opnieuw.</string>
