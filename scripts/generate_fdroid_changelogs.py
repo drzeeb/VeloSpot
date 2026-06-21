@@ -226,6 +226,22 @@ CHANGELOGS: dict[int, dict[str, str]] = {
             "\u2022 Datenschutz-Hinweise und Stabilit\u00e4tsverbesserungen\n"
         ),
     },
+    10021: {
+        "en-US": (
+            "\u2022 Share any spot as an OpenStreetMap link from the detail sheets\n"
+            "\u2022 Cleaner map: one Settings sheet, a slimmer navigation pill with route elevation profile, and a turn-by-turn banner\n"
+            "\u2022 Round-trip generator builds a loop back to your start\n"
+            "\u2022 Offline routing: download all of Germany, France & Luxembourg, plus automatic on-demand tiles\n"
+            "\u2022 Smoother live navigation and several offline-routing fixes\n"
+        ),
+        "de-DE": (
+            "\u2022 Teile jeden Ort als OpenStreetMap-Link aus den Detail-Sheets\n"
+            "\u2022 Aufger\u00e4umte Karte: ein einziges Einstellungs-Sheet, schlankere Navigations-Pille mit H\u00f6henprofil und ein Abbiege-Banner\n"
+            "\u2022 Rundtour-Generator erstellt eine Schleife zur\u00fcck zum Start\n"
+            "\u2022 Offline-Routing: ganz Deutschland, Frankreich & Luxemburg herunterladen, plus automatische Kacheln bei Bedarf\n"
+            "\u2022 Fl\u00fcssigere Live-Navigation und mehrere Offline-Routing-Korrekturen\n"
+        ),
+    },
 }
 
 
