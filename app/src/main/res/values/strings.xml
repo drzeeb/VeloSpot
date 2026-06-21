@@ -14,6 +14,34 @@
     <string name="menu_simulate_route_hint">▶ Simulate route (start navigation first)</string>
     <string name="menu_about">About</string>
 
+    <!-- Settings sheet (unified menu) -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_quick_actions">Quick actions</string>
+    <string name="settings_section_appearance">Appearance &amp; map</string>
+    <string name="settings_section_routing">Routing</string>
+    <string name="settings_section_debug">Developer</string>
+
+    <!-- Route elevation profile -->
+    <string name="elevation_profile_ascent">↑ %1$d m</string>
+    <string name="elevation_profile_descent">↓ %1$d m</string>
+
+    <!-- Round-trip generator -->
+    <string name="round_trip_title">Round trip</string>
+    <string name="round_trip_menu">Round trip</string>
+    <string name="round_trip_sheet_title">Round trip</string>
+    <string name="round_trip_sheet_subtitle">Generate a loop from your location and back. Offline routing required.</string>
+    <string name="round_trip_distance_km">%1$d km</string>
+    <string name="round_trip_start">Generate route</string>
+
+    <!-- Turn-by-turn banner -->
+    <string name="nav_turn_in">In %1$s</string>
+    <string name="nav_turn_left">Turn left</string>
+    <string name="nav_turn_right">Turn right</string>
+    <string name="nav_turn_slight_left">Slight left</string>
+    <string name="nav_turn_slight_right">Slight right</string>
+    <string name="nav_turn_sharp_left">Sharp left</string>
+    <string name="nav_turn_sharp_right">Sharp right</string>
+
     <!-- Ride tracking ("My rides" timeline) -->
     <string name="menu_my_rides">My rides</string>
     <string name="rides_title">My rides</string>

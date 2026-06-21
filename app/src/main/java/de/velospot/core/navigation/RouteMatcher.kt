@@ -43,6 +43,18 @@ internal object RouteMatcher {
     const val TURN_LOOKAHEAD_METERS = 35.0
 
     /**
+     * Next-turn detection for the turn-by-turn banner.
+     * @property distanceMeters distance from the snapped point to the turn vertex.
+     * @property angleDegrees signed heading change: negative = left, positive = right.
+     */
+    data class TurnHint(val distanceMeters: Double, val angleDegrees: Double)
+
+    /** Heading change (deg) at a single vertex that counts as a real turn. */
+    private const val TURN_MIN_ANGLE_DEG = 32.0
+    /** Don't look further than this for the next turn (keeps the banner relevant). */
+    private const val NEXT_TURN_MAX_DISTANCE_M = 500.0
+
+    /**
      * Look-ahead distance for the camera/marker heading. The route heading is
      * taken from the snapped point towards a vertex at least this far along the
      * route, instead of from the single matched segment — so a degenerate sub-metre
@@ -147,8 +159,7 @@ internal object RouteMatcher {
     }
 
     /** Distance from the snapped point (segment [index], fraction [t]) to the route end. */
-    fun remainingMeters(points: List<RoutePoint>, index: Int, t: Double): Double {
-        if (points.size < 2) return 0.0
+    fun remainingMeters(points: List<RoutePoint>, index: Int, t: Double): Double {        if (points.size < 2) return 0.0
         val a = points[index]
         val b = points[index + 1]
         val segLen = GeoMath.distanceMeters(a.latitude, a.longitude, b.latitude, b.longitude)
@@ -166,8 +177,7 @@ internal object RouteMatcher {
      * Largest heading change within [TURN_LOOKAHEAD_METERS] ahead of the snapped
      * point, relative to the current segment heading.
      */
-    private fun turnSharpness(points: List<RoutePoint>, index: Int, t: Double): Double {
-        if (index + 1 >= points.size - 1) return 0.0
+    private fun turnSharpness(points: List<RoutePoint>, index: Int, t: Double): Double {        if (index + 1 >= points.size - 1) return 0.0
         val currentBearing = GeoMath.bearingDegrees(
             points[index].latitude, points[index].longitude,
             points[index + 1].latitude, points[index + 1].longitude
@@ -193,6 +203,52 @@ internal object RouteMatcher {
             i++
         }
         return maxDelta
+    }
+
+    /**
+     * Finds the next notable turn ahead of the snapped point (segment [index],
+     * fraction [t]) for the turn-by-turn banner: the first vertex within
+     * [NEXT_TURN_MAX_DISTANCE_M] whose heading change exceeds [TURN_MIN_ANGLE_DEG].
+     * Returns its distance and signed angle (negative = left, positive = right),
+     * or `null` when the road runs straight ahead.
+     */
+    fun nextTurn(points: List<RoutePoint>, index: Int, t: Double): TurnHint? {
+        if (index + 1 >= points.size - 1) return null
+        // Distance from the snapped point to the end of the current segment.
+        var distance = GeoMath.distanceMeters(
+            points[index].latitude, points[index].longitude,
+            points[index + 1].latitude, points[index + 1].longitude
+        ) * (1.0 - t)
+
+        var i = index + 1
+        while (i < points.size - 1 && distance <= NEXT_TURN_MAX_DISTANCE_M) {
+            val inBearing = GeoMath.bearingDegrees(
+                points[i - 1].latitude, points[i - 1].longitude,
+                points[i].latitude, points[i].longitude
+            )
+            val outBearing = GeoMath.bearingDegrees(
+                points[i].latitude, points[i].longitude,
+                points[i + 1].latitude, points[i + 1].longitude
+            )
+            val signed = signedAngle(inBearing, outBearing)
+            if (kotlin.math.abs(signed) >= TURN_MIN_ANGLE_DEG) {
+                return TurnHint(distanceMeters = distance, angleDegrees = signed)
+            }
+            distance += GeoMath.distanceMeters(
+                points[i].latitude, points[i].longitude,
+                points[i + 1].latitude, points[i + 1].longitude
+            )
+            i++
+        }
+        return null
+    }
+
+    /** Signed heading change from [a] to [b], normalised to (-180, 180]. */
+    private fun signedAngle(a: Double, b: Double): Double {
+        var d = (b - a) % 360.0
+        if (d > 180.0) d -= 360.0
+        if (d <= -180.0) d += 360.0
+        return d
     }
 }
 

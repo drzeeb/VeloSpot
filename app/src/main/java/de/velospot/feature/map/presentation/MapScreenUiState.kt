@@ -12,6 +12,10 @@ internal class MapScreenUiState {
     var isMenuExpanded by mutableStateOf(false)
         private set
 
+    /** The unified Settings sheet that replaced the old top-bar dropdown menu. */
+    var isSettingsSheetVisible by mutableStateOf(false)
+        private set
+
     var isFavoritesSheetVisible by mutableStateOf(false)
         private set
 
@@ -30,17 +34,24 @@ internal class MapScreenUiState {
     var isRidesSheetVisible by mutableStateOf(false)
         private set
 
+    /** The round-trip generator sheet (pick a target distance). */
+    var isRoundTripSheetVisible by mutableStateOf(false)
+        private set
+
+    /** Opens the unified Settings sheet (top-bar menu button). */
     fun expandMenu() {
+        isSettingsSheetVisible = true
         isMenuExpanded = true
     }
 
     fun dismissMenu() {
+        isSettingsSheetVisible = false
         isMenuExpanded = false
     }
 
     fun openFavorites() {
         isFavoritesSheetVisible = true
-        isMenuExpanded = false
+        dismissMenu()
     }
 
     fun closeFavorites() {
@@ -49,7 +60,7 @@ internal class MapScreenUiState {
 
     fun openLanguage() {
         isLanguageSheetVisible = true
-        isMenuExpanded = false
+        dismissMenu()
     }
 
     fun closeLanguage() {
@@ -58,7 +69,7 @@ internal class MapScreenUiState {
 
     fun openLayers() {
         isLayersSheetVisible = true
-        isMenuExpanded = false
+        dismissMenu()
     }
 
     fun closeLayers() {
@@ -67,7 +78,7 @@ internal class MapScreenUiState {
 
     fun openNavigationView() {
         isNavigationViewSheetVisible = true
-        isMenuExpanded = false
+        dismissMenu()
     }
 
     fun closeNavigationView() {
@@ -76,7 +87,7 @@ internal class MapScreenUiState {
 
     fun openAbout() {
         isAboutSheetVisible = true
-        isMenuExpanded = false
+        dismissMenu()
     }
 
     fun closeAbout() {
@@ -85,11 +96,20 @@ internal class MapScreenUiState {
 
     fun openRides() {
         isRidesSheetVisible = true
-        isMenuExpanded = false
+        dismissMenu()
     }
 
     fun closeRides() {
         isRidesSheetVisible = false
+    }
+
+    fun openRoundTrip() {
+        isRoundTripSheetVisible = true
+        dismissMenu()
+    }
+
+    fun closeRoundTrip() {
+        isRoundTripSheetVisible = false
     }
 }
 

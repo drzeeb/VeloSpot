@@ -141,6 +141,17 @@ internal fun MapBottomSheets(
         )
     }
 
+    // Round-trip generator (pick a target distance, loop back to start).
+    if (screenUiState.isRoundTripSheetVisible) {
+        RoundTripSheet(
+            onStart = { distanceMeters ->
+                screenUiState.closeRoundTrip()
+                viewModel.startRoundTrip(distanceMeters)
+            },
+            onDismiss = screenUiState::closeRoundTrip
+        )
+    }
+
     // Detail view for a single recorded ride (stats + speed timeline).
     selectedRide?.let { ride ->
         RideDetailSheet(

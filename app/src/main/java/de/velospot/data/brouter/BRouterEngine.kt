@@ -122,6 +122,71 @@ class BRouterEngine(
         }
     }
 
+    /**
+     * Generates a circular **round-trip** route that starts and ends at [start],
+     * roughly [targetDistanceMeters] long, entirely on-device. BRouter builds a
+     * ring of waypoints around the start (radius derived from the target length)
+     * and routes through them back to the origin via [RoutingEngine.doRoundTrip].
+     *
+     * An optional [directionDeg] (compass degrees) biases which way the loop heads
+     * out; when `null` BRouter picks a direction itself. The resulting length is
+     * approximate — round-trip routing trades exactness for a pleasant loop.
+     *
+     * @throws NoRouteFoundException if BRouter cannot build a loop (e.g. missing
+     *  segment tiles around the start).
+     */
+    suspend fun calculateRoundTrip(
+        start: GeoCoordinate,
+        targetDistanceMeters: Double,
+        profile: BRouterProfile = BRouterProfile.TREKKING,
+        directionDeg: Int? = null
+    ): BikeRoute = withContext(Dispatchers.Default) {
+        ensureProfiles()
+        val profilePath = File(profilesDir, "${profile.fileName}.brf").absolutePath
+
+        // BRouter's roundTripDistance is the *search radius* of the waypoint ring,
+        // not the total length. Empirically the looped result is ~3× the radius, so
+        // derive the radius from the requested trip length.
+        val searchRadius = (targetDistanceMeters / ROUND_TRIP_LENGTH_TO_RADIUS)
+            .toInt().coerceIn(MIN_ROUND_TRIP_RADIUS_M, MAX_ROUND_TRIP_RADIUS_M)
+
+        val rc = RoutingContext().apply {
+            localFunction = profilePath
+            roundTripDistance = searchRadius
+            roundTripPoints = ROUND_TRIP_POINTS
+            if (directionDeg != null) {
+                startDirection = ((directionDeg % 360) + 360) % 360
+            }
+        }
+        val engine = RoutingEngine(
+            /* baseUrl     = */ null,
+            /* outfileBase = */ null,
+            /* segmentDir  = */ segmentsDir,
+            /* waypoints   = */ mutableListOf(osmNodeNamed("start", start.longitude, start.latitude)),
+            /* rc          = */ rc
+        )
+        engine.doRoundTrip()
+
+        val track = engine.foundTrack ?: throw NoRouteFoundException()
+        if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
+
+        val points = track.nodes.map { node ->
+            RoutePoint(
+                latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
+                longitude = node.getCoordField("ilon") / 1_000_000.0 - 180.0,
+                elevationMeters = node.getElevMetersOrNull()
+            )
+        }
+        val distanceMeters  = haversineDistanceMeters(points)
+        val durationSeconds = distanceMeters / profile.typicalSpeedMs
+        BikeRoute(
+            points          = points,
+            distanceMeters  = distanceMeters,
+            durationSeconds = durationSeconds,
+            source          = RoutingSource.BROUTER_OFFLINE
+        )
+    }
+
     companion object {
         private const val TAG = "BRouterEngine"
 
@@ -146,6 +211,14 @@ class BRouterEngine(
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
         /** First segment vs destination-direction difference that counts as a start U-turn. */
         private const val REVERSAL_MIN_ANGLE_DEG = 110.0
+
+        // ── Round-trip generation (see calculateRoundTrip) ────────────────────
+        /** Approximate ratio of looped trip length to BRouter's search radius. */
+        private const val ROUND_TRIP_LENGTH_TO_RADIUS = 3.0
+        /** Number of waypoints BRouter spreads around the ring. */
+        private const val ROUND_TRIP_POINTS = 5
+        private const val MIN_ROUND_TRIP_RADIUS_M = 500
+        private const val MAX_ROUND_TRIP_RADIUS_M = 40_000
     }
 
 

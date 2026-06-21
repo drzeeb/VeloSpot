@@ -22,6 +22,16 @@ data class NavigationProgress(
     val remainingSeconds: Double,
     val distanceFromRouteMeters: Double,
     val isOffRoute: Boolean,
-    val currentSpeedMps: Float? = null
+    val currentSpeedMps: Float? = null,
+    /**
+     * Distance (m) to the next notable turn ahead, or `null` when the road runs
+     * straight / no turn is within range. Drives the turn-by-turn banner.
+     */
+    val nextTurnDistanceMeters: Double? = null,
+    /**
+     * Signed heading change of the next turn: negative = left, positive = right.
+     * `null` when [nextTurnDistanceMeters] is `null`.
+     */
+    val nextTurnAngleDegrees: Double? = null
 )
 

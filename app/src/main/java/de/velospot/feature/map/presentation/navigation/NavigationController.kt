@@ -189,6 +189,40 @@ class NavigationController(
         }
     }
 
+    /**
+     * Starts a generated **round-trip** loop of roughly [targetDistanceMeters],
+     * beginning and ending at the rider's current position. [destination] is a
+     * synthetic space placed at the start (its id must be in
+     * [syntheticDestinationIds] so arrival neither auto-parks nor mis-fires). The
+     * loop is BRouter-only; a failure (offline routing off / segments missing)
+     * surfaces as a navigation error.
+     */
+    fun startRoundTrip(destination: BikeParkingSpace, targetDistanceMeters: Double) {
+        if (currentLocation() == null) {
+            _uiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
+            return
+        }
+        val start = currentLocation()!!
+        navigationJob?.cancel()
+        _uiState.value = NavigationUiState.Loading
+        _progress.value = null
+        hasArrivedForCurrentRoute = false
+        consecutiveArrivalFixes = 0
+        navigationJob = scope.launch {
+            runCatching {
+                routingRepository.getRoundTrip(
+                    from = GeoCoordinate(start.latitude, start.longitude),
+                    targetDistanceMeters = targetDistanceMeters
+                )
+            }.onSuccess { route ->
+                _uiState.value = NavigationUiState.Active(destination = destination, route = route)
+                onNavigationStarted()
+            }.onFailure { throwable ->
+                _uiState.value = NavigationUiState.Error(mapRoutingError(throwable))
+            }
+        }
+    }
+
     fun stop() {
         navigationJob?.cancel()
         navigationJob = null

@@ -94,13 +94,15 @@ class MapViewModel @Inject constructor(
         const val ID_SAVED_PLACE = "saved_place"
         /** ID used for the synthetic BikeParkingSpace created when navigating to the parked bike. */
         const val ID_PARKED_BIKE = "parked_bike"
+        /** ID used for the synthetic BikeParkingSpace anchoring a generated round-trip loop. */
+        const val ID_ROUND_TRIP = "round_trip"
 
         /**
          * Synthetic destination IDs that must NOT trigger auto-parking on arrival —
          * only navigation to a genuine bike parking spot from the map data should.
          */
         private val SYNTHETIC_DESTINATION_IDS = setOf(
-            ID_CUSTOM_MAP_PIN, ID_ADDRESS_SEARCH_PIN, ID_SAVED_PLACE, ID_PARKED_BIKE
+            ID_CUSTOM_MAP_PIN, ID_ADDRESS_SEARCH_PIN, ID_SAVED_PLACE, ID_PARKED_BIKE, ID_ROUND_TRIP
         )
     }
 
@@ -817,6 +819,24 @@ class MapViewModel @Inject constructor(
     // ── Navigation ────────────────────────────────────────────────────────────
 
     fun startInAppNavigation(space: BikeParkingSpace) = navigationController.start(space)
+
+    /**
+     * Generates and starts a round-trip loop of roughly [distanceMeters] from the
+     * current position back to it. Offline-only; surfaces a navigation error when
+     * offline routing is off or the start segment tile is unavailable.
+     */
+    fun startRoundTrip(distanceMeters: Double) {
+        val location = _userLocation.value ?: return
+        val destination = syntheticSpace(
+            id          = ID_ROUND_TRIP,
+            latitude    = location.latitude,
+            longitude   = location.longitude,
+            name        = context.getString(de.velospot.R.string.round_trip_title),
+            address     = null,
+            sourceLayer = "round_trip"
+        )
+        navigationController.startRoundTrip(destination, distanceMeters)
+    }
 
     fun stopInAppNavigation() = navigationController.stop()
 

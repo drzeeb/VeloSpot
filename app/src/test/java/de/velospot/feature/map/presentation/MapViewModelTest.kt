@@ -619,5 +619,11 @@ private class FakeRoutingRepository(
         error?.let { throw it }
         return route
     }
+
+    override suspend fun getRoundTrip(from: GeoCoordinate, targetDistanceMeters: Double): BikeRoute {
+        lastFrom = from
+        error?.let { throw it }
+        return route
+    }
 }
 

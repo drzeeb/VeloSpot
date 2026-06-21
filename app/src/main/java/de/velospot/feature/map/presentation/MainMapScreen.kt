@@ -300,7 +300,10 @@ fun MainMapScreen(
                     // (animated heading arrow), so the renderer must not draw it.
                     suppressLocationDot = activeNavigation != null,
                     // …and it owns the route polyline (travelled/remaining split).
-                    suppressRoute = activeNavigation != null
+                    suppressRoute = activeNavigation != null,
+                    // Minimal nav mode: hide all non-trip markers while navigating
+                    // so only the route, destination and live position remain.
+                    minimalNavMode = activeNavigation != null
                 )
         }
     }
@@ -454,8 +457,43 @@ fun MainMapScreen(
             onDismissError    = viewModel::clearNavigationError
         )
 
+        // Turn-by-turn banner (top) — only during active navigation.
+        if (activeNavigation != null) {
+            MapTurnBanner(progress = navigationProgress)
+        }
+
 
         // ── Search bar + Menu button – vertically centred in one Row ─────────
+        val menuState = MapMenuCardState(
+            favoritesCount     = favorites.size + savedPlaces.size,
+            isDarkTheme        = isDarkTheme,
+            currentLanguageFlag = currentLanguageFlag,
+            isExpanded         = screenUiState.isSettingsSheetVisible,
+            offlineRoutingUiState = offlineRoutingUiState,
+            isBikeParked       = parkedBike != null,
+            // Debug-only GPS route simulator: always visible in debug
+            // builds, enabled once a route is available to drive along.
+            showSimulator      = de.velospot.BuildConfig.DEBUG,
+            simulatorEnabled   = activeNavigation != null,
+            isSimulating       = isSimulatingRoute
+        )
+        val menuActions = MapMenuCardActions(
+            onExpand              = screenUiState::expandMenu,
+            onDismiss             = screenUiState::dismissMenu,
+            onOpenFavorites       = screenUiState::openFavorites,
+            onOpenLanguage        = screenUiState::openLanguage,
+            onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
+            onOpenLayers          = screenUiState::openLayers,
+            onOpenNavigationView  = screenUiState::openNavigationView,
+            onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
+            onOpenProfileSheet    = viewModel::openProfileSheet,
+            onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
+            onShowParkedBike      = viewModel::showParkedBike,
+            onToggleSimulation    = viewModel::toggleRouteSimulation,
+            onOpenAbout           = screenUiState::openAbout,
+            onOpenRides           = screenUiState::openRides,
+            onOpenRoundTrip       = screenUiState::openRoundTrip
+        )
         Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -474,36 +512,14 @@ fun MainMapScreen(
                 onClear          = viewModel::onSearchCleared
             )
             Spacer(Modifier.width(8.dp))
-            MapMenuCard(
-                state = MapMenuCardState(
-                    favoritesCount     = favorites.size + savedPlaces.size,
-                    isDarkTheme        = isDarkTheme,
-                    currentLanguageFlag = currentLanguageFlag,
-                    isExpanded         = screenUiState.isMenuExpanded,
-                    offlineRoutingUiState = offlineRoutingUiState,
-                    isBikeParked       = parkedBike != null,
-                    // Debug-only GPS route simulator: always visible in debug
-                    // builds, enabled once a route is available to drive along.
-                    showSimulator      = de.velospot.BuildConfig.DEBUG,
-                    simulatorEnabled   = activeNavigation != null,
-                    isSimulating       = isSimulatingRoute
-                ),
-                actions = MapMenuCardActions(
-                    onExpand              = screenUiState::expandMenu,
-                    onDismiss             = screenUiState::dismissMenu,
-                    onOpenFavorites       = screenUiState::openFavorites,
-                    onOpenLanguage        = screenUiState::openLanguage,
-                    onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
-                    onOpenLayers          = screenUiState::openLayers,
-                    onOpenNavigationView  = screenUiState::openNavigationView,
-                    onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
-                    onOpenProfileSheet    = viewModel::openProfileSheet,
-                    onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
-                    onShowParkedBike      = viewModel::showParkedBike,
-                    onToggleSimulation    = viewModel::toggleRouteSimulation,
-                    onOpenAbout           = screenUiState::openAbout,
-                    onOpenRides           = screenUiState::openRides
-                )
+            MapMenuCard(state = menuState, actions = menuActions)
+        }
+
+        // Unified Settings sheet (replaces the old top-bar dropdown menu).
+        if (screenUiState.isSettingsSheetVisible) {
+            de.velospot.feature.map.presentation.sheets.SettingsSheet(
+                state = menuState,
+                actions = menuActions
             )
         }
 

@@ -72,6 +72,40 @@ class RoutingRepositoryImpl @Inject constructor(
         // On-demand disabled, or the download failed – fall back gracefully.
         return osrmFallbackRoute(osrmApi, from, to)
     }
+
+    /**
+     * Round-trip routing is offline-only (BRouter has native support; OSRM has
+     * none). Ensures the segment tile(s) around the start are present — using the
+     * on-demand downloader when enabled — then asks BRouter for a loop. Throws
+     * [RoutingFailedException] when offline routing is unavailable.
+     */
+    override suspend fun getRoundTrip(from: GeoCoordinate, targetDistanceMeters: Double): BikeRoute {
+        if (!OfflineRoutingPreferences.isOfflineRoutingEnabled(context)) {
+            throw RoutingFailedException("offline_required")
+        }
+        val profile = OfflineRoutingPreferences.getSelectedProfile(context)
+
+        val haveStartTile = segmentManager.hasAllSegments(
+            fromLat = from.latitude, fromLon = from.longitude,
+            toLat   = from.latitude, toLon   = from.longitude
+        )
+        if (!haveStartTile && OfflineRoutingPreferences.isOnDemandDownloadEnabled(context)) {
+            runCatching {
+                segmentManager.ensureSegments(
+                    fromLat = from.latitude, fromLon = from.longitude,
+                    toLat   = from.latitude, toLon   = from.longitude
+                )
+            }
+        }
+        if (!segmentManager.hasAllSegments(
+                fromLat = from.latitude, fromLon = from.longitude,
+                toLat   = from.latitude, toLon   = from.longitude
+            )
+        ) {
+            throw RoutingFailedException("segments_missing")
+        }
+        return brouterEngine.calculateRoundTrip(from, targetDistanceMeters, profile)
+    }
 }
 
 // ── OSRM online fallback ──────────────────────────────────────────────────────
