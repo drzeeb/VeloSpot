@@ -66,6 +66,15 @@
     <string name="offline_routing_success_subtitle">Routes worden nu op het apparaat berekend – betere fietspaden, geen internet nodig.</string>
     <string name="offline_routing_profile_title">Routeringsprofiel</string>
     <string name="offline_routing_profile_subtitle">Tik om te wijzigen. Deactiveer hieronder voor online routering.</string>
+
+    <!-- Hellingsschuif (offline routering) -->
+    <string name="elevation_slider_title">Hellingen op de route</string>
+    <string name="elevation_slider_subtitle">Hoe sterk klimmen wordt vermeden. Alleen offline routering.</string>
+    <string name="elevation_level_any">Maakt niet uit</string>
+    <string name="elevation_level_gentle">Iets vlakker</string>
+    <string name="elevation_level_moderate">Vlakker</string>
+    <string name="elevation_level_low">Weinig klim</string>
+    <string name="elevation_level_flattest">Zo vlak mogelijk</string>
     <string name="common_cancel">Annuleren</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d min</string>

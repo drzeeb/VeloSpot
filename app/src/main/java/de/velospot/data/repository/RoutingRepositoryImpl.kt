@@ -35,6 +35,7 @@ class RoutingRepositoryImpl @Inject constructor(
     override suspend fun getBikeRoute(from: GeoCoordinate, to: GeoCoordinate): BikeRoute {
         val offlineEnabled = OfflineRoutingPreferences.isOfflineRoutingEnabled(context)
         val profile = OfflineRoutingPreferences.getSelectedProfile(context)
+        val elevation = OfflineRoutingPreferences.getElevationPreference(context)
 
         if (!offlineEnabled) {
             return osrmFallbackRoute(osrmApi, from, to)
@@ -45,7 +46,7 @@ class RoutingRepositoryImpl @Inject constructor(
             toLat   = to.latitude,   toLon   = to.longitude
         )
         if (segmentsReady) {
-            return brouterEngine.calculateRoute(from, to, profile)
+            return brouterEngine.calculateRoute(from, to, profile, elevation)
         }
 
         // Segments for this route are missing. With on-demand enabled, fetch the
@@ -65,7 +66,7 @@ class RoutingRepositoryImpl @Inject constructor(
                     toLat   = to.latitude,   toLon   = to.longitude
                 )
             ) {
-                return brouterEngine.calculateRoute(from, to, profile)
+                return brouterEngine.calculateRoute(from, to, profile, elevation)
             }
         }
 
@@ -100,7 +101,10 @@ class RoutingRepositoryImpl @Inject constructor(
             }
         }
         if (!startTileReady()) throw RoutingFailedException("segments_missing")
-        return brouterEngine.calculateRoundTrip(from, targetDistanceMeters, profile)
+        return brouterEngine.calculateRoundTrip(
+            from, targetDistanceMeters, profile,
+            elevation = OfflineRoutingPreferences.getElevationPreference(context)
+        )
     }
 }
 

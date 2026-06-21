@@ -66,6 +66,15 @@
     <string name="offline_routing_success_subtitle">As rotas são calculadas no dispositivo – melhores ciclovias, sem internet.</string>
     <string name="offline_routing_profile_title">Perfil de roteamento</string>
     <string name="offline_routing_profile_subtitle">Toque para alterar. Desative abaixo para voltar ao roteamento online.</string>
+
+    <!-- Controlo de desnível (roteamento offline) -->
+    <string name="elevation_slider_title">Desnível do percurso</string>
+    <string name="elevation_slider_subtitle">Quanto evitar as subidas. Apenas roteamento offline.</string>
+    <string name="elevation_level_any">Indiferente</string>
+    <string name="elevation_level_gentle">Um pouco mais plano</string>
+    <string name="elevation_level_moderate">Mais plano</string>
+    <string name="elevation_level_low">Pouca subida</string>
+    <string name="elevation_level_flattest">O mais plano</string>
     <string name="common_cancel">Cancelar</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d min</string>

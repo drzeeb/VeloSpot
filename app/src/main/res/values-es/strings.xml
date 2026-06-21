@@ -66,6 +66,15 @@
     <string name="offline_routing_success_subtitle">Las rutas se calculan en el dispositivo – mejores carriles bici, sin internet.</string>
     <string name="offline_routing_profile_title">Perfil de enrutamiento</string>
     <string name="offline_routing_profile_subtitle">Toca para cambiar. Desactiva abajo para volver al enrutamiento online.</string>
+
+    <!-- Control de desnivel (enrutamiento sin conexión) -->
+    <string name="elevation_slider_title">Desnivel de la ruta</string>
+    <string name="elevation_slider_subtitle">Cuánto evitar las subidas. Solo enrutamiento sin conexión.</string>
+    <string name="elevation_level_any">Indiferente</string>
+    <string name="elevation_level_gentle">Algo más llano</string>
+    <string name="elevation_level_moderate">Más llano</string>
+    <string name="elevation_level_low">Poca subida</string>
+    <string name="elevation_level_flattest">Lo más llano</string>
     <string name="common_cancel">Cancelar</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d min</string>

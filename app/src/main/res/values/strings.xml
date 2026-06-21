@@ -238,6 +238,15 @@
     <string name="offline_routing_profile_title">Routing Profile</string>
     <string name="offline_routing_profile_subtitle">Tap a profile to change. Deactivate below to switch back to online routing.</string>
 
+    <!-- Route hilliness slider (offline routing) -->
+    <string name="elevation_slider_title">Route hilliness</string>
+    <string name="elevation_slider_subtitle">How strongly to avoid climbs. Offline routing only.</string>
+    <string name="elevation_level_any">Any</string>
+    <string name="elevation_level_gentle">Gentle</string>
+    <string name="elevation_level_moderate">Flatter</string>
+    <string name="elevation_level_low">Low climb</string>
+    <string name="elevation_level_flattest">Flattest</string>
+
     <string name="common_cancel">Cancel</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d min</string>

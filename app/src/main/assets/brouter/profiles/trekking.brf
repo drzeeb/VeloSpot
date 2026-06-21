@@ -40,8 +40,16 @@ assign downhillcutoff     = 1.5   # %downhillcutoff% | Gradients below this valu
 assign uphillcost         = 0     # %uphillcost% | Cost for going uphill | number
 assign uphillcutoff       = 1.5   # %uphillcutoff% | Gradients below this value in percents are not counted.  | number
 
+# Extra uphill cost added by VeloSpot's "route hilliness" slider (0 = unchanged).
+assign uphill_extra       = 0     # %uphill_extra% | Extra uphill cost to favour flatter routes (VeloSpot slider) | number
+
 assign downhillcost       = if consider_elevation then downhillcost else 0
 assign uphillcost         = if consider_elevation then uphillcost else 0
+
+# Apply the slider's extra uphill cost on top of the profile's own value, and
+# force elevation to be considered whenever the rider asked for flatter routes.
+assign consider_elevation = if uphill_extra then true else consider_elevation
+assign uphillcost         = add uphillcost uphill_extra
 
 # Kinematic model parameters (travel time computation)
 assign totalMass  = 90     # %totalMass% | Mass (in kg) of the bike + biker, for travel time computation | number

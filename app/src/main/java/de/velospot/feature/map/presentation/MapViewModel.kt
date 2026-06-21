@@ -10,6 +10,8 @@ import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.navigation.NavigationModePreferences
 import de.velospot.core.navigation.VoiceGuidancePreferences
+import de.velospot.core.routing.OfflineRoutingPreferences
+import de.velospot.data.brouter.ElevationPreference
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.core.tracking.RideRecordingManager
@@ -885,6 +887,24 @@ class MapViewModel @Inject constructor(
      */
     fun selectRoutingProfile(profile: de.velospot.data.brouter.BRouterProfile) {
         offlineRouting.selectProfile(profile)
+        val currentDestination = navigationController.activeDestination
+        if (currentDestination != null) {
+            startInAppNavigation(currentDestination)
+        }
+    }
+
+    /**
+     * How strongly offline routes should avoid climbing (the "route hilliness"
+     * slider). Persisted via [OfflineRoutingPreferences]; changing it re-runs an
+     * active navigation so the new preference takes effect immediately.
+     */
+    private val _elevationPreference =
+        MutableStateFlow(OfflineRoutingPreferences.getElevationPreference(context))
+    val elevationPreference: StateFlow<ElevationPreference> = _elevationPreference.asStateFlow()
+
+    fun selectElevationPreference(preference: ElevationPreference) {
+        OfflineRoutingPreferences.setElevationPreference(context, preference)
+        _elevationPreference.value = preference
         val currentDestination = navigationController.activeDestination
         if (currentDestination != null) {
             startInAppNavigation(currentDestination)

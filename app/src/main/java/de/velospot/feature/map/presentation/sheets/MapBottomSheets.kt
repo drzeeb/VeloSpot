@@ -185,9 +185,12 @@ internal fun MapBottomSheets(
     if (showProfileSheet) {
         val currentProfile = (offlineRoutingUiState as? OfflineRoutingUiState.Enabled)?.profile
             ?: de.velospot.data.brouter.BRouterProfile.TREKKING
+        val elevationPreference by viewModel.elevationPreference.collectAsStateWithLifecycle()
         RoutingProfileSheet(
             currentProfile         = currentProfile,
             onSelectProfile        = viewModel::selectRoutingProfile,
+            currentElevation       = elevationPreference,
+            onSelectElevation      = viewModel::selectElevationPreference,
             onDismiss              = viewModel::dismissProfileSheet,
             onDisableOfflineRouting = viewModel::disableOfflineRouting
         )

@@ -66,6 +66,15 @@
     <string name="offline_routing_success_subtitle">Strecken gi lo um Apparat berechent – besser Vëlosweeër, kee Internet nëideg.</string>
     <string name="offline_routing_profile_title">Routing-Profil</string>
     <string name="offline_routing_profile_subtitle">Tippt fir z\'änneren. Ënnen deaktivéieren fir zréck op Online ze wiesselen.</string>
+
+    <!-- Steigungs-Reegler (Offline-Routing) -->
+    <string name="elevation_slider_title">Steigung vun der Streck</string>
+    <string name="elevation_slider_subtitle">Wéi staark Klamme vermidde ginn. Nëmme beim Offline-Routing.</string>
+    <string name="elevation_level_any">Egal</string>
+    <string name="elevation_level_gentle">E bësse méi flaach</string>
+    <string name="elevation_level_moderate">Méi flaach</string>
+    <string name="elevation_level_low">Wéineg Steigung</string>
+    <string name="elevation_level_flattest">Esou flaach wéi méiglech</string>
     <string name="common_cancel">Ofbriechen</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d Min.</string>

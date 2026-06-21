@@ -66,6 +66,15 @@
     <string name="offline_routing_success_subtitle">Routen werden jetzt auf deinem Gerät berechnet – bessere Radwege, kein Internet nötig.</string>
     <string name="offline_routing_profile_title">Routing-Profil</string>
     <string name="offline_routing_profile_subtitle">Profil antippen zum Wechseln. Unten deaktivieren um zur Online-Routenführung zurückzukehren.</string>
+
+    <!-- Steigungs-Regler (Offline-Routing) -->
+    <string name="elevation_slider_title">Steigung der Route</string>
+    <string name="elevation_slider_subtitle">Wie stark Anstiege vermieden werden. Nur bei Offline-Routing.</string>
+    <string name="elevation_level_any">Egal</string>
+    <string name="elevation_level_gentle">Etwas flacher</string>
+    <string name="elevation_level_moderate">Flacher</string>
+    <string name="elevation_level_low">Wenig Steigung</string>
+    <string name="elevation_level_flattest">Möglichst flach</string>
     <string name="common_cancel">Abbrechen</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="duration_minutes">%1$d Min.</string>

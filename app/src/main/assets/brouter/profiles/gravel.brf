@@ -44,6 +44,9 @@ assign avoid_noise false # %avoid_noise% | Enable to avoid noisy areas | boolean
 assign correctMisplacedViaPoints = false # %correctMisplacedViaPoints% | Set to true to remove detours due to via points (going back and forth on the same route) | boolean
 assign correctMisplacedViaPointsDistance = 400 # %correctMisplacedViaPointsDistance% | Only remove detours shorter than this (one-way) distance (in m) (engine defaults to 0 which removes detours whatever their length) | number
 
+# Extra uphill cost added by VeloSpot's "route hilliness" slider (0 = unchanged).
+assign uphill_extra = 0 # %uphill_extra% | Extra uphill cost to favour flatter routes | number
+
 ---context:way
 
 assign downhillcost   switch consider_elevation 40 switch avoid_steep_inclines  80 0.0
@@ -58,6 +61,9 @@ assign downhillcost   switch bad_when_steep ( max 160 downhillcost   ) downhillc
 assign downhillcutoff switch bad_when_steep ( min 1.5 downhillcutoff ) downhillcutoff
 assign uphillcost     switch bad_when_steep ( max  80 uphillcost     ) uphillcost
 assign uphillcutoff   switch bad_when_steep ( min 1.5 uphillcutoff   ) uphillcutoff
+
+# Add the "route hilliness" slider's extra uphill cost (0 = unchanged).
+assign uphillcost     add uphillcost uphill_extra
 
 assign any_cycleway or cycleway=track|lane|shared_lane|shared
                     or and cycleway:right=track|lane|shared_lane reversedirection=
