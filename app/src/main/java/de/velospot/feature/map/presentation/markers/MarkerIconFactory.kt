@@ -269,6 +269,13 @@ internal fun createSavedPlaceIcon(): Drawable {
         close()
     }, pinPaint)
 
+    // White five-pointed star centred on the pin body, so a saved favourite is
+    // instantly recognisable (and matches the icon's documented appearance).
+    canvas.drawPath(
+        starPath(centerX = cx, centerY = cy, outerRadius = 16f, innerRadius = 6.6f),
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL }
+    )
+
     return BitmapDrawable(null, bitmap)
 }
 
