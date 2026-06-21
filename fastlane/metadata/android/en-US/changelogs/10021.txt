@@ -1,0 +1,5 @@
+• Share any spot as an OpenStreetMap link from the detail sheets
+• Cleaner map: one Settings sheet, a slimmer navigation pill with route elevation profile, and a turn-by-turn banner
+• Round-trip generator builds a loop back to your start
+• Offline routing: download all of Germany, France & Luxembourg, plus automatic on-demand tiles
+• Smoother live navigation and several offline-routing fixes

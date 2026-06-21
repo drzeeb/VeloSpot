@@ -1,0 +1,5 @@
+• Teile jeden Ort als OpenStreetMap-Link aus den Detail-Sheets
+• Aufgeräumte Karte: ein einziges Einstellungs-Sheet, schlankere Navigations-Pille mit Höhenprofil und ein Abbiege-Banner
+• Rundtour-Generator erstellt eine Schleife zurück zum Start
+• Offline-Routing: ganz Deutschland, Frankreich & Luxemburg herunterladen, plus automatische Kacheln bei Bedarf
+• Flüssigere Live-Navigation und mehrere Offline-Routing-Korrekturen

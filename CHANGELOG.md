@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v1.0.21] - 2026-06-21
+
 ### Added
 - **Share a location with other apps** — the detail sheets for a custom map pin, an address search result, a bike parking space and a saved favourite now carry a **Share** action that opens the system share sheet with a universal **OpenStreetMap web link** (plus the resolved name/address as the first line), so you can send a spot to WhatsApp, Telegram, e-mail, etc. Built on a small `LocationSharer` (in `core/share`, symmetric to `ImageSharer`). Fully localised across all eight supported languages.
 - **Leaner, cleaner map UI + new ride features** — a focused pass that declutters the map and adds practical navigation tools, all localised across the eight supported languages:
