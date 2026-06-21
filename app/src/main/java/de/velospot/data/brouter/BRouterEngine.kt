@@ -228,8 +228,11 @@ class BRouterEngine(
          * - 6: extend the start-on-carriageway guard (`check_start_way` +
          *      `noStartWay=footway,sidewalk`) to the remaining profiles (fastbike, mtb,
          *      shortest) so no profile opens the route on a sidewalk.
+         * - 7: penalise cycling a `footway=sidewalk` (even when bicycle=yes) in trekking
+         *      and shortest so they stop hugging the pavement next to the carriageway,
+         *      matching gravel/fastbike/mtb.
          */
-        private const val PROFILES_VERSION = "6"
+        private const val PROFILES_VERSION = "7"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
 
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────

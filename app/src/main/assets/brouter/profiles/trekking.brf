@@ -348,9 +348,16 @@ assign costfactor
   #
   # Footways (incl. sidewalks) are de-preferred even when cycling is allowed, so
   # in town the carriageway wins over hugging the pavement next to it. Dedicated
-  # cycleways (handled above as cost 1) stay preferred.
+  # cycleways (handled above as cost 1) stay preferred. A `footway=sidewalk` is
+  # penalised hard even when cycling is explicitly allowed (bicycle=yes), so the
+  # route never opens on / hugs the pavement when there's a carriageway alongside.
   #
-  else if ( highway=footway                   ) then ( if isbike then ( if probablyGood then 1.8 else 3.0 ) else 4.0 )
+  else if ( highway=footway ) then
+  (
+    if      ( footway=sidewalk ) then 5.0
+    else if ( isbike          ) then ( if probablyGood then 1.8 else 3.0 )
+    else 4.0
+  )
 
   #
   # tracks and track-like ways are rated mainly be tracktype/grade
