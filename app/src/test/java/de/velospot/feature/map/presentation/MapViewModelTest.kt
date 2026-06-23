@@ -25,6 +25,7 @@ import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -48,6 +49,29 @@ class MapViewModelTest {
     private lateinit var mockSegmentManager: BRouterSegmentManager
     private lateinit var mockNominatimGeocoder: NominatimGeocoder
 
+    /**
+     * Every [MapViewModel] built by [makeViewModel] is tracked here and cleared in
+     * [tearDown]. Without this the view-models' `viewModelScope` coroutines (e.g.
+     * the infinite location/favorites flow collectors) outlive the test and keep
+     * running on the shared main dispatcher; an exception thrown by such a leaked
+     * coroutine then surfaces against the *next* test as `UncaughtExceptionsBeforeTest`,
+     * making the suite flaky on CI. Clearing cancels each `viewModelScope`.
+     */
+    private val createdViewModels = mutableListOf<MapViewModel>()
+
+    /**
+     * Real, cancellable scopes handed to each `RideRecordingManager`. The manager
+     * runs background work (a 1 s stats ticker + GPS collector) on its own scope
+     * that `ViewModel.clear()` does NOT touch; navigation tests auto-start a
+     * recording and never stop it, so on the default scope that work would keep
+     * running on background threads across every later test and — firing after
+     * `resetMain()` — bridge into the (now reset) main dispatcher, throwing and
+     * surfacing as a flaky `UncaughtExceptionsBeforeTest`. We hand the manager a
+     * **real** Default scope (never a test scheduler, whose `advanceUntilIdle()`
+     * would spin forever on the ticker's endless `delay` loop) and cancel it here.
+     */
+    private val createdManagerScopes = mutableListOf<kotlinx.coroutines.CoroutineScope>()
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -68,6 +92,22 @@ class MapViewModelTest {
 
     @After
     fun tearDown() {
+        // 1) Cancel the recording managers' background scopes (ticker + GPS collector)
+        //    so nothing keeps running on background threads once the test's main
+        //    dispatcher is reset.
+        createdManagerScopes.forEach { runCatching { it.cancel() } }
+        createdManagerScopes.clear()
+        // 2) Cancel each view-model's viewModelScope so no collector coroutine leaks
+        //    into the next test. ViewModel.clear() is not public, so reach it reflectively.
+        createdViewModels.forEach { vm ->
+            runCatching {
+                androidx.lifecycle.ViewModel::class.java
+                    .getDeclaredMethod("clear")
+                    .apply { isAccessible = true }
+                    .invoke(vm)
+            }
+        }
+        createdViewModels.clear()
         Dispatchers.resetMain()
     }
 
@@ -78,6 +118,12 @@ class MapViewModelTest {
         routingRepository: RoutingRepository = FakeRoutingRepository()
     ): MapViewModel {
         val recordedRidesRepository = FakeRecordedRidesRepository()
+        // Hand the manager a REAL but cancellable Default scope (cancelled in tearDown)
+        // so its background ticker / GPS collector can't leak across tests. Never a
+        // test scheduler — its `advanceUntilIdle()` would spin forever on the ticker.
+        val managerScope = kotlinx.coroutines.CoroutineScope(
+            kotlinx.coroutines.SupervisorJob() + Dispatchers.Default
+        ).also { createdManagerScopes.add(it) }
         return MapViewModel(
             bikeParkingRepository = bikeParkingRepository,
             favoritesRepository   = favoritesRepository,
@@ -88,13 +134,14 @@ class MapViewModelTest {
             recordingManager      = de.velospot.core.tracking.RideRecordingManager(
                 context = mockContext,
                 locationRepository = locationRepository,
-                recordedRidesRepository = recordedRidesRepository
+                recordedRidesRepository = recordedRidesRepository,
+                scope = managerScope
             ),
             savedPlacesRepository = FakeSavedPlacesRepository(),
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
             context               = mockContext
-        )
+        ).also { createdViewModels.add(it) }
     }
 
     @Test

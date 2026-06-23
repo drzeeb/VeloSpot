@@ -83,8 +83,25 @@ internal fun createBikeMarkerIcon(context: Context, zoomBucket: Int, pinColor: I
  * [LAYER_LOCATION] layer rotates it by the per-feature [PROP_BEARING] and the
  * map tilts during navigation, so the rider visibly leans into the heading.
  * [isNavigationActive] simply renders the avatar a bit larger while navigating.
+ *
+ * [pedalPhase] (`0f..1f`) drives the **pedalling animation**: the legs, shoes and
+ * pedals are drawn programmatically (not baked into the vector), so by rendering a
+ * sequence of frames at advancing phases the rider appears to pedal. Phase `0`
+ * is a neutral mid-stroke stance; the navigation frame loop cycles the phase in
+ * step with the rider's ground speed.
+ *
+ * [idle] renders the **stopped** pose instead of the pedalling pose: the rider
+ * plants one foot flat on the ground beside the bike (the other stays on the
+ * raised pedal), exactly like a cyclist waiting at a standstill. It defaults to
+ * `true` whenever the rider is not navigating, so the resting map marker looks
+ * naturally parked rather than frozen mid-stroke.
  */
-internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Boolean): Drawable {
+internal fun createLocationMarkerIcon(
+    context: Context,
+    isNavigationActive: Boolean,
+    pedalPhase: Float = 0f,
+    idle: Boolean = !isNavigationActive
+): Drawable {
     val size = if (isNavigationActive) 184 else 148
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
@@ -109,8 +126,13 @@ internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Bool
         // basemap, then composite the colour version on top.
         val pad = (size * 0.10f).roundToInt()
         val avatarBmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val avatarCanvas = Canvas(avatarBmp)
         avatar.setBounds(pad, pad, size - pad, size - pad)
-        avatar.draw(Canvas(avatarBmp))
+        avatar.draw(avatarCanvas)
+        // Animated legs / shoes / pedals on top of the bike (and rider torso),
+        // so the white keyline below wraps them together with the rest of the
+        // sprite into one clean silhouette.
+        drawCyclistLegs(avatarCanvas, size, pad, pedalPhase, idle)
 
         val outline = size * 0.012f
         val whitePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -130,6 +152,79 @@ internal fun createLocationMarkerIcon(context: Context, isNavigationActive: Bool
     }
 
     return BitmapDrawable(context.resources, bitmap)
+}
+
+/**
+ * Draws the rider's two legs, shoes and pedals onto the avatar bitmap at the given
+ * crank [phase] (`0f..1f`). The feet oscillate forward/back along the bike's
+ * longitudinal axis 180° out of phase (left vs right), mimicking a turning crank
+ * seen from above, while the knees bow slightly outward for a believable bent-leg
+ * pedalling pose. Coordinates are expressed in the avatar vector's 64×64 space and
+ * mapped into the padded bitmap so they line up exactly with the drawn bike frame.
+ *
+ * When [idle] is `true` the pedalling pose is replaced by a **standstill** pose:
+ * the left leg reaches down and out to plant a flat foot on the ground beside the
+ * bike (a wider, flattened shoe sells the ground contact), while the right foot
+ * rests on the raised pedal — the natural stance of a stopped cyclist.
+ */
+private fun drawCyclistLegs(canvas: Canvas, size: Int, pad: Int, phase: Float, idle: Boolean = false) {
+    val scale = (size - 2 * pad) / 64f
+    fun vx(x: Float) = pad + x * scale
+    fun vy(y: Float) = pad + y * scale
+
+    val a = phase * (2f * Math.PI.toFloat())
+    val cos = Math.cos(a.toDouble()).toFloat()
+    val amplitude = 4.0f          // forward/back foot travel (vector units)
+    val crankY = 43.5f            // bottom-bracket height (matches the frame)
+
+    // Hips emerge from just under the torso (bottom edge ≈ y 35).
+    val hipLeftX = 28.7f;  val hipRightX = 35.3f;  val hipY = 35f
+
+    val legPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = "#283593".toColorInt()                 // shorts / legs blue
+        style = Paint.Style.STROKE
+        strokeWidth = 3.4f * scale
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    // A single quadratic curve hip → (knee) → foot, with the control point pushed
+    // outward so the leg reads as bent at the knee.
+    fun drawLeg(hipX: Float, footX: Float, footY: Float, kneeOutX: Float) {
+        val kneeX = (hipX + footX) / 2f + kneeOutX
+        val kneeY = (hipY + footY) / 2f
+        canvas.drawPath(Path().apply {
+            moveTo(vx(hipX), vy(hipY))
+            quadTo(vx(kneeX), vy(kneeY), vx(footX), vy(footY))
+        }, legPaint)
+    }
+
+    val shoePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = "#212121".toColorInt() }
+    fun drawShoe(footX: Float, footY: Float, w: Float, h: Float) {
+        val cx = vx(footX); val cy = vy(footY)
+        val halfW = w * scale / 2f; val halfH = h * scale / 2f
+        canvas.drawRoundRect(cx - halfW, cy - halfH, cx + halfW, cy + halfH, halfH, halfH, shoePaint)
+    }
+
+    if (idle) {
+        // Standstill: left foot planted on the ground (down & out), right foot up
+        // on the pedal. The planted foot sits below/outside the bike footprint.
+        val groundFootX = 23.5f; val groundFootY = 53.5f
+        val pedalFootX = 36.4f;  val pedalFootY = 41.5f
+        drawLeg(hipLeftX, groundFootX, groundFootY, kneeOutX = -2.6f)
+        drawLeg(hipRightX, pedalFootX, pedalFootY, kneeOutX = 1.6f)
+        // Planted shoe is flatter & wider so it reads as resting on the ground.
+        drawShoe(groundFootX, groundFootY, w = 5.2f, h = 2.2f)
+        drawShoe(pedalFootX, pedalFootY, w = 3.8f, h = 2.4f)
+        return
+    }
+
+    val footLeftX = 27.6f; val footRightX = 36.4f
+    val footLeftY  = crankY - cos * amplitude          // left foot leads…
+    val footRightY = crankY + cos * amplitude          // …right foot trails (180° apart)
+    drawLeg(hipLeftX, footLeftX, footLeftY, kneeOutX = -1.6f)
+    drawLeg(hipRightX, footRightX, footRightY, kneeOutX = 1.6f)
+    drawShoe(footLeftX, footLeftY, w = 3.8f, h = 2.4f)
+    drawShoe(footRightX, footRightY, w = 3.8f, h = 2.4f)
 }
 
 internal fun createMutedMarkerIcon(

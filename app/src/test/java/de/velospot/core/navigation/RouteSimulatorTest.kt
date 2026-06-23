@@ -2,6 +2,8 @@ package de.velospot.core.navigation
 
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -9,6 +11,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class RouteSimulatorTest {
 
     // ~330 m straight eastbound leg then a northbound leg.
@@ -76,6 +79,39 @@ class RouteSimulatorTest {
         sim.start(this, listOf(RoutePoint(49.0, 6.0)), onFix = { emitted = true })
         assertFalse(emitted)
         assertFalse(sim.isRunning)
+    }
+
+    @Test
+    fun `resumes from the given start offset instead of the route start`() = runTest {
+        val fixes = mutableListOf<GeoCoordinate>()
+        RouteSimulator().start(
+            scope = this,
+            route = route,
+            speedMps = 20.0,
+            intervalMs = 1_000L,
+            startOffsetMeters = 200.0,   // ~200 m in, near the end of the eastbound leg
+            onFix = { fixes.add(it) }
+        )
+        advanceUntilIdle()
+        // The first emitted fix is the resume point — well east of the 6.0000 start,
+        // not back at the beginning.
+        val first = fixes.first()
+        assertEquals(49.0000, first.latitude, 1e-4)
+        assertTrue("resumed east of the start (lon=${first.longitude})", first.longitude > 6.0020)
+    }
+
+    @Test
+    fun `stop keeps travelled distance, reset rewinds it`() = runTest {
+        val sim = RouteSimulator()
+        sim.start(this, route, speedMps = 20.0, intervalMs = 1_000L, onFix = {})
+        advanceTimeBy(2_500)            // ~2 ticks → some distance, but not the whole route
+        sim.stop()
+        val paused = sim.travelledMeters
+        assertTrue("some distance covered before pause (was $paused)", paused > 0.0)
+        assertTrue("not yet at the route end", paused < 400.0)
+
+        sim.reset()
+        assertEquals(0.0, sim.travelledMeters, 0.0)
     }
 }
 

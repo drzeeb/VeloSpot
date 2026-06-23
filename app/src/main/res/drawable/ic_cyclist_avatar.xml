@@ -31,18 +31,9 @@
     <!-- Handlebar -->
     <path android:fillColor="#37474F"
         android:pathData="M21,14.5 h22 a2,2 0 0,1 0,4 h-22 a2,2 0 0,1 0,-4 z" />
-    <!-- Pedals -->
-    <path android:fillColor="#212121"
-        android:pathData="M25.5,42.5 h4.5 v3 h-4.5 z" />
-    <path android:fillColor="#212121"
-        android:pathData="M34,42.5 h4.5 v3 h-4.5 z" />
 
     <!-- ── Rider ───────────────────────────────────────────────────────── -->
-    <!-- Legs / shorts reaching back to the pedals -->
-    <path android:fillColor="#283593"
-        android:pathData="M29.5,33 L32,33 L29.5,44 L26.5,44 z" />
-    <path android:fillColor="#283593"
-        android:pathData="M32,33 L34.5,33 L37.5,44 L34.5,44 z" />
+    <!-- (Legs / shoes / pedals are drawn & animated in code, see header note.) -->
 
     <!-- Arms / jersey sleeves reaching forward to the handlebar -->
     <path android:fillColor="#1565C0"

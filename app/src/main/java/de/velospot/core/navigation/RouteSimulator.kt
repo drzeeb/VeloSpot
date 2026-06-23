@@ -27,6 +27,14 @@ class RouteSimulator {
 
     private var job: Job? = null
 
+    /**
+     * Distance (m) travelled along the route so far. Survives [stop] so the
+     * simulation can be **paused and resumed** from the same spot (pass it back as
+     * `startOffsetMeters`); [reset] (or reaching the end) zeroes it again.
+     */
+    var travelledMeters: Double = 0.0
+        private set
+
     /** True while a simulation is currently running. */
     val isRunning: Boolean get() = job?.isActive == true
 
@@ -38,6 +46,8 @@ class RouteSimulator {
      * @param speedMps simulated ground speed in metres per second (default ≈ 18 km/h).
      * @param intervalMs delay between emitted fixes (default 1 s — "im Sekundentakt").
      * @param jitterMeters max random lateral offset added to each fix (0 = exact).
+     * @param startOffsetMeters distance along the route to begin from (default 0 =
+     *  the start). Pass [travelledMeters] to **resume** a paused run.
      * @param onFix invoked on the scope's thread with each simulated [GeoCoordinate].
      * @param onFinished invoked once the end of the route is reached.
      */
@@ -47,6 +57,7 @@ class RouteSimulator {
         speedMps: Double = 5.0,
         intervalMs: Long = 1_000L,
         jitterMeters: Double = 0.0,
+        startOffsetMeters: Double = 0.0,
         onFix: (GeoCoordinate) -> Unit,
         onFinished: () -> Unit = {}
     ) {
@@ -65,23 +76,31 @@ class RouteSimulator {
         val totalLength = cumulative.last()
 
         job = scope.launch {
-            var travelled = 0.0
-            // Emit the start point immediately so the camera tilts in at t=0.
+            var travelled = startOffsetMeters.coerceIn(0.0, totalLength)
+            travelledMeters = travelled
+            // Emit the start (or resume) point immediately so the camera tilts in at t=0.
             emitAt(route, cumulative, travelled, speedMps, jitterMeters, onFix)
 
             while (isActive && travelled < totalLength) {
                 delay(intervalMs)
                 travelled = (travelled + speedMps * (intervalMs / 1000.0)).coerceAtMost(totalLength)
+                travelledMeters = travelled
                 emitAt(route, cumulative, travelled, speedMps, jitterMeters, onFix)
             }
             onFinished()
         }
     }
 
-    /** Stops the running simulation (if any). */
+    /** Pauses the run, **keeping** [travelledMeters] so it can be resumed. */
     fun stop() {
         job?.cancel()
         job = null
+    }
+
+    /** Fully stops the run and rewinds [travelledMeters] back to the start. */
+    fun reset() {
+        stop()
+        travelledMeters = 0.0
     }
 
     /** Interpolates the position at [travelled] metres and emits a fix. */
