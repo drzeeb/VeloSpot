@@ -46,14 +46,30 @@ import javax.inject.Singleton
  * flows and the foreground service lifecycle.
  */
 @Singleton
-class RideRecordingManager @Inject constructor(
-    @ApplicationContext private val context: Context,
+class RideRecordingManager(
+    private val context: Context,
     private val locationRepository: LocationRepository,
     private val recordedRidesRepository: RecordedRidesRepository,
-) {
     /** Long-lived scope, independent of any ViewModel, so feeding/persistence
-     *  continue while the app is backgrounded or closed. */
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+     *  continue while the app is backgrounded or closed. Injectable so unit tests
+     *  can supply a controlled, cancellable scope instead of the real-thread default. */
+    private val scope: CoroutineScope,
+) {
+    /**
+     * Production constructor (Hilt-provided): owns a long-lived [SupervisorJob] on
+     * [Dispatchers.Default] so a running recording survives the map ViewModel.
+     */
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        locationRepository: LocationRepository,
+        recordedRidesRepository: RecordedRidesRepository,
+    ) : this(
+        context,
+        locationRepository,
+        recordedRidesRepository,
+        CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    )
 
     private val tracker = RideTracker()
 
