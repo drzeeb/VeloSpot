@@ -327,6 +327,14 @@ class NavigationController(
     fun stopSimulation() {
         routeSimulator.stop()
         _isSimulating.value = false
+        // With the simulator stopped, no further fixes arrive to slow the navigation
+        // puck — so its dead-reckoning would keep gliding it forward along the route
+        // at the last simulated speed (it never sees a "standing still" fix the way a
+        // real GPS would). Feed one final **stationary** fix (speed 0) at the current
+        // position so the puck's speed eases to a stop instead of coasting on.
+        currentLocation()?.let { last ->
+            onSimulatedFix(last.copy(speedMetersPerSecond = 0f))
+        }
     }
 
     /** Stops the simulator; call from the host's `onCleared`. */
