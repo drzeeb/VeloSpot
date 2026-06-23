@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import de.velospot.core.display.KeepScreenOnPreferences
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
@@ -368,6 +369,20 @@ class MapViewModel @Inject constructor(
     fun setVoiceGuidanceEnabled(enabled: Boolean) {
         VoiceGuidancePreferences.setVoiceGuidanceEnabled(context, enabled)
         _voiceGuidanceEnabled.value = enabled
+    }
+
+    /**
+     * Whether the display is kept awake during a follow session (active navigation
+     * or a live ride recording). Persisted across sessions; defaults to enabled.
+     */
+    private val _keepScreenOnEnabled =
+        MutableStateFlow(KeepScreenOnPreferences.isKeepScreenOnEnabled(context))
+    val keepScreenOnEnabled: StateFlow<Boolean> = _keepScreenOnEnabled.asStateFlow()
+
+    /** Toggles the keep-display-awake behaviour on/off and persists the choice. */
+    fun setKeepScreenOnEnabled(enabled: Boolean) {
+        KeepScreenOnPreferences.setKeepScreenOnEnabled(context, enabled)
+        _keepScreenOnEnabled.value = enabled
     }
 
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)

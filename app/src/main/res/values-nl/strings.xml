@@ -122,6 +122,7 @@
     <string name="menu_layers">Lagen</string>
     <string name="menu_navigation_view">Kaartweergave (2D/3D)</string>
     <string name="menu_voice_guidance">Spraakbegeleiding</string>
+    <string name="menu_keep_screen_on">Scherm aan houden tijdens het rijden</string>
     <string name="menu_simulate_route_start">▶ Route simuleren (nep-GPS)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatie stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simuleren (start eerst navigatie)</string>

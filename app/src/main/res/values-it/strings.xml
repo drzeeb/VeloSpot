@@ -115,6 +115,7 @@
     <string name="menu_layers">Livelli</string>
     <string name="menu_navigation_view">Vista mappa (2D/3D)</string>
     <string name="menu_voice_guidance">Guida vocale</string>
+    <string name="menu_keep_screen_on">Mantieni lo schermo acceso durante il percorso</string>
     <string name="menu_simulate_route_start">▶ Simula percorso (GPS finto)</string>
     <string name="menu_simulate_route_stop">⏹ Ferma simulazione</string>
     <string name="menu_simulate_route_hint">▶ Simula percorso (avvia prima la navigazione)</string>

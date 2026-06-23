@@ -97,6 +97,7 @@ fun MainMapScreen(
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val voiceGuidanceEnabled by viewModel.voiceGuidanceEnabled.collectAsStateWithLifecycle()
+    val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
@@ -112,13 +113,15 @@ fun MainMapScreen(
     val isRecordingRide  = rideTrackingState is RideTrackingUiState.Recording
     val isFollowSession  = activeNavigation != null || isRecordingRide
 
-    // Keep the screen awake while navigation is running, so the display does not
-    // dim/lock mid-ride. The flag is cleared automatically when navigation ends
-    // or the screen leaves composition.
+    // Keep the screen awake during a follow session — active navigation OR a live
+    // ride recording — so the display does not dim/lock mid-ride. Gated by the
+    // user's "keep screen on" preference (default on), and the flag is cleared
+    // automatically when the session ends or the screen leaves composition.
     val isNavigating = activeNavigation != null
+    val keepScreenAwake = keepScreenOnEnabled && (isNavigating || isRecordingRide)
     val currentView = LocalView.current
-    DisposableEffect(currentView, isNavigating) {
-        currentView.keepScreenOn = isNavigating
+    DisposableEffect(currentView, keepScreenAwake) {
+        currentView.keepScreenOn = keepScreenAwake
         onDispose { currentView.keepScreenOn = false }
     }
 
@@ -534,6 +537,7 @@ fun MainMapScreen(
             offlineRoutingUiState = offlineRoutingUiState,
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
+            keepScreenOnEnabled = keepScreenOnEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -553,6 +557,7 @@ fun MainMapScreen(
             onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
             onShowParkedBike      = viewModel::showParkedBike,
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
+            onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,

@@ -30,3 +30,6 @@ keystore.properties
 *.p12
 *.base64
 
+
+# Kotlin compiler artifacts
+.kotlin/

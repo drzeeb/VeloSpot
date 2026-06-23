@@ -8,6 +8,7 @@
     <string name="menu_layers">Layers</string>
     <string name="menu_navigation_view">Map view (2D/3D)</string>
     <string name="menu_voice_guidance">Voice guidance</string>
+    <string name="menu_keep_screen_on">Keep screen on while riding</string>
     <string name="menu_park_bike_here">Park bike here</string>
     <string name="menu_show_parked_bike">My parked bike</string>
     <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
