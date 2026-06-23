@@ -20,6 +20,7 @@ import de.velospot.feature.map.presentation.markers.ensureBuildingExtrusionLayer
 import de.velospot.feature.map.presentation.markers.ensureLocationLayer
 import de.velospot.feature.map.presentation.markers.ensureRouteLayer
 import de.velospot.feature.map.presentation.markers.ensureTraveledRouteLayer
+import de.velospot.feature.map.presentation.markers.navIdleFrameImageId
 import de.velospot.feature.map.presentation.markers.navPedalFrameImageId
 import de.velospot.feature.map.presentation.markers.setBuildingExtrusionVisible
 import de.velospot.feature.map.presentation.markers.upsertSource
@@ -124,6 +125,13 @@ class NavigationManager(private val context: Context) {
          * (≈4.4 m/s) this yields roughly ~1.8 crank turns per second.
          */
         const val PEDAL_METERS_PER_REV = 2.4
+
+        /**
+         * Below this eased ground speed (m/s ≈ 1.4 km/h) the rider is treated as
+         * **stopped** (e.g. waiting at a traffic light) and the avatar shows the
+         * foot-down standstill frame instead of freezing mid-pedal-stroke.
+         */
+        const val PEDAL_STANDSTILL_SPEED_MPS = 0.4
     }
 
     private var map: MapLibreMap? = null
@@ -266,6 +274,14 @@ class NavigationManager(private val context: Context) {
                     )
                 )
             }
+            // Standstill frame: one foot planted on the ground, shown whenever the
+            // rider has (nearly) stopped so the avatar doesn't freeze mid-stroke.
+            style.addImage(
+                navIdleFrameImageId(),
+                drawableToBitmap(
+                    createLocationMarkerIcon(context, isNavigationActive = true, idle = true)
+                )
+            )
         }
         ensureLocationLayer(style)
         ensureBuildingExtrusionLayer(style)
@@ -798,10 +814,13 @@ class NavigationManager(private val context: Context) {
     /**
      * Picks the pedalling-animation frame for the current tick. The crank phase is
      * tied to the rider's along-route distance ([predictedDistanceM]) so the legs
-     * turn in step with the real ground speed — and naturally freeze when stopped,
-     * since the distance stops advancing.
+     * turn in step with the real ground speed. When the rider has (nearly) stopped
+     * ([smoothedSpeedMps] below [PEDAL_STANDSTILL_SPEED_MPS]) the foot-down
+     * standstill frame is shown instead, so the avatar plants a foot at e.g. a
+     * traffic light rather than hovering frozen mid-stroke.
      */
     private fun currentPedalFrameImageId(): String {
+        if (smoothedSpeedMps < PEDAL_STANDSTILL_SPEED_MPS) return navIdleFrameImageId()
         val revs = predictedDistanceM / PEDAL_METERS_PER_REV
         val phase = revs - kotlin.math.floor(revs)          // 0..1
         val idx = (phase * NAV_PEDAL_FRAME_COUNT).toInt()

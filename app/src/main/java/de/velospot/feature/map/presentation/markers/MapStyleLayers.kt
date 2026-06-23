@@ -139,6 +139,14 @@ internal const val NAV_PEDAL_FRAME_COUNT = 8
 /** Image id of pedal-animation frame [i] (`0 until [NAV_PEDAL_FRAME_COUNT]`). */
 internal fun navPedalFrameImageId(i: Int): String = "vs-location-nav-$i"
 
+/**
+ * Image id of the navigating cyclist's **standstill** frame — the rider with one
+ * foot planted on the ground. The navigation frame loop shows this instead of a
+ * pedal frame whenever the rider has (nearly) stopped, e.g. waiting at a traffic
+ * light, so the avatar doesn't freeze mid-stroke.
+ */
+internal fun navIdleFrameImageId(): String = "vs-location-nav-idle"
+
 // â”€â”€ GeoJSON source upsert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 internal fun upsertSource(style: Style, id: String, data: FeatureCollection) {
