@@ -455,9 +455,9 @@ internal fun updateTracksHistoryLayer(
             PropertyFactory.lineWidth(
                 Expression.interpolate(
                     Expression.linear(), Expression.zoom(),
-                    Expression.stop(8, 0.5f),
-                    Expression.stop(13, 1.0f),
-                    Expression.stop(17, 1.8f)
+                    Expression.stop(8, 0.9f),
+                    Expression.stop(13, 1.8f),
+                    Expression.stop(17, 3.0f)
                 )
             ),
             // Translucent so overlapping passes accumulate into a heat-like effect.
