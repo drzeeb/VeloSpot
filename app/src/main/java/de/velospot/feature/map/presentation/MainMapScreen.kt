@@ -537,6 +537,7 @@ fun MainMapScreen(
             offlineRoutingUiState = offlineRoutingUiState,
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
+            keepScreenOnEnabled = keepScreenOnEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
