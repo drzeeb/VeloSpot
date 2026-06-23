@@ -249,6 +249,7 @@
     <string name="ride_stats_earth">Ronderëm d\'Äerd</string>
     <string name="ride_recording">Tour gëtt opgeholl</string>
     <string name="ride_stop">Stop</string>
+    <string name="ride_start">Tour ophuelen</string>
     <string name="ride_discard">Verwerfen</string>
     <string name="ride_saved">Tour gespäichert</string>
     <string name="ride_too_short">Tour ze kuerz fir ze späicheren</string>

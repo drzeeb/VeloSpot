@@ -250,6 +250,7 @@
     <string name="ride_stats_earth">Alrededor de la Tierra</string>
     <string name="ride_recording">Grabando ruta</string>
     <string name="ride_stop">Detener</string>
+    <string name="ride_start">Grabar trayecto</string>
     <string name="ride_discard">Descartar</string>
     <string name="ride_saved">Ruta guardada</string>
     <string name="ride_too_short">Ruta demasiado corta para guardar</string>

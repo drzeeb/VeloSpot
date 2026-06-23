@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - **Legal notice (Impressum)** — the project now carries a proper imprint with the responsible party's name and postal address (§ 5 DDG). It's reachable everywhere: a new **Imprint** section in the in-app *About* sheet (shown inline, so it stays offline-accessible and localised across all eight languages), a dedicated **`imprint.html`** page on the website linked from the navigation and footers of the home and privacy pages, a root **`IMPRINT.md`**, and the contact/data-controller blocks of both `PRIVACY.md` files and the privacy page now name the full address.
+- **`CODEOWNERS`** — a `.github/CODEOWNERS` file (`* @drzeeb`) so GitHub automatically requests the maintainer's review on every pull request (including Renovate bot PRs) and branch protection can require code-owner reviews.
+
+### Fixed
+- **Accessibility (a11y) — TalkBack/screen-reader support** across the map UI: sheet titles are now exposed as **headings** (`SheetHeader` + every sheet title) so screen-reader users can navigate by heading; the **record-ride FAB** (idle red-dot state) now has an accessible name (`ride_start`); the **2D/3D navigation tiles** and the **offline routing-profile rows** expose `Role.RadioButton` + selected state so the active choice is announced; **layer toggle cards** and **address-search result rows** merge their contents into a single focusable element. New strings localised across all eight languages.
+
 
 ### Added
 - **"Ridden tracks" map layer** — a new *Layers* overlay draws **every recorded ride as its own thin, translucent line**, so you can see everywhere you've been at a glance. Because the lines are semi-transparent, overlapping passes build up colour and frequently used streets read stronger — a lightweight, route-preserving complement to the existing *Ride heatmap*. Each track is reduced with Ramer–Douglas–Peucker simplification (`RideTrackLines`, ~8 m tolerance, typically −80–95 % points) off the main thread before drawing, the hairline width scales with zoom, and the layer sits beneath the map pins (which stay tappable). It's **off by default** and persisted (`MapLayerCategory.TRACKS`, `updateTracksHistoryLayer`); the pure aggregation is unit-tested (`RideTrackLinesTest`). Fully localised across all eight supported languages.

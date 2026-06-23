@@ -249,6 +249,7 @@
     <string name="ride_stats_earth">À volta da Terra</string>
     <string name="ride_recording">A gravar percurso</string>
     <string name="ride_stop">Parar</string>
+    <string name="ride_start">Gravar percurso</string>
     <string name="ride_discard">Descartar</string>
     <string name="ride_saved">Percurso guardado</string>
     <string name="ride_too_short">Percurso demasiado curto para guardar</string>

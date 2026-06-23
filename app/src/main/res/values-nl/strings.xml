@@ -249,6 +249,7 @@
     <string name="ride_stats_earth">Rond de aarde</string>
     <string name="ride_recording">Rit wordt opgenomen</string>
     <string name="ride_stop">Stoppen</string>
+    <string name="ride_start">Rit opnemen</string>
     <string name="ride_discard">Verwijderen</string>
     <string name="ride_saved">Rit opgeslagen</string>
     <string name="ride_too_short">Rit te kort om op te slaan</string>

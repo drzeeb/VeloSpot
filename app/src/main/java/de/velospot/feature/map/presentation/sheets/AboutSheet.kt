@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.velospot.R
+import de.velospot.feature.map.presentation.headingSemantics
 
 private const val APP_URL = "https://velospot.app"
 private const val PRIVACY_URL = "https://velospot.app/privacy"
@@ -78,7 +79,8 @@ internal fun AboutSheet(
         ) {
             Text(
                 text = stringResource(id = R.string.app_name),
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.headingSemantics()
             )
             Text(
                 text = stringResource(id = R.string.about_tagline),

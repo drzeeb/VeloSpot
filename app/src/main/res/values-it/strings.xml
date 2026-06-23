@@ -251,6 +251,7 @@
     <string name="ride_stats_earth">Intorno alla Terra</string>
     <string name="ride_recording">Registrazione percorso</string>
     <string name="ride_stop">Ferma</string>
+    <string name="ride_start">Registra percorso</string>
     <string name="ride_discard">Annulla</string>
     <string name="ride_saved">Percorso salvato</string>
     <string name="ride_too_short">Percorso troppo breve per salvarlo</string>

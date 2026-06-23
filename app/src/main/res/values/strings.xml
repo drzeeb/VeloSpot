@@ -98,6 +98,7 @@
     <string name="ride_stats_earth">Around the Earth</string>
     <string name="ride_recording">Recording ride</string>
     <string name="ride_stop">Stop</string>
+    <string name="ride_start">Start ride recording</string>
     <string name="ride_discard">Discard</string>
     <string name="ride_saved">Ride saved</string>
     <string name="ride_too_short">Ride too short to save</string>

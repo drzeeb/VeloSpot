@@ -35,10 +35,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
+import de.velospot.feature.map.presentation.headingSemantics
 
 private val ParkingColor = Color(0xFF1565C0)
 private val FavoriteColor = Color(0xFFD32F2F)
@@ -144,7 +146,11 @@ private fun LayerToggleCard(
 ) {
     Card(
         onClick = { onCheckedChange(!checked) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            // Merge the icon, title, description and switch into a single
+            // TalkBack node so it announces e.g. "Parking spaces, switch, on".
+            .semantics(mergeDescendants = true) {},
         colors = CardDefaults.cardColors(
             containerColor = if (checked) {
                 accent.copy(alpha = 0.12f)
