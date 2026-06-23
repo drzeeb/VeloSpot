@@ -197,6 +197,8 @@
     <string name="layers_saved_desc">Tus marcadores guardados</string>
     <string name="layers_heatmap_title">Mapa de calor de rutas</string>
     <string name="layers_heatmap_desc">Por dónde circulas más, según tus rutas grabadas</string>
+    <string name="layers_tracks_title">Rutas recorridas</string>
+    <string name="layers_tracks_desc">Cada ruta grabada como una línea fina</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Ubicación personalizada</string>
     <string name="custom_pin_subtitle">Toca el mapa para mover el marcador.</string>

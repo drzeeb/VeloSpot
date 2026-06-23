@@ -168,6 +168,8 @@
     <string name="layers_saved_desc">Your saved custom pins</string>
     <string name="layers_heatmap_title">Ride heatmap</string>
     <string name="layers_heatmap_desc">Where you ride most, from your recorded rides</string>
+    <string name="layers_tracks_title">Ridden tracks</string>
+    <string name="layers_tracks_desc">Every recorded ride drawn as a thin line</string>
 
     <string name="language_sheet_title">Choose language</string>
 

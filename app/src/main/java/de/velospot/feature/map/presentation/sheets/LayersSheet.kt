@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,6 +44,7 @@ private val ParkingColor = Color(0xFF1565C0)
 private val FavoriteColor = Color(0xFFD32F2F)
 private val SavedColor = Color(0xFF2E7D32)
 private val HeatmapColor = Color(0xFFE65100)
+private val TracksColor = Color(0xFF00897B)
 
 /**
  * Bottom sheet to toggle which pin categories ("layers") are shown on the map.
@@ -114,6 +116,15 @@ internal fun LayersSheet(
                 description = stringResource(id = R.string.layers_heatmap_desc),
                 checked = visibility.showHeatmap,
                 onCheckedChange = { onToggle(MapLayerCategory.HEATMAP, it) }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            LayerToggleCard(
+                icon = Icons.Default.Route,
+                accent = TracksColor,
+                title = stringResource(id = R.string.layers_tracks_title),
+                description = stringResource(id = R.string.layers_tracks_desc),
+                checked = visibility.showTracks,
+                onCheckedChange = { onToggle(MapLayerCategory.TRACKS, it) }
             )
 
             Spacer(modifier = Modifier.height(8.dp))

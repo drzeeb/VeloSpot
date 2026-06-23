@@ -51,7 +51,9 @@ import de.velospot.feature.map.presentation.markers.createMutedMarkerIcon
 import de.velospot.feature.map.presentation.markers.defaultMarkerStyleConfig
 import de.velospot.feature.map.presentation.markers.updateMarkers
 import de.velospot.feature.map.presentation.markers.updateHeatmapLayer
+import de.velospot.feature.map.presentation.markers.updateTracksHistoryLayer
 import de.velospot.core.map.RideHeatmap
+import de.velospot.core.map.RideTrackLines
 import de.velospot.feature.map.presentation.sheets.MapBottomSheets
 import de.velospot.feature.map.presentation.sheets.RideDetailSheet
 import de.velospot.feature.map.presentation.sheets.languageFlagForCode
@@ -348,6 +350,23 @@ fun MainMapScreen(
             RideHeatmap.build(recordedRides).map { Triple(it.latitude, it.longitude, it.intensity) }
         }
         updateHeatmapLayer(style, cells, visible = true)
+    }
+
+    // ── Recorded-ride "ridden tracks" overlay ─────────────────────────────────
+    // Draw every recorded ride as its own thin, translucent line (simplified off
+    // the main thread). Overlapping passes accumulate, so often-ridden streets
+    // read stronger. (Re)built whenever the rides change, the layer is toggled or
+    // the style reloads; hidden (and skipped) while the layer is off.
+    LaunchedEffect(maplibreMap, styleVersion, recordedRides, layerVisibility.showTracks) {
+        val style = maplibreMap?.style ?: return@LaunchedEffect
+        if (!layerVisibility.showTracks) {
+            updateTracksHistoryLayer(style, emptyList(), markerStyleConfig.routeColor, visible = false)
+            return@LaunchedEffect
+        }
+        val polylines = withContext(Dispatchers.Default) {
+            RideTrackLines.build(recordedRides)
+        }
+        updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
     }
 
     // ── 3D navigation: bind manager + start/stop with the active route ────────
