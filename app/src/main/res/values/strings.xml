@@ -144,6 +144,7 @@
     <string name="ride_export_save">Save to file</string>
     <string name="ride_export_saved">Rides saved</string>
     <string name="ride_export_save_failed">Couldn\'t save the file</string>
+    <string name="ride_export_invalid">Couldn\'t create a valid GPX file</string>
     <!-- Share ride as a "VeloSpot Wrapped" card -->
     <string name="ride_share_action">Share ride</string>
     <string name="ride_share_dismiss">Close</string>

@@ -292,6 +292,7 @@
     <string name="ride_export_save">Guardar em ficheiro</string>
     <string name="ride_export_saved">Percursos guardados</string>
     <string name="ride_export_save_failed">Não foi possível guardar o ficheiro</string>
+    <string name="ride_export_invalid">Não foi possível criar um ficheiro GPX válido</string>
     <!-- Partilhar percurso como cartão "VeloSpot Wrapped" -->
     <string name="ride_share_action">Partilhar percurso</string>
     <string name="ride_share_dismiss">Fechar</string>

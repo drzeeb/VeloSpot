@@ -36,11 +36,30 @@ class GpxWriterTest {
     @Test
     fun `emits coordinates, elevation and iso time for points`() {
         val gpx = GpxWriter.write(listOf(ride("R", listOf(TrackPoint(49.75, 6.64, 0L, 5f, 130.0)))))
-        assertTrue(gpx.contains("lat=\"49.75\""))
-        assertTrue(gpx.contains("lon=\"6.64\""))
+        // Coordinates are fixed-7-decimal, dot-separated (no scientific notation).
+        assertTrue(gpx.contains("lat=\"49.7500000\""))
+        assertTrue(gpx.contains("lon=\"6.6400000\""))
         assertTrue(gpx.contains("<ele>130.0</ele>"))
         // Epoch 0 in UTC.
         assertTrue(gpx.contains("<time>1970-01-01T00:00:00Z</time>"))
+    }
+
+    @Test
+    fun `output is always well-formed and validatable`() {
+        val gpx = GpxWriter.write(listOf(ride("Trier", listOf(TrackPoint(49.75, 6.64, 0L, 5f, 130.0)))))
+        val result = GpxValidator.validate(gpx)
+        assertTrue(result.wellFormed)
+        assertEquals(1, result.trackPointCount)
+        assertTrue(result.isValid)
+    }
+
+    @Test
+    fun `strips xml-illegal control characters from the name`() {
+        // A NUL/control char in the name would make the file unparseable everywhere.
+        val gpx = GpxWriter.write(listOf(ride("Bad\u0000Na\u0007me", listOf(TrackPoint(0.0, 0.0, 0L, null, null)))))
+        assertTrue("control chars must be stripped", !gpx.contains("\u0000") && !gpx.contains("\u0007"))
+        assertTrue("file still parses", GpxValidator.validate(gpx).wellFormed)
+        assertTrue(gpx.contains("<name>BadName</name>"))
     }
 
     @Test

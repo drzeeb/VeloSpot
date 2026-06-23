@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Exported GPX files some apps refused to open** — the ride GPX export is now hardened to be strictly standards-compliant so Garmin Connect, Strava and other readers accept it. Coordinates and elevation are written as **fixed-precision, dot-separated decimals** (`%.7f` / `%.1f`, `Locale.US`) instead of raw `Double.toString`, which could emit long float tails or scientific notation; **XML-illegal control characters** are stripped from the ride name (a single one made the whole file unparseable everywhere); and each track now carries a `<type>cycling</type>`. Every generated document is additionally **validated** (well-formed XML with at least one `<trkpt>`, via `GpxValidator`) before it is shared or saved — a malformed file is never handed to the user; instead a clear error is shown (`ride_export_invalid`). Covered by `GpxWriterTest` and a new `GpxValidatorTest`.
+
 ## [v1.0.23] - 2026-06-23
 
 ### Added

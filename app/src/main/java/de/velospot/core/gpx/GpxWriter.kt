@@ -41,15 +41,17 @@ object GpxWriter {
         }
         for (ride in rides) {
             sb.append("  <trk>\n")
-            ride.name?.takeIf { it.isNotBlank() }?.let {
+            ride.name?.let { sanitizeText(it) }?.takeIf { it.isNotBlank() }?.let {
                 sb.append("    <name>").append(escape(it)).append("</name>\n")
             }
+            // Standard GPX activity type (matches what Garmin & co. emit).
+            sb.append("    <type>cycling</type>\n")
             sb.append("    <trkseg>\n")
             for (p in ride.points) {
-                sb.append("      <trkpt lat=\"").append(p.latitude)
-                    .append("\" lon=\"").append(p.longitude).append("\">\n")
+                sb.append("      <trkpt lat=\"").append(coord(p.latitude))
+                    .append("\" lon=\"").append(coord(p.longitude)).append("\">\n")
                 p.altitudeMeters?.let {
-                    sb.append("        <ele>").append(it).append("</ele>\n")
+                    sb.append("        <ele>").append(elevation(it)).append("</ele>\n")
                 }
                 sb.append("        <time>").append(isoUtc.format(Date(p.timestamp)))
                     .append("</time>\n")
@@ -60,6 +62,25 @@ object GpxWriter {
         }
         sb.append("</gpx>\n")
         return sb.toString()
+    }
+
+    /**
+     * Formats a WGS84 coordinate as a fixed 7-decimal (≈ 1 cm) plain-decimal string
+     * using a dot separator. Avoids `Double.toString` artefacts (long float tails or
+     * scientific notation like `1.0E-4`) that some strict GPX readers reject.
+     */
+    private fun coord(value: Double): String = String.format(Locale.US, "%.7f", value)
+
+    /** Formats an elevation in metres to one decimal place, dot-separated. */
+    private fun elevation(value: Double): String = String.format(Locale.US, "%.1f", value)
+
+    /**
+     * Drops characters that are **illegal in XML 1.0** (control chars below 0x20
+     * except tab/newline/CR). A single such character in a ride name would otherwise
+     * make the whole file unparseable in *every* GPX reader.
+     */
+    private fun sanitizeText(value: String): String = buildString(value.length) {
+        for (c in value) if (c == '\t' || c == '\n' || c == '\r' || c.code >= 0x20) append(c)
     }
 
     /** Escapes the five XML predefined entities for safe inclusion in text/attributes. */

@@ -293,6 +293,7 @@
     <string name="ride_export_save">Guardar en archivo</string>
     <string name="ride_export_saved">Rutas guardadas</string>
     <string name="ride_export_save_failed">No se pudo guardar el archivo</string>
+    <string name="ride_export_invalid">No se pudo crear un archivo GPX válido</string>
     <!-- Compartir ruta como tarjeta "VeloSpot Wrapped" -->
     <string name="ride_share_action">Compartir ruta</string>
     <string name="ride_share_dismiss">Cerrar</string>

@@ -298,6 +298,7 @@
     <string name="ride_export_save">In Datei speichern</string>
     <string name="ride_export_saved">Fahrten gespeichert</string>
     <string name="ride_export_save_failed">Datei konnte nicht gespeichert werden</string>
+    <string name="ride_export_invalid">Konnte keine gültige GPX-Datei erstellen</string>
     <!-- Fahrt als "VeloSpot Wrapped"-Kachel teilen -->
     <string name="ride_share_action">Fahrt teilen</string>
     <string name="ride_share_dismiss">Schließen</string>
