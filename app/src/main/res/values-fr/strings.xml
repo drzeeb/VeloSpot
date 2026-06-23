@@ -122,6 +122,7 @@
     <string name="menu_layers">Calques</string>
     <string name="menu_navigation_view">Vue de la carte (2D/3D)</string>
     <string name="menu_voice_guidance">Guidage vocal</string>
+    <string name="menu_keep_screen_on">Garder l’écran allumé pendant le trajet</string>
     <string name="menu_simulate_route_start">▶ Simuler l\'itinéraire (GPS fictif)</string>
     <string name="menu_simulate_route_stop">⏹ Arrêter la simulation</string>
     <string name="menu_simulate_route_hint">▶ Simuler l\'itinéraire (démarrer la navigation d\'abord)</string>

@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **"Keep screen on while riding" toggle** — the display is now kept awake during **both** active navigation **and** a live ride recording (previously only navigation prevented the screen from dimming/locking). A new switch in the *Settings → Appearance & map* sheet lets you turn this off (e.g. to save battery and rely on voice guidance). It's **on by default** and persisted (`KeepScreenOnPreferences`, `MapViewModel.keepScreenOnEnabled`). Fully localised across all eight supported languages.
+
+### Added
 - **Legal notice (Impressum)** — the project now carries a proper imprint with the responsible party's name and postal address (§ 5 DDG). It's reachable everywhere: a new **Imprint** section in the in-app *About* sheet (shown inline, so it stays offline-accessible and localised across all eight languages), a dedicated **`imprint.html`** page on the website linked from the navigation and footers of the home and privacy pages, a root **`IMPRINT.md`**, and the contact/data-controller blocks of both `PRIVACY.md` files and the privacy page now name the full address.
 - **`CODEOWNERS`** — a `.github/CODEOWNERS` file (`* @drzeeb`) so GitHub automatically requests the maintainer's review on every pull request (including Renovate bot PRs) and branch protection can require code-owner reviews.
 

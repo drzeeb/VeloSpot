@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Loop
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SignalWifiOff
@@ -153,6 +154,17 @@ internal fun SettingsSheet(
                     Switch(
                         checked = state.voiceGuidanceEnabled,
                         onCheckedChange = { actions.onToggleVoiceGuidance() }
+                    )
+                }
+            )
+            SettingsRow(
+                icon = Icons.Default.LightMode,
+                title = stringResource(R.string.menu_keep_screen_on),
+                onClick = actions.onToggleKeepScreenOn,
+                trailing = {
+                    Switch(
+                        checked = state.keepScreenOnEnabled,
+                        onCheckedChange = { actions.onToggleKeepScreenOn() }
                     )
                 }
             )

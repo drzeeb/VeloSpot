@@ -92,6 +92,8 @@ internal data class MapMenuCardState(
     val isBikeParked: Boolean = false,
     /** Whether spoken turn-by-turn voice guidance (TTS) is enabled. */
     val voiceGuidanceEnabled: Boolean = false,
+    /** Whether the display is kept awake during navigation / ride recording. */
+    val keepScreenOnEnabled: Boolean = true,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -113,6 +115,7 @@ internal data class MapMenuCardActions(
     val onParkBikeHere: () -> Unit = {},
     val onShowParkedBike: () -> Unit = {},
     val onToggleVoiceGuidance: () -> Unit = {},
+    val onToggleKeepScreenOn: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
     val onOpenRides: () -> Unit = {},
