@@ -141,6 +141,8 @@
     <string name="layers_saved_desc">Vos marqueurs enregistrés</string>
     <string name="layers_heatmap_title">Carte de chaleur des trajets</string>
     <string name="layers_heatmap_desc">Où vous roulez le plus, d’après vos trajets enregistrés</string>
+    <string name="layers_tracks_title">Trajets parcourus</string>
+    <string name="layers_tracks_desc">Chaque trajet enregistré tracé en fine ligne</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Emplacement personnalisé</string>
     <string name="custom_pin_subtitle">Appuyez sur la carte pour déplacer le repère.</string>

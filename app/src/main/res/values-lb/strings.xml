@@ -141,6 +141,8 @@
     <string name="layers_saved_desc">Deng gespäichert Pinnen</string>
     <string name="layers_heatmap_title">Tour-Heatmap</string>
     <string name="layers_heatmap_desc">Wou s du am meeschte fiers – aus dengen opgeholl Touren</string>
+    <string name="layers_tracks_title">Gefuere Strecken</string>
+    <string name="layers_tracks_desc">All opgeholl Tour als dënn Linn</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Markéierten Uert</string>
     <string name="custom_pin_subtitle">Tipp op d\'Kaart, fir de Pin ze réckelen.</string>

@@ -43,6 +43,9 @@ internal const val SOURCE_TRACK = "velospot-track-source"
 /** Aggregated weighted points of all recorded rides, feeding the heatmap overlay. */
 internal const val SOURCE_HEATMAP = "velospot-heatmap-source"
 
+/** Simplified polylines of every recorded ride, feeding the thin "ridden tracks" overlay. */
+internal const val SOURCE_TRACKS_HISTORY = "velospot-tracks-history-source"
+
 internal const val LAYER_ROUTE      = "velospot-route-layer"
 internal const val LAYER_PARKING    = "velospot-parking-layer"
 internal const val LAYER_PARKING_CLUSTER       = "velospot-parking-cluster-layer"
@@ -62,6 +65,9 @@ internal const val LAYER_TRACK = "velospot-track-layer"
 
 /** Heatmap of all recorded-ride GPS tracks (where you ride most). */
 internal const val LAYER_HEATMAP = "velospot-heatmap-layer"
+
+/** Thin per-ride polylines of all recorded rides (everywhere you have been). */
+internal const val LAYER_TRACKS_HISTORY = "velospot-tracks-history-layer"
 
 /** Feature property carrying a [0..1] heat weight for the heatmap points. */
 internal const val PROP_HEAT_WEIGHT = "weight"
@@ -408,6 +414,63 @@ internal fun updateTrackLayer(style: Style, points: List<Pair<Double, Double>>, 
         if (style.getLayer(LAYER_PARKING) != null) style.addLayerBelow(layer, LAYER_PARKING)
         else style.addLayer(layer)
     }
+}
+
+/**
+ * Idempotently registers and updates the **"ridden tracks"** overlay: every
+ * recorded ride drawn as its own thin, translucent line. Where lines overlap the
+ * colour builds up, so frequently used streets read stronger — a lightweight
+ * personal-heatmap effect that still shows individual routes.
+ *
+ * Inserted beneath the parking markers so pins stay tappable on top, and
+ * shown/hidden via [visible] (also hidden when there are no polylines). Pass an
+ * empty list / `visible = false` to clear it.
+ */
+internal fun updateTracksHistoryLayer(
+    style: Style,
+    polylines: List<List<Pair<Double, Double>>>,
+    colorInt: Int,
+    visible: Boolean
+) {
+    val show = visible && polylines.any { it.size > 1 }
+    val data = if (show) {
+        FeatureCollection.fromFeatures(
+            polylines.filter { it.size > 1 }.map { line ->
+                Feature.fromGeometry(
+                    LineString.fromLngLats(line.map { Point.fromLngLat(it.second, it.first) })
+                )
+            }
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    upsertSource(style, SOURCE_TRACKS_HISTORY, data)
+
+    if (style.getLayer(LAYER_TRACKS_HISTORY) == null) {
+        val hex = "#%06X".format(0xFFFFFF and colorInt)
+        val layer = LineLayer(LAYER_TRACKS_HISTORY, SOURCE_TRACKS_HISTORY).withProperties(
+            PropertyFactory.lineColor(hex),
+            // Hairline that thickens slightly as you zoom in so it stays visible
+            // city-wide but never dominates the map.
+            PropertyFactory.lineWidth(
+                Expression.interpolate(
+                    Expression.linear(), Expression.zoom(),
+                    Expression.stop(8, 0.5f),
+                    Expression.stop(13, 1.0f),
+                    Expression.stop(17, 1.8f)
+                )
+            ),
+            // Translucent so overlapping passes accumulate into a heat-like effect.
+            PropertyFactory.lineOpacity(0.35f),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
+        )
+        if (style.getLayer(LAYER_PARKING) != null) style.addLayerBelow(layer, LAYER_PARKING)
+        else style.addLayer(layer)
+    }
+    style.getLayer(LAYER_TRACKS_HISTORY)?.setProperties(
+        PropertyFactory.visibility(if (show) Property.VISIBLE else Property.NONE)
+    )
 }
 
 /**

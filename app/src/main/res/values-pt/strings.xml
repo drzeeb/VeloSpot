@@ -141,6 +141,8 @@
     <string name="layers_saved_desc">Os teus marcadores guardados</string>
     <string name="layers_heatmap_title">Mapa de calor dos percursos</string>
     <string name="layers_heatmap_desc">Onde pedalas mais, a partir dos teus percursos gravados</string>
+    <string name="layers_tracks_title">Percursos percorridos</string>
+    <string name="layers_tracks_desc">Cada percurso gravado como uma linha fina</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Localização personalizada</string>
     <string name="custom_pin_subtitle">Toque no mapa para mover o marcador.</string>

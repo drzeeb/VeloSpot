@@ -205,6 +205,8 @@
     <string name="layers_saved_desc">Deine gespeicherten Pins</string>
     <string name="layers_heatmap_title">Fahrten-Heatmap</string>
     <string name="layers_heatmap_desc">Wo du am meisten fährst – aus deinen aufgezeichneten Fahrten</string>
+    <string name="layers_tracks_title">Gefahrene Strecken</string>
+    <string name="layers_tracks_desc">Jede aufgezeichnete Fahrt als dünne Linie</string>
 
     <!-- Zoom-out-Hinweis: erscheint wenn der Zoom-Level zu niedrig ist -->
     <string name="zoom_in_for_parking">Reinzoomen um Fahrradstellplätze zu sehen</string>
