@@ -292,6 +292,7 @@
     <string name="ride_export_save">Opslaan in bestand</string>
     <string name="ride_export_saved">Ritten opgeslagen</string>
     <string name="ride_export_save_failed">Kon het bestand niet opslaan</string>
+    <string name="ride_export_invalid">Kon geen geldig GPX-bestand maken</string>
     <!-- Rit delen als "VeloSpot Wrapped"-kaart -->
     <string name="ride_share_action">Rit delen</string>
     <string name="ride_share_dismiss">Sluiten</string>

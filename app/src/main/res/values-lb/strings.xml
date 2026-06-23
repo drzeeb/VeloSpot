@@ -292,6 +292,7 @@
     <string name="ride_export_save">An Datei späicheren</string>
     <string name="ride_export_saved">Tourën gespäichert</string>
     <string name="ride_export_save_failed">Datei konnt net gespäichert ginn</string>
+    <string name="ride_export_invalid">Konnt keng gülteg GPX-Datei erstellen</string>
     <!-- Tour als "VeloSpot Wrapped"-Kaart deelen -->
     <string name="ride_share_action">Tour deelen</string>
     <string name="ride_share_dismiss">Zoumaachen</string>

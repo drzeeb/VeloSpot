@@ -739,7 +739,7 @@ class MapViewModel @Inject constructor(
      */
     fun exportRidesAsGpx(rides: List<RecordedRide>, combineIntoSingleFile: Boolean) {
         val documents = buildGpxDocuments(rides, combineIntoSingleFile)
-        if (documents.isEmpty()) return
+        if (documents.isEmpty()) return // empty selection or validation failed (toast shown)
         GpxExporter.share(
             context = context,
             documents = documents,
@@ -750,7 +750,10 @@ class MapViewModel @Inject constructor(
     /**
      * Builds the GPX documents (name + content) for [rides], used by the
      * "save to file" path (the UI launches a Storage Access Framework picker and
-     * then calls [saveGpxToUri] / [saveGpxToTree]).
+     * then calls [saveGpxToUri] / [saveGpxToTree]). Each document is **validated**
+     * (well-formed XML with at least one track point) before it is returned, so a
+     * broken file is never shared or saved; on failure a toast is shown and an empty
+     * list returned.
      */
     fun buildGpxDocuments(
         rides: List<RecordedRide>,
@@ -759,11 +762,18 @@ class MapViewModel @Inject constructor(
         if (rides.isEmpty()) return emptyList()
         val stamp = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
             .format(java.util.Date())
-        return GpxExporter.buildDocuments(
+        val documents = GpxExporter.buildDocuments(
             rides = rides,
             combineIntoSingleFile = combineIntoSingleFile,
             combinedFileName = context.getString(de.velospot.R.string.ride_export_combined_filename, stamp)
         )
+        val allValid = documents.isNotEmpty() &&
+            documents.all { de.velospot.core.gpx.GpxValidator.validate(it.content).isValid }
+        if (!allValid) {
+            _userMessageRes.value = de.velospot.R.string.ride_export_invalid
+            return emptyList()
+        }
+        return documents
     }
 
     /** Writes a single GPX document's [content] to the SAF-picked [uri]. */
