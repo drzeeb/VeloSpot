@@ -8,7 +8,7 @@ import de.velospot.core.navigation.NavigationProgress
 import de.velospot.core.navigation.RouteMatcher
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
-import de.velospot.feature.map.presentation.markers.IMG_LOCATION_NAV
+import de.velospot.feature.map.presentation.markers.NAV_PEDAL_FRAME_COUNT
 import de.velospot.feature.map.presentation.markers.PROP_BEARING
 import de.velospot.feature.map.presentation.markers.PROP_ICON
 import de.velospot.feature.map.presentation.markers.SOURCE_LOCATION
@@ -20,6 +20,7 @@ import de.velospot.feature.map.presentation.markers.ensureBuildingExtrusionLayer
 import de.velospot.feature.map.presentation.markers.ensureLocationLayer
 import de.velospot.feature.map.presentation.markers.ensureRouteLayer
 import de.velospot.feature.map.presentation.markers.ensureTraveledRouteLayer
+import de.velospot.feature.map.presentation.markers.navPedalFrameImageId
 import de.velospot.feature.map.presentation.markers.setBuildingExtrusionVisible
 import de.velospot.feature.map.presentation.markers.upsertSource
 import org.maplibre.android.camera.CameraPosition
@@ -48,7 +49,7 @@ import org.maplibre.geojson.Point
  *  3. **3D camera** — fixed 60° pitch, speed/turn-dependent zoom and a bearing
  *     that follows the direction of travel.
  *  4. **Heading arrow** — owns the [SOURCE_LOCATION] puck during navigation and
- *     rotates the [IMG_LOCATION_NAV] arrow by the live bearing.
+ *     rotates the animated cyclist avatar (pedalling frames) by the live bearing.
  *  5. **3D buildings** — toggles the `fill-extrusion` building layer on/off.
  *  6. **Route progress** — on every fix, reports the remaining distance + ETA via
  *     [onProgress] and greys out the already-travelled part of the polyline.
@@ -116,6 +117,13 @@ class NavigationManager(private val context: Context) {
 
         /** Fraction of the (small) along-route error corrected on each GPS fix. */
         const val POSITION_CORRECTION = 0.35
+
+        /**
+         * Along-route distance (m) per full pedal revolution of the animated
+         * cyclist avatar. Tuned for a believable cadence: at a typical ~16 km/h
+         * (≈4.4 m/s) this yields roughly ~1.8 crank turns per second.
+         */
+        const val PEDAL_METERS_PER_REV = 2.4
     }
 
     private var map: MapLibreMap? = null
@@ -243,14 +251,21 @@ class NavigationManager(private val context: Context) {
      */
     fun attach(map: MapLibreMap, style: Style) {
         this.map = map
-        if (style.getImage(IMG_LOCATION_NAV) == null) {
-            // Use the larger cyclist avatar (not the old arrow puck) while navigating.
-            // The location layer still rotates it by PROP_BEARING, so the rider turns
-            // to face the live heading and leans with the tilted 3D map.
-            style.addImage(
-                IMG_LOCATION_NAV,
-                drawableToBitmap(createLocationMarkerIcon(context, isNavigationActive = true))
-            )
+        if (style.getImage(navPedalFrameImageId(0)) == null) {
+            // Pre-render the pedalling animation as a strip of frames (the larger
+            // navigation avatar). The location layer rotates each frame by
+            // PROP_BEARING, so the rider turns to face the live heading and leans
+            // with the tilted 3D map; writePuck() swaps the frame each tick so the
+            // legs visibly pedal at a cadence matching the rider's ground speed.
+            for (i in 0 until NAV_PEDAL_FRAME_COUNT) {
+                val phase = i.toFloat() / NAV_PEDAL_FRAME_COUNT
+                style.addImage(
+                    navPedalFrameImageId(i),
+                    drawableToBitmap(
+                        createLocationMarkerIcon(context, isNavigationActive = true, pedalPhase = phase)
+                    )
+                )
+            }
         }
         ensureLocationLayer(style)
         ensureBuildingExtrusionLayer(style)
@@ -770,7 +785,7 @@ class NavigationManager(private val context: Context) {
     private fun writePuck() {
         val style = map?.style ?: return
         val feature = Feature.fromGeometry(Point.fromLngLat(curLon, curLat)).apply {
-            addStringProperty(PROP_ICON, IMG_LOCATION_NAV)
+            addStringProperty(PROP_ICON, currentPedalFrameImageId())
             addNumberProperty(PROP_BEARING, curBearing)
         }
         // Upsert (create-or-update) rather than only updating an existing source:
@@ -778,6 +793,20 @@ class NavigationManager(private val context: Context) {
         // normal renderer skips re-creating it while navigating (suppressLocationDot),
         // so the puck would otherwise vanish until navigation ends.
         upsertSource(style, SOURCE_LOCATION, FeatureCollection.fromFeature(feature))
+    }
+
+    /**
+     * Picks the pedalling-animation frame for the current tick. The crank phase is
+     * tied to the rider's along-route distance ([predictedDistanceM]) so the legs
+     * turn in step with the real ground speed — and naturally freeze when stopped,
+     * since the distance stops advancing.
+     */
+    private fun currentPedalFrameImageId(): String {
+        val revs = predictedDistanceM / PEDAL_METERS_PER_REV
+        val phase = revs - kotlin.math.floor(revs)          // 0..1
+        val idx = (phase * NAV_PEDAL_FRAME_COUNT).toInt()
+            .coerceIn(0, NAV_PEDAL_FRAME_COUNT - 1)
+        return navPedalFrameImageId(idx)
     }
 }
 

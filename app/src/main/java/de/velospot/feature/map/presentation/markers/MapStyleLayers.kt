@@ -127,7 +127,17 @@ internal const val IMG_MUTED_NORMAL   = "vs-marker-muted-normal"
 internal const val IMG_MUTED_FAVORITE = "vs-marker-muted-favorite"
 internal const val IMG_MUTED_SELECTED = "vs-marker-muted-selected"
 internal const val IMG_LOCATION       = "vs-location"
-internal const val IMG_LOCATION_NAV   = "vs-location-nav"
+
+/**
+ * Number of pre-rendered pedal-animation frames for the navigating cyclist
+ * avatar. The navigation frame loop selects one of these images each frame based
+ * on the rider's along-route distance, so the avatar appears to pedal at a
+ * cadence that matches the real ground speed.
+ */
+internal const val NAV_PEDAL_FRAME_COUNT = 8
+
+/** Image id of pedal-animation frame [i] (`0 until [NAV_PEDAL_FRAME_COUNT]`). */
+internal fun navPedalFrameImageId(i: Int): String = "vs-location-nav-$i"
 
 // â”€â”€ GeoJSON source upsert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -570,7 +580,8 @@ internal fun registerIcons(style: Style, icons: MarkerIconSet) {
     add(IMG_MUTED_SELECTED, icons.mutedSelected)
     // Plain location dot (idle / browsing). MapLibre replaces an existing image
     // with the same ID in-place, so re-adding on every GPS or zoom update is cheap.
-    // IMG_LOCATION_NAV (the rotating heading arrow) is owned by NavigationManager
-    // and intentionally NOT registered here so it is never clobbered.
+    // The navigating cyclist's animated pedal frames (navPedalFrameImageId) are
+    // owned by NavigationManager and intentionally NOT registered here so they are
+    // never clobbered.
     style.addImage(IMG_LOCATION, drawableToBitmap(icons.location))
 }
