@@ -170,6 +170,8 @@
     <string name="about_privacy">Datenschutz</string>
     <string name="about_support">Spendier mir einen Kaffee</string>
     <string name="about_open_link">Link öffnen</string>
+    <string name="about_imprint">Impressum</string>
+    <string name="imprint_legal_note">Angaben gemäß § 5 DDG</string>
     <string name="parked_bike_title">Mein geparktes Fahrrad</string>
     <string name="parked_bike_park_here">Fahrrad hier parken</string>
     <string name="parked_bike_navigate">Zu meinem Fahrrad navigieren</string>

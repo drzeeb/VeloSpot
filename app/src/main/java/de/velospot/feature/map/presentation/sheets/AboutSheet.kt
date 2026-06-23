@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -134,6 +135,35 @@ internal fun AboutSheet(
                 title = stringResource(id = R.string.about_support),
                 subtitle = "buymeacoffee.com/velospot",
                 onClick = { openUrl(SUPPORT_URL) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            // Imprint / legal notice (§ 5 DDG) — shown inline so it stays
+            // permanently and offline-accessible from within the app.
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Gavel,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.size(16.dp))
+                Text(
+                    text = stringResource(id = R.string.about_imprint),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(id = R.string.imprint_legal_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(id = R.string.imprint_address),
+                style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(Modifier.height(8.dp))

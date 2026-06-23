@@ -197,6 +197,8 @@
     <string name="about_privacy">Confidentialité</string>
     <string name="about_support">Offrez-moi un café</string>
     <string name="about_open_link">Ouvrir le lien</string>
+    <string name="about_imprint">Mentions légales</string>
+    <string name="imprint_legal_note">Informations conformément au § 5 DDG</string>
     <string name="parked_bike_title">Mon vélo garé</string>
     <string name="parked_bike_park_here">Garer le vélo ici</string>
     <string name="parked_bike_navigate">Aller à mon vélo</string>

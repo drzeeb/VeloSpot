@@ -196,6 +196,8 @@
     <string name="about_privacy">Privacy</string>
     <string name="about_support">Trakteer me op een koffie</string>
     <string name="about_open_link">Link openen</string>
+    <string name="about_imprint">Colofon</string>
+    <string name="imprint_legal_note">Informatie conform § 5 DDG</string>
     <string name="parked_bike_title">Mijn geparkeerde fiets</string>
     <string name="parked_bike_park_here">Fiets hier parkeren</string>
     <string name="parked_bike_navigate">Navigeer naar mijn fiets</string>

@@ -31,6 +31,7 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany ðŸ‡©ðŸ
 - **Website**: https://velospot.app
 - **GitHub Repository**: https://github.com/drzeeb/VeloSpot
 - **Privacy Policy**: https://velospot.app/privacy.html ([`PRIVACY.md`](./PRIVACY.md))
+- **Legal Notice (Impressum)**: https://velospot.app/imprint.html ([`IMPRINT.md`](./IMPRINT.md))
 - **Changelog**: [`CHANGELOG.md`](./CHANGELOG.md)
 - **Licensing & Attribution**: [ATTRIBUTIONS.md](ATTRIBUTIONS.md)
 

@@ -196,6 +196,8 @@
     <string name="about_privacy">Privacidade</string>
     <string name="about_support">Paga-me um café</string>
     <string name="about_open_link">Abrir ligação</string>
+    <string name="about_imprint">Informação legal</string>
+    <string name="imprint_legal_note">Informações nos termos do § 5 DDG</string>
     <string name="parked_bike_title">A minha bici estacionada</string>
     <string name="parked_bike_park_here">Estacionar a bici aqui</string>
     <string name="parked_bike_navigate">Navegar até à minha bici</string>

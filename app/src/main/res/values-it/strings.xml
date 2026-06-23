@@ -198,6 +198,8 @@
     <string name="about_privacy">Privacy</string>
     <string name="about_support">Offrimi un caffè</string>
     <string name="about_open_link">Apri link</string>
+    <string name="about_imprint">Note legali</string>
+    <string name="imprint_legal_note">Informazioni ai sensi del § 5 DDG</string>
     <string name="parked_bike_title">La mia bici parcheggiata</string>
     <string name="parked_bike_park_here">Parcheggia la bici qui</string>
     <string name="parked_bike_navigate">Vai alla mia bici</string>

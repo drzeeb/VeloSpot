@@ -148,6 +148,9 @@
     <string name="about_privacy">Privacy Policy</string>
     <string name="about_support">Buy me a coffee</string>
     <string name="about_open_link">Open link</string>
+    <string name="about_imprint">Imprint</string>
+    <string name="imprint_legal_note">Information pursuant to § 5 DDG</string>
+    <string name="imprint_address" translatable="false">Michael Zeeb\nc/o POSTFLEX PFX-876-986\nEmsdettener Straße 10\n48268 Greven</string>
 
     <!-- Navigation view sheet (2D / 3D perspective switch) -->
     <string name="nav_view_title">Map view</string>
