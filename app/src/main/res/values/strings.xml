@@ -110,7 +110,7 @@
     <string name="ride_stat_elevation_loss">Elevation loss</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Close ride details</string>
-    <string name="ride_detail_drag_hint">Drag to expand • map stays interactive</string>
+    <string name="ride_detail_drag_hint">Drag down • map stays interactive</string>
     <string name="ride_speed_chart_title">Speed over time</string>
     <string name="ride_delete">Delete ride</string>
     <!-- Share ride as a "VeloSpot Wrapped" card -->
