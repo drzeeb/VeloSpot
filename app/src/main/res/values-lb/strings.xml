@@ -196,6 +196,8 @@
     <string name="about_privacy">Dateschutz</string>
     <string name="about_support">Spendéier mer e Kaffi</string>
     <string name="about_open_link">Link opmaachen</string>
+    <string name="about_imprint">Impressum</string>
+    <string name="imprint_legal_note">Informatiounen no § 5 DDG</string>
     <string name="parked_bike_title">Mäi gepaarkte Velo</string>
     <string name="parked_bike_park_here">Velo hei parken</string>
     <string name="parked_bike_navigate">Bei mäi Velo navigéieren</string>
@@ -247,6 +249,7 @@
     <string name="ride_stats_earth">Ronderëm d\'Äerd</string>
     <string name="ride_recording">Tour gëtt opgeholl</string>
     <string name="ride_stop">Stop</string>
+    <string name="ride_start">Tour ophuelen</string>
     <string name="ride_discard">Verwerfen</string>
     <string name="ride_saved">Tour gespäichert</string>
     <string name="ride_too_short">Tour ze kuerz fir ze späicheren</string>

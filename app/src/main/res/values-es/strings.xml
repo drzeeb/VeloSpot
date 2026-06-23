@@ -165,6 +165,8 @@
     <string name="about_privacy">Privacidad</string>
     <string name="about_support">Invítame a un café</string>
     <string name="about_open_link">Abrir enlace</string>
+    <string name="about_imprint">Aviso legal</string>
+    <string name="imprint_legal_note">Información conforme al § 5 DDG</string>
     <string name="parked_bike_title">Mi bici aparcada</string>
     <string name="parked_bike_park_here">Aparcar la bici aquí</string>
     <string name="parked_bike_navigate">Ir a mi bici</string>
@@ -248,6 +250,7 @@
     <string name="ride_stats_earth">Alrededor de la Tierra</string>
     <string name="ride_recording">Grabando ruta</string>
     <string name="ride_stop">Detener</string>
+    <string name="ride_start">Grabar trayecto</string>
     <string name="ride_discard">Descartar</string>
     <string name="ride_saved">Ruta guardada</string>
     <string name="ride_too_short">Ruta demasiado corta para guardar</string>

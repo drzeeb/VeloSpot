@@ -1,0 +1,9 @@
+# Code owners for VeloSpot
+#
+# These owners are automatically requested for review on every pull request
+# that touches matching files. See:
+# https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repository
+* @drzeeb
+

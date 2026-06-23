@@ -197,6 +197,8 @@
     <string name="about_privacy">Confidentialité</string>
     <string name="about_support">Offrez-moi un café</string>
     <string name="about_open_link">Ouvrir le lien</string>
+    <string name="about_imprint">Mentions légales</string>
+    <string name="imprint_legal_note">Informations conformément au § 5 DDG</string>
     <string name="parked_bike_title">Mon vélo garé</string>
     <string name="parked_bike_park_here">Garer le vélo ici</string>
     <string name="parked_bike_navigate">Aller à mon vélo</string>
@@ -248,6 +250,7 @@
     <string name="ride_stats_earth">Autour de la Terre</string>
     <string name="ride_recording">Enregistrement du trajet</string>
     <string name="ride_stop">Arrêter</string>
+    <string name="ride_start">Enregistrer le trajet</string>
     <string name="ride_discard">Abandonner</string>
     <string name="ride_saved">Trajet enregistré</string>
     <string name="ride_too_short">Trajet trop court pour être enregistré</string>

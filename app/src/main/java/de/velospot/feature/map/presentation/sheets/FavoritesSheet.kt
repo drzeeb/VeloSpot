@@ -70,7 +70,8 @@ internal fun FavoritesSheet(
         ) {
             Text(
                 text = stringResource(id = R.string.favorites_title),
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.headingSemantics()
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(

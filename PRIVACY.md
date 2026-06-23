@@ -10,13 +10,16 @@ This privacy policy explains how the **VeloSpot** app ("the app") handles your d
 
 The party responsible for data processing in connection with this app is:
 
-**Michael** (developer of VeloSpot)
-Contact: via the GitHub repository
+**Michael Zeeb** (developer of VeloSpot)
+c/o POSTFLEX PFX-876-986
+Emsdettener Straße 10
+48268 Greven, Germany
+
+- Mail: velospot@proton.me
 - Issues: https://github.com/drzeeb/VeloSpot/issues
 - Repository: https://github.com/drzeeb/VeloSpot
-- Mail: velospot@proton.me
 
-> Please add your full contact details here as needed (name, postal address, email address), as required for your publication on the Google Play Store.
+See also the full [legal notice (Impressum)](./IMPRINT.md).
 
 ---
 

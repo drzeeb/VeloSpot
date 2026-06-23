@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import de.velospot.R
 import de.velospot.core.locale.LanguagePreferences
+import de.velospot.feature.map.presentation.headingSemantics
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +48,8 @@ internal fun LanguageSheet(
         ) {
             Text(
                 text = stringResource(id = R.string.language_sheet_title),
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.headingSemantics()
             )
             Spacer(modifier = Modifier.height(12.dp))
 

@@ -20,10 +20,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.domain.model.BikeParkingType
+
+/**
+ * Marks a composable as a TalkBack heading so screen-reader users can jump
+ * between section/sheet titles with heading navigation. Shared across the map
+ * sheets so every title is announced consistently.
+ */
+internal fun Modifier.headingSemantics(): Modifier = semantics { heading() }
+
 
 /** Localised display label for a [BikeParkingType]. Shared across map sheets and overlays. */
 internal fun BikeParkingType.label(context: Context): String = when (this) {
@@ -93,7 +103,11 @@ internal fun SheetHeader(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        Text(text = title, style = MaterialTheme.typography.headlineSmall)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.headingSemantics()
+        )
         if (subtitle != null) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(

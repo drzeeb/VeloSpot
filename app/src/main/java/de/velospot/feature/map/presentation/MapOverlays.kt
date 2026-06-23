@@ -68,6 +68,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.velospot.R
@@ -616,20 +618,26 @@ internal fun BoxScope.RecordRideFab(
         ),
         label = "recordPulseAlpha"
     )
+    // The idle state is a plain red dot with no icon/label, so the FAB itself
+    // carries the accessible name for both states.
+    val recordCd = stringResource(
+        id = if (isRecording) R.string.ride_stop else R.string.ride_start
+    )
     FloatingActionButton(
         onClick = onClick,
         modifier = Modifier
             .align(Alignment.BottomEnd)
             // Same right inset as MyLocationFab, lifted one FAB height (56 dp) +
             // 16 dp gap + 16 dp base inset so the two buttons stack neatly.
-            .padding(end = 16.dp, bottom = 88.dp),
+            .padding(end = 16.dp, bottom = 88.dp)
+            .semantics { contentDescription = recordCd },
         containerColor = if (isRecording) MaterialTheme.colorScheme.errorContainer
                          else MaterialTheme.colorScheme.surface
     ) {
         if (isRecording) {
             Icon(
                 imageVector = Icons.Default.Stop,
-                contentDescription = stringResource(id = R.string.ride_stop),
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.error.copy(alpha = pulse)
             )
         } else {

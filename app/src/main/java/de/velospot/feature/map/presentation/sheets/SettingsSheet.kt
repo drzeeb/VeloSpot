@@ -52,6 +52,7 @@ import de.velospot.R
 import de.velospot.feature.map.presentation.MapMenuCardActions
 import de.velospot.feature.map.presentation.MapMenuCardState
 import de.velospot.feature.map.presentation.OfflineRoutingUiState
+import de.velospot.feature.map.presentation.headingSemantics
 
 /**
  * The single, tidy entry point for everything that used to clutter the top-bar
@@ -87,7 +88,9 @@ internal fun SettingsSheet(
             Text(
                 text = stringResource(id = R.string.settings_title),
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                modifier = Modifier
+                    .padding(horizontal = 4.dp, vertical = 8.dp)
+                    .headingSemantics()
             )
 
             // ── Quick actions ─────────────────────────────────────────────────

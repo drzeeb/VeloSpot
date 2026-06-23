@@ -31,6 +31,7 @@ docs/
 ├── index.html       # Main website (all-in-one file)
 ├── privacy.html     # Privacy policy page (served at https://velospot.app/privacy.html)
 ├── PRIVACY.md       # Privacy policy (Markdown source)
+├── imprint.html     # Legal notice / Impressum (served at https://velospot.app/imprint.html)
 ├── CNAME            # Custom domain (velospot.app)
 └── screenshots/     # App preview images used by the site & README
 ```

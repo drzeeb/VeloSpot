@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.feature.map.presentation.PrimaryActionButton
+import de.velospot.feature.map.presentation.headingSemantics
 
 /** Selectable round-trip target distances (km). */
 private val ROUND_TRIP_DISTANCES_KM = listOf(5, 10, 15, 20, 30, 40, 50)
@@ -57,7 +58,8 @@ internal fun RoundTripSheet(
         ) {
             Text(
                 text = stringResource(R.string.round_trip_sheet_title),
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.headingSemantics()
             )
             Spacer(Modifier.height(6.dp))
             Text(

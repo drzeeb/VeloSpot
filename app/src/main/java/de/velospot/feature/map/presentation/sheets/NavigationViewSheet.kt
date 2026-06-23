@@ -37,9 +37,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
+import de.velospot.feature.map.presentation.headingSemantics
 
 /**
  * Bottom sheet that lets the user pick the navigation camera perspective with a
@@ -135,7 +140,12 @@ private fun PerspectiveTile(
 
     Card(
         onClick = onClick,
-        modifier = modifier.scale(scale),
+        modifier = modifier
+            .scale(scale)
+            .semantics {
+                role = Role.RadioButton
+                this.selected = selected
+            },
         colors = CardDefaults.cardColors(containerColor = container),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         border = if (selected) BorderStroke(1.5.dp, accent) else null
