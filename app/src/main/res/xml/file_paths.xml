@@ -2,5 +2,7 @@
 <paths>
     <!-- Transient share images written by ImageSharer (e.g. ride share cards). -->
     <cache-path name="shared_images" path="shared_images/" />
+    <!-- Transient GPX exports written by GpxExporter (shared to Files/Drive/email). -->
+    <cache-path name="shared_gpx" path="shared_gpx/" />
 </paths>
 

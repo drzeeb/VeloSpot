@@ -20,6 +20,10 @@ interface RecordedRideDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(ride: RecordedRideEntity)
 
+    /** Renames a ride (or clears its name when [name] is null). */
+    @Query("UPDATE recorded_rides SET name = :name WHERE id = :id")
+    suspend fun updateName(id: String, name: String?)
+
     @Query("DELETE FROM recorded_rides WHERE id = :id")
     suspend fun delete(id: String)
 

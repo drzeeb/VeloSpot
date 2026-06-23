@@ -26,6 +26,8 @@ data class RecordedRideEntity(
     val elevationGainMeters: Double,
     val elevationLossMeters: Double,
     /** JSON-serialised `List<TrackPoint>`. */
-    val pointsJson: String
+    val pointsJson: String,
+    /** Optional user-facing name (destination / round-trip place / typed name). */
+    val name: String? = null
 )
 

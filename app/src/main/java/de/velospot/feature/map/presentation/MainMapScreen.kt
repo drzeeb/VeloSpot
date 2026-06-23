@@ -103,6 +103,7 @@ fun MainMapScreen(
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
     val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
     val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
+    val rideNamePrompt       by viewModel.rideNamePrompt.collectAsStateWithLifecycle()
     val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
@@ -606,14 +607,14 @@ fun MainMapScreen(
             if (recording != null) {
                 RideTrackingOverlay(
                     stats     = recording.stats,
-                    onStop    = viewModel::stopRideTracking,
+                    onStop    = viewModel::requestStopRideTracking,
                     onDiscard = viewModel::discardRideTracking
                 )
             }
             RecordRideFab(
                 isRecording = recording != null,
                 onClick = {
-                    if (recording != null) viewModel.stopRideTracking()
+                    if (recording != null) viewModel.requestStopRideTracking()
                     else startRideRecording()
                 }
             )
@@ -644,8 +645,23 @@ fun MainMapScreen(
         selectedRide?.let { ride ->
             RideDetailSheet(
                 ride      = ride,
-                onDismiss = viewModel::dismissSelectedRide,
-                onDelete  = { id -> viewModel.deleteRecordedRide(id) }
+                onDismiss = {
+                    // Closing a ride's detail returns to the "My rides" list it was
+                    // opened from, instead of leaving the bare map.
+                    viewModel.dismissSelectedRide()
+                    screenUiState.openRides()
+                },
+                onDelete  = { id -> viewModel.deleteRecordedRide(id) },
+                onRename  = { id, name -> viewModel.renameRecordedRide(id, name) }
+            )
+        }
+
+        // ── Name-on-stop prompt for a manual recording ───────────────────────
+        rideNamePrompt?.let { prompt ->
+            de.velospot.feature.map.presentation.sheets.RideNamePromptDialog(
+                suggestion = prompt.suggestion,
+                onConfirm  = { name -> viewModel.confirmRideNameAndStop(name) },
+                onDismiss  = viewModel::cancelRideNamePrompt
             )
         }
     }

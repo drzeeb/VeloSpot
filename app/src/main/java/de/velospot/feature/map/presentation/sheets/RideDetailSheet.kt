@@ -27,13 +27,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -76,14 +79,27 @@ import kotlinx.coroutines.launch
 internal fun RideDetailSheet(
     ride: RecordedRide,
     onDismiss: () -> Unit,
-    onDelete: (String) -> Unit
+    onDelete: (String) -> Unit,
+    onRename: (String, String?) -> Unit
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     if (showShareDialog) {
         RideShareDialog(
             ride = ride,
             onDismiss = { showShareDialog = false }
+        )
+    }
+
+    if (showRenameDialog) {
+        RideRenameDialog(
+            currentName = ride.name,
+            onConfirm = { newName ->
+                onRename(ride.id, newName)
+                showRenameDialog = false
+            },
+            onDismiss = { showRenameDialog = false }
         )
     }
 
@@ -176,6 +192,28 @@ internal fun RideDetailSheet(
                         .padding(horizontal = 20.dp)
                         .padding(bottom = 12.dp)
                 ) {
+                    // ── Ride name (tap the pencil to rename) ─────────────────
+                    val rideName = ride.name?.takeIf { it.isNotBlank() }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = rideName ?: stringResource(R.string.ride_unnamed),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (rideName != null) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = { showRenameDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.ride_rename)
+                            )
+                        }
+                    }
+
                     SheetHeader(
                         title = formatRideDistance(ride.distanceMeters),
                         subtitle = stringResource(
@@ -273,6 +311,42 @@ internal fun RideDetailSheet(
             }
         }
     }
+}
+
+/**
+ * Simple dialog to name (or clear the name of) a recorded ride. Pre-fills the
+ * current name; an empty field clears it (the ride falls back to its date label).
+ */
+@Composable
+private fun RideRenameDialog(
+    currentName: String?,
+    onConfirm: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var text by remember { mutableStateOf(currentName.orEmpty()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ride_rename_dialog_title)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                singleLine = true,
+                label = { Text(stringResource(R.string.ride_rename_hint)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(text.trim().ifBlank { null }) }) {
+                Text(stringResource(R.string.ride_rename_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ride_rename_cancel))
+            }
+        }
+    )
 }
 
 @Composable

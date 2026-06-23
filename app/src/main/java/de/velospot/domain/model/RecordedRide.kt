@@ -25,6 +25,9 @@ data class TrackPoint(
  * A completed, persisted ride — the full GPS track plus the aggregate statistics
  * shown on the "My rides" timeline.
  *
+ * @property name Optional user-facing name for the ride (the navigation
+ *  destination, a "Round trip – <place>" label, or a name the rider typed when
+ *  finishing a recording). `null`/blank falls back to the date in the UI.
  * @property elapsedSeconds  Wall-clock duration from first to last fix.
  * @property movingSeconds   Time actually spent moving (standstills excluded).
  * @property avgSpeedMps      Average moving speed (distance / moving time).
@@ -43,7 +46,8 @@ data class RecordedRide(
     val maxSpeedMps: Double,
     val elevationGainMeters: Double,
     val elevationLossMeters: Double,
-    val points: List<TrackPoint>
+    val points: List<TrackPoint>,
+    val name: String? = null
 )
 
 /**

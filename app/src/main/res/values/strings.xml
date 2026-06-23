@@ -115,6 +115,35 @@
     <string name="ride_detail_drag_hint">Drag down • map stays interactive</string>
     <string name="ride_speed_chart_title">Speed over time</string>
     <string name="ride_delete">Delete ride</string>
+    <!-- Rename a recorded ride -->
+    <string name="ride_rename">Rename ride</string>
+    <string name="ride_rename_dialog_title">Name this ride</string>
+    <string name="ride_rename_hint">Ride name</string>
+    <string name="ride_rename_save">Save</string>
+    <string name="ride_rename_cancel">Cancel</string>
+    <string name="ride_unnamed">Untitled ride</string>
+    <!-- Auto-generated round-trip ride name, %1$s = current place (city/town) -->
+    <string name="ride_round_trip_name">Round trip - %1$s</string>
+    <!-- GPX export / import -->
+    <string name="ride_export">Export</string>
+    <string name="ride_import">Import</string>
+    <string name="ride_export_cancel">Cancel</string>
+    <string name="ride_export_confirm">Export</string>
+    <string name="ride_export_selected_count">%1$d selected</string>
+    <string name="ride_export_select_hint">Select rides to export</string>
+    <string name="ride_export_chooser_title">Export rides as GPX</string>
+    <string name="ride_export_combined_filename">VeloSpot-rides-%1$s</string>
+    <string name="ride_export_mode_title">Export as GPX</string>
+    <string name="ride_export_mode_message">Combine the selected rides into one file or create a separate file per ride?</string>
+    <string name="ride_export_mode_combined">One combined file</string>
+    <string name="ride_export_mode_separate">One file per ride</string>
+    <string name="ride_import_done">Rides imported</string>
+    <string name="ride_import_failed">No rides found in the file</string>
+    <string name="ride_export_destination_title">Export rides</string>
+    <string name="ride_export_share">Share</string>
+    <string name="ride_export_save">Save to file</string>
+    <string name="ride_export_saved">Rides saved</string>
+    <string name="ride_export_save_failed">Couldn\'t save the file</string>
     <!-- Share ride as a "VeloSpot Wrapped" card -->
     <string name="ride_share_action">Share ride</string>
     <string name="ride_share_dismiss">Close</string>

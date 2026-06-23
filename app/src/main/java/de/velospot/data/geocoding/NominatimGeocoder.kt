@@ -56,6 +56,24 @@ class NominatimGeocoder @Inject constructor(
         }.getOrNull()
 
     /**
+     * Reverse geocodes [latitude]/[longitude] to a **short place name** (the city /
+     * town / village, falling back to the suburb), e.g. `"Trier"`. Used to name
+     * recorded rides (round-trip label, manual-recording suggestion). Returns `null`
+     * when nothing was found or the network call failed.
+     */
+    suspend fun reverseGeocodePlace(latitude: Double, longitude: Double): String? =
+        runCatching {
+            val response = api.reverseGeocode(lat = latitude, lon = longitude)
+            if (!response.isSuccessful) return@runCatching null
+            val address = response.body()?.address ?: return@runCatching null
+            (address.resolvedCity ?: address.suburb)?.takeIf { it.isNotBlank() }
+        }.onFailure { e ->
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "Reverse place lookup failed for ($latitude, $longitude): ${e.message}")
+            }
+        }.getOrNull()
+
+    /**
      * Forward geocoding: returns up to 5 address suggestions for [query], restricted to
      * the covered countries (DE, FR, LU).
      *

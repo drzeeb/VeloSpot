@@ -12,6 +12,7 @@ import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.navigation.NavigationModePreferences
 import de.velospot.core.navigation.VoiceGuidancePreferences
 import de.velospot.core.routing.OfflineRoutingPreferences
+import de.velospot.core.share.GpxExporter
 import de.velospot.data.brouter.ElevationPreference
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
@@ -73,6 +74,13 @@ sealed class RideTrackingUiState {
     data object Idle : RideTrackingUiState()
     data class Recording(val stats: LiveRideStats) : RideTrackingUiState()
 }
+
+/**
+ * Drives the "name this ride" dialog shown when a **manual** recording is being
+ * finished. [suggestion] is the reverse-geocoded current place pre-filled into the
+ * text field — `null` while it's still being resolved (or unavailable).
+ */
+data class RideNamePromptUiState(val suggestion: String?)
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -236,6 +244,51 @@ class MapViewModel @Inject constructor(
         setHighAccuracyLocation(true)
         // Auto-record the ride for the whole navigation (unless already recording).
         startRideTracking(autoStarted = true)
+        // Name the auto-recorded ride after the navigation destination so it lands in
+        // "My rides" with a meaningful label instead of just a date. Only do so when
+        // this recording was actually auto-started by navigation (not a manual one
+        // the rider already had running).
+        if (rideTracking.isAutoStartedByNavigation) {
+            resolveAndSetAutoRideName()
+        }
+    }
+
+    /**
+     * Derives a human-readable name for the auto-recorded navigation ride and pushes
+     * it to the recording manager:
+     *  - **Round trip** → "Round trip - {current place}" (reverse-geocoded city/town),
+     *    falling back to the plain round-trip label when the place can't be resolved.
+     *  - **Any other destination** → the **destination's place** (reverse-geocoded
+     *    city/town, e.g. "Trier"), falling back to the destination's own label only
+     *    when the place can't be resolved. The place is preferred so the ride reads
+     *    "Trier" rather than the destination's street ("Hauptstraße").
+     *
+     * A best-effort synchronous name is set first so a very short ride is never left
+     * blank, then the (network) reverse-geocode refines it once it returns.
+     */
+    private fun resolveAndSetAutoRideName() {
+        val destination = navigationController.activeDestination ?: return
+        val isRoundTrip = destination.id == ID_ROUND_TRIP
+        val existingName = destination.name?.trim()?.takeIf { it.isNotBlank() }
+        // Immediate fallback so the ride always has *some* label until the place
+        // reverse-geocode returns and refines it to the city/town.
+        if (!isRoundTrip && existingName != null) rideTracking.setPendingName(existingName)
+        val lat = destination.latitude
+        val lon = destination.longitude
+        viewModelScope.launch {
+            val place = nominatimGeocoder.reverseGeocodePlace(lat, lon)
+            val name = when {
+                isRoundTrip && place != null ->
+                    context.getString(de.velospot.R.string.ride_round_trip_name, place)
+                isRoundTrip ->
+                    existingName ?: context.getString(de.velospot.R.string.round_trip_title)
+                else -> place ?: existingName
+            }
+            // Only apply if the navigation-started recording is still the active one.
+            if (name != null && rideTracking.isAutoStartedByNavigation) {
+                rideTracking.setPendingName(name)
+            }
+        }
     }
 
     /** On navigation end: finish an auto-recorded ride, else relax GPS accuracy. */
@@ -630,9 +683,155 @@ class MapViewModel @Inject constructor(
         rideTracking.discard()
         updateFollowSession()
     }
+
+    // ── Name-on-stop prompt (manual recordings) ───────────────────────────────
+
+    /**
+     * When non-null, the UI shows a dialog asking the rider to name the recording
+     * they are about to finish. [RideNamePromptUiState.suggestion] is the
+     * reverse-geocoded current place (null while it's still being resolved), shown
+     * as the pre-filled default.
+     */
+    private val _rideNamePrompt = MutableStateFlow<RideNamePromptUiState?>(null)
+    val rideNamePrompt: StateFlow<RideNamePromptUiState?> = _rideNamePrompt.asStateFlow()
+
+    /**
+     * Called by the record FAB / live-stats overlay's **Stop** control for a
+     * **manual** recording. Instead of saving straight away it opens the naming
+     * prompt (pre-filled with the reverse-geocoded current place) and leaves the
+     * recording running, so cancelling keeps the ride going. The actual save
+     * happens in [confirmRideNameAndStop].
+     */
+    fun requestStopRideTracking() {
+        if (!rideTracking.isRecording) return
+        _rideNamePrompt.value = RideNamePromptUiState(suggestion = null)
+        val location = _userLocation.value
+        viewModelScope.launch {
+            val place = location?.let {
+                nominatimGeocoder.reverseGeocodePlace(it.latitude, it.longitude)
+            }
+            // Only fill the suggestion if the prompt is still open (not cancelled).
+            _rideNamePrompt.update { if (it != null) it.copy(suggestion = place) else it }
+        }
+    }
+
+    /** Confirms the naming prompt: names the active recording and saves it. */
+    fun confirmRideNameAndStop(name: String?) {
+        _rideNamePrompt.value = null
+        rideTracking.setPendingName(name?.trim()?.takeIf { it.isNotBlank() })
+        stopRideTracking()
+    }
+
+    /** Dismisses the naming prompt **without** stopping — the ride keeps recording. */
+    fun cancelRideNamePrompt() {
+        _rideNamePrompt.value = null
+    }
+
     fun selectRecordedRide(ride: RecordedRide) = rideTracking.selectRide(ride)
     fun dismissSelectedRide() = rideTracking.dismissSelectedRide()
     fun deleteRecordedRide(id: String) = rideTracking.deleteRide(id)
+    fun renameRecordedRide(id: String, name: String?) = rideTracking.renameRide(id, name)
+
+    /**
+     * Exports [rides] as GPX and opens the system **share** sheet. When
+     * [combineIntoSingleFile] is `true` (or only one ride is given) all tracks land
+     * in one file; otherwise each ride is written to its own file named after it.
+     */
+    fun exportRidesAsGpx(rides: List<RecordedRide>, combineIntoSingleFile: Boolean) {
+        val documents = buildGpxDocuments(rides, combineIntoSingleFile)
+        if (documents.isEmpty()) return
+        GpxExporter.share(
+            context = context,
+            documents = documents,
+            chooserTitle = context.getString(de.velospot.R.string.ride_export_chooser_title)
+        )
+    }
+
+    /**
+     * Builds the GPX documents (name + content) for [rides], used by the
+     * "save to file" path (the UI launches a Storage Access Framework picker and
+     * then calls [saveGpxToUri] / [saveGpxToTree]).
+     */
+    fun buildGpxDocuments(
+        rides: List<RecordedRide>,
+        combineIntoSingleFile: Boolean
+    ): List<de.velospot.core.share.GpxDocument> {
+        if (rides.isEmpty()) return emptyList()
+        val stamp = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            .format(java.util.Date())
+        return GpxExporter.buildDocuments(
+            rides = rides,
+            combineIntoSingleFile = combineIntoSingleFile,
+            combinedFileName = context.getString(de.velospot.R.string.ride_export_combined_filename, stamp)
+        )
+    }
+
+    /** Writes a single GPX document's [content] to the SAF-picked [uri]. */
+    fun saveGpxToUri(uri: android.net.Uri, content: String) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val ok = runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(content.toByteArray()) }
+                    ?: error("no stream")
+            }.isSuccess
+            _userMessageRes.value =
+                if (ok) de.velospot.R.string.ride_export_saved
+                else de.velospot.R.string.ride_export_save_failed
+        }
+    }
+
+    /** Writes each GPX [documents] into the SAF-picked folder [treeUri]. */
+    fun saveGpxToTree(treeUri: android.net.Uri, documents: List<de.velospot.core.share.GpxDocument>) {
+        if (documents.isEmpty()) return
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val resolver = context.contentResolver
+            var saved = 0
+            runCatching {
+                val parentDocId = android.provider.DocumentsContract.getTreeDocumentId(treeUri)
+                val parentUri = android.provider.DocumentsContract
+                    .buildDocumentUriUsingTree(treeUri, parentDocId)
+                for (doc in documents) {
+                    runCatching {
+                        val fileUri = android.provider.DocumentsContract.createDocument(
+                            resolver, parentUri, "application/gpx+xml", doc.fileName
+                        ) ?: return@runCatching
+                        resolver.openOutputStream(fileUri)?.use { it.write(doc.content.toByteArray()) }
+                        saved++
+                    }
+                }
+            }
+            _userMessageRes.value =
+                if (saved > 0) de.velospot.R.string.ride_export_saved
+                else de.velospot.R.string.ride_export_save_failed
+        }
+    }
+
+    /**
+     * Imports rides from the picked GPX file [uris]. Each `<trk>` becomes a ride
+     * (its `<name>` kept); a short toast reports the outcome. Parsing/persistence
+     * run off the main thread.
+     */
+    fun importGpxFiles(uris: List<android.net.Uri>) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            var imported = 0
+            for (uri in uris) {
+                val tracks = runCatching {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        de.velospot.core.gpx.GpxParser.parse(stream)
+                    }.orEmpty()
+                }.getOrDefault(emptyList())
+                for (track in tracks) {
+                    de.velospot.core.gpx.GpxRideFactory.toRecordedRide(track)?.let { ride ->
+                        rideTracking.importRide(ride)
+                        imported++
+                    }
+                }
+            }
+            _userMessageRes.value =
+                if (imported > 0) de.velospot.R.string.ride_import_done
+                else de.velospot.R.string.ride_import_failed
+        }
+    }
 
     // ── Offline routing ───────────────────────────────────────────────────────
 

@@ -624,6 +624,10 @@ private class FakeRecordedRidesRepository : RecordedRidesRepository {
         rides.value = rides.value.filterNot { it.id == id }
     }
 
+    override suspend fun updateRideName(id: String, name: String?) {
+        rides.value = rides.value.map { if (it.id == id) it.copy(name = name) else it }
+    }
+
     override suspend fun clearAll() { rides.value = emptyList() }
 }
 
