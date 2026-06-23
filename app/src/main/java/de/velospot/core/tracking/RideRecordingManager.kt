@@ -108,6 +108,14 @@ class RideRecordingManager(
     @Volatile
     var suppressRealFixes: Boolean = false
 
+    /**
+     * Name to attach to the ride when it is saved on [stop]. Set by the host while
+     * recording (the navigation destination / "Round trip – place", or the name the
+     * rider typed when finishing a manual recording). Cleared on every [start].
+     */
+    @Volatile
+    var pendingRideName: String? = null
+
     private var lastElevationIndex = 0
     private var tickerJob: Job? = null
     private var locationJob: Job? = null
@@ -121,6 +129,7 @@ class RideRecordingManager(
     fun start(autoStarted: Boolean = false, seedLocation: GeoCoordinate? = null) {
         if (tracker.isRecording) return
         isAutoStartedByNavigation = autoStarted
+        pendingRideName = null
         lastElevationIndex = 0
         tracker.start(System.currentTimeMillis())
         _liveTrackPoints.value = emptyList()
@@ -144,7 +153,9 @@ class RideRecordingManager(
         locationJob?.cancel(); locationJob = null
         stopTicker()
         val ride = tracker.stop(System.currentTimeMillis())
+            ?.copy(name = pendingRideName?.trim()?.takeIf { it.isNotBlank() })
         isAutoStartedByNavigation = false
+        pendingRideName = null
         _trackingState.value = RideTrackingUiState.Idle
         _liveTrackPoints.value = emptyList()
         if (ride != null) {

@@ -41,6 +41,9 @@ class RecordedRidesRepositoryImpl @Inject constructor(
     override suspend fun clearAll() =
         recordedRideDao.deleteAll()
 
+    override suspend fun updateRideName(id: String, name: String?) =
+        recordedRideDao.updateName(id, name?.trim()?.takeIf { it.isNotBlank() })
+
     private fun RecordedRideEntity.toDomain() = RecordedRide(
         id = id,
         startedAt = startedAt,
@@ -52,7 +55,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         maxSpeedMps = maxSpeedMps,
         elevationGainMeters = elevationGainMeters,
         elevationLossMeters = elevationLossMeters,
-        points = runCatching { pointsAdapter.fromJson(pointsJson) }.getOrNull().orEmpty()
+        points = runCatching { pointsAdapter.fromJson(pointsJson) }.getOrNull().orEmpty(),
+        name = name
     )
 
     private fun RecordedRide.toEntity() = RecordedRideEntity(
@@ -66,7 +70,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         maxSpeedMps = maxSpeedMps,
         elevationGainMeters = elevationGainMeters,
         elevationLossMeters = elevationLossMeters,
-        pointsJson = pointsAdapter.toJson(points)
+        pointsJson = pointsAdapter.toJson(points),
+        name = name?.trim()?.takeIf { it.isNotBlank() }
     )
 }
 

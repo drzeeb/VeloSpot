@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -104,6 +105,27 @@ class RideTrackingController(
 
     /** Resets the elevation-match cursor when the active route changes. */
     fun onRouteChanged() = manager.onRouteChanged()
+
+    /**
+     * Sets the name that the **active** recording will be saved with on [stop] (the
+     * navigation destination / "Round trip – place", or the name typed when finishing
+     * a manual recording). `null` leaves the ride unnamed.
+     */
+    fun setPendingName(name: String?) {
+        manager.pendingRideName = name
+    }
+
+    /** Renames a persisted ride (and the open detail sheet, if it's the same one). */
+    fun renameRide(id: String, name: String?) {
+        val trimmed = name?.trim()?.takeIf { it.isNotBlank() }
+        _selectedRide.update { if (it?.id == id) it.copy(name = trimmed) else it }
+        scope.launch { repository.updateRideName(id, trimmed) }
+    }
+
+    /** Persists a ride built from an imported GPX track. */
+    fun importRide(ride: RecordedRide) {
+        scope.launch { repository.saveRide(ride) }
+    }
 
     /** Opens the detail sheet for a recorded ride and draws its track on the map. */
     fun selectRide(ride: RecordedRide) {

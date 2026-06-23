@@ -134,12 +134,57 @@ internal fun MapBottomSheets(
 
     // "My rides" timeline (list of recorded rides).
     if (screenUiState.isRidesSheetVisible) {
+        val gpxImportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments()
+        ) { uris ->
+            if (uris.isNotEmpty()) viewModel.importGpxFiles(uris)
+        }
+        // GPX documents staged for "save to file" while the SAF picker is open.
+        var pendingGpxSave by remember {
+            mutableStateOf<List<de.velospot.core.share.GpxDocument>>(emptyList())
+        }
+        // Single file → "Create document"; several separate files → pick a folder.
+        val gpxCreateLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/gpx+xml")
+        ) { uri ->
+            val doc = pendingGpxSave.firstOrNull()
+            if (uri != null && doc != null) viewModel.saveGpxToUri(uri, doc.content)
+            pendingGpxSave = emptyList()
+        }
+        val gpxTreeLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
+        ) { treeUri ->
+            if (treeUri != null && pendingGpxSave.isNotEmpty()) {
+                viewModel.saveGpxToTree(treeUri, pendingGpxSave)
+            }
+            pendingGpxSave = emptyList()
+        }
         RidesSheet(
             rides        = recordedRides,
             onDismiss    = screenUiState::closeRides,
             onSelectRide = { ride ->
                 screenUiState.closeRides()
                 viewModel.selectRecordedRide(ride)
+            },
+            onExportRides = { selected, combine, save ->
+                if (save) {
+                    val documents = viewModel.buildGpxDocuments(selected, combine)
+                    pendingGpxSave = documents
+                    if (documents.size == 1) {
+                        gpxCreateLauncher.launch(documents.first().fileName)
+                    } else if (documents.isNotEmpty()) {
+                        gpxTreeLauncher.launch(null)
+                    }
+                } else {
+                    viewModel.exportRidesAsGpx(selected, combine)
+                }
+            },
+            onImport = {
+                // GPX has no widely-registered MIME type, so allow any document and
+                // let the parser validate; common GPX/XML types are offered as hints.
+                gpxImportLauncher.launch(
+                    arrayOf("application/gpx+xml", "application/xml", "text/xml", "*/*")
+                )
             }
         )
     }

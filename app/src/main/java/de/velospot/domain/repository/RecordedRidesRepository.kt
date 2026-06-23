@@ -14,6 +14,9 @@ interface RecordedRidesRepository {
     /** Inserts or updates a recorded ride. */
     suspend fun saveRide(ride: RecordedRide)
 
+    /** Renames a ride (or clears its name when [name] is null/blank). */
+    suspend fun updateRideName(id: String, name: String?)
+
     /** Removes a recorded ride by its id. */
     suspend fun removeRide(id: String)
 
