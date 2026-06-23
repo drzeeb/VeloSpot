@@ -48,6 +48,16 @@ class MapViewModelTest {
     private lateinit var mockSegmentManager: BRouterSegmentManager
     private lateinit var mockNominatimGeocoder: NominatimGeocoder
 
+    /**
+     * Every [MapViewModel] built by [makeViewModel] is tracked here and cleared in
+     * [tearDown]. Without this the view-models' `viewModelScope` coroutines (e.g.
+     * the infinite location/favorites flow collectors) outlive the test and keep
+     * running on the shared main dispatcher; an exception thrown by such a leaked
+     * coroutine then surfaces against the *next* test as `UncaughtExceptionsBeforeTest`,
+     * making the suite flaky on CI. Clearing cancels each `viewModelScope`.
+     */
+    private val createdViewModels = mutableListOf<MapViewModel>()
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -68,6 +78,17 @@ class MapViewModelTest {
 
     @After
     fun tearDown() {
+        // Cancel each view-model's viewModelScope so no collector coroutine leaks
+        // into the next test. ViewModel.clear() is not public, so reach it reflectively.
+        createdViewModels.forEach { vm ->
+            runCatching {
+                androidx.lifecycle.ViewModel::class.java
+                    .getDeclaredMethod("clear")
+                    .apply { isAccessible = true }
+                    .invoke(vm)
+            }
+        }
+        createdViewModels.clear()
         Dispatchers.resetMain()
     }
 
@@ -94,7 +115,7 @@ class MapViewModelTest {
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
             context               = mockContext
-        )
+        ).also { createdViewModels.add(it) }
     }
 
     @Test
