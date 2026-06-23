@@ -257,6 +257,8 @@
     <string name="ride_stat_elevation_gain">Desnivel positivo</string>
     <string name="ride_stat_elevation_loss">Desnivel negativo</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_detail_close">Cerrar detalles del trayecto</string>
+    <string name="ride_detail_drag_hint">Arrastra para expandir • el mapa sigue interactivo</string>
     <string name="ride_speed_chart_title">Velocidad en el tiempo</string>
     <string name="ride_delete">Eliminar ruta</string>
     <!-- Compartir ruta como tarjeta "VeloSpot Wrapped" -->

@@ -262,6 +262,8 @@
     <string name="ride_stat_elevation_gain">Anstieg</string>
     <string name="ride_stat_elevation_loss">Abstieg</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_detail_close">Fahrtdetails schließen</string>
+    <string name="ride_detail_drag_hint">Zum Ausklappen ziehen • Karte bleibt bedienbar</string>
     <string name="ride_speed_chart_title">Geschwindigkeit über Zeit</string>
     <string name="ride_delete">Fahrt löschen</string>
     <!-- Fahrt als "VeloSpot Wrapped"-Kachel teilen -->

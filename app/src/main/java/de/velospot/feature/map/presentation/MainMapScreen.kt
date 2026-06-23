@@ -53,6 +53,7 @@ import de.velospot.feature.map.presentation.markers.updateMarkers
 import de.velospot.feature.map.presentation.markers.updateHeatmapLayer
 import de.velospot.core.map.RideHeatmap
 import de.velospot.feature.map.presentation.sheets.MapBottomSheets
+import de.velospot.feature.map.presentation.sheets.RideDetailSheet
 import de.velospot.feature.map.presentation.sheets.languageFlagForCode
 import de.velospot.feature.map.presentation.sheets.resolveCurrentLanguageCode
 import kotlinx.coroutines.Dispatchers
@@ -98,6 +99,7 @@ fun MainMapScreen(
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
     val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
+    val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
     val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
@@ -609,6 +611,18 @@ fun MainMapScreen(
         // follow button takes over once the rider pans the map away.
         if (!isFollowSession) {
             MyLocationFab(onClick = requestOrUseLocation)
+        }
+
+        // ── Recorded-ride detail — non-modal sheet ───────────────────────────
+        // Lives inside the map Box (not in MapBottomSheets) so it overlays the
+        // map without a scrim: only its surface consumes touches, leaving the
+        // drawn ride track fully pan/pinch/zoom-able above the collapsed sheet.
+        selectedRide?.let { ride ->
+            RideDetailSheet(
+                ride      = ride,
+                onDismiss = viewModel::dismissSelectedRide,
+                onDelete  = { id -> viewModel.deleteRecordedRide(id) }
+            )
         }
     }
 
