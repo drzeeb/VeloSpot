@@ -59,6 +59,18 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - **🆕 Address search** — type any address in Germany, France or Luxembourg into the floating search bar and jump straight to the location; results are biased toward your current surroundings. Tap a result to drop a pin and start in-app BRouter navigation, save it as a favourite, or remove the pin (same sheet as a custom pin)
 - **🆕 Tap-to-place custom pin** — tap any empty spot on the map to drop a blue pin; the address is resolved automatically via Nominatim reverse geocoding and a bottom sheet lets you start navigation directly to that point
 - **🆕 BRouter offline routing** — routes calculated entirely on-device with 5 cycling profiles; no internet needed after the one-time segment download
+- **🆕 Round-trip generator** — pick a target distance (5–50 km) and BRouter builds a circular loop that starts and ends at your position
+- **🆕 Spoken turn-by-turn voice guidance** — optional Text-to-Speech reads the upcoming turns aloud, with a *prepare*, *now* and *arrival* cue
+- **🆕 Route hilliness slider** — trade a little distance for flatter offline routes (five levels, applied live)
+- **🆕 Record your rides** — the "My rides" timeline captures time, distance, speed, elevation and a speed chart; recording keeps running in the background with a notification, a Quick Settings tile and a home-screen widget
+- **🆕 Named rides + GPX export/import** — rides are auto-named after the destination (round trips become "Round trip – place"); a prompt names manual recordings; export selected rides as GPX (share or save to a file) and import GPX back in
+- **🆕 Ride statistics dashboard** — totals, averages, personal records, streaks and fun facts (CO₂ saved, calories), all computed on-device
+- **🆕 Ride heatmap & "Ridden tracks" layers** — see where you cycle most as a colour heatmap, or draw every recorded ride as a thin line
+- **🆕 Share a ride** — export a recorded ride as a slick "VeloSpot Wrapped" card for WhatsApp, Telegram & Instagram
+- **🆕 Pedalling cyclist avatar** — your live-location marker visibly pedals while you ride and plants a foot on the ground when you stop
+- **🆕 Find my bike** — save where you parked (auto-saved on navigation arrival) and navigate back to it later
+- **🆕 Share any spot** as a universal OpenStreetMap link from the detail sheets
+- **🆕 Keep screen on** while navigating and recording (toggle); **accessibility** (TalkBack) improvements; legal notice (Impressum) in-app and on the website
 
 ## 🌟 Features
 
@@ -388,5 +400,5 @@ Navigate with confidence and never miss a parking spot again — across Germany,
 
 ---
 
-**Last Updated**: 2026-06-20  
+**Last Updated**: 2026-06-23  
 **Status**: Active Development

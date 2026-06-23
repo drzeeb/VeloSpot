@@ -255,23 +255,23 @@ CHANGELOGS: dict[int, dict[str, str]] = {
             "\u2022 Gesprochene Abbiegeansagen lesen die n\u00e4chsten Abbiegungen vor (optional)\n"
             "\u2022 Neuer Schieberegler \u201eH\u00fcgeligkeit der Route\u201c f\u00fcr flachere Offline-Routen\n"
             "\u2022 Routen starten nicht mehr auf dem Gehweg, und Rundtouren funktionieren mit jedem Radprofil\n"
-            "\u2022 Fl\u00fcssigere Live-Navigation und mehrere Offline-Routing-Korrekturen\n"
+            "\u2022 Mehrere Offline-Routing-Korrekturen f\u00fcr zuverl\u00e4ssigere Routenberechnung\n"
         ),
     },
-    10022: {
+    10023: {
         "en-US": (
-            "\u2022 Ride heatmap overlay turns your recorded rides into a colour heatmap of where you cycle most\n"
-            "\u2022 Spoken turn-by-turn voice guidance reads upcoming turns aloud (opt-in)\n"
-            "\u2022 New \"Route hilliness\" slider trades a little distance for flatter offline routes\n"
-            "\u2022 Routes no longer start on the sidewalk, and round trips work with every cycling profile\n"
-            "\u2022 Several offline-routing fixes for more reliable route calculation\n"
+            "\u2022 Name your rides \u2013 auto-named after the destination (or \"Round trip \u2013 place\"), with a prompt when you finish a manual recording\n"
+            "\u2022 Export & import your rides as GPX \u2013 share them or save to a file\n"
+            "\u2022 The cyclist avatar now pedals as you ride and puts a foot down when you stop\n"
+            "\u2022 New \"Ridden tracks\" map layer draws every recorded ride as a thin line\n"
+            "\u2022 Keep the screen on while recording, a legal notice, accessibility improvements, and a fix for bogus top speeds\n"
         ),
         "de-DE": (
-            "\u2022 Fahrten-Heatmap zeigt als farbige Heatmap, wo du am h\u00e4ufigsten f\u00e4hrst\n"
-            "\u2022 Gesprochene Abbiegeansagen lesen die n\u00e4chsten Abbiegungen vor (optional)\n"
-            "\u2022 Neuer Schieberegler \u201eH\u00fcgeligkeit der Route\u201c f\u00fcr flachere Offline-Routen\n"
-            "\u2022 Routen starten nicht mehr auf dem Gehweg, und Rundtouren funktionieren mit jedem Radprofil\n"
-            "\u2022 Mehrere Offline-Routing-Korrekturen f\u00fcr zuverl\u00e4ssigere Routenberechnung\n"
+            "\u2022 Benenne deine Fahrten \u2013 automatisch nach dem Zielort (oder \u201eRundfahrt \u2013 Ort\u201c), mit Abfrage beim Beenden einer Aufzeichnung\n"
+            "\u2022 Fahrten als GPX exportieren & importieren \u2013 teilen oder als Datei speichern\n"
+            "\u2022 Der Fahrrad-Avatar tritt jetzt in die Pedale und stellt beim Halten einen Fu\u00df ab\n"
+            "\u2022 Neue Kartenebene \u201eGefahrene Strecken\u201c zeichnet jede Fahrt als d\u00fcnne Linie\n"
+            "\u2022 Display bleibt beim Aufzeichnen an, Impressum, Barrierefreiheit und ein Fix f\u00fcr falsche Spitzengeschwindigkeiten\n"
         ),
     },
 }

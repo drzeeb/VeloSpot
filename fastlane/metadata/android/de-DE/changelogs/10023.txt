@@ -1,0 +1,5 @@
+• Benenne deine Fahrten – automatisch nach dem Zielort (oder „Rundfahrt – Ort“), mit Abfrage beim Beenden einer Aufzeichnung
+• Fahrten als GPX exportieren & importieren – teilen oder als Datei speichern
+• Der Fahrrad-Avatar tritt jetzt in die Pedale und stellt beim Halten einen Fuß ab
+• Neue Kartenebene „Gefahrene Strecken“ zeichnet jede Fahrt als dünne Linie
+• Display bleibt beim Aufzeichnen an, Impressum, Barrierefreiheit und ein Fix für falsche Spitzengeschwindigkeiten

@@ -1,0 +1,5 @@
+• Name your rides – auto-named after the destination (or "Round trip – place"), with a prompt when you finish a manual recording
+• Export & import your rides as GPX – share them or save to a file
+• The cyclist avatar now pedals as you ride and puts a foot down when you stop
+• New "Ridden tracks" map layer draws every recorded ride as a thin line
+• Keep the screen on while recording, a legal notice, accessibility improvements, and a fix for bogus top speeds

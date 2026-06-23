@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces across Germany, France and Luxembourg. 100 000+ locations from OpenStreetMap, fully offline, with address search, tap-to-place custom pins, BRouter on-device bike routing, 5 cycling profiles, MapLibre vector tile map, favorites, live location tools, and multilingual support.">
-    <meta name="keywords" content="bike parking, Germany, Deutschland, France, Luxembourg, cycling, map, Android, OpenStreetMap, OSM, offline, address search, geocoding, custom pin, tap to navigate, in-app navigation, BRouter, offline routing, MapLibre, vector tiles, OpenFreeMap, favorites, dark mode, room, nominatim, multilingual">
+    <meta name="description" content="VeloSpot helps cyclists find, save, and navigate to bike parking spaces across Germany, France and Luxembourg. 100 000+ locations from OpenStreetMap, fully offline, with address search, tap-to-place custom pins, BRouter on-device bike routing, 5 cycling profiles, round-trip generator, ride recording with GPX export/import, ride heatmap, spoken voice guidance, MapLibre vector tile map, favorites, live location tools, and multilingual support.">
+    <meta name="keywords" content="bike parking, Germany, Deutschland, France, Luxembourg, cycling, map, Android, OpenStreetMap, OSM, offline, address search, geocoding, custom pin, tap to navigate, in-app navigation, BRouter, offline routing, round trip, ride recording, ride tracking, GPX export, GPX import, ride heatmap, voice guidance, turn-by-turn, MapLibre, vector tiles, OpenFreeMap, favorites, dark mode, room, nominatim, multilingual">
     <title>VeloSpot - Bike Parking Finder for Germany, France & Luxembourg</title>
     <style>
         * {
@@ -577,6 +577,46 @@
                     <h3>Ride Statistics</h3>
                     <p>Record a ride and the "My rides" timeline leads with a collapsible statistics dashboard: totals (distance, time, elevation), averages, personal records (top speed, longest ride, biggest climb), activity streaks (active days, this week / this month) and fun facts like CO₂ saved vs. a car, calories burned and your share of a lap around the Earth — all computed on-device from your own rides.</p>
                 </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚴</div>
+                    <h3>Record Your Rides</h3>
+                    <p>Track any ride with live time, distance, speed and elevation plus a speed chart. Recording keeps running in the background with a notification, a Quick Settings tile and a home-screen widget — and your live-location avatar visibly pedals as you ride, planting a foot down when you stop.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏷️</div>
+                    <h3>Named Rides &amp; GPX</h3>
+                    <p>Rides are auto-named after the destination ("Round trip – place" for loops), and finishing a manual recording asks for a name suggested from your current location. Export selected rides as GPX — share them or save to a file (combine or one file per ride) — and import GPX tracks back in.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔥</div>
+                    <h3>Ride Heatmap &amp; Ridden Tracks</h3>
+                    <p>Turn all your recorded rides into a colour heatmap that reveals where you cycle most, or draw every ride as its own thin, translucent line so frequently used streets read stronger. Both are optional map layers built on-device from your own data.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗣️</div>
+                    <h3>Voice Guidance</h3>
+                    <p>Optional spoken turn-by-turn guidance reads the upcoming turns aloud via Text-to-Speech — an early "prepare" cue, a "now" cue right before the turn and an arrival cue — building on the on-screen turn banner. Opt-in and persisted.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔁</div>
+                    <h3>Round-Trip Generator</h3>
+                    <p>Pick a target distance (5–50 km) and BRouter builds a circular route that starts and ends right at your position — perfect for a quick loop. Offline routing required.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⛰️</div>
+                    <h3>Route Hilliness</h3>
+                    <p>A five-step "Route hilliness" slider lets you trade a little distance for less climbing. Each level adds an uphill penalty handed to BRouter and is applied live to point-to-point, on-demand and round-trip routing.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🅿️</div>
+                    <h3>Find My Bike</h3>
+                    <p>Save where you parked — automatically on navigation arrival or with one tap — and later navigate straight back to it, with the reverse-geocoded address and live distance from your position.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📤</div>
+                    <h3>Share Spots &amp; Rides</h3>
+                    <p>Share any parking spot, pin, search result or saved place as a universal OpenStreetMap link, or export a recorded ride as a slick "VeloSpot Wrapped" card — your route on a map cutout with your stats — ready for WhatsApp, Telegram &amp; Instagram.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -629,6 +669,12 @@
                         <li>Dark mode toggle directly in the map menu — including dark map tiles</li>
                         <li>Toggle pin layers — show/hide parking, favourites, and saved places</li>
                         <li>Save any tapped location as a named favourite (saved places)</li>
+                        <li>Round-trip generator builds a circular loop back to your start</li>
+                        <li>Record rides with stats &amp; a speed chart; background recording with notification, tile &amp; widget</li>
+                        <li>Named rides + GPX export/import (share or save to a file)</li>
+                        <li>Ride heatmap &amp; "Ridden tracks" map layers from your own rides</li>
+                        <li>Spoken turn-by-turn voice guidance (opt-in) and a "Route hilliness" slider</li>
+                        <li>Find my bike — save your parking spot and navigate back</li>
                         <li>8-language picker with persistent flag-based selection</li>
                         <li><strong>MapLibre vector tiles</strong> via OpenFreeMap — sharp at any zoom, no API key</li>
                     </ul>
