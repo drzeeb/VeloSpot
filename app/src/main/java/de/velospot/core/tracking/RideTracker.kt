@@ -102,6 +102,12 @@ class RideTracker {
         val previous = points.lastOrNull()
         var pointSpeed = speedMps
 
+        // Position-derived speed of this segment and whether it is a *reliable*
+        // baseline for cross-checking the reported speed (long enough interval that
+        // GPS jitter doesn't dominate the division). Both feed the max-speed gate.
+        var segSpeedMps = 0.0
+        var segSpeedReliable = false
+
         if (previous != null && hasRaw) {
             val dtMillis = timestamp - previous.timestamp
             if (dtMillis in 1..MAX_GAP_MILLIS) {
@@ -116,6 +122,8 @@ class RideTracker {
                 if (segSpeed > MAX_PLAUSIBLE_SPEED_MPS) {
                     return currentStats()
                 }
+                segSpeedMps = segSpeed
+                segSpeedReliable = dtMillis >= MIN_SPEED_BASELINE_MILLIS
                 if (segMeters >= MIN_SEGMENT_METERS) {
                     distanceMeters += segMeters
                 }
@@ -126,8 +134,21 @@ class RideTracker {
             }
         }
 
+        // Max speed: the device-reported (GPS Doppler) speed is the most direct
+        // measurement, but it can briefly **spike** to wildly wrong values (seen at
+        // ~50–70 km/h on a bike) while the position barely moved — a sensor glitch,
+        // typically on a low-accuracy fix. So a sample may raise the max only when
+        // **corroborated by the geometry**: there must be a reliable position-derived
+        // baseline and the speed may not exceed it by more than [SPEED_CORROBORATION_FACTOR].
+        // This rejects the Doppler spikes while still honouring genuine fast (e.g.
+        // downhill) stretches where both the sensor and the track agree.
         pointSpeed?.let { sp ->
-            if (sp <= MAX_PLAUSIBLE_SPEED_MPS) maxSpeedMps = maxOf(maxSpeedMps, sp.toDouble())
+            val spd = sp.toDouble()
+            if (spd in 0.0..MAX_PLAUSIBLE_SPEED_MPS &&
+                segSpeedReliable && spd <= segSpeedMps * SPEED_CORROBORATION_FACTOR
+            ) {
+                maxSpeedMps = maxOf(maxSpeedMps, spd)
+            }
         }
 
         // Elevation gain/loss. GPS-only altitude is extremely noisy (it can swing
@@ -247,6 +268,20 @@ class RideTracker {
         private const val MOVING_SPEED_THRESHOLD_MPS = 0.8
         /** Reject fixes implying a faster-than-plausible bike speed (~90 km/h). */
         private const val MAX_PLAUSIBLE_SPEED_MPS = 25.0
+        /**
+         * Minimum interval between two fixes for their position-derived speed to be
+         * trusted as a *baseline* when validating the reported speed. Below ~1 s the
+         * division is dominated by GPS jitter, so such tiny segments are not used to
+         * corroborate (or reject) a peak-speed sample.
+         */
+        private const val MIN_SPEED_BASELINE_MILLIS = 1_000L
+        /**
+         * How far the reported (GPS Doppler) speed may exceed the corroborating
+         * position-derived speed before it's treated as a sensor spike and ignored
+         * for the max-speed statistic. 1.5× tolerates honest Doppler lead on a fix
+         * while still discarding the gross 2–5× glitches.
+         */
+        private const val SPEED_CORROBORATION_FACTOR = 1.5
         /**
          * Reject fixes whose reported horizontal accuracy (1σ radius) is worse than
          * this. GPS multipath in urban canyons / under 3D building shadow — exactly

@@ -107,7 +107,25 @@ class RideTrackerTest {
         val stats = tracker.addPoint(0.001, baseLon, 3_000L, speedMps = 40f, altitudeMeters = null, accuracyMeters = 60f)
         assertEquals(0.0, stats.distanceMeters, 0.001)
         assertEquals(1, stats.pointCount)
-        assertEquals(5.0, stats.maxSpeedMps, 0.001)
+        // Max speed stays 0: the lone first fix's reported speed has no position
+        // baseline to corroborate it, and the drift fix was rejected outright.
+        assertEquals(0.0, stats.maxSpeedMps, 0.001)
+    }
+
+    @Test
+    fun `doppler speed spike that the track does not support is ignored for max speed`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        // Steady ~5.6 m/s ride: ~55.6 m (0.0005°) every 10 s.
+        tracker.addPoint(0.0000, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
+        // Reported 6 m/s is corroborated by the ~5.6 m/s geometry → counts.
+        tracker.addPoint(0.0005, baseLon, 10_000L, speedMps = 6f, altitudeMeters = null, accuracyMeters = 5f)
+        // GPS Doppler glitch: reports 20 m/s (72 km/h) while the position only moved
+        // ~5.6 m/s — far above the corroboration tolerance, so it must NOT set the max.
+        tracker.addPoint(0.0010, baseLon, 20_000L, speedMps = 20f, altitudeMeters = null, accuracyMeters = 5f)
+        val ride = tracker.stop(20_000L)
+        requireNotNull(ride)
+        assertEquals("spike ignored, max is the corroborated 6 m/s", 6.0, ride.maxSpeedMps, 0.001)
     }
 
     @Test
