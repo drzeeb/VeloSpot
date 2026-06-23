@@ -10,6 +10,7 @@ import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoRouteFoundException
+import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.feature.map.presentation.NavigationUiState
@@ -65,6 +66,13 @@ class NavigationController(
     private val routeSimulator = RouteSimulator()
     private val _isSimulating = MutableStateFlow(false)
     val isSimulating: StateFlow<Boolean> = _isSimulating.asStateFlow()
+
+    /**
+     * The route the simulator's paused [RouteSimulator.travelledMeters] belongs to.
+     * Resume only continues from the saved position while this is still the active
+     * route instance; a new/rerouted route restarts the simulation from the start.
+     */
+    private var simulationRouteRef: List<RoutePoint>? = null
 
     /** Active route calculation job — cancelled immediately when a new navigation starts. */
     private var navigationJob: Job? = null
@@ -297,18 +305,26 @@ class NavigationController(
     }
 
     /**
-     * Starts/stops the GPS mock simulator. When running it walks along the active
-     * route, feeding synthetic fixes (with bearing + speed) back through
-     * [onSimulatedFix] exactly like real GPS — so the whole live-navigation
-     * pipeline can be tested on the couch.
+     * Play/pause toggle for the GPS mock simulator. Starting it walks along the
+     * active route, feeding synthetic fixes (with bearing + speed) back through
+     * [onSimulatedFix] exactly like real GPS — so the whole live-navigation pipeline
+     * can be tested on the couch. Pressing it again **pauses** (keeping the
+     * position); pressing play once more **resumes from where it left off** rather
+     * than restarting — unless the route changed in the meantime (e.g. a reroute),
+     * in which case it begins from the start again.
      */
     fun toggleSimulation() {
         if (_isSimulating.value) {
-            stopSimulation()
+            pauseSimulation()
             return
         }
         val route = activeRoute ?: return
         if (route.points.size < 2) return
+
+        // Resume from the paused position only when still on the same route instance;
+        // a fresh/rerouted route restarts from the beginning.
+        val resumeFrom = if (route.points === simulationRouteRef) routeSimulator.travelledMeters else 0.0
+        simulationRouteRef = route.points
 
         _isSimulating.value = true
         routeSimulator.start(
@@ -319,19 +335,45 @@ class NavigationController(
             speedMps = 13.9,
             intervalMs = 500L,
             jitterMeters = 0.0,
+            startOffsetMeters = resumeFrom,
             onFix = { fix -> onSimulatedFix(fix) },
-            onFinished = { _isSimulating.value = false }
+            onFinished = {
+                _isSimulating.value = false
+                routeSimulator.reset()
+                simulationRouteRef = null
+            }
         )
     }
 
-    fun stopSimulation() {
+    /**
+     * Pauses the simulation, **keeping** the travelled distance so the next play
+     * press resumes from here. Also brakes the navigation puck (see below).
+     */
+    private fun pauseSimulation() {
         routeSimulator.stop()
         _isSimulating.value = false
-        // With the simulator stopped, no further fixes arrive to slow the navigation
-        // puck — so its dead-reckoning would keep gliding it forward along the route
-        // at the last simulated speed (it never sees a "standing still" fix the way a
-        // real GPS would). Feed one final **stationary** fix (speed 0) at the current
-        // position so the puck's speed eases to a stop instead of coasting on.
+        brakePuck()
+    }
+
+    /**
+     * Fully stops the simulation and rewinds it to the start. Used when navigation
+     * ends or the controller is disposed (not for the play/pause toggle).
+     */
+    fun stopSimulation() {
+        routeSimulator.reset()
+        simulationRouteRef = null
+        _isSimulating.value = false
+        brakePuck()
+    }
+
+    /**
+     * Feeds one final **stationary** fix (speed 0) at the current position. Without
+     * the simulator no further fixes arrive to slow the navigation puck, so its
+     * dead-reckoning would keep gliding it forward along the route at the last
+     * simulated speed (it never sees a "standing still" fix the way real GPS would);
+     * this lets the puck's speed ease to a stop instead of coasting on.
+     */
+    private fun brakePuck() {
         currentLocation()?.let { last ->
             onSimulatedFix(last.copy(speedMetersPerSecond = 0f))
         }
@@ -339,7 +381,8 @@ class NavigationController(
 
     /** Stops the simulator; call from the host's `onCleared`. */
     fun dispose() {
-        routeSimulator.stop()
+        routeSimulator.reset()
+        simulationRouteRef = null
     }
 
     private fun mapRoutingError(throwable: Throwable): MapError = when (throwable) {
