@@ -256,6 +256,8 @@
     <string name="ride_stat_elevation_gain">Subida</string>
     <string name="ride_stat_elevation_loss">Descida</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_detail_close">Fechar detalhes do percurso</string>
+    <string name="ride_detail_drag_hint">Arraste para baixo • o mapa continua interativo</string>
     <string name="ride_speed_chart_title">Velocidade ao longo do tempo</string>
     <string name="ride_delete">Eliminar percurso</string>
     <!-- Partilhar percurso como cartão "VeloSpot Wrapped" -->

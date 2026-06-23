@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Saved-ride detail no longer blocks the map** — opening a recorded ride from *My rides* used to show its statistics in a modal bottom sheet, whose scrim swallowed all touches so the drawn ride track couldn't be panned, pinched or zoomed. The detail view is now a **non-modal, draggable sheet**: it overlays the map without a scrim, only its own surface consumes touches, and it can be dragged down to a small peek (or closed with the **✕** button) to free up the map while the ride polyline stays drawn. It starts fully expanded so all stats are visible immediately (`RideDetailSheet`, rendered inside the map layout). Fully localised across all eight supported languages (`ride_detail_close`, `ride_detail_drag_hint`).
+
 ## [v1.0.22] - 2026-06-21
 
 ### Added

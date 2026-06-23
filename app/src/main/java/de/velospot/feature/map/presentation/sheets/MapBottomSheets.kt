@@ -43,7 +43,6 @@ internal fun MapBottomSheets(
     val parkedBike           by viewModel.parkedBike.collectAsStateWithLifecycle()
     val isParkedBikeSheetVisible by viewModel.isParkedBikeSheetVisible.collectAsStateWithLifecycle()
     val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
-    val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
     val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
     val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
@@ -156,16 +155,9 @@ internal fun MapBottomSheets(
         )
     }
 
-    // Detail view for a single recorded ride (stats + speed timeline).
-    selectedRide?.let { ride ->
-        RideDetailSheet(
-            ride      = ride,
-            onDismiss = viewModel::dismissSelectedRide,
-            onDelete  = { id ->
-                viewModel.deleteRecordedRide(id)
-            }
-        )
-    }
+    // Detail view for a single recorded ride (stats + speed timeline) is a
+    // *non-modal* sheet so the map stays interactive while a ride is drawn — it
+    // is rendered inside the map layout Box of MainMapScreen, not here.
 
     if (showOfflineSetupSheet) {
         OfflineRoutingSetupSheet(

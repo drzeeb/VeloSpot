@@ -258,6 +258,8 @@
     <string name="ride_stat_elevation_gain">Dislivello positivo</string>
     <string name="ride_stat_elevation_loss">Dislivello negativo</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_detail_close">Chiudi i dettagli del percorso</string>
+    <string name="ride_detail_drag_hint">Trascina verso il basso • la mappa resta interattiva</string>
     <string name="ride_speed_chart_title">Velocità nel tempo</string>
     <string name="ride_delete">Elimina percorso</string>
     <!-- Condividi il percorso come scheda "VeloSpot Wrapped" -->

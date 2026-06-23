@@ -256,6 +256,8 @@
     <string name="ride_stat_elevation_gain">Stijging</string>
     <string name="ride_stat_elevation_loss">Daling</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
+    <string name="ride_detail_close">Ritdetails sluiten</string>
+    <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>
     <string name="ride_speed_chart_title">Snelheid over tijd</string>
     <string name="ride_delete">Rit verwijderen</string>
     <!-- Rit delen als "VeloSpot Wrapped"-kaart -->
