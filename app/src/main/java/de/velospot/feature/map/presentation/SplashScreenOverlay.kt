@@ -1,8 +1,8 @@
 package de.velospot.feature.map.presentation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -16,11 +16,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -31,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -48,7 +45,6 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
 import de.velospot.R
-import kotlinx.coroutines.launch
 
 // VeloSpot brand greens (mirrors the launcher background gradient).
 private val SplashGreenLight = Color(0xFF3FE0A2)
@@ -56,31 +52,35 @@ private val SplashGreenMid   = Color(0xFF10C68C)
 private val SplashGreenDark  = Color(0xFF019875)
 
 /**
- * Full-screen, **animated launch overlay** shown on top of the map while it loads,
- * so the user sees the branded VeloSpot logo instead of a bare white screen during
- * the brief style/tile load.
+ * Full-screen **branded launch overlay** shown on top of the map while it loads.
  *
- * The animation is themed around the app's purpose — a location pin that **drops in
- * with a bounce**, gently **breathes**, and emits expanding **GPS-ping rings** (as if
- * acquiring a fix) — finished with the app name and a row of pulsing loading dots.
- * When [visible] flips to `false` (the map is ready) the whole overlay **fades and
- * scales away** to reveal the live map underneath.
+ * Compose animations run on the main thread, so anything animating *while the map's
+ * native renderer initialises* (a heavy main-thread block) would visibly stutter.
+ * This splash therefore works in two phases:
+ *
+ *  1. **Loading** (`mapReady == false`) — a **static** logo on the brand gradient,
+ *     seamlessly matching the pre-Compose window background. Nothing animates, so
+ *     nothing can hitch while the thread is busy.
+ *  2. **Reveal** (`mapReady == true`) — the main thread is free again, so the logo
+ *     gives a satisfying **"GPS-lock" heartbeat** while expanding **ping rings**
+ *     radiate outward. After a short beat the whole overlay fades + scales away to
+ *     the live map ([visible] flips to `false`).
  */
 @Composable
-fun BoxScope.VeloSpotSplash(visible: Boolean) {
+fun BoxScope.VeloSpotSplash(visible: Boolean, mapReady: Boolean) {
     AnimatedVisibility(
         visible = visible,
-        // No enter transition: the content runs its own bouncy entrance animation.
-        enter = androidx.compose.animation.EnterTransition.None,
+        // The content runs its own reveal animation; no enter transition needed.
+        enter = EnterTransition.None,
         exit = fadeOut(tween(420, easing = FastOutSlowInEasing)) +
             scaleOut(targetScale = 1.10f, animationSpec = tween(420, easing = FastOutSlowInEasing))
     ) {
-        SplashContent()
+        SplashContent(mapReady = mapReady)
     }
 }
 
 @Composable
-private fun SplashContent() {
+private fun SplashContent(mapReady: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -93,55 +93,42 @@ private fun SplashContent() {
             ),
         contentAlignment = Alignment.Center
     ) {
-        // ── Bouncy entrance (scale + fade), driven once on first composition ──
-        val entranceScale = remember { Animatable(0.45f) }
-        val entranceAlpha = remember { Animatable(0f) }
-        LaunchedEffect(Unit) {
-            launch { entranceAlpha.animateTo(1f, tween(360, easing = LinearEasing)) }
-            entranceScale.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
+        // ── "GPS-lock" heartbeat once the map is ready (thread is free) ──
+        val pulse = remember { Animatable(1f) }
+        LaunchedEffect(mapReady) {
+            if (mapReady) {
+                pulse.animateTo(1.16f, tween(240, easing = FastOutSlowInEasing))
+                pulse.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
                 )
-            )
+            }
         }
 
-        // ── Continuous "breathing" pulse once settled ──
+        // ── Expanding ping rings — only drawn/animated during the reveal phase ──
         val infinite = rememberInfiniteTransition(label = "splash")
-        val breathe by infinite.animateFloat(
-            initialValue = 1f,
-            targetValue = 1.06f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(1400, easing = EaseInOutSine),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "breathe"
-        )
-
-        // ── GPS-ping ring expansion (0→1 looped; three staggered rings) ──
         val ping by infinite.animateFloat(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(2200, easing = LinearEasing),
+                animation = tween(1500, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             ),
             label = "ping"
         )
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.alpha(entranceAlpha.value)
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(contentAlignment = Alignment.Center) {
-                // Expanding GPS rings behind the logo.
                 Canvas(modifier = Modifier.size(240.dp)) {
+                    if (!mapReady) return@Canvas
                     val maxR = size.minDimension / 2f
                     val center = Offset(size.width / 2f, size.height / 2f)
                     for (i in 0 until 3) {
                         val p = (ping + i / 3f) % 1f
-                        val radius = maxR * (0.32f + 0.68f * p)
+                        val radius = maxR * (0.34f + 0.66f * p)
                         val ringAlpha = (1f - p) * 0.45f
                         drawCircle(
                             color = Color.White.copy(alpha = ringAlpha),
@@ -156,7 +143,7 @@ private fun SplashContent() {
                 Box(
                     modifier = Modifier
                         .size(132.dp)
-                        .scale(entranceScale.value * breathe)
+                        .scale(pulse.value)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.16f)),
                     contentAlignment = Alignment.Center
@@ -178,37 +165,6 @@ private fun SplashContent() {
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 letterSpacing = 1.sp
-            )
-
-            Spacer(Modifier.height(28.dp))
-
-            LoadingDots(infinite)
-        }
-    }
-}
-
-/** Three softly pulsing dots that ripple left→right, signalling work in progress. */
-@Composable
-private fun LoadingDots(
-    infinite: androidx.compose.animation.core.InfiniteTransition
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        for (i in 0 until 3) {
-            val phase by infinite.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(900, delayMillis = i * 160, easing = EaseInOutSine),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "dot$i"
-            )
-            Box(
-                modifier = Modifier
-                    .size(11.dp)
-                    .scale(0.7f + 0.5f * phase)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.55f + 0.45f * phase))
             )
         }
     }

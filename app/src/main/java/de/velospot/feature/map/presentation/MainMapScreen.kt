@@ -88,12 +88,12 @@ private const val CAMERA_FOLLOW_DURATION_MS = 600
 private const val LIVE_TRACK_REDRAW_DEBOUNCE_MS = 120L
 
 /**
- * Delay (ms) before the MapLibre [MapView] is created and mounted on a cold start.
- * Lets the launch splash's bouncy entrance animation play smoothly first, so the
- * heavy one-off native renderer / GL-context init doesn't freeze the animation's
- * start. Short enough that the map is still ready well before the splash dismisses.
+ * How long the splash plays its **reveal animation** after the map becomes ready,
+ * before fading away. By then the main thread is free (map loaded), so this stretch
+ * of animation is guaranteed smooth — long enough to read as a deliberate "GPS lock"
+ * flourish rather than a flash.
  */
-private const val MAP_MOUNT_DELAY_MS = 450L
+private const val SPLASH_REVEAL_MS = 1150L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -172,14 +172,14 @@ fun MainMapScreen(
         }
     }
 
-    // Defer the heavy MapLibre native/GL initialisation (MapView creation + onCreate)
-    // by a beat so the launch splash's entrance animation plays smoothly first. The
-    // one-off init then lands during the steady part of the animation rather than
-    // freezing its very start. The map still loads well before the splash is dismissed.
+    // Mount the MapLibre [MapView] only after the first splash frame has painted, so
+    // the branded splash is on-screen before the (heavy, main-thread) native renderer
+    // init runs. While that init blocks the thread the splash shows a STATIC logo — so
+    // there is nothing animating to stutter. The cool animation plays later, once the
+    // map is ready and the main thread is free again (see the splash dismissal below).
     var mapMounted by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        withFrameNanos { }            // let the first splash frame paint
-        delay(MAP_MOUNT_DELAY_MS)
+        withFrameNanos { }            // let the first (static) splash frame paint
         mapMounted = true
     }
 
@@ -219,18 +219,16 @@ fun MainMapScreen(
     var styleVersion by remember { mutableIntStateOf(0) }
 
     // ── Animated launch splash ────────────────────────────────────────────────
-    // Cover the brief white map-load with the branded animated logo. The map is
-    // "ready" once its style has loaded (styleVersion > 0); we keep the splash up
-    // for a short minimum so its entrance animation is actually seen, then let it
-    // fade/scale away to reveal the live map.
+    // Cover the map load with the branded logo. While the map loads (main thread busy
+    // with the native renderer init) the splash shows a STATIC logo — nothing animates,
+    // so nothing can stutter. Once the map is ready (styleVersion > 0) the main thread
+    // is free again: the splash then plays its cool "GPS-lock" reveal animation for a
+    // fixed beat and fades/scales away to the live map.
     val mapReady = styleVersion > 0
     var showSplash by remember { mutableStateOf(true) }
-    val splashStartMs = remember { System.currentTimeMillis() }
     LaunchedEffect(mapReady) {
         if (mapReady) {
-            val elapsed = System.currentTimeMillis() - splashStartMs
-            val minVisibleMs = 1100L
-            if (elapsed < minVisibleMs) delay(minVisibleMs - elapsed)
+            delay(SPLASH_REVEAL_MS)   // let the smooth reveal animation play out
             showSplash = false
         }
     }
@@ -813,7 +811,7 @@ fun MainMapScreen(
         // ── Animated branded launch overlay (top of the stack) ───────────────
         // Sits above the map and all controls while the style/tiles load, then
         // fades + scales away once the map is ready.
-        VeloSpotSplash(visible = showSplash)
+        VeloSpotSplash(visible = showSplash, mapReady = mapReady)
     }
 
     // ── Bottom sheets & dialogs ───────────────────────────────────────────────
