@@ -267,6 +267,16 @@
     <string name="ride_detail_drag_hint">Glissez vers le bas • la carte reste interactive</string>
     <string name="ride_speed_chart_title">Vitesse dans le temps</string>
     <string name="ride_delete">Supprimer le trajet</string>
+    <!-- Mock ride indicator (recorded with the route simulator / mock tool) -->
+    <string name="ride_mock_badge">Simu</string>
+    <string name="ride_mock_indicator">Trajet simulé enregistré</string>
+    <!-- Archive a recorded ride -->
+    <string name="ride_archive">Archiver le trajet</string>
+    <string name="ride_unarchive">Restaurer le trajet</string>
+    <string name="ride_archived_badge">Archivé</string>
+    <string name="rides_archived_header">Archivés (%1$d)</string>
+    <string name="rides_archived_show">Afficher les archivés (%1$d)</string>
+    <string name="rides_archived_hide">Masquer les archivés</string>
     <string name="ride_rename">Renommer le trajet</string>
     <string name="ride_rename_dialog_title">Nommer ce trajet</string>
     <string name="ride_rename_hint">Nom du trajet</string>

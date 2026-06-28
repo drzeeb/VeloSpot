@@ -129,5 +129,30 @@ class RideStatisticsTest {
         assertEquals(300, stats.caloriesBurned)
         assertTrue(stats.earthCircumferencePercent > 0.0)
     }
+
+    @Test
+    fun `mock rides are excluded from statistics`() {
+        val stats = computeRideStatistics(
+            listOf(
+                ride("real", now - dayMs, distanceMeters = 2_000.0),
+                ride("mock", now - dayMs, distanceMeters = 9_000.0).copy(isMock = true)
+            ),
+            now
+        )
+        // Only the real ride counts; the mock ride is ignored entirely.
+        assertEquals(1, stats.rideCount)
+        assertEquals(2_000.0, stats.totalDistanceMeters, 0.0)
+        assertEquals(2_000.0, stats.longestRideMeters, 0.0)
+    }
+
+    @Test
+    fun `history of only mock rides reports no data`() {
+        val stats = computeRideStatistics(
+            listOf(ride("mock", now - dayMs).copy(isMock = true)),
+            now
+        )
+        assertFalse(stats.hasData)
+        assertEquals(0, stats.rideCount)
+    }
 }
 

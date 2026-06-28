@@ -266,6 +266,16 @@
     <string name="ride_detail_drag_hint">Arraste para baixo • o mapa continua interativo</string>
     <string name="ride_speed_chart_title">Velocidade ao longo do tempo</string>
     <string name="ride_delete">Eliminar percurso</string>
+    <!-- Mock ride indicator (recorded with the route simulator / mock tool) -->
+    <string name="ride_mock_badge">Simul.</string>
+    <string name="ride_mock_indicator">Percurso simulado gravado</string>
+    <!-- Archive a recorded ride -->
+    <string name="ride_archive">Arquivar percurso</string>
+    <string name="ride_unarchive">Restaurar percurso</string>
+    <string name="ride_archived_badge">Arquivado</string>
+    <string name="rides_archived_header">Arquivados (%1$d)</string>
+    <string name="rides_archived_show">Mostrar arquivados (%1$d)</string>
+    <string name="rides_archived_hide">Ocultar arquivados</string>
     <string name="ride_rename">Renomear percurso</string>
     <string name="ride_rename_dialog_title">Dar nome a este percurso</string>
     <string name="ride_rename_hint">Nome do percurso</string>
