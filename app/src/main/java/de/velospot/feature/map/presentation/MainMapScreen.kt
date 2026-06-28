@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
@@ -86,6 +87,13 @@ private const val CAMERA_FOLLOW_DURATION_MS = 600
  */
 private const val LIVE_TRACK_REDRAW_DEBOUNCE_MS = 120L
 
+/**
+ * How long the splash plays its **reveal animation** after the map becomes ready,
+ * before fading away. By then the main thread is free (map loaded), so this stretch
+ * of animation is guaranteed smooth — long enough to read as a deliberate "GPS lock"
+ * flourish rather than a flash.
+ */
+private const val SPLASH_REVEAL_MS = 1150L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,7 +172,18 @@ fun MainMapScreen(
         }
     }
 
-    val mapView       = rememberMapViewWithLifecycle()
+    // Mount the MapLibre [MapView] only after the first splash frame has painted, so
+    // the branded splash is on-screen before the (heavy, main-thread) native renderer
+    // init runs. While that init blocks the thread the splash shows a STATIC logo — so
+    // there is nothing animating to stutter. The cool animation plays later, once the
+    // map is ready and the main thread is free again (see the splash dismissal below).
+    var mapMounted by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }            // let the first (static) splash frame paint
+        mapMounted = true
+    }
+
+    val mapView       = rememberMapViewWithLifecycle(enabled = mapMounted)
     val screenUiState = rememberMapScreenUiState()
     val markerStyleConfig = remember(isDarkTheme) { defaultMarkerStyleConfig(isDarkTheme) }
 
@@ -198,6 +217,21 @@ fun MainMapScreen(
     // e.g. when toggling dark mode – wipes all custom sources/layers/images, so we
     // use this as a key to re-run the marker rendering effect and rebuild them.
     var styleVersion by remember { mutableIntStateOf(0) }
+
+    // ── Animated launch splash ────────────────────────────────────────────────
+    // Cover the map load with the branded logo. While the map loads (main thread busy
+    // with the native renderer init) the splash shows a STATIC logo — nothing animates,
+    // so nothing can stutter. Once the map is ready (styleVersion > 0) the main thread
+    // is free again: the splash then plays its cool "GPS-lock" reveal animation for a
+    // fixed beat and fades/scales away to the live map.
+    val mapReady = styleVersion > 0
+    var showSplash by remember { mutableStateOf(true) }
+    LaunchedEffect(mapReady) {
+        if (mapReady) {
+            delay(SPLASH_REVEAL_MS)   // let the smooth reveal animation play out
+            showSplash = false
+        }
+    }
 
 
     // Show a Toast when the user zooms out below the minimum parking marker level.
@@ -308,9 +342,15 @@ fun MainMapScreen(
         maplibreMap, uiState, favorites, selectedSpace,
         activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
-        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike
+        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike,
+        showSplash
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
+        // While the animated launch splash covers the map, defer this heavy pass
+        // (it serialises the whole parking / favourites / saved-places GeoJSON on the
+        // main thread) so it doesn't steal frames from the splash animation. It re-runs
+        // the moment the splash is dismissed (showSplash is a key).
+        if (showSplash) return@LaunchedEffect
         if (uiState is MapUiState.Success) {
             val spaces = (uiState as MapUiState.Success).spaces
             updateMarkers(
@@ -520,7 +560,8 @@ fun MainMapScreen(
     LaunchedEffect(savedPlaces) { savedPlacesRef.value = savedPlaces }
 
     DisposableEffect(mapView) {
-        mapView.initVeloSpotMap(
+        val mv = mapView ?: return@DisposableEffect onDispose { }
+        mv.initVeloSpotMap(
             viewModel          = viewModel,
             currentSpaces      = { (uiStateRef.value as? MapUiState.Success)?.spaces.orEmpty() },
             currentSavedPlaces = { savedPlacesRef.value },
@@ -593,11 +634,13 @@ fun MainMapScreen(
 
     // ── UI layout ─────────────────────────────────────────────────────────────
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory  = { mapView },
-            modifier = Modifier.fillMaxSize()
-            // No update block needed – all updates go through LaunchedEffect above.
-        )
+        mapView?.let { mv ->
+            AndroidView(
+                factory  = { mv },
+                modifier = Modifier.fillMaxSize()
+                // No update block needed – all updates go through LaunchedEffect above.
+            )
+        }
 
         MapStatusOverlay(uiState = uiState)
         MapNavigationOverlay(
@@ -764,6 +807,11 @@ fun MainMapScreen(
                 onDismiss  = viewModel::cancelRideNamePrompt
             )
         }
+
+        // ── Animated branded launch overlay (top of the stack) ───────────────
+        // Sits above the map and all controls while the style/tiles load, then
+        // fades + scales away once the map is ready.
+        VeloSpotSplash(visible = showSplash, mapReady = mapReady)
     }
 
     // ── Bottom sheets & dialogs ───────────────────────────────────────────────

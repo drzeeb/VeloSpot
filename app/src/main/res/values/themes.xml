@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.VeloSpot" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Theme.VeloSpot" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Branded launch background (green gradient + logo) so a cold start never
+             flashes white before Compose draws the animated splash overlay. -->
+        <item name="android:windowBackground">@drawable/splash_window_background</item>
+    </style>
 </resources>
