@@ -112,7 +112,7 @@ class BRouterEngine(
             // (BRouter otherwise connects the start to the nearest network node, which
             // can sit *behind* the rider, and routes out-and-back).
             val gpsStartDir: Int? = from.bearing?.let { ((it.toInt() % 360) + 360) % 360 }
-            var points = runBrouter(profilePath, from, to, gpsStartDir, elevation)
+            var points = runBrouterWithStartWayFallback(profilePath, from, to, gpsStartDir, elevation)
 
             // Standstill start (no GPS heading): if the route still opens with a
             // reversal, recompute once telling BRouter the route's own forward
@@ -234,8 +234,16 @@ class BRouterEngine(
          * - 8: extend that sidewalk penalty to fastbike and mtb — the MTB profile
          *      heavily penalises paved roads, so a sidewalk used to be cheaper than the
          *      carriageway; a strong `footway=sidewalk` surcharge keeps both on the road.
+         * - 9: prefer cycleways over motorways/trunks (all five profiles hard-block
+         *      motorway/trunk for bikes unless cycling is permitted / bike infra is
+         *      present, and discount highway=cycleway + roads with cycleway=track/lane);
+         *      also drops the invalid `bicycle=…|official` value from shortest.brf that
+         *      made the profile fail to parse. This bump is required so the corrected
+         *      profiles actually replace the stale copies in internal storage on existing
+         *      installs — otherwise [ensureProfiles] keeps the old (possibly broken) files
+         *      and routing fails ("route data incomplete") for every profile.
          */
-        private const val PROFILES_VERSION = "8"
+        private const val PROFILES_VERSION = "9"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
 
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
@@ -288,6 +296,40 @@ class BRouterEngine(
         hashMapOf("uphill_extra" to elevation.uphillExtraCost.coerceAtLeast(0).toString())
 
     /**
+     * Runs the first BRouter pass and, if it yields no usable route, retries once
+     * with the profile's start-way guard disabled (`check_start_way = 0`).
+     *
+     * Every bundled profile declares `noStartWay=footway,sidewalk` so the route never
+     * *snaps its start onto a pavement*. BRouter enforces this by refusing to match the
+     * **start** waypoint to such a way (`WaypointMatcherImpl` skips it for index 0).
+     * That's the right default — but when the rider actually stands on / next to a
+     * `footway=sidewalk` and no carriageway is within the catching range, the start
+     * waypoint matches *nothing*, BRouter throws "from-position not mapped" internally,
+     * and the caller only sees an empty track ("route data incomplete"). This happened
+     * on every profile the moment navigation started from such a spot.
+     *
+     * The fallback keeps the no-sidewalk-start preference for the normal case but
+     * guarantees the rider still gets a route from a pavement: on the retry the start
+     * may snap to any way. A genuinely impossible route (e.g. missing segment tile)
+     * still fails on the retry, which is correct.
+     */
+    private suspend fun runBrouterWithStartWayFallback(
+        profilePath: String,
+        from: GeoCoordinate,
+        to: GeoCoordinate,
+        startDir: Int?,
+        elevation: ElevationPreference
+    ): List<RoutePoint> = try {
+        runBrouter(profilePath, from, to, startDir, elevation)
+    } catch (e: NoRouteFoundException) {
+        Log.w(TAG, "No route on first pass; retrying without the start-way guard", e)
+        runBrouter(profilePath, from, to, startDir, elevation, allowStartOnAnyWay = true)
+    } catch (e: EmptyRouteGeometryException) {
+        Log.w(TAG, "Empty route on first pass; retrying without the start-way guard", e)
+        runBrouter(profilePath, from, to, startDir, elevation, allowStartOnAnyWay = true)
+    }
+
+    /**
      * Runs one BRouter calculation from [from] to [to] with an optional
      * [startDir] (compass degrees) hint. Fresh waypoint nodes are created per call
      * because BRouter mutates their matching state, so they must not be reused
@@ -298,12 +340,18 @@ class BRouterEngine(
         from: GeoCoordinate,
         to: GeoCoordinate,
         startDir: Int?,
-        elevation: ElevationPreference
+        elevation: ElevationPreference,
+        allowStartOnAnyWay: Boolean = false
     ): List<RoutePoint> {
         val rc = RoutingContext().apply {
             localFunction = profilePath          // path to .brf WITHOUT extension
             memoryclass = nodesCacheMemoryMb     // bigger node cache → fewer disk reloads
-            keyValues = elevationKeyValues(elevation)
+            keyValues = elevationKeyValues(elevation).apply {
+                // Disable the profile's no-sidewalk-start guard for this pass so the
+                // start/end may snap to any way (used as a fallback when the strict
+                // matching found nothing — see runBrouterWithStartWayFallback).
+                if (allowStartOnAnyWay) put("check_start_way", "0")
+            }
             if (startDir != null) {
                 startDirection = startDir
                 forceUseStartDirection = true
