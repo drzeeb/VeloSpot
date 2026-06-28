@@ -325,9 +325,15 @@ fun MainMapScreen(
         maplibreMap, uiState, favorites, selectedSpace,
         activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
-        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike
+        selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike,
+        showSplash
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
+        // While the animated launch splash covers the map, defer this heavy pass
+        // (it serialises the whole parking / favourites / saved-places GeoJSON on the
+        // main thread) so it doesn't steal frames from the splash animation. It re-runs
+        // the moment the splash is dismissed (showSplash is a key).
+        if (showSplash) return@LaunchedEffect
         if (uiState is MapUiState.Success) {
             val spaces = (uiState as MapUiState.Success).spaces
             updateMarkers(
