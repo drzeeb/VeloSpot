@@ -11,6 +11,9 @@
          background or closed, with a persistent notification to stop/save it. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Keep the CPU awake during an active recording so GPS fixes keep arriving
+         with the screen off / in Doze (the foreground service alone does not). -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Posting the recording notification (runtime-requested on Android 13+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

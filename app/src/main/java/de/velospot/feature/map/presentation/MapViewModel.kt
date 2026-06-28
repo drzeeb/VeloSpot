@@ -19,13 +19,13 @@ import de.velospot.data.brouter.ElevationPreference
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.core.tracking.RideRecordingManager
+import de.velospot.core.tracking.RideTrackingUiState
 import de.velospot.domain.model.AddressSearchResult
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeParkingType
 import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.model.GeoCoordinate
-import de.velospot.domain.model.LiveRideStats
 import de.velospot.domain.model.MapError
 import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RecordedRide
@@ -72,10 +72,8 @@ sealed class NavigationUiState {
 }
 
 /** State of the live ride-tracking ("record my ride") feature. */
-sealed class RideTrackingUiState {
-    data object Idle : RideTrackingUiState()
-    data class Recording(val stats: LiveRideStats) : RideTrackingUiState()
-}
+// RideTrackingUiState now lives in `core.tracking` (next to its producer,
+// RideRecordingManager) so the recording stack never depends on the UI layer.
 
 /**
  * Drives the "name this ride" dialog shown when a **manual** recording is being

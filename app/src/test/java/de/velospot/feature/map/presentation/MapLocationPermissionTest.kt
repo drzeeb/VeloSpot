@@ -1,5 +1,6 @@
 package de.velospot.feature.map.presentation
 
+import de.velospot.core.location.hasLocationPermission
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

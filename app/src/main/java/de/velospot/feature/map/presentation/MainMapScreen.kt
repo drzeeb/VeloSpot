@@ -38,6 +38,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
+import de.velospot.core.format.formatRideSpeed
+import de.velospot.core.tracking.RideTrackingUiState
 import de.velospot.feature.map.presentation.markers.MarkerDisplayConfig
 import de.velospot.feature.map.presentation.markers.MarkerIconSet
 import de.velospot.feature.map.presentation.markers.MarkerRenderLabels

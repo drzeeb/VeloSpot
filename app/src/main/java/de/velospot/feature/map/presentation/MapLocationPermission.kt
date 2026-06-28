@@ -2,24 +2,7 @@ package de.velospot.feature.map.presentation
 
 import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
-
-internal fun hasLocationPermission(context: Context): Boolean {
-    val fineGranted = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED
-    val coarseGranted = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED
-    return hasLocationPermission(fineGranted = fineGranted, coarseGranted = coarseGranted)
-}
-
-internal fun hasLocationPermission(fineGranted: Boolean, coarseGranted: Boolean): Boolean {
-    return fineGranted || coarseGranted
-}
+import de.velospot.core.location.hasLocationPermission
 
 internal fun locationPermissions(): Array<String> = arrayOf(
     Manifest.permission.ACCESS_FINE_LOCATION,

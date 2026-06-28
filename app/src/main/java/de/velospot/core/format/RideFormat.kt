@@ -1,11 +1,16 @@
-package de.velospot.feature.map.presentation
+package de.velospot.core.format
 
 import kotlin.math.roundToInt
 
 /**
- * Locale-neutral formatting helpers shared by the ride-tracking overlay and the
- * "My rides" sheets. Units (km, km/h, m) are universal, durations use a digital
- * clock layout, so no per-language string resources are needed.
+ * Locale-neutral formatting helpers shared by the ride-tracking overlay, the
+ * "My rides" sheets, the foreground-service notification and the home-screen
+ * widget. Units (km, km/h, m) are universal and durations use a digital clock
+ * layout, so no per-language string resources are needed.
+ *
+ * Located in `core.format` (not the presentation layer) so the background
+ * recording stack — service, widget, tile — can reuse it without depending
+ * "upwards" on the UI.
  */
 
 /** Formats a duration in seconds as `H:MM:SS` (or `M:SS` under an hour). */

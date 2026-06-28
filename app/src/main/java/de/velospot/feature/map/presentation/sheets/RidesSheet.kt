@@ -1,6 +1,9 @@
 package de.velospot.feature.map.presentation.sheets
 
 import de.velospot.feature.map.presentation.*
+import de.velospot.core.format.formatRideDistance
+import de.velospot.core.format.formatRideDuration
+import de.velospot.core.format.formatRideSpeed
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
