@@ -44,6 +44,9 @@ class RecordedRidesRepositoryImpl @Inject constructor(
     override suspend fun updateRideName(id: String, name: String?) =
         recordedRideDao.updateName(id, name?.trim()?.takeIf { it.isNotBlank() })
 
+    override suspend fun setRideArchived(id: String, archived: Boolean) =
+        recordedRideDao.updateArchivedAt(id, if (archived) System.currentTimeMillis() else null)
+
     private fun RecordedRideEntity.toDomain() = RecordedRide(
         id = id,
         startedAt = startedAt,
@@ -56,7 +59,9 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         elevationGainMeters = elevationGainMeters,
         elevationLossMeters = elevationLossMeters,
         points = runCatching { pointsAdapter.fromJson(pointsJson) }.getOrNull().orEmpty(),
-        name = name
+        name = name,
+        isMock = isMock,
+        archivedAt = archivedAt
     )
 
     private fun RecordedRide.toEntity() = RecordedRideEntity(
@@ -71,7 +76,9 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         elevationGainMeters = elevationGainMeters,
         elevationLossMeters = elevationLossMeters,
         pointsJson = pointsAdapter.toJson(points),
-        name = name?.trim()?.takeIf { it.isNotBlank() }
+        name = name?.trim()?.takeIf { it.isNotBlank() },
+        isMock = isMock,
+        archivedAt = archivedAt
     )
 }
 

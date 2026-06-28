@@ -65,11 +65,15 @@ private const val EARTH_CIRCUMFERENCE_KM = 40_075.0
 /**
  * Crunches the full list of recorded rides into a single [RideStatistics] bundle.
  * Returns an all-zero instance (with `hasData == false`) when there are no rides.
+ *
+ * Mock rides (recorded via the debug route simulator) are ignored so synthetic
+ * test rides never skew the rider's real totals, records or streaks.
  */
 internal fun computeRideStatistics(
-    rides: List<RecordedRide>,
+    allRides: List<RecordedRide>,
     now: Long = System.currentTimeMillis()
 ): RideStatistics {
+    val rides = allRides.filterNot { it.isMock }
     if (rides.isEmpty()) {
         return RideStatistics(
             rideCount = 0,

@@ -731,6 +731,8 @@ class MapViewModel @Inject constructor(
     fun dismissSelectedRide() = rideTracking.dismissSelectedRide()
     fun deleteRecordedRide(id: String) = rideTracking.deleteRide(id)
     fun renameRecordedRide(id: String, name: String?) = rideTracking.renameRide(id, name)
+    fun setRecordedRideArchived(id: String, archived: Boolean) =
+        rideTracking.setRideArchived(id, archived)
 
     /**
      * Exports [rides] as GPX and opens the system **share** sheet. When

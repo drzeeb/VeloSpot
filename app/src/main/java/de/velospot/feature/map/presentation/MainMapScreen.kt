@@ -351,7 +351,8 @@ fun MainMapScreen(
             return@LaunchedEffect
         }
         val cells = withContext(Dispatchers.Default) {
-            RideHeatmap.build(recordedRides).map { Triple(it.latitude, it.longitude, it.intensity) }
+            RideHeatmap.build(recordedRides.filterNot { it.isMock })
+                .map { Triple(it.latitude, it.longitude, it.intensity) }
         }
         updateHeatmapLayer(style, cells, visible = true)
     }
@@ -368,7 +369,7 @@ fun MainMapScreen(
             return@LaunchedEffect
         }
         val polylines = withContext(Dispatchers.Default) {
-            RideTrackLines.build(recordedRides)
+            RideTrackLines.build(recordedRides.filterNot { it.isMock })
         }
         updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
     }
@@ -652,7 +653,8 @@ fun MainMapScreen(
                     screenUiState.openRides()
                 },
                 onDelete  = { id -> viewModel.deleteRecordedRide(id) },
-                onRename  = { id, name -> viewModel.renameRecordedRide(id, name) }
+                onRename  = { id, name -> viewModel.renameRecordedRide(id, name) },
+                onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) }
             )
         }
 

@@ -24,6 +24,10 @@ interface RecordedRideDao {
     @Query("UPDATE recorded_rides SET name = :name WHERE id = :id")
     suspend fun updateName(id: String, name: String?)
 
+    /** Archives a ride (sets [archivedAt]) or restores it (pass `null`). */
+    @Query("UPDATE recorded_rides SET archivedAt = :archivedAt WHERE id = :id")
+    suspend fun updateArchivedAt(id: String, archivedAt: Long?)
+
     @Query("DELETE FROM recorded_rides WHERE id = :id")
     suspend fun delete(id: String)
 

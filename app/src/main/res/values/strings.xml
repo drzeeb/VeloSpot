@@ -115,6 +115,16 @@
     <string name="ride_detail_drag_hint">Drag down • map stays interactive</string>
     <string name="ride_speed_chart_title">Speed over time</string>
     <string name="ride_delete">Delete ride</string>
+    <!-- Mock ride indicator (recorded with the route simulator / mock tool) -->
+    <string name="ride_mock_badge">Mock</string>
+    <string name="ride_mock_indicator">Recorded mock ride</string>
+    <!-- Archive a recorded ride -->
+    <string name="ride_archive">Archive ride</string>
+    <string name="ride_unarchive">Restore ride</string>
+    <string name="ride_archived_badge">Archived</string>
+    <string name="rides_archived_header">Archived (%1$d)</string>
+    <string name="rides_archived_show">Show archived (%1$d)</string>
+    <string name="rides_archived_hide">Hide archived</string>
     <!-- Rename a recorded ride -->
     <string name="ride_rename">Rename ride</string>
     <string name="ride_rename_dialog_title">Name this ride</string>
