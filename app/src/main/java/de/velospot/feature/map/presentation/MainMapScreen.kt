@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
@@ -86,6 +87,13 @@ private const val CAMERA_FOLLOW_DURATION_MS = 600
  */
 private const val LIVE_TRACK_REDRAW_DEBOUNCE_MS = 120L
 
+/**
+ * Delay (ms) before the MapLibre [MapView] is created and mounted on a cold start.
+ * Lets the launch splash's bouncy entrance animation play smoothly first, so the
+ * heavy one-off native renderer / GL-context init doesn't freeze the animation's
+ * start. Short enough that the map is still ready well before the splash dismisses.
+ */
+private const val MAP_MOUNT_DELAY_MS = 450L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,7 +172,18 @@ fun MainMapScreen(
         }
     }
 
-    val mapView       = rememberMapViewWithLifecycle()
+    // Defer the heavy MapLibre native/GL initialisation (MapView creation + onCreate)
+    // by a beat so the launch splash's entrance animation plays smoothly first. The
+    // one-off init then lands during the steady part of the animation rather than
+    // freezing its very start. The map still loads well before the splash is dismissed.
+    var mapMounted by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }            // let the first splash frame paint
+        delay(MAP_MOUNT_DELAY_MS)
+        mapMounted = true
+    }
+
+    val mapView       = rememberMapViewWithLifecycle(enabled = mapMounted)
     val screenUiState = rememberMapScreenUiState()
     val markerStyleConfig = remember(isDarkTheme) { defaultMarkerStyleConfig(isDarkTheme) }
 
@@ -543,7 +562,8 @@ fun MainMapScreen(
     LaunchedEffect(savedPlaces) { savedPlacesRef.value = savedPlaces }
 
     DisposableEffect(mapView) {
-        mapView.initVeloSpotMap(
+        val mv = mapView ?: return@DisposableEffect onDispose { }
+        mv.initVeloSpotMap(
             viewModel          = viewModel,
             currentSpaces      = { (uiStateRef.value as? MapUiState.Success)?.spaces.orEmpty() },
             currentSavedPlaces = { savedPlacesRef.value },
@@ -616,11 +636,13 @@ fun MainMapScreen(
 
     // ── UI layout ─────────────────────────────────────────────────────────────
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory  = { mapView },
-            modifier = Modifier.fillMaxSize()
-            // No update block needed – all updates go through LaunchedEffect above.
-        )
+        mapView?.let { mv ->
+            AndroidView(
+                factory  = { mv },
+                modifier = Modifier.fillMaxSize()
+                // No update block needed – all updates go through LaunchedEffect above.
+            )
+        }
 
         MapStatusOverlay(uiState = uiState)
         MapNavigationOverlay(
