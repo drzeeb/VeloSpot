@@ -5,12 +5,12 @@ import android.content.Intent
 import android.content.ComponentName
 import android.service.quicksettings.TileService
 import androidx.core.content.ContextCompat
+import de.velospot.core.location.LocationController
 import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
-import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +48,7 @@ import javax.inject.Singleton
 @Singleton
 class RideRecordingManager(
     private val context: Context,
-    private val locationRepository: LocationRepository,
+    private val locationController: LocationController,
     private val recordedRidesRepository: RecordedRidesRepository,
     /** Long-lived scope, independent of any ViewModel, so feeding/persistence
      *  continue while the app is backgrounded or closed. Injectable so unit tests
@@ -62,11 +62,11 @@ class RideRecordingManager(
     @Inject
     constructor(
         @ApplicationContext context: Context,
-        locationRepository: LocationRepository,
+        locationController: LocationController,
         recordedRidesRepository: RecordedRidesRepository,
     ) : this(
         context,
-        locationRepository,
+        locationController,
         recordedRidesRepository,
         CoroutineScope(SupervisorJob() + Dispatchers.Default),
     )
@@ -138,12 +138,6 @@ class RideRecordingManager(
      */
     var routeElevationProvider: (() -> BikeRoute?)? = null
 
-    /**
-     * Invoked whenever the recording starts/stops so a live host (the map ViewModel)
-     * can re-evaluate the GPS power mode against navigation. When `null` (no host,
-     * e.g. app closed) the manager manages the GPS radio itself.
-     */
-    var onRecordingStateChanged: (() -> Unit)? = null
 
     /** When `true`, real GPS fixes are ignored (used by the debug route simulator). */
     @Volatile
@@ -191,9 +185,10 @@ class RideRecordingManager(
         seedLocation?.let { feed(it) }
         startTicker()
         observeLocation()
-        // Guarantee precise, frequent fixes even when no ViewModel is around.
-        runCatching { locationRepository.startLocationUpdates(highAccuracy = true) }
-        onRecordingStateChanged?.invoke()
+        // Declare the recording's location need to the single GPS owner: it keeps the
+        // radio at high accuracy and (with the foreground service) alive in the
+        // background, regardless of whether a map ViewModel is around.
+        locationController.setRecording(true)
         startService()
         refreshExternalControls()
     }
@@ -224,7 +219,7 @@ class RideRecordingManager(
         // The ride is persisted to the DB now (or was too short) — drop the
         // crash-recovery session so it isn't replayed on the next launch.
         persist { persistence.clear() }
-        finishGps()
+        locationController.setRecording(false)
         stopService()
         refreshExternalControls()
     }
@@ -240,7 +235,7 @@ class RideRecordingManager(
         _liveTrackPoints.value = emptyList()
         _events.tryEmit(RideRecordingEvent.Discarded)
         persist { persistence.clear() }
-        finishGps()
+        locationController.setRecording(false)
         stopService()
         refreshExternalControls()
     }
@@ -273,7 +268,7 @@ class RideRecordingManager(
     private fun observeLocation() {
         locationJob?.cancel()
         locationJob = scope.launch {
-            locationRepository.getCurrentLocationFlow().collect { location ->
+            locationController.locationFlow().collect { location ->
                 if (location == null || suppressRealFixes) return@collect
                 if (tracker.isRecording) feed(location)
             }
@@ -356,22 +351,6 @@ class RideRecordingManager(
         tickerJob = null
     }
 
-    /**
-     * Releases the GPS after a recording ends. A live host re-evaluates the power
-     * mode (it may still need GPS for navigation); without a host the manager stops
-     * the radio itself — but only while backgrounded, so a foregrounded map keeps
-     * its position updates.
-     */
-    private fun finishGps() {
-        val host = onRecordingStateChanged
-        if (host != null) {
-            host.invoke()
-        } else {
-            // No live host (app closed, started from tile/widget): nothing observes
-            // the GPS anymore, so release the radio.
-            runCatching { locationRepository.stopLocationUpdates() }
-        }
-    }
 
     private fun startService() {
         runCatching {

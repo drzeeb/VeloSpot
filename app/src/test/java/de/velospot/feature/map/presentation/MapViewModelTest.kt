@@ -124,16 +124,18 @@ class MapViewModelTest {
         val managerScope = kotlinx.coroutines.CoroutineScope(
             kotlinx.coroutines.SupervisorJob() + Dispatchers.Default
         ).also { createdManagerScopes.add(it) }
+        // Single GPS owner shared by the manager and the ViewModel (as in production).
+        val locationController = de.velospot.core.location.LocationController(locationRepository)
         return MapViewModel(
             bikeParkingRepository = bikeParkingRepository,
             favoritesRepository   = favoritesRepository,
-            locationRepository    = locationRepository,
+            locationController    = locationController,
             routingRepository     = routingRepository,
             segmentManager        = mockSegmentManager,
             nominatimGeocoder     = mockNominatimGeocoder,
             recordingManager      = de.velospot.core.tracking.RideRecordingManager(
                 context = mockContext,
-                locationRepository = locationRepository,
+                locationController = locationController,
                 recordedRidesRepository = recordedRidesRepository,
                 scope = managerScope
             ),
