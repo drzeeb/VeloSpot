@@ -291,10 +291,13 @@ internal fun ensureLocationLayer(style: Style) {
             PropertyFactory.iconAllowOverlap(true),
             PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER),
             // Render the cyclist avatar as an upright billboard that always faces
-            // the camera, so the 3D map tilt during navigation never flattens /
-            // squishes it onto the ground plane. The navigation camera keeps the
-            // heading pointing "up", so the rider naturally appears from behind
-            // (true 3rd-person view) without any extra per-feature rotation.
+            // the camera, so it keeps its full standing presence and never looks
+            // flattened/squished onto the ground plane on the tilted 3D map. The
+            // "wheelie" look the upright top-down sprite used to have is solved in
+            // the *bitmap* instead: createLocationMarkerIcon pre-tilts the avatar
+            // backwards (perspective foreshortening) so the rider reads as seen
+            // from behind/above. The navigation camera keeps the heading pointing
+            // "up", so the rider naturally appears from behind (true 3rd-person).
             PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_VIEWPORT),
             PropertyFactory.iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT)
         )

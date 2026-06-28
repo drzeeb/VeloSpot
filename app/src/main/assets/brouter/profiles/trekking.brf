@@ -109,6 +109,16 @@ assign hasbikerouteoraccess =
 assign hascycleway = not
   and ( or cycleway= cycleway=no|none ) and ( or cycleway:left= cycleway:left=no ) and ( or cycleway:right= cycleway:right=no ) ( or cycleway:both= cycleway:both=no )
 
+# A *separate* on-road cycle facility (track or lane) running alongside the
+# carriageway. These tags exist in the standard lookups.dat. Such a way deserves
+# a noticeable bonus over a plain main road so the router prefers the road with
+# the adjacent cycleway instead of an unprotected highway.
+assign hasonroadcycleway =
+  or cycleway=track|lane|share_busway
+  or cycleway:both=track|lane|share_busway
+  or cycleway:left=track|lane|share_busway
+     cycleway:right=track|lane|share_busway
+
 assign isbike = or hasbikerouteoraccess hascycleway
 
 assign ispaved = or surface=paved|asphalt|concrete|paving_stones|sett smoothness=excellent|good
@@ -298,10 +308,13 @@ assign costfactor
   else if ( highway=proposed|abandoned|construction ) then   10000
 
   #
-  # never cycle a trunk road / "Kraftfahrstrasse" where cycling is signed off
-  # (typical motorway feeders & ramps, e.g. around the A1)
+  # never cycle a trunk road / "Kraftfahrstrasse" unless there is an explicit
+  # bike facility / access. Without a bike hint trunk & trunk_link are blocked
+  # hard (10000) here — this is BEFORE the `min 9999` cap below, so it is a real
+  # exclusion just like motorways, not just a high-but-passable cost.
   #
   else if ( and highway=trunk|trunk_link bicycle=no|private|use_sidepath ) then 10000
+  else if ( and highway=trunk|trunk_link not isbike ) then 10000
 
   #
   # all other exclusions below (access, steps, ferries,..)
@@ -380,12 +393,16 @@ assign costfactor
   else add ( if ( and avoid_unsafe not isbike ) then 2 else 0 )
 
   #
-  # actuals roads are o.k. if we have a bike hint
+  # actuals roads are o.k. if we have a bike hint. A *separate* on-road cycleway
+  # (cycleway=track/lane) gives the road a noticeable bonus (cost 1.0, on par
+  # with a dedicated highway=cycleway) so it always wins over the bare highway.
+  # trunk / trunk_link are blocked hard (10000) unless there is an explicit bike
+  # facility / access, mirroring the motorway treatment above.
   #
-       if ( highway=trunk|trunk_link         ) then ( if isbike then 1.5 else 10  )
-  else if ( highway=primary|primary_link     ) then ( if isbike then 1.2 else  3  )
-  else if ( highway=secondary|secondary_link ) then ( if isbike then 1.1 else 1.6 )
-  else if ( highway=tertiary|tertiary_link   ) then ( if isbike then 1.0 else 1.4 )
+       if ( highway=trunk|trunk_link         ) then ( if hasonroadcycleway then 1.5 else if isbike then 1.5 else 10000 )
+  else if ( highway=primary|primary_link     ) then ( if hasonroadcycleway then 1.0 else if isbike then 1.2 else  3  )
+  else if ( highway=secondary|secondary_link ) then ( if hasonroadcycleway then 1.0 else if isbike then 1.1 else 1.6 )
+  else if ( highway=tertiary|tertiary_link   ) then ( if hasonroadcycleway then 1.0 else if isbike then 1.0 else 1.4 )
   else if ( highway=unclassified             ) then ( if isbike then 1.0 else 1.3 )
 
   #

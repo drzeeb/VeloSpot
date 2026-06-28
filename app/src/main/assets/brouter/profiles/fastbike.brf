@@ -265,16 +265,22 @@ assign costfactor
   switch or highway=motorway highway=motorway_link    switch allow_motorways 1.5 10000
   # never cycle a trunk / "Kraftfahrstrasse" where cycling is signed off (e.g. A1 feeders)
   switch and or highway=trunk highway=trunk_link bicycle=no|private|use_sidepath  10000
+  # Block trunks / "Kraftfahrstrassen" for bikes unless cycling is explicitly
+  # permitted there. This keeps the router off such roads whenever a parallel
+  # cycleway or alternative road exists, instead of just adding a mild penalty.
+  switch and or highway=trunk highway=trunk_link not bicycle=yes|designated|permissive  switch allow_motorways 1.5 10000
   switch or highway=trunk highway=trunk_link          switch allow_motorways 1.5 10
-  switch or highway=primary highway=primary_link      1.2
-  switch or highway=secondary highway=secondary_link  1.1
-  switch or highway=tertiary highway=tertiary_link    1.0
+  # Roads carrying a dedicated cycleway (cycleway=track/lane, cycleway:left/right/both)
+  # get a noticeable discount so they win against bare main roads of the same class.
+  switch or highway=primary highway=primary_link      switch hascycleway 1.0  1.2
+  switch or highway=secondary highway=secondary_link  switch hascycleway 0.95 1.1
+  switch or highway=tertiary highway=tertiary_link    switch hascycleway 0.9  1.0
   switch    highway=unclassified                      switch isunpaved 10 1.1
   switch    highway=pedestrian                        switch hascycleway 1.3 5
   switch    highway=steps                             switch allow_steps 120 10000
   switch    route=ferry                               switch allow_ferries 5.67 10000
   switch    highway=bridleway                         5
-  switch    highway=cycleway                          1.3
+  switch    highway=cycleway                          1.0
   switch    isresidentialorliving                     switch isunpaved 10 1.2
   switch    highway=service                           switch isunpaved 10 1.2
   switch or highway=track or highway=road or highway=path highway=footway
