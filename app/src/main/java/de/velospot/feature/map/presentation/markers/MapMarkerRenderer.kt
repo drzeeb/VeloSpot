@@ -210,6 +210,44 @@ internal fun updateMarkers(
     ensureParkedBikeLayer(style)
 }
 
+/**
+ * Updates **only** the live-location dot ([SOURCE_LOCATION]) — split out of
+ * [updateMarkers] so a fresh GPS fix can move the dot without re-serialising the
+ * whole parking / favourites / saved-places GeoJSON on every fix (the dominant
+ * per-fix cost while recording / browsing). [updateMarkers] is therefore always
+ * called with `suppressLocationDot = true`; this function owns the dot.
+ *
+ * No-op while [suppress] is `true` (active navigation), where `NavigationManager`
+ * owns the puck and animates the rotating heading arrow. The location image is
+ * (re)registered when missing so the dot survives a style reload independently of
+ * the marker pass.
+ */
+internal fun updateLocationDot(
+    map: MapLibreMap,
+    location: GeoCoordinate?,
+    locationIcon: Drawable,
+    suppress: Boolean
+) {
+    val style = map.style ?: return
+    if (suppress) return
+
+    if (style.getImage(IMG_LOCATION) == null) {
+        style.addImage(IMG_LOCATION, drawableToBitmap(locationIcon))
+    }
+
+    val locFeature = location?.let { loc ->
+        Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude)).also {
+            it.addStringProperty(PROP_ICON, IMG_LOCATION)
+        }
+    }
+    upsertSource(
+        style, SOURCE_LOCATION,
+        if (locFeature != null) FeatureCollection.fromFeature(locFeature)
+        else FeatureCollection.fromFeatures(emptyList())
+    )
+    ensureLocationLayer(style)
+}
+
 
 // ── Feature building ──────────────────────────────────────────────────────────
 
