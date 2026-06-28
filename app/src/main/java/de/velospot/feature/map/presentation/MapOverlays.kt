@@ -68,6 +68,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -570,7 +571,8 @@ internal fun BoxScope.RideViewOptionsControls(
     showMaxSpeedBubble: Boolean,
     colorTrackBySpeed: Boolean,
     onToggleMaxSpeedBubble: (Boolean) -> Unit,
-    onToggleColorBySpeed: (Boolean) -> Unit
+    onToggleColorBySpeed: (Boolean) -> Unit,
+    colorBySpeedEnabled: Boolean = true
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -602,7 +604,8 @@ internal fun BoxScope.RideViewOptionsControls(
                 RideViewOptionRow(
                     icon = Icons.Default.Gradient,
                     label = stringResource(R.string.ride_option_color_by_speed),
-                    checked = colorTrackBySpeed,
+                    checked = colorTrackBySpeed && colorBySpeedEnabled,
+                    enabled = colorBySpeedEnabled,
                     onCheckedChange = onToggleColorBySpeed
                 )
             }
@@ -615,7 +618,8 @@ private fun RideViewOptionRow(
     icon: ImageVector,
     label: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -626,11 +630,14 @@ private fun RideViewOptionRow(
             contentDescription = label,
             tint = if (checked) MaterialTheme.colorScheme.primary
                    else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier
+                .size(20.dp)
+                .alpha(if (enabled) 1f else 0.38f)
         )
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            enabled = enabled,
             modifier = Modifier.semantics { contentDescription = label }
         )
     }

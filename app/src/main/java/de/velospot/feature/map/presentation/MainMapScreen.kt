@@ -551,7 +551,9 @@ fun MainMapScreen(
         // cancelled & restarted on each new emission, so only the last one redraws).
         if (rideTrackingState is RideTrackingUiState.Recording) delay(LIVE_TRACK_REDRAW_DEBOUNCE_MS)
         val ride = selectedRide
-        val colorBySpeed = ride != null && rideViewOptions.colorTrackBySpeed
+        // Mock rides carry no speed samples (max speed 0), so the speed-coloured
+        // line would render invisible — always draw their track as the plain line.
+        val colorBySpeed = ride != null && rideViewOptions.colorTrackBySpeed && !ride.isMock
         if (colorBySpeed) {
             val segments = withContext(Dispatchers.Default) {
                 de.velospot.core.map.RideSpeedSegments.build(ride.points)
@@ -683,6 +685,9 @@ fun MainMapScreen(
             visible          = selectedRide != null,
             showMaxSpeedBubble = rideViewOptions.showMaxSpeedBubble,
             colorTrackBySpeed = rideViewOptions.colorTrackBySpeed,
+            // Mock rides have no speed data, so colouring by speed is meaningless and
+            // would hide the track — disable that toggle while inspecting one.
+            colorBySpeedEnabled = selectedRide?.isMock != true,
             onToggleMaxSpeedBubble = viewModel::setMaxSpeedBubbleEnabled,
             onToggleColorBySpeed   = viewModel::setColorTrackBySpeedEnabled
         )
