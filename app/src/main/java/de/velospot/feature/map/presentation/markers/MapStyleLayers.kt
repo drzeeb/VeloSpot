@@ -1,5 +1,6 @@
 package de.velospot.feature.map.presentation.markers
 
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
@@ -46,6 +47,9 @@ internal const val SOURCE_HEATMAP = "velospot-heatmap-source"
 /** Simplified polylines of every recorded ride, feeding the thin "ridden tracks" overlay. */
 internal const val SOURCE_TRACKS_HISTORY = "velospot-tracks-history-source"
 
+/** Single point marking where the inspected ride reached its peak speed. */
+internal const val SOURCE_MAX_SPEED = "velospot-max-speed-source"
+
 internal const val LAYER_ROUTE      = "velospot-route-layer"
 internal const val LAYER_PARKING    = "velospot-parking-layer"
 internal const val LAYER_PARKING_CLUSTER       = "velospot-parking-cluster-layer"
@@ -68,6 +72,12 @@ internal const val LAYER_HEATMAP = "velospot-heatmap-layer"
 
 /** Thin per-ride polylines of all recorded rides (everywhere you have been). */
 internal const val LAYER_TRACKS_HISTORY = "velospot-tracks-history-layer"
+
+/** Bubble marking where the inspected ride reached its peak speed. */
+internal const val LAYER_MAX_SPEED = "velospot-max-speed-layer"
+
+/** Image id of the dynamically-rendered "max speed" speech bubble. */
+internal const val IMG_MAX_SPEED = "vs-max-speed-bubble"
 
 /** Feature property carrying a [0..1] heat weight for the heatmap points. */
 internal const val PROP_HEAT_WEIGHT = "weight"
@@ -492,6 +502,41 @@ internal fun updateTracksHistoryLayer(
     style.getLayer(LAYER_TRACKS_HISTORY)?.setProperties(
         PropertyFactory.visibility(if (show) Property.VISIBLE else Property.NONE)
     )
+}
+
+/**
+ * Idempotently registers and updates the **"max speed" bubble** marker shown while
+ * the rider inspects a past ride: a single speech bubble (carrying the peak speed
+ * label) planted on the GPS point where the ride was fastest.
+ *
+ * [point] is the `(latitude, longitude)` of that fix and [icon] the pre-rendered
+ * bubble bitmap (see `createSpeedBubbleIcon`). Pass `null` for either to clear the
+ * marker (e.g. when the ride detail is dismissed). The bubble's tail tip is its
+ * bottom-centre, so the layer anchors it at `ICON_ANCHOR_BOTTOM`. Drawn on top of
+ * the track line so the label is never hidden by it.
+ */
+internal fun updateMaxSpeedMarker(style: Style, point: Pair<Double, Double>?, icon: Bitmap?) {
+    val data = if (point != null) {
+        FeatureCollection.fromFeature(
+            Feature.fromGeometry(Point.fromLngLat(point.second, point.first))
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    upsertSource(style, SOURCE_MAX_SPEED, data)
+
+    if (icon != null) style.addImage(IMG_MAX_SPEED, icon)
+
+    if (style.getLayer(LAYER_MAX_SPEED) == null && icon != null) {
+        style.addLayer(
+            SymbolLayer(LAYER_MAX_SPEED, SOURCE_MAX_SPEED).withProperties(
+                PropertyFactory.iconImage(IMG_MAX_SPEED),
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconIgnorePlacement(true),
+                PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
+            )
+        )
+    }
 }
 
 /**

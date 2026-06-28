@@ -12,6 +12,8 @@ import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.appcompat.content.res.AppCompatResources
@@ -436,6 +438,85 @@ internal fun createParkedBikeIcon(context: Context): Drawable {
     }
 
     return BitmapDrawable(context.resources, bitmap)
+}
+
+/**
+ * A speech-bubble "tag" that marks the spot a recorded ride reached its top speed,
+ * shown when the rider inspects a past ride. The [label] (e.g. `"31.0 km/h"`) is
+ * drawn in white on a bold red rounded bubble with a small downward pointer (tail)
+ * whose tip sits at the bottom-centre of the bitmap — so a `ICON_ANCHOR_BOTTOM`
+ * symbol layer plants the tail exactly on the GPS point. A soft drop shadow and a
+ * white keyline lift it off any basemap.
+ */
+internal fun createSpeedBubbleIcon(
+    label: String,
+    fillColor: Int = "#E53935".toColorInt(),
+    textColor: Int = Color.WHITE
+): Bitmap {
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = textColor
+        textSize = 34f
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
+    val fm = textPaint.fontMetrics
+    val textWidth = textPaint.measureText(label)
+    val textHeight = fm.descent - fm.ascent
+
+    val padH = 26f
+    val padV = 16f
+    val stroke = 4f
+    val tailW = 22f
+    val tailH = 16f
+    val pad = 6f // breathing room for the shadow / keyline
+
+    val bubbleW = textWidth + padH * 2
+    val bubbleH = textHeight + padV * 2
+    val width = (bubbleW + stroke * 2 + pad * 2).roundToInt()
+    val height = (bubbleH + tailH + stroke * 2 + pad * 2).roundToInt()
+
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val cx = width / 2f
+    val left = pad + stroke
+    val top = pad + stroke
+    val right = width - pad - stroke
+    val bottom = top + bubbleH
+    val radius = bubbleH / 2f
+
+    // Bubble + tail as a single path so the keyline wraps them as one silhouette.
+    val bubblePath = Path().apply {
+        addRoundRect(RectF(left, top, right, bottom), radius, radius, Path.Direction.CW)
+        moveTo(cx - tailW / 2f, bottom - 1f)
+        lineTo(cx, bottom + tailH)
+        lineTo(cx + tailW / 2f, bottom - 1f)
+        close()
+    }
+
+    // Soft drop shadow.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x44000000
+        maskFilter = BlurMaskFilter(5f, BlurMaskFilter.Blur.NORMAL)
+    })
+    // White keyline.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = stroke * 2f
+        strokeJoin = Paint.Join.ROUND
+    })
+    // Filled bubble.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = fillColor
+        style = Paint.Style.FILL
+    })
+
+    // Centred label.
+    val baseline = top + padV - fm.ascent
+    canvas.drawText(label, cx, baseline, textPaint)
+
+    return bitmap
 }
 
 /** Builds a five-pointed star [Path] centred at ([centerX], [centerY]). */

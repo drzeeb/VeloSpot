@@ -51,8 +51,11 @@ import de.velospot.feature.map.presentation.markers.createMutedMarkerIcon
 import de.velospot.feature.map.presentation.markers.defaultMarkerStyleConfig
 import de.velospot.feature.map.presentation.markers.updateMarkers
 import de.velospot.feature.map.presentation.markers.updateHeatmapLayer
+import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
+import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
 import de.velospot.feature.map.presentation.markers.updateTracksHistoryLayer
 import de.velospot.core.map.RideHeatmap
+import de.velospot.core.map.RideMaxSpeedPoint
 import de.velospot.core.map.RideTrackLines
 import de.velospot.feature.map.presentation.sheets.MapBottomSheets
 import de.velospot.feature.map.presentation.sheets.RideDetailSheet
@@ -504,6 +507,23 @@ fun MainMapScreen(
             points = rideTrackPoints.map { it.latitude to it.longitude },
             colorInt = markerStyleConfig.routeColor
         )
+    }
+
+    // ── Max-speed bubble for a reopened ride ──────────────────────────────────
+    // When the rider inspects a past ride via the detail sheet, mark the spot it
+    // reached its top speed with a speech bubble showing that speed. Cleared when
+    // no ride is selected. Re-run after style reloads (the layer/image are wiped).
+    LaunchedEffect(maplibreMap, styleVersion, selectedRide) {
+        val style = maplibreMap?.style ?: return@LaunchedEffect
+        val ride = selectedRide
+        val peak = ride?.let { RideMaxSpeedPoint.find(it) }
+        if (ride == null || peak == null) {
+            updateMaxSpeedMarker(style, null, null)
+            return@LaunchedEffect
+        }
+        val label = formatRideSpeed(ride.maxSpeedMps)
+        val icon = withContext(Dispatchers.Default) { createSpeedBubbleIcon(label) }
+        updateMaxSpeedMarker(style, peak.latitude to peak.longitude, icon)
     }
 
 
