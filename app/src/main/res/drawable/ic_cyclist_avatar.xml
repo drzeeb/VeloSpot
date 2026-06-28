@@ -1,10 +1,15 @@
 <!--
-  Full-colour 2D cyclist avatar shown as the live-location marker. Drawn as a
-  clean 3rd-person / top-down rider pointing "up" (north before any rotation):
-  two slim wheels front & back, a narrow frame, the handlebar with gripping
-  hands, a compact rider (helmet, shoulders, arms reaching forward, legs reaching
-  back to the pedals). Rendered as an upright billboard, so it reads as a clear
-  top-down cyclist even on the tilted 3D navigation map.
+  Full-colour cyclist avatar shown as the live-location marker, drawn as a true
+  3rd-person *rear* view: we look at the rider from behind, forward (the travel
+  direction) is "up" (north before any rotation). Nearest to the viewer is the
+  rear wheel at the bottom; above it the rider's back and the back of the helmet,
+  with the arms reaching forward/out to the handlebar grips. Because it is a real
+  rear view (not a top-down sprite) it reads as a rider standing on the map when
+  rendered as an upright billboard on the tilted 3D navigation map — no fake
+  perspective tilt and no "wheelie" look needed.
+
+  The legs / shoes / pedals are drawn & animated in code (MarkerIconFactory
+  .drawCyclistLegs) on either side of the rear wheel, so the rider visibly pedals.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="64dp"
@@ -12,50 +17,53 @@
     android:viewportWidth="64"
     android:viewportHeight="64">
 
-    <!-- ── Bike ────────────────────────────────────────────────────────── -->
-    <!-- Front wheel (tyre) -->
+    <!-- ── Bike (rear) ─────────────────────────────────────────────────── -->
+    <!-- Rear wheel (tyre) — nearly edge-on from behind, so a slim tall oval -->
     <path android:fillColor="#2B2B2B"
-        android:pathData="M29.5,6.5 a2.5,2.5 0 0,1 5,0 v12 a2.5,2.5 0 0,1 -5,0 z" />
-    <!-- Front wheel (rim) -->
-    <path android:fillColor="#6D6D6D"
-        android:pathData="M31,7.5 a1,1 0 0,1 2,0 v10 a1,1 0 0,1 -2,0 z" />
-    <!-- Rear wheel (tyre) -->
-    <path android:fillColor="#2B2B2B"
-        android:pathData="M29.5,45.5 a2.5,2.5 0 0,1 5,0 v12 a2.5,2.5 0 0,1 -5,0 z" />
+        android:pathData="M28.5,42 a3.5,3.5 0 0,1 7,0 v15 a3.5,3.5 0 0,1 -7,0 z" />
     <!-- Rear wheel (rim) -->
     <path android:fillColor="#6D6D6D"
-        android:pathData="M31,46.5 a1,1 0 0,1 2,0 v10 a1,1 0 0,1 -2,0 z" />
-    <!-- Frame -->
-    <path android:fillColor="#B0BEC5"
-        android:pathData="M30.5,18 h3 v28 h-3 z" />
-    <!-- Handlebar -->
+        android:pathData="M30.5,43 a1.5,1.5 0 0,1 3,0 v13 a1.5,1.5 0 0,1 -3,0 z" />
+
+    <!-- Seat post + saddle -->
+    <path android:fillColor="#455A64"
+        android:pathData="M31,34 h2 v8 h-2 z" />
+    <path android:fillColor="#263238"
+        android:pathData="M28.5,33 h7 a1.5,1.5 0 0,1 0,3 h-7 a1.5,1.5 0 0,1 0,-3 z" />
+
+    <!-- Handlebar (ahead of the rider, grips poking out to the sides) -->
     <path android:fillColor="#37474F"
-        android:pathData="M21,14.5 h22 a2,2 0 0,1 0,4 h-22 a2,2 0 0,1 0,-4 z" />
+        android:pathData="M20,18.5 h24 a2,2 0 0,1 0,4 h-24 a2,2 0 0,1 0,-4 z" />
 
-    <!-- ── Rider ───────────────────────────────────────────────────────── -->
-    <!-- (Legs / shoes / pedals are drawn & animated in code, see header note.) -->
-
-    <!-- Arms / jersey sleeves reaching forward to the handlebar -->
+    <!-- ── Rider (seen from behind) ────────────────────────────────────── -->
+    <!-- Arms / jersey sleeves reaching forward & out to the grips -->
     <path android:fillColor="#1565C0"
-        android:pathData="M24.5,31 L27.5,29.5 L23,17 L20,18.5 z" />
+        android:pathData="M25,28 L21.5,30 L18.5,21 L22,19.5 z" />
     <path android:fillColor="#1565C0"
-        android:pathData="M39.5,31 L36.5,29.5 L41,17 L44,18.5 z" />
+        android:pathData="M39,28 L42.5,30 L45.5,21 L42,19.5 z" />
 
-    <!-- Torso / shoulders (jersey) -->
+    <!-- Back / torso (jersey): wide shoulders tapering to the waist -->
     <path android:fillColor="#1E88E5"
-        android:pathData="M26,26 h12 a4,4 0 0,1 4,4 v1 a4,4 0 0,1 -4,4 h-12 a4,4 0 0,1 -4,-4 v-1 a4,4 0 0,1 4,-4 z" />
+        android:pathData="M23,25 q0,-4 4,-4 h10 q4,0 4,4 v6 q0,4 -4,4 h-10 q-4,0 -4,-4 z" />
+    <!-- Lower-back shading -->
+    <path android:fillColor="#1565C0"
+        android:pathData="M26,31 h12 v3 q0,3 -3,3 h-6 q-3,0 -3,-3 z" />
 
-    <!-- Helmet -->
+    <!-- Neck -->
+    <path android:fillColor="#F5C396"
+        android:pathData="M30,17 h4 v6 h-4 z" />
+
+    <!-- Helmet (back of the head) -->
     <path android:fillColor="#E53935"
-        android:pathData="M32,20 a6,6 0 1,0 0.01,0 z" />
-    <!-- Helmet centre vent -->
+        android:pathData="M32,9 a7,7 0 1,0 0.01,0 z" />
+    <!-- Helmet lower rim (darker back edge) -->
     <path android:fillColor="#C62828"
-        android:pathData="M31,22 h2 v8 h-2 z" />
+        android:pathData="M25.2,14 a7,7 0 0,0 13.6,0 z" />
 
-    <!-- Hands gripping the handlebar (skin) -->
+    <!-- Hands gripping the bar ends -->
     <path android:fillColor="#F5C396"
-        android:pathData="M21,14.1 a2.4,2.4 0 1,0 0.01,0 z" />
+        android:pathData="M19.5,18 a2.4,2.4 0 1,0 0.01,0 z" />
     <path android:fillColor="#F5C396"
-        android:pathData="M43,14.1 a2.4,2.4 0 1,0 0.01,0 z" />
+        android:pathData="M44.5,18 a2.4,2.4 0 1,0 0.01,0 z" />
 </vector>
 

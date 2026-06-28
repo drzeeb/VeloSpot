@@ -77,6 +77,18 @@ assign footaccess
 
 assign accesspenalty switch or bikeaccess footaccess 0 100000
 
+# Detect dedicated cycling infrastructure: either a standalone cycleway, or a
+# road that carries a mapped cycle track / cycle lane (cycleway=track|lane and
+# its side-specific variants). Only tags that exist in the standard lookups.dat
+# are used here. This lets us give such ways a noticeable cost bonus below so
+# the router prefers them over a parallel main road / trunk.
+assign has_cycleway_infra =
+  or highway=cycleway
+  or cycleway=track|lane
+  or cycleway:both=track|lane
+  or cycleway:left=track|lane
+     cycleway:right=track|lane
+
 assign costfactor
   add accesspenalty
 
@@ -84,11 +96,19 @@ assign costfactor
 
   switch    route=ferry                             5.67
   switch or highway=motorway highway=motorway_link    100000
-  switch and or highway=trunk highway=trunk_link bicycle=no|private|use_sidepath  100000
+  # Hard-block trunk roads for bikes as well: only keep them usable (cost 1) when
+  # cycling is explicitly permitted, otherwise treat them like a near-barrier so
+  # a parallel cycleway is always preferred. trunk_link is handled the same way.
+  switch or highway=trunk highway=trunk_link
+            switch bicycle=yes|designated|permissive|official  1  10000
   switch or highway=proposed highway=abandoned        100000
   # Avoid hugging the pavement: cycling a sidewalk costs more than the carriageway,
   # so even the shortest route starts on / stays on the road where one exists.
   switch    footway=sidewalk                          5
+  # Reward dedicated cycling infrastructure with a tangible bonus so a parallel
+  # cycleway (or a road with a mapped cycle track / lane) beats a plain main road
+  # even though it may carry a few extra crossings or curves.
+  switch    has_cycleway_infra                        0.7
   1
 
 # way priorities used for voice hint generation
