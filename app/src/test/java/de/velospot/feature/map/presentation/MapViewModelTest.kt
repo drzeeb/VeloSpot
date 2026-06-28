@@ -137,6 +137,7 @@ class MapViewModelTest {
                 recordedRidesRepository = recordedRidesRepository,
                 scope = managerScope
             ),
+            gpxFileStore          = de.velospot.data.gpx.GpxFileStore(mockContext),
             savedPlacesRepository = FakeSavedPlacesRepository(),
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
