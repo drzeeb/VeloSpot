@@ -267,7 +267,19 @@
     <string name="ride_detail_close">Chiudi i dettagli del percorso</string>
     <string name="ride_detail_drag_hint">Trascina verso il basso • la mappa resta interattiva</string>
     <string name="ride_speed_chart_title">Velocità nel tempo</string>
+    <string name="ride_option_max_speed_bubble">Mostra fumetto velocità massima</string>
+    <string name="ride_option_color_by_speed">Colora il percorso per velocità</string>
     <string name="ride_delete">Elimina percorso</string>
+    <!-- Mock ride indicator (recorded with the route simulator / mock tool) -->
+    <string name="ride_mock_badge">Simul.</string>
+    <string name="ride_mock_indicator">Percorso simulato registrato</string>
+    <!-- Archive a recorded ride -->
+    <string name="ride_archive">Archivia percorso</string>
+    <string name="ride_unarchive">Ripristina percorso</string>
+    <string name="ride_archived_badge">Archiviato</string>
+    <string name="rides_archived_header">Archiviati (%1$d)</string>
+    <string name="rides_archived_show">Mostra archiviati (%1$d)</string>
+    <string name="rides_archived_hide">Nascondi archiviati</string>
     <string name="ride_rename">Rinomina percorso</string>
     <string name="ride_rename_dialog_title">Assegna un nome al percorso</string>
     <string name="ride_rename_hint">Nome del percorso</string>

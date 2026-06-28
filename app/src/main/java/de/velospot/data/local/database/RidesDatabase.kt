@@ -18,7 +18,7 @@ import de.velospot.data.local.entity.RecordedRideEntity
  */
 @Database(
     entities = [RecordedRideEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class RidesDatabase : RoomDatabase() {
@@ -36,13 +36,25 @@ abstract class RidesDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v2 → v3: flags mock-recorded rides (`isMock`) so they can be marked in the
+         * timeline and excluded from statistics, and adds `archivedAt` so rides can be
+         * archived (hidden) without deleting them.
+         */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recorded_rides ADD COLUMN isMock INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE recorded_rides ADD COLUMN archivedAt INTEGER")
+            }
+        }
+
         fun getInstance(context: Context): RidesDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     RidesDatabase::class.java,
                     "velospot_rides.db"
-                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
             }
         }
     }

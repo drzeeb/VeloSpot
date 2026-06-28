@@ -265,7 +265,19 @@
     <string name="ride_detail_close">Ritdetails sluiten</string>
     <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>
     <string name="ride_speed_chart_title">Snelheid over tijd</string>
+    <string name="ride_option_max_speed_bubble">Maximumsnelheid-ballon tonen</string>
+    <string name="ride_option_color_by_speed">Route kleuren op snelheid</string>
     <string name="ride_delete">Rit verwijderen</string>
+    <!-- Mock ride indicator (recorded with the route simulator / mock tool) -->
+    <string name="ride_mock_badge">Mock</string>
+    <string name="ride_mock_indicator">Opgenomen mock-rit</string>
+    <!-- Archive a recorded ride -->
+    <string name="ride_archive">Rit archiveren</string>
+    <string name="ride_unarchive">Rit herstellen</string>
+    <string name="ride_archived_badge">Gearchiveerd</string>
+    <string name="rides_archived_header">Gearchiveerd (%1$d)</string>
+    <string name="rides_archived_show">Gearchiveerde tonen (%1$d)</string>
+    <string name="rides_archived_hide">Gearchiveerde verbergen</string>
     <string name="ride_rename">Rit hernoemen</string>
     <string name="ride_rename_dialog_title">Geef deze rit een naam</string>
     <string name="ride_rename_hint">Naam van de rit</string>

@@ -471,13 +471,25 @@ assign any_cycleroute
   # there's no alternative.
   assign sidewalk_penalty  switch footway=sidewalk 25 0
 
+  # Reward dedicated cycling infrastructure so it clearly beats running parallel
+  # main roads, even though those are smooth and (almost) junction-free. A real
+  # cycleway gets the biggest bonus; a carriageway with a mapped cycleway=track/lane
+  # (hascycleway) gets a smaller one. The bonus is negative cost and is clamped by
+  # the "max 1.0" in the costfactor below, so it can never make a way "free".
+  assign cycleway_bonus
+      if highway=cycleway then -0.5
+      else if hascycleway  then -0.3
+      else 0.0
+
   assign rawcostfactor ( # can be <1, adjusted to >=1 in final step of calculation of costfactor, uphillcostfactor,downhillcostfactor
     switch and highway= not route=ferry  10000 #only highways unless ferry
     switch highway=motorway|motorway_link|proposed|abandoned  10000
-    # Keep the MTB off trunk roads / "Kraftfahrstrassen" (motorway feeders & ramps,
-    # e.g. around the A1): forbid where cycling is signed off, otherwise -- unless the
-    # trunk explicitly carries bike infrastructure -- strongly avoid it.
-    switch and highway=trunk|trunk_link not isbike  switch bicycle=no|private|dismount|use_sidepath 10000 200
+    # Keep the MTB off motorway-like roads / "Kraftfahrstrassen" (motorway feeders &
+    # ramps, e.g. around the A1). Unless the trunk explicitly carries bike
+    # infrastructure (isbike, i.e. a mapped cycleway=track/lane or bicycle=yes), it is
+    # blocked outright with 10000 -- same as motorways -- so the router never prefers
+    # it over a parallel cycleway.
+    switch and highway=trunk|trunk_link not isbike  10000
 
     # all other exclusions below (access, steps, ferries,..) should not be deleted by the decoder, to be available in voice-hint-processing
     min 9999
@@ -505,7 +517,7 @@ assign any_cycleroute
 
     # can be <1, adjusted to >=1 in final step of calculation of costfactor, uphillcostfactor,downhillcostfactor
     assign rawcostfactor2  if isCFgt9997 then rawcostfactor
-      else add sidewalk_penalty add rawcostfactor add cycleroute_tweak add MTB_factor_for_road smallpaved_factor_for_road
+      else add cycleway_bonus add sidewalk_penalty add rawcostfactor add cycleroute_tweak add MTB_factor_for_road smallpaved_factor_for_road
 
     assign access-penalty max onewaypenalty accesspenalty
 

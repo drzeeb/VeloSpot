@@ -12,6 +12,8 @@ import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.appcompat.content.res.AppCompatResources
@@ -76,13 +78,14 @@ internal fun createBikeMarkerIcon(context: Context, zoomBucket: Int, pinColor: I
 }
 
 /**
- * The live "my location" marker: a full-colour 2D cyclist avatar
- * (`R.drawable.ic_cyclist_avatar`) rendered as a real little rider sitting on the
- * map — no flat dot. A soft contact shadow underneath lifts it off the basemap
- * for a 3D feel. The sprite points "up" (north before rotation); the
- * [LAYER_LOCATION] layer rotates it by the per-feature [PROP_BEARING] and the
- * map tilts during navigation, so the rider visibly leans into the heading.
- * [isNavigationActive] simply renders the avatar a bit larger while navigating.
+ * The live "my location" marker: a full-colour cyclist avatar
+ * (`R.drawable.ic_cyclist_avatar`) rendered as a real little rider seen from
+ * behind — no flat dot. A soft contact shadow underneath lifts it off the basemap
+ * for a 3D feel. The art is a true 3rd-person **rear** view, so as the upright
+ * billboard the [LAYER_LOCATION] layer draws it, it reads as a rider standing on
+ * the map; the navigation camera keeps the heading pointing "up", so the rider
+ * naturally faces the travel direction. [isNavigationActive] renders the avatar a
+ * bit larger while navigating.
  *
  * [pedalPhase] (`0f..1f`) drives the **pedalling animation**: the legs, shoes and
  * pedals are drawn programmatically (not baked into the vector), so by rendering a
@@ -102,7 +105,7 @@ internal fun createLocationMarkerIcon(
     pedalPhase: Float = 0f,
     idle: Boolean = !isNavigationActive
 ): Drawable {
-    val size = if (isNavigationActive) 184 else 148
+    val size = if (isNavigationActive) 208 else 148
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val center = size / 2f
@@ -134,13 +137,17 @@ internal fun createLocationMarkerIcon(
         // sprite into one clean silhouette.
         drawCyclistLegs(avatarCanvas, size, pad, pedalPhase, idle)
 
+        // Compose the rider + its white keyline onto a single layer so the whole
+        // silhouette is one clean sticker over the contact shadow.
+        val composed = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val composedCanvas = Canvas(composed)
         val outline = size * 0.012f
         val whitePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             colorFilter = PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
         }
         var angle = 0.0
         while (angle < 2 * Math.PI) {
-            canvas.drawBitmap(
+            composedCanvas.drawBitmap(
                 avatarBmp,
                 (Math.cos(angle) * outline).toFloat(),
                 (Math.sin(angle) * outline).toFloat(),
@@ -148,7 +155,13 @@ internal fun createLocationMarkerIcon(
             )
             angle += Math.PI / 8
         }
-        canvas.drawBitmap(avatarBmp, 0f, 0f, null)
+        composedCanvas.drawBitmap(avatarBmp, 0f, 0f, null)
+
+        // The avatar art is now a true 3rd-person *rear* view, so as an upright
+        // billboard it already reads as a rider standing on the map seen from
+        // behind — no perspective faking needed. Just composite it (with its white
+        // keyline) over the contact shadow.
+        canvas.drawBitmap(composed, 0f, 0f, null)
     }
 
     return BitmapDrawable(context.resources, bitmap)
@@ -174,11 +187,11 @@ private fun drawCyclistLegs(canvas: Canvas, size: Int, pad: Int, phase: Float, i
 
     val a = phase * (2f * Math.PI.toFloat())
     val cos = Math.cos(a.toDouble()).toFloat()
-    val amplitude = 4.0f          // forward/back foot travel (vector units)
-    val crankY = 43.5f            // bottom-bracket height (matches the frame)
+    val amplitude = 3.5f          // forward/back foot travel (vector units)
+    val crankY = 47f              // bottom-bracket height (beside the rear wheel)
 
-    // Hips emerge from just under the torso (bottom edge ≈ y 35).
-    val hipLeftX = 28.7f;  val hipRightX = 35.3f;  val hipY = 35f
+    // Hips emerge from just under the torso (waist ≈ y 34), straddling the wheel.
+    val hipLeftX = 29f;  val hipRightX = 35f;  val hipY = 34f
 
     val legPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = "#283593".toColorInt()                 // shorts / legs blue
@@ -208,8 +221,8 @@ private fun drawCyclistLegs(canvas: Canvas, size: Int, pad: Int, phase: Float, i
     if (idle) {
         // Standstill: left foot planted on the ground (down & out), right foot up
         // on the pedal. The planted foot sits below/outside the bike footprint.
-        val groundFootX = 23.5f; val groundFootY = 53.5f
-        val pedalFootX = 36.4f;  val pedalFootY = 41.5f
+        val groundFootX = 22f;   val groundFootY = 56f
+        val pedalFootX = 37.5f;  val pedalFootY = 46f
         drawLeg(hipLeftX, groundFootX, groundFootY, kneeOutX = -2.6f)
         drawLeg(hipRightX, pedalFootX, pedalFootY, kneeOutX = 1.6f)
         // Planted shoe is flatter & wider so it reads as resting on the ground.
@@ -218,7 +231,7 @@ private fun drawCyclistLegs(canvas: Canvas, size: Int, pad: Int, phase: Float, i
         return
     }
 
-    val footLeftX = 27.6f; val footRightX = 36.4f
+    val footLeftX = 26.5f; val footRightX = 37.5f
     val footLeftY  = crankY - cos * amplitude          // left foot leads…
     val footRightY = crankY + cos * amplitude          // …right foot trails (180° apart)
     drawLeg(hipLeftX, footLeftX, footLeftY, kneeOutX = -1.6f)
@@ -425,6 +438,85 @@ internal fun createParkedBikeIcon(context: Context): Drawable {
     }
 
     return BitmapDrawable(context.resources, bitmap)
+}
+
+/**
+ * A speech-bubble "tag" that marks the spot a recorded ride reached its top speed,
+ * shown when the rider inspects a past ride. The [label] (e.g. `"31.0 km/h"`) is
+ * drawn in white on a bold red rounded bubble with a small downward pointer (tail)
+ * whose tip sits at the bottom-centre of the bitmap — so a `ICON_ANCHOR_BOTTOM`
+ * symbol layer plants the tail exactly on the GPS point. A soft drop shadow and a
+ * white keyline lift it off any basemap.
+ */
+internal fun createSpeedBubbleIcon(
+    label: String,
+    fillColor: Int = "#E53935".toColorInt(),
+    textColor: Int = Color.WHITE
+): Bitmap {
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = textColor
+        textSize = 34f
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
+    val fm = textPaint.fontMetrics
+    val textWidth = textPaint.measureText(label)
+    val textHeight = fm.descent - fm.ascent
+
+    val padH = 26f
+    val padV = 16f
+    val stroke = 4f
+    val tailW = 22f
+    val tailH = 16f
+    val pad = 6f // breathing room for the shadow / keyline
+
+    val bubbleW = textWidth + padH * 2
+    val bubbleH = textHeight + padV * 2
+    val width = (bubbleW + stroke * 2 + pad * 2).roundToInt()
+    val height = (bubbleH + tailH + stroke * 2 + pad * 2).roundToInt()
+
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val cx = width / 2f
+    val left = pad + stroke
+    val top = pad + stroke
+    val right = width - pad - stroke
+    val bottom = top + bubbleH
+    val radius = bubbleH / 2f
+
+    // Bubble + tail as a single path so the keyline wraps them as one silhouette.
+    val bubblePath = Path().apply {
+        addRoundRect(RectF(left, top, right, bottom), radius, radius, Path.Direction.CW)
+        moveTo(cx - tailW / 2f, bottom - 1f)
+        lineTo(cx, bottom + tailH)
+        lineTo(cx + tailW / 2f, bottom - 1f)
+        close()
+    }
+
+    // Soft drop shadow.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x44000000
+        maskFilter = BlurMaskFilter(5f, BlurMaskFilter.Blur.NORMAL)
+    })
+    // White keyline.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = stroke * 2f
+        strokeJoin = Paint.Join.ROUND
+    })
+    // Filled bubble.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = fillColor
+        style = Paint.Style.FILL
+    })
+
+    // Centred label.
+    val baseline = top + padV - fm.ascent
+    canvas.drawText(label, cx, baseline, textPaint)
+
+    return bitmap
 }
 
 /** Builds a five-pointed star [Path] centred at ([centerX], [centerY]). */

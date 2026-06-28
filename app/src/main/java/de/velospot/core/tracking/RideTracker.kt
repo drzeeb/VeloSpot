@@ -44,6 +44,15 @@ class RideTracker {
     private var lastRawLon = 0.0
     private var hasRaw = false
 
+    /**
+     * Last **reliable** position-derived segment speed (m/s), used as the baseline
+     * for the acceleration-plausibility gate. Only updated from segments whose
+     * interval is long enough ([MIN_SPEED_BASELINE_MILLIS]) that the division
+     * isn't dominated by GPS jitter.
+     */
+    private var lastSegSpeedMps = 0.0
+    private var hasSegSpeed = false
+
     /** Whether a recording is currently in progress. */
     var isRecording: Boolean = false
         private set
@@ -67,6 +76,8 @@ class RideTracker {
         lastRawLat = 0.0
         lastRawLon = 0.0
         hasRaw = false
+        lastSegSpeedMps = 0.0
+        hasSegSpeed = false
         isRecording = true
     }
 
@@ -122,8 +133,20 @@ class RideTracker {
                 if (segSpeed > MAX_PLAUSIBLE_SPEED_MPS) {
                     return currentStats()
                 }
-                segSpeedMps = segSpeed
                 segSpeedReliable = dtMillis >= MIN_SPEED_BASELINE_MILLIS
+                // Acceleration-plausibility gate: even a fix whose *absolute* speed
+                // is within bounds can be a drift spike if it implies a physically
+                // impossible change in speed (e.g. 0 → 40 km/h in 1 s while standing
+                // still / under poor reception). We reject such jumps, but only when
+                // both this and the previous segment are reliable baselines (long
+                // enough interval) so GPS jitter on tiny segments can't trip it.
+                if (segSpeedReliable && hasSegSpeed) {
+                    val accelMps2 = abs(segSpeed - lastSegSpeedMps) / (dtMillis / 1000.0)
+                    if (accelMps2 > MAX_PLAUSIBLE_ACCEL_MPS2) {
+                        return currentStats()
+                    }
+                }
+                segSpeedMps = segSpeed
                 if (segMeters >= MIN_SEGMENT_METERS) {
                     distanceMeters += segMeters
                 }
@@ -131,6 +154,12 @@ class RideTracker {
                     movingMillis += dtMillis
                 }
                 if (pointSpeed == null) pointSpeed = segSpeed.toFloat()
+                // Remember this segment's speed as the next acceleration baseline,
+                // but only when it's a reliable (long-enough) measurement.
+                if (segSpeedReliable) {
+                    lastSegSpeedMps = segSpeed
+                    hasSegSpeed = true
+                }
             }
         }
 
@@ -268,6 +297,14 @@ class RideTracker {
         private const val MOVING_SPEED_THRESHOLD_MPS = 0.8
         /** Reject fixes implying a faster-than-plausible bike speed (~90 km/h). */
         private const val MAX_PLAUSIBLE_SPEED_MPS = 25.0
+        /**
+         * Reject fixes implying a physically impossible change of speed between two
+         * reliable segments. 6 m/s² is ~0.6 g — well beyond a cyclist's real sprint
+         * or hard braking (≈1–4 m/s²), so it still passes genuine fast descents and
+         * stops while catching the abrupt "0 → 40 km/h in 1 s" GPS-drift jumps that
+         * stay under the absolute [MAX_PLAUSIBLE_SPEED_MPS] gate.
+         */
+        private const val MAX_PLAUSIBLE_ACCEL_MPS2 = 6.0
         /**
          * Minimum interval between two fixes for their position-derived speed to be
          * trusted as a *baseline* when validating the reported speed. Below ~1 s the

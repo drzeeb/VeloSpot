@@ -204,7 +204,18 @@ assign mtbpenalty
     if mtb:scale=0    then 1.5 else    if mtb:scale=0+    then 3.0 else 9.0
 
 assign notcycleroutepenalty switch any_cycleroute 1.0 switch not prefer_cycle_routes 1.03 1.85
-assign notcyclewaypenalty switch bicycle_road=yes 1.0 switch any_cycleway 1.02 1.06
+# Reward ways carrying bike infrastructure (dedicated cycleways, bicycle roads,
+# or roads with cycleway=track/lane) over plain carriageways. The multiplier
+# stays >= 1 (no sub-1 costs, which BRouter dislikes); a way *without* any bike
+# infrastructure gets a mild penalty so a road with cycleway=track/lane is
+# clearly cheaper than the bare main road next to it -- while the else value is
+# kept low enough not to push routing off quiet gravel tracks/paths (this is a
+# gravel profile). All tags used (highway, bicycle, bicycle_road, cycleway,
+# cycleway:left/right) exist in the standard lookups.dat.
+assign notcyclewaypenalty
+    switch or highway=cycleway or bicycle_road=yes bicycle=designated  1.0
+    switch any_cycleway                                                1.0
+                                                                       1.12
 
 assign maxspeedpenalty
     switch maxspeed=50   1.0
@@ -273,17 +284,21 @@ assign costfactor
     multiply switch bicycle=use_sidepath 1.6 1
     multiply switch nobikeaccess 6 1
     multiply tracktypepenalty
+    # Hard-block motorways and motorway links for bikes (matches lookups.dat
+    # highway/motorroad tags). These are never cyclable.
     switch or highway=motorway|motorway_link motorroad=yes      10000
     switch    and nobikeaccess nofootaccess                     10000
     switch    highway= switch not route=ferry                   10000 2
     # Keep gravel bikes off trunk roads / "Kraftfahrstrassen" (typical motorway
-    # feeders and on/off ramps, e.g. around the A1): only ride a trunk that
-    # explicitly carries bike infrastructure, otherwise strongly avoid it -- and
-    # treat it as forbidden where cycling is signed off (bicycle=no/dismount).
+    # feeders and on/off ramps, e.g. around the A1). A bare trunk/trunk_link is
+    # treated as a blocking cost (10000) so the router always prefers a parallel
+    # cycleway/cycle route -- it is only ridden when it explicitly carries bike
+    # infrastructure (cycleway=track/lane, a cycle route, or bicycle=yes/designated),
+    # and even then it stays expensive relative to dedicated cycleways.
     switch    highway=trunk|trunk_link
                 ( switch or any_cycleway or any_cycleroute bicycle=yes|designated
                     ( switch any_cycleroute 20 60 )
-                    ( switch bicycle=no|private|dismount 10000 200 ) )
+                    10000 )
     switch    highway=bridleway|raceway switch not bicycle=yes  20 5
     switch    highway=pedestrian switch not bicycle=yes         8 3
     switch    highway=primary|primary_link                      4.8

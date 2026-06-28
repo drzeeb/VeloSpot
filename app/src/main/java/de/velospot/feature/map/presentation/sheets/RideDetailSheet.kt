@@ -25,10 +25,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -80,7 +83,8 @@ internal fun RideDetailSheet(
     ride: RecordedRide,
     onDismiss: () -> Unit,
     onDelete: (String) -> Unit,
-    onRename: (String, String?) -> Unit
+    onRename: (String, String?) -> Unit,
+    onSetArchived: (String, Boolean) -> Unit
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -214,6 +218,25 @@ internal fun RideDetailSheet(
                         }
                     }
 
+                    // ── Mock-recording indicator ─────────────────────────────
+                    if (ride.isMock) {
+                        Spacer(Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Science,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.ride_mock_indicator),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+                    }
+
                     SheetHeader(
                         title = formatRideDistance(ride.distanceMeters),
                         subtitle = stringResource(
@@ -285,6 +308,25 @@ internal fun RideDetailSheet(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(text = stringResource(R.string.ride_share_action))
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // ── Archive / restore ────────────────────────────────────
+                    TextButton(
+                        onClick = { onSetArchived(ride.id, !ride.isArchived) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = if (ride.isArchived) Icons.Default.Unarchive
+                                          else Icons.Default.Archive,
+                            contentDescription = null
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = if (ride.isArchived) stringResource(R.string.ride_unarchive)
+                                   else stringResource(R.string.ride_archive)
+                        )
                     }
 
                     Spacer(Modifier.height(8.dp))

@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,6 +71,12 @@ internal fun RidesSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val dateFormat = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT) }
     val statistics = remember(rides) { computeRideStatistics(rides) }
+
+    // Active rides drive the timeline; archived rides are tucked into a collapsible
+    // section so they stay out of the way but remain restorable.
+    val activeRides = remember(rides) { rides.filterNot { it.isArchived } }
+    val archivedRides = remember(rides) { rides.filter { it.isArchived } }
+    var showArchived by remember { mutableStateOf(false) }
 
     var selectionMode by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf(emptySet<String>()) }
@@ -133,7 +140,7 @@ internal fun RidesSheet(
                 subtitle = when {
                     selectionMode -> stringResource(R.string.ride_export_selected_count, selectedIds.size)
                     rides.isEmpty() -> null
-                    else -> stringResource(R.string.rides_count, rides.size)
+                    else -> stringResource(R.string.rides_count, activeRides.size)
                 }
             )
 
@@ -186,7 +193,9 @@ internal fun RidesSheet(
                             RideStatisticsSection(stats = statistics)
                         }
                     }
-                    items(rides, key = { it.id }) { ride ->
+                    // Active timeline (in export mode every ride is selectable).
+                    val listRides = if (selectionMode) rides else activeRides
+                    items(listRides, key = { it.id }) { ride ->
                         RideListItem(
                             ride = ride,
                             dateLabel = dateFormat.format(Date(ride.startedAt)),
@@ -202,6 +211,33 @@ internal fun RidesSheet(
                                 }
                             }
                         )
+                    }
+                    // Collapsible "Archived" section (hidden while exporting).
+                    if (!selectionMode && archivedRides.isNotEmpty()) {
+                        item(key = "archived-toggle") {
+                            TextButton(
+                                onClick = { showArchived = !showArchived },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (showArchived)
+                                        stringResource(R.string.rides_archived_hide)
+                                    else
+                                        stringResource(R.string.rides_archived_show, archivedRides.size)
+                                )
+                            }
+                        }
+                        if (showArchived) {
+                            items(archivedRides, key = { "archived-" + it.id }) { ride ->
+                                RideListItem(
+                                    ride = ride,
+                                    dateLabel = dateFormat.format(Date(ride.startedAt)),
+                                    selectable = false,
+                                    selected = false,
+                                    onClick = { onSelectRide(ride) }
+                                )
+                            }
+                        }
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -341,6 +377,26 @@ private fun RideListItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                // Indicators: a mock-recording badge and/or an archived badge.
+                if (ride.isMock || ride.isArchived) {
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (ride.isMock) {
+                            RideBadge(
+                                text = stringResource(R.string.ride_mock_badge),
+                                container = MaterialTheme.colorScheme.tertiaryContainer,
+                                content = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                        if (ride.isArchived) {
+                            RideBadge(
+                                text = stringResource(R.string.ride_archived_badge),
+                                container = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                content = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
@@ -355,6 +411,26 @@ private fun RideListItem(
                 )
             }
         }
+    }
+}
+
+/**
+ * Tiny pill-shaped label used to flag a ride in the timeline (e.g. a mock
+ * recording or an archived ride).
+ */
+@Composable
+private fun RideBadge(text: String, container: Color, content: Color) {
+    androidx.compose.material3.Surface(
+        color = container,
+        contentColor = content,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
     }
 }
 

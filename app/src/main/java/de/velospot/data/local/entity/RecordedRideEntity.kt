@@ -28,6 +28,10 @@ data class RecordedRideEntity(
     /** JSON-serialised `List<TrackPoint>`. */
     val pointsJson: String,
     /** Optional user-facing name (destination / round-trip place / typed name). */
-    val name: String? = null
+    val name: String? = null,
+    /** `true` when recorded via the debug route simulator ("Mock tool"). */
+    val isMock: Boolean = false,
+    /** Wall-clock time the ride was archived, or `null` while still in the timeline. */
+    val archivedAt: Long? = null
 )
 
