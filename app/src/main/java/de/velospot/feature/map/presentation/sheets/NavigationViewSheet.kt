@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Map
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -121,11 +123,15 @@ private fun PerspectiveTile(
     modifier: Modifier = Modifier
 ) {
     val accent = MaterialTheme.colorScheme.primary
+    // Opaque base the selected tint is composited over. A *translucent* container
+    // colour would let the Card's elevation shadow bleed through the tile, muddying
+    // its interior/edges — so we keep the container fully opaque.
+    val sheetSurface = MaterialTheme.colorScheme.surfaceContainerLow
 
     val scale by animateFloatAsState(if (selected) 1f else 0.96f, label = "tileScale")
     val elevation by animateDpAsState(if (selected) 8.dp else 1.dp, label = "tileElevation")
     val container by animateColorAsState(
-        if (selected) accent.copy(alpha = 0.14f)
+        if (selected) accent.copy(alpha = 0.14f).compositeOver(sheetSurface)
         else MaterialTheme.colorScheme.surfaceContainerHighest,
         label = "tileContainer"
     )
@@ -146,6 +152,7 @@ private fun PerspectiveTile(
                 role = Role.RadioButton
                 this.selected = selected
             },
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = container),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         border = if (selected) BorderStroke(1.5.dp, accent) else null
