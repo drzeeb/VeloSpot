@@ -10,9 +10,9 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import de.velospot.domain.model.RecordedRide
-import de.velospot.feature.map.presentation.formatRideDuration
-import de.velospot.feature.map.presentation.formatRideElevation
-import de.velospot.feature.map.presentation.formatRideSpeed
+import de.velospot.core.format.formatRideDuration
+import de.velospot.core.format.formatRideElevation
+import de.velospot.core.format.formatRideSpeed
 import kotlin.math.cos
 import kotlin.math.roundToInt
 

@@ -12,7 +12,6 @@ import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RecordedRidesRepository
-import de.velospot.feature.map.presentation.RideTrackingUiState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

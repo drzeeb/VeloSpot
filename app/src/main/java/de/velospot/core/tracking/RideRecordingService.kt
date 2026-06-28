@@ -10,14 +10,14 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.MainActivity
 import de.velospot.R
-import de.velospot.feature.map.presentation.RideTrackingUiState
-import de.velospot.feature.map.presentation.formatRideDistance
-import de.velospot.feature.map.presentation.formatRideDuration
-import de.velospot.feature.map.presentation.formatRideSpeed
+import de.velospot.core.format.formatRideDistance
+import de.velospot.core.format.formatRideDuration
+import de.velospot.core.format.formatRideSpeed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +44,17 @@ class RideRecordingService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var observeJob: Job? = null
+
+    /**
+     * Partial wake lock held for the duration of an active recording. A
+     * `location`-typed foreground service keeps the *process* alive and location
+     * access allowed, but does **not** keep the CPU awake: with the screen off and
+     * the device dozing, location callbacks get deferred/batched, so the recorded
+     * track would thin out or freeze. Holding a [PowerManager.PARTIAL_WAKE_LOCK]
+     * while recording keeps the CPU running so every GPS fix is delivered on time.
+     * Acquired when the service goes foreground, released the moment recording ends.
+     */
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -75,6 +86,8 @@ class RideRecordingService : Service() {
             stopSelf()
             return
         }
+        // Keep the CPU awake so GPS fixes keep arriving with the screen off / in Doze.
+        acquireWakeLock()
         // Live-update the notification on every stats tick; stop the service when the
         // recording ends from elsewhere (e.g. the in-app FAB).
         observeJob?.cancel()
@@ -91,6 +104,7 @@ class RideRecordingService : Service() {
 
     private fun stopRecordingService() {
         observeJob?.cancel()
+        releaseWakeLock()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -98,6 +112,24 @@ class RideRecordingService : Service() {
             stopForeground(true)
         }
         stopSelf()
+    }
+
+    /** Acquires the partial wake lock (idempotent) for the active recording. */
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG).apply {
+            setReferenceCounted(false)
+            // Bounded acquire so a missed release can never drain the battery
+            // indefinitely; far longer than any realistic ride.
+            acquire(WAKELOCK_TIMEOUT_MS)
+        }
+    }
+
+    /** Releases the wake lock if held. Safe to call when none was acquired. */
+    private fun releaseWakeLock() {
+        wakeLock?.let { if (it.isHeld) it.release() }
+        wakeLock = null
     }
 
     private fun startForegroundCompat(notification: Notification) {
@@ -183,6 +215,7 @@ class RideRecordingService : Service() {
         getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     override fun onDestroy() {
+        releaseWakeLock()
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -196,6 +229,17 @@ class RideRecordingService : Service() {
         private const val NOTIFICATION_ID = 4711
         private const val REQ_STOP = 1
         private const val REQ_DISCARD = 2
+
+        /** Wake-lock tag (namespaced, shown in `dumpsys power`). */
+        private const val WAKELOCK_TAG = "VeloSpot:ride-recording"
+
+        /**
+         * Safety-net timeout for the wake lock (12 h). The lock is released
+         * deterministically when recording ends; this only guards against a
+         * leaked lock (e.g. process killed without `onDestroy`) draining the
+         * battery, and comfortably outlasts any realistic ride.
+         */
+        private const val WAKELOCK_TIMEOUT_MS = 12L * 60L * 60L * 1_000L
     }
 }
 

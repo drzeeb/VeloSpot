@@ -78,6 +78,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.velospot.R
+import de.velospot.core.format.formatRideDistance
+import de.velospot.core.format.formatRideDuration
+import de.velospot.core.format.formatRideSpeed
 import de.velospot.domain.model.MapError
 import kotlin.math.roundToInt
 

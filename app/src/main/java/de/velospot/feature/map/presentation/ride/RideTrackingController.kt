@@ -2,12 +2,12 @@ package de.velospot.feature.map.presentation.ride
 
 import de.velospot.core.tracking.RideRecordingEvent
 import de.velospot.core.tracking.RideRecordingManager
+import de.velospot.core.tracking.RideTrackingUiState
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.feature.map.presentation.MapCameraTarget
-import de.velospot.feature.map.presentation.RideTrackingUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

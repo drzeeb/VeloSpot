@@ -12,10 +12,9 @@ import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.MainActivity
 import de.velospot.R
-import de.velospot.feature.map.presentation.RideTrackingUiState
-import de.velospot.feature.map.presentation.formatRideDistance
-import de.velospot.feature.map.presentation.formatRideDuration
-import de.velospot.feature.map.presentation.hasLocationPermission
+import de.velospot.core.format.formatRideDistance
+import de.velospot.core.format.formatRideDuration
+import de.velospot.core.location.hasLocationPermission
 import javax.inject.Inject
 
 /**

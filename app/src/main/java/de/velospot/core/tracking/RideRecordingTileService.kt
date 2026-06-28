@@ -9,7 +9,7 @@ import android.service.quicksettings.TileService
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.MainActivity
 import de.velospot.R
-import de.velospot.feature.map.presentation.hasLocationPermission
+import de.velospot.core.location.hasLocationPermission
 import javax.inject.Inject
 
 /**

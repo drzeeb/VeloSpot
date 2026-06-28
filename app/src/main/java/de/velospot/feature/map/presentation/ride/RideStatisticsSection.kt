@@ -30,10 +30,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
-import de.velospot.feature.map.presentation.formatRideDistance
-import de.velospot.feature.map.presentation.formatRideDuration
-import de.velospot.feature.map.presentation.formatRideElevation
-import de.velospot.feature.map.presentation.formatRideSpeed
+import de.velospot.core.format.formatRideDistance
+import de.velospot.core.format.formatRideDuration
+import de.velospot.core.format.formatRideElevation
+import de.velospot.core.format.formatRideSpeed
 import java.text.DateFormat
 import java.util.Date
 
