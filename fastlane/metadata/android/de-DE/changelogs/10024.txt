@@ -1,0 +1,6 @@
+• Fahrten im Detail ansehen: Spitzentempo-Marker und tempo-eingefärbte Strecke
+• Mock-Fahrten werden markiert, aus der Statistik gehalten und Fahrten archivierbar
+• Animierter Marken-Startbildschirm
+• Fahrrad-Routing meidet jetzt Autobahnen / Kraftfahrstraßen und bevorzugt Radwege
+• Aufzeichnungen überstehen Abstürze und brechen bei dunklem Display nicht mehr ab
+• Sauberer Fahrrad-Avatar, robusterer GPX-Export und Offline-Routing-Korrekturen
