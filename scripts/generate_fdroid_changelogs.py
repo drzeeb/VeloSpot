@@ -274,6 +274,24 @@ CHANGELOGS: dict[int, dict[str, str]] = {
             "\u2022 Display bleibt beim Aufzeichnen an, Impressum, Barrierefreiheit und ein Fix f\u00fcr falsche Spitzengeschwindigkeiten\n"
         ),
     },
+    10024: {
+        "en-US": (
+            "\u2022 Review a ride in detail: a top-speed marker and a speed-coloured track\n"
+            "\u2022 Mock rides are flagged, kept out of your stats, and rides can be archived\n"
+            "\u2022 Animated branded launch screen\n"
+            "\u2022 Bike routing now avoids motorways / expressways and prefers cycleways\n"
+            "\u2022 Recordings survive a crash and no longer thin out with the screen off\n"
+            "\u2022 Cleaner cyclist avatar, hardened GPX export, and offline-routing fixes\n"
+        ),
+        "de-DE": (
+            "\u2022 Fahrten im Detail ansehen: Spitzentempo-Marker und tempo-eingef\u00e4rbte Strecke\n"
+            "\u2022 Mock-Fahrten werden markiert, aus der Statistik gehalten und Fahrten archivierbar\n"
+            "\u2022 Animierter Marken-Startbildschirm\n"
+            "\u2022 Fahrrad-Routing meidet jetzt Autobahnen / Kraftfahrstra\u00dfen und bevorzugt Radwege\n"
+            "\u2022 Aufzeichnungen \u00fcberstehen Abst\u00fcrze und brechen bei dunklem Display nicht mehr ab\n"
+            "\u2022 Sauberer Fahrrad-Avatar, robusterer GPX-Export und Offline-Routing-Korrekturen\n"
+        ),
+    },
 }
 
 

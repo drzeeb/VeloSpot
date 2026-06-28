@@ -93,7 +93,7 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - 🌐 **8 Languages** - Choose from German, English, French, Italian, Portuguese, Luxembourgish, Dutch, and Spanish; the selection is remembered across restarts
 - 💾 **SQLite Offline Database** - All ~100 000 parking locations are bundled as a Room asset; no sync required
 - 🎯 **In-App Navigation** - Calculate bike routes directly inside the app and render the route path on the map
-- 🧭 **Live 3D Navigation** - A mit­laufende, Google-Maps-style 3D follow camera (fixed 60° pitch, heading-up rotation, speed- and turn-dependent zoom) with snap-to-route map matching, a rotating heading arrow, live remaining-distance + ETA, a greyed-out travelled path, extruded 3D buildings, and automatic off-route rerouting via BRouter
+- 🧭 **Live 3D Navigation** - A Google-Maps-style 3D follow camera (fixed 60° pitch, heading-up rotation, speed- and turn-dependent zoom) with snap-to-route map matching, a rotating heading arrow, live remaining-distance + ETA, a greyed-out travelled path, extruded 3D buildings, and automatic off-route rerouting via BRouter
 - 🧱 **2D / 3D Map View** - Switch the resting map between a flat top-down view and a tilted 3D view with 3D buildings from a sleek segmented selector; the choice is remembered. Active navigation always uses the full 3D camera
 - 👁️ **Navigation Focus** - During active navigation, non-target markers are dimmed to keep the destination visually prominent
 - 📊 **Detailed Information** - View capacity, address, and operator for each location
@@ -400,5 +400,5 @@ Navigate with confidence and never miss a parking spot again — across Germany,
 
 ---
 
-**Last Updated**: 2026-06-23  
+**Last Updated**: 2026-06-28  
 **Status**: Active Development

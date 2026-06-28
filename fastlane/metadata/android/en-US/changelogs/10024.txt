@@ -1,0 +1,6 @@
+• Review a ride in detail: a top-speed marker and a speed-coloured track
+• Mock rides are flagged, kept out of your stats, and rides can be archived
+• Animated branded launch screen
+• Bike routing now avoids motorways / expressways and prefers cycleways
+• Recordings survive a crash and no longer thin out with the screen off
+• Cleaner cyclist avatar, hardened GPX export, and offline-routing fixes
