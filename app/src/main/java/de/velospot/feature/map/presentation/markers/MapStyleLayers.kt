@@ -2,6 +2,7 @@ package de.velospot.feature.map.presentation.markers
 
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import de.velospot.core.map.SpeedSegment
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.CircleLayer
@@ -50,6 +51,9 @@ internal const val SOURCE_TRACKS_HISTORY = "velospot-tracks-history-source"
 /** Single point marking where the inspected ride reached its peak speed. */
 internal const val SOURCE_MAX_SPEED = "velospot-max-speed-source"
 
+/** Inspected ride's track split into speed-coloured segments. */
+internal const val SOURCE_TRACK_SPEED = "velospot-track-speed-source"
+
 internal const val LAYER_ROUTE      = "velospot-route-layer"
 internal const val LAYER_PARKING    = "velospot-parking-layer"
 internal const val LAYER_PARKING_CLUSTER       = "velospot-parking-cluster-layer"
@@ -76,8 +80,15 @@ internal const val LAYER_TRACKS_HISTORY = "velospot-tracks-history-layer"
 /** Bubble marking where the inspected ride reached its peak speed. */
 internal const val LAYER_MAX_SPEED = "velospot-max-speed-layer"
 
+/** Inspected ride's speed-coloured track line (green slow → red at the peak). */
+internal const val LAYER_TRACK_SPEED = "velospot-track-speed-layer"
+
+/** Feature property carrying a segment's speed (m/s) for the speed-coloured track. */
+internal const val PROP_SPEED = "speedMps"
+
 /** Image id of the dynamically-rendered "max speed" speech bubble. */
 internal const val IMG_MAX_SPEED = "vs-max-speed-bubble"
+
 
 /** Feature property carrying a [0..1] heat weight for the heatmap points. */
 internal const val PROP_HEAT_WEIGHT = "weight"
@@ -445,6 +456,66 @@ internal fun updateTrackLayer(style: Style, points: List<Pair<Double, Double>>, 
         if (style.getLayer(LAYER_PARKING) != null) style.addLayerBelow(layer, LAYER_PARKING)
         else style.addLayer(layer)
     }
+}
+
+/**
+ * Idempotently registers and updates the **speed-coloured track** drawn while the
+ * rider inspects a past ride with "colour by speed" on: the ride's polyline split
+ * into [segments], each painted on a green → red ramp by the speed ridden, with
+ * red mapped to the ride's peak speed ([maxSpeedMps]). Pass an empty list /
+ * `visible = false` (e.g. when the option is off) to clear it.
+ *
+ * Drawn just above the plain track line so it fully replaces it while active.
+ */
+internal fun updateTrackSpeedLayer(
+    style: Style,
+    segments: List<SpeedSegment>,
+    maxSpeedMps: Double,
+    visible: Boolean
+) {
+    val show = visible && segments.isNotEmpty() && maxSpeedMps > 0.0
+    val data = if (show) {
+        FeatureCollection.fromFeatures(
+            segments.filter { it.line.size > 1 }.map { seg ->
+                Feature.fromGeometry(
+                    LineString.fromLngLats(seg.line.map { Point.fromLngLat(it.second, it.first) })
+                ).apply { addNumberProperty(PROP_SPEED, seg.speedMps) }
+            }
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    upsertSource(style, SOURCE_TRACK_SPEED, data)
+
+    // Green (slow) → amber (mid) → red (the ride's peak). MapLibre clamps values
+    // outside the stop range, so any speed ≥ peak reads pure red. The top end is
+    // per-ride, so the colour expression is (re)applied on every update.
+    fun speedColorExpression(): Expression {
+        val mid = (maxSpeedMps / 2.0).coerceAtLeast(0.1)
+        return Expression.interpolate(
+            Expression.linear(), Expression.get(PROP_SPEED),
+            Expression.stop(0.0, Expression.rgb(46, 125, 50)),        // #2E7D32
+            Expression.stop(mid, Expression.rgb(249, 168, 37)),       // #F9A825
+            Expression.stop(maxSpeedMps.coerceAtLeast(mid + 0.1), Expression.rgb(229, 57, 53)) // #E53935
+        )
+    }
+
+    if (style.getLayer(LAYER_TRACK_SPEED) == null) {
+        val layer = LineLayer(LAYER_TRACK_SPEED, SOURCE_TRACK_SPEED).withProperties(
+            PropertyFactory.lineWidth(5f),
+            PropertyFactory.lineOpacity(0.95f),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
+        )
+        if (style.getLayer(LAYER_PARKING) != null) style.addLayerBelow(layer, LAYER_PARKING)
+        else style.addLayer(layer)
+    }
+    if (show) {
+        style.getLayer(LAYER_TRACK_SPEED)?.setProperties(PropertyFactory.lineColor(speedColorExpression()))
+    }
+    style.getLayer(LAYER_TRACK_SPEED)?.setProperties(
+        PropertyFactory.visibility(if (show) Property.VISIBLE else Property.NONE)
+    )
 }
 
 /**

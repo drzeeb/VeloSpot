@@ -114,6 +114,8 @@
     <string name="ride_detail_close">Close ride details</string>
     <string name="ride_detail_drag_hint">Drag down • map stays interactive</string>
     <string name="ride_speed_chart_title">Speed over time</string>
+    <string name="ride_option_max_speed_bubble">Show max speed bubble</string>
+    <string name="ride_option_color_by_speed">Colour track by speed</string>
     <string name="ride_delete">Delete ride</string>
     <!-- Mock ride indicator (recorded with the route simulator / mock tool) -->
     <string name="ride_mock_badge">Mock</string>

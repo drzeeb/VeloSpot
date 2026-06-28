@@ -52,6 +52,7 @@ import de.velospot.feature.map.presentation.markers.defaultMarkerStyleConfig
 import de.velospot.feature.map.presentation.markers.updateMarkers
 import de.velospot.feature.map.presentation.markers.updateHeatmapLayer
 import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
+import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
 import de.velospot.feature.map.presentation.markers.updateTracksHistoryLayer
 import de.velospot.core.map.RideHeatmap
@@ -106,6 +107,7 @@ fun MainMapScreen(
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
     val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
     val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
+    val rideViewOptions      by viewModel.rideViewOptions.collectAsStateWithLifecycle()
     val rideNamePrompt       by viewModel.rideNamePrompt.collectAsStateWithLifecycle()
     val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
 
@@ -500,24 +502,40 @@ fun MainMapScreen(
     }
 
     // ── Recorded-ride track polyline (live recording or a reopened ride) ──────
-    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints) {
+    // When inspecting a past ride with "colour by speed" on, the flat line is
+    // replaced by a green→red speed-coloured line; otherwise the plain line shows.
+    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints, selectedRide, rideViewOptions.colorTrackBySpeed) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
-        de.velospot.feature.map.presentation.markers.updateTrackLayer(
-            style = style,
-            points = rideTrackPoints.map { it.latitude to it.longitude },
-            colorInt = markerStyleConfig.routeColor
-        )
+        val ride = selectedRide
+        val colorBySpeed = ride != null && rideViewOptions.colorTrackBySpeed
+        if (colorBySpeed) {
+            val segments = withContext(Dispatchers.Default) {
+                de.velospot.core.map.RideSpeedSegments.build(ride.points)
+            }
+            de.velospot.feature.map.presentation.markers.updateTrackLayer(
+                style = style, points = emptyList(), colorInt = markerStyleConfig.routeColor
+            )
+            updateTrackSpeedLayer(style, segments, ride.maxSpeedMps, visible = true)
+        } else {
+            updateTrackSpeedLayer(style, emptyList(), 0.0, visible = false)
+            de.velospot.feature.map.presentation.markers.updateTrackLayer(
+                style = style,
+                points = rideTrackPoints.map { it.latitude to it.longitude },
+                colorInt = markerStyleConfig.routeColor
+            )
+        }
     }
 
     // ── Max-speed bubble for a reopened ride ──────────────────────────────────
     // When the rider inspects a past ride via the detail sheet, mark the spot it
-    // reached its top speed with a speech bubble showing that speed. Cleared when
-    // no ride is selected. Re-run after style reloads (the layer/image are wiped).
-    LaunchedEffect(maplibreMap, styleVersion, selectedRide) {
+    // reached its top speed with a speech bubble showing that speed. Gated on the
+    // persisted "show max speed bubble" option and cleared when off or no ride is
+    // selected. Re-run after style reloads (the layer/image are wiped).
+    LaunchedEffect(maplibreMap, styleVersion, selectedRide, rideViewOptions.showMaxSpeedBubble) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         val ride = selectedRide
         val peak = ride?.let { RideMaxSpeedPoint.find(it) }
-        if (ride == null || peak == null) {
+        if (ride == null || peak == null || !rideViewOptions.showMaxSpeedBubble) {
             updateMaxSpeedMarker(style, null, null)
             return@LaunchedEffect
         }
@@ -613,6 +631,17 @@ fun MainMapScreen(
                 actions = menuActions
             )
         }
+
+        // ── Ride-inspection overlay toggles (right edge, below the menu) ──────
+        // Only while looking at a past ride: switch the max-speed bubble and the
+        // speed-coloured track on/off. Choices are persisted globally.
+        RideViewOptionsControls(
+            visible          = selectedRide != null,
+            showMaxSpeedBubble = rideViewOptions.showMaxSpeedBubble,
+            colorTrackBySpeed = rideViewOptions.colorTrackBySpeed,
+            onToggleMaxSpeedBubble = viewModel::setMaxSpeedBubbleEnabled,
+            onToggleColorBySpeed   = viewModel::setColorTrackBySpeedEnabled
+        )
 
         when (val offState = offlineRoutingUiState) {
             is OfflineRoutingUiState.Downloading      -> OfflineSetupProgressOverlay(state = offState)
