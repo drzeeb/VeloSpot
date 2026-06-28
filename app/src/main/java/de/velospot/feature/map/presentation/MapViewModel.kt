@@ -9,6 +9,8 @@ import de.velospot.core.display.KeepScreenOnPreferences
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
+import de.velospot.core.map.RideViewOptions
+import de.velospot.core.map.RideViewPreferences
 import de.velospot.core.navigation.NavigationModePreferences
 import de.velospot.core.navigation.VoiceGuidancePreferences
 import de.velospot.core.routing.OfflineRoutingPreferences
@@ -668,6 +670,26 @@ class MapViewModel @Inject constructor(
     val selectedRide: StateFlow<RecordedRide?> = rideTracking.selectedRide
     val rideTrackPoints: StateFlow<List<RoutePoint>> = rideTracking.trackPoints
 
+    /**
+     * The rider's persisted "inspect a past ride" overlay choices (max-speed
+     * bubble + colour-by-speed track). Global and remembered across sessions, so
+     * the last-used settings apply to every ride opened afterwards.
+     */
+    private val _rideViewOptions = MutableStateFlow(RideViewPreferences.get(context))
+    val rideViewOptions: StateFlow<RideViewOptions> = _rideViewOptions.asStateFlow()
+
+    /** Toggles the on-map "max speed" bubble for inspected rides and persists it. */
+    fun setMaxSpeedBubbleEnabled(enabled: Boolean) {
+        RideViewPreferences.setShowMaxSpeedBubble(context, enabled)
+        _rideViewOptions.update { it.copy(showMaxSpeedBubble = enabled) }
+    }
+
+    /** Toggles colouring an inspected ride's track by speed and persists it. */
+    fun setColorTrackBySpeedEnabled(enabled: Boolean) {
+        RideViewPreferences.setColorTrackBySpeed(context, enabled)
+        _rideViewOptions.update { it.copy(colorTrackBySpeed = enabled) }
+    }
+
     val isRecordingRide: Boolean get() = rideTracking.isRecording
 
     fun startRideTracking(autoStarted: Boolean = false) {
@@ -731,6 +753,8 @@ class MapViewModel @Inject constructor(
     fun dismissSelectedRide() = rideTracking.dismissSelectedRide()
     fun deleteRecordedRide(id: String) = rideTracking.deleteRide(id)
     fun renameRecordedRide(id: String, name: String?) = rideTracking.renameRide(id, name)
+    fun setRecordedRideArchived(id: String, archived: Boolean) =
+        rideTracking.setRideArchived(id, archived)
 
     /**
      * Exports [rides] as GPX and opens the system **share** sheet. When

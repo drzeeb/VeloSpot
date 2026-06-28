@@ -109,6 +109,14 @@ class RideRecordingManager(
     var suppressRealFixes: Boolean = false
 
     /**
+     * Set the moment the active recording receives its first simulated fix (from
+     * the debug route simulator / "Mock tool"). Carried onto the saved ride as
+     * [RecordedRide.isMock]. Reset on every [start].
+     */
+    @Volatile
+    private var sawSimulatedFix: Boolean = false
+
+    /**
      * Name to attach to the ride when it is saved on [stop]. Set by the host while
      * recording (the navigation destination / "Round trip – place", or the name the
      * rider typed when finishing a manual recording). Cleared on every [start].
@@ -130,6 +138,7 @@ class RideRecordingManager(
         if (tracker.isRecording) return
         isAutoStartedByNavigation = autoStarted
         pendingRideName = null
+        sawSimulatedFix = false
         lastElevationIndex = 0
         tracker.start(System.currentTimeMillis())
         _liveTrackPoints.value = emptyList()
@@ -153,7 +162,10 @@ class RideRecordingManager(
         locationJob?.cancel(); locationJob = null
         stopTicker()
         val ride = tracker.stop(System.currentTimeMillis())
-            ?.copy(name = pendingRideName?.trim()?.takeIf { it.isNotBlank() })
+            ?.copy(
+                name = pendingRideName?.trim()?.takeIf { it.isNotBlank() },
+                isMock = sawSimulatedFix
+            )
         isAutoStartedByNavigation = false
         pendingRideName = null
         _trackingState.value = RideTrackingUiState.Idle
@@ -201,7 +213,10 @@ class RideRecordingManager(
      * bypassing the real-GPS suppression gate.
      */
     fun feedExternal(location: GeoCoordinate) {
-        if (tracker.isRecording) feed(location)
+        if (tracker.isRecording) {
+            sawSimulatedFix = true
+            feed(location)
+        }
     }
 
     // ── Internals ──────────────────────────────────────────────────────────────

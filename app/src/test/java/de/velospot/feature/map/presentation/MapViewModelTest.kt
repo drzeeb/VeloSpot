@@ -628,6 +628,12 @@ private class FakeRecordedRidesRepository : RecordedRidesRepository {
         rides.value = rides.value.map { if (it.id == id) it.copy(name = name) else it }
     }
 
+    override suspend fun setRideArchived(id: String, archived: Boolean) {
+        rides.value = rides.value.map {
+            if (it.id == id) it.copy(archivedAt = if (archived) 1L else null) else it
+        }
+    }
+
     override suspend fun clearAll() { rides.value = emptyList() }
 }
 

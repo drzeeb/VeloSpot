@@ -151,4 +151,14 @@ class RideTrackingController(
         if (_selectedRide.value?.id == id) dismissSelectedRide()
         scope.launch { repository.removeRide(id) }
     }
+
+    /**
+     * Archives a ride (hides it from the active timeline) or restores it. Closes the
+     * detail sheet of the affected ride when archiving so the map returns to the list.
+     */
+    fun setRideArchived(id: String, archived: Boolean) {
+        if (archived && _selectedRide.value?.id == id) dismissSelectedRide()
+        _selectedRide.update { if (it?.id == id) it.copy(archivedAt = if (archived) System.currentTimeMillis() else null) else it }
+        scope.launch { repository.setRideArchived(id, archived) }
+    }
 }

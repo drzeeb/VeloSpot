@@ -34,6 +34,12 @@ data class TrackPoint(
  * @property maxSpeedMps      Peak speed reached.
  * @property elevationGainMeters Cumulative ascent estimated from altitude deltas.
  * @property elevationLossMeters Cumulative descent estimated from altitude deltas.
+ * @property isMock `true` when the ride was recorded via the debug route
+ *  simulator ("Mock tool") rather than from real GPS fixes. Such rides are
+ *  flagged in the timeline and excluded from the aggregate statistics.
+ * @property archivedAt Wall-clock time the ride was archived, or `null` when it
+ *  is still in the active timeline. Archived rides are hidden from the main list
+ *  but kept in storage so they can be restored.
  */
 data class RecordedRide(
     val id: String,
@@ -47,8 +53,13 @@ data class RecordedRide(
     val elevationGainMeters: Double,
     val elevationLossMeters: Double,
     val points: List<TrackPoint>,
-    val name: String? = null
-)
+    val name: String? = null,
+    val isMock: Boolean = false,
+    val archivedAt: Long? = null
+) {
+    /** Whether this ride is currently archived (hidden from the active timeline). */
+    val isArchived: Boolean get() = archivedAt != null
+}
 
 /**
  * Live, in-progress statistics emitted by the ride tracker on every GPS fix while

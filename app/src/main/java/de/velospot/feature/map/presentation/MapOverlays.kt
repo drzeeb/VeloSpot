@@ -26,18 +26,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.Gradient
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SignalWifiOff
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.ViewInAr
@@ -55,6 +58,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +70,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -547,6 +552,84 @@ internal fun MapMenuCard(
                 )
             }
         }
+    }
+}
+
+/**
+ * Compact right-edge toggle stack shown **only while inspecting a past ride**
+ * (below the menu button): one switch for the on-map "max speed" bubble and one
+ * for colouring the track by speed. The choices are persisted globally by the
+ * caller, so they carry over to the next ride opened.
+ */
+@Composable
+internal fun BoxScope.RideViewOptionsControls(
+    visible: Boolean,
+    showMaxSpeedBubble: Boolean,
+    colorTrackBySpeed: Boolean,
+    onToggleMaxSpeedBubble: (Boolean) -> Unit,
+    onToggleColorBySpeed: (Boolean) -> Unit
+) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .statusBarsPadding()
+            // Tucked directly under the 52 dp menu button (top 12 + 52 + 12 gap).
+            .padding(top = 76.dp, end = 12.dp),
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Card(
+            shape = RoundedCornerShape(26.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                RideViewOptionRow(
+                    icon = Icons.Default.Speed,
+                    label = stringResource(R.string.ride_option_max_speed_bubble),
+                    checked = showMaxSpeedBubble,
+                    onCheckedChange = onToggleMaxSpeedBubble
+                )
+                RideViewOptionRow(
+                    icon = Icons.Default.Gradient,
+                    label = stringResource(R.string.ride_option_color_by_speed),
+                    checked = colorTrackBySpeed,
+                    onCheckedChange = onToggleColorBySpeed
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RideViewOptionRow(
+    icon: ImageVector,
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (checked) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.semantics { contentDescription = label }
+        )
     }
 }
 

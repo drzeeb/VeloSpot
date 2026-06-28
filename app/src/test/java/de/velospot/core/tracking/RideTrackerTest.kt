@@ -140,6 +140,35 @@ class RideTrackerTest {
     }
 
     @Test
+    fun `implausible acceleration spike is rejected even within the speed cap`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        // Establish a calm ~1.1 m/s baseline: ~11 m (0.0001°) every 10 s.
+        tracker.addPoint(0.0000, baseLon, 0L, speedMps = 1f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.0001, baseLon, 10_000L, speedMps = 1f, altitudeMeters = null, accuracyMeters = 6f)
+        val before = tracker.currentStats().distanceMeters
+        // Next fix jumps ~22 m (0.0002°) in just 1 s → ~22 m/s and an acceleration
+        // of ~21 m/s² from the 1.1 m/s baseline. Under the 90 km/h absolute cap but
+        // physically impossible for a bike → must be rejected outright.
+        val stats = tracker.addPoint(0.0003, baseLon, 11_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        assertEquals("drift spike adds no distance", before, stats.distanceMeters, 0.001)
+        assertEquals("drift spike adds no track point", 2, stats.pointCount)
+    }
+
+    @Test
+    fun `genuine hard acceleration within physical limits is kept`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        // Standing start, then a strong but realistic sprint: ~0 → ~5.6 m/s over a
+        // few seconds (~2 m/s²), well under the 6 m/s² gate → must be accepted.
+        tracker.addPoint(0.00000, baseLon, 0L, speedMps = 0f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.00005, baseLon, 5_000L, speedMps = 1f, altitudeMeters = null, accuracyMeters = 6f) // ~1.1 m/s
+        val stats = tracker.addPoint(0.00030, baseLon, 10_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f) // ~5.6 m/s
+        assertEquals("legitimate sprint is kept", 3, stats.pointCount)
+        assertTrue("distance keeps accumulating", stats.distanceMeters > 25.0)
+    }
+
+    @Test
     fun `stored positions are smoothed by the moving average while distance stays raw`() {
         val tracker = RideTracker()
         tracker.start(0L)

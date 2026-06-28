@@ -17,6 +17,9 @@ interface RecordedRidesRepository {
     /** Renames a ride (or clears its name when [name] is null/blank). */
     suspend fun updateRideName(id: String, name: String?)
 
+    /** Archives a ride (hides it from the active timeline) or restores it. */
+    suspend fun setRideArchived(id: String, archived: Boolean)
+
     /** Removes a recorded ride by its id. */
     suspend fun removeRide(id: String)
 

@@ -265,7 +265,19 @@
     <string name="ride_detail_close">Fahrtdetailer zoumaachen</string>
     <string name="ride_detail_drag_hint">Erof zéien • d\'Kaart bleift benotzbar</string>
     <string name="ride_speed_chart_title">Vitesse iwwer Zäit</string>
+    <string name="ride_option_max_speed_bubble">Maximalvitesse-Bubble weisen</string>
+    <string name="ride_option_color_by_speed">Streck no Vitesse afierwen</string>
     <string name="ride_delete">Tour läschen</string>
+    <!-- Mock ride indicator (recorded with the route simulator / mock tool) -->
+    <string name="ride_mock_badge">Mock</string>
+    <string name="ride_mock_indicator">Opgeholl Mock-Tour</string>
+    <!-- Archive a recorded ride -->
+    <string name="ride_archive">Tour archivéieren</string>
+    <string name="ride_unarchive">Tour restauréieren</string>
+    <string name="ride_archived_badge">Archivéiert</string>
+    <string name="rides_archived_header">Archivéiert (%1$d)</string>
+    <string name="rides_archived_show">Archivéiert weisen (%1$d)</string>
+    <string name="rides_archived_hide">Archivéiert verstoppen</string>
     <string name="ride_rename">Tour ëmbenennen</string>
     <string name="ride_rename_dialog_title">Tour benennen</string>
     <string name="ride_rename_hint">Numm vun der Tour</string>
