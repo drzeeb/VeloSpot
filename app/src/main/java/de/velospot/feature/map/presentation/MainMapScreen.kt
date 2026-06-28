@@ -199,6 +199,23 @@ fun MainMapScreen(
     // use this as a key to re-run the marker rendering effect and rebuild them.
     var styleVersion by remember { mutableIntStateOf(0) }
 
+    // ── Animated launch splash ────────────────────────────────────────────────
+    // Cover the brief white map-load with the branded animated logo. The map is
+    // "ready" once its style has loaded (styleVersion > 0); we keep the splash up
+    // for a short minimum so its entrance animation is actually seen, then let it
+    // fade/scale away to reveal the live map.
+    val mapReady = styleVersion > 0
+    var showSplash by remember { mutableStateOf(true) }
+    val splashStartMs = remember { System.currentTimeMillis() }
+    LaunchedEffect(mapReady) {
+        if (mapReady) {
+            val elapsed = System.currentTimeMillis() - splashStartMs
+            val minVisibleMs = 1100L
+            if (elapsed < minVisibleMs) delay(minVisibleMs - elapsed)
+            showSplash = false
+        }
+    }
+
 
     // Show a Toast when the user zooms out below the minimum parking marker level.
     // Only fires on the false→true transition, not on further zoom-out.
@@ -764,6 +781,11 @@ fun MainMapScreen(
                 onDismiss  = viewModel::cancelRideNamePrompt
             )
         }
+
+        // ── Animated branded launch overlay (top of the stack) ───────────────
+        // Sits above the map and all controls while the style/tiles load, then
+        // fades + scales away once the map is ready.
+        VeloSpotSplash(visible = showSplash)
     }
 
     // ── Bottom sheets & dialogs ───────────────────────────────────────────────

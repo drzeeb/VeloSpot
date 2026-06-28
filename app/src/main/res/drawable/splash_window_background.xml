@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pre-Compose window background shown for the very first frames of a cold start,
+  so the launch is branded (green gradient + logo) instead of a white flash. The
+  animated Compose splash (VeloSpotSplash) takes over seamlessly once drawn.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/ic_launcher_background" />
+    <item
+        android:width="180dp"
+        android:height="180dp"
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:gravity="center" />
+</layer-list>
+
