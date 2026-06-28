@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.velospot.core.display.KeepScreenOnPreferences
+import de.velospot.core.location.LocationController
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
@@ -34,7 +35,6 @@ import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
-import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
@@ -87,7 +87,7 @@ data class RideNamePromptUiState(val suggestion: String?)
 class MapViewModel @Inject constructor(
     private val bikeParkingRepository: BikeParkingRepository,
     private val favoritesRepository: FavoritesRepository,
-    private val locationRepository: LocationRepository,
+    private val locationController: LocationController,
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
     private val nominatimGeocoder: NominatimGeocoder,
@@ -243,7 +243,7 @@ class MapViewModel @Inject constructor(
     private fun onNavigationStarted() {
         rideTracking.onRouteChanged()
         // Active navigation needs precise, frequent fixes.
-        setHighAccuracyLocation(true)
+        locationController.setNavigating(true)
         // Auto-record the ride for the whole navigation (unless already recording).
         startRideTracking(autoStarted = true)
         // Name the auto-recorded ride after the navigation destination so it lands in
@@ -295,10 +295,12 @@ class MapViewModel @Inject constructor(
 
     /** On navigation end: finish an auto-recorded ride, else relax GPS accuracy. */
     private fun onNavigationStopped() {
+        // Navigation no longer needs the GPS at high accuracy; the controller keeps
+        // it on (balanced) while the map is visible, or drops it otherwise.
+        locationController.setNavigating(false)
         // If this ride was auto-recorded by navigation, finish + save it now. A
         // manually-started recording keeps running so the user controls it.
         if (rideTracking.isAutoStartedByNavigation) rideTracking.stop()
-        else refreshLocationAccuracy()
         // Drop the follow lock once nothing keeps it alive (no nav, no recording).
         updateFollowSession()
     }
@@ -857,11 +859,12 @@ class MapViewModel @Inject constructor(
     private var viewportJob: Job? = null
 
     init {
-        // Wire the process-level recording manager to this (live) host: supply the
-        // navigation route for accurate elevation and let it re-evaluate the GPS
-        // power mode (against navigation) when a recording starts/stops.
+        // Wire the process-level recording manager to this (live) host so it can
+        // resolve accurate terrain elevation from the active navigation route.
         recordingManager.routeElevationProvider = { navigationController.activeRoute }
-        recordingManager.onRecordingStateChanged = { refreshLocationAccuracy() }
+        // The map screen is foreground when this ViewModel is created: declare its
+        // location need to the single GPS owner.
+        locationController.setMapVisible(true)
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeFavorites()
         observeUserLocation()
@@ -957,71 +960,21 @@ class MapViewModel @Inject constructor(
      */
     private var hasCenteredOnStartup = false
 
-    /**
-     * Whether the app is currently in the foreground. Location updates are only
-     * registered while foregrounded; going to the background fully stops the GPS
-     * radio to save battery (re-armed in [onAppForegrounded]).
-     */
-    private var isForeground = true
-
-    /**
-     * Whether high-accuracy (frequent GPS) location updates are currently
-     * requested. Enabled only during active turn-by-turn navigation; idle map
-     * browsing uses a battery-friendly balanced-power mode.
-     */
-    private var highAccuracyLocation = false
-
-    /**
-     * (Re-)applies the current location-update strategy based on [isForeground]
-     * and [highAccuracyLocation]. Single source of truth so accuracy changes and
-     * lifecycle changes can never leave the GPS in the wrong power state.
-     */
-    private fun applyLocationStrategy() {
-        if (isForeground) {
-            locationRepository.startLocationUpdates(highAccuracy = highAccuracyLocation)
-        } else if (!recordingManager.isRecording) {
-            locationRepository.stopLocationUpdates()
-        }
-        // else: a recording is running in the background — the RideRecordingManager
-        // (kept alive by the foreground service) owns the GPS radio, so we must not
-        // stop it here or the background track would freeze.
-    }
-
-    private fun setHighAccuracyLocation(enabled: Boolean) {
-        if (highAccuracyLocation == enabled) return
-        highAccuracyLocation = enabled
-        applyLocationStrategy()
-    }
-
-    /**
-     * High-accuracy GPS is needed whenever navigation is active OR a ride is being
-     * recorded. Centralising the decision keeps the two features from clobbering
-     * each other's accuracy request.
-     */
-    private fun refreshLocationAccuracy() {
-        val needsHighAccuracy =
-            navigationController.isActive || rideTracking.isRecording
-        setHighAccuracyLocation(needsHighAccuracy)
-    }
-
     /** Called when the map screen returns to the foreground — re-arm location updates. */
     fun onAppForegrounded() {
-        isForeground = true
-        applyLocationStrategy()
+        locationController.setMapVisible(true)
     }
 
-    /** Called when the map screen leaves the foreground — stop the GPS to save battery. */
+    /** Called when the map screen leaves the foreground — relax the GPS to save battery. */
     fun onAppBackgrounded() {
-        isForeground = false
-        // Keep the GPS running when a recording is active: the foreground service +
-        // manager continue the background track. Otherwise stop it to save battery.
-        if (!recordingManager.isRecording) locationRepository.stopLocationUpdates()
+        // The controller keeps the radio alive when a recording is active (the
+        // foreground service continues the background track); otherwise it stops it.
+        locationController.setMapVisible(false)
     }
 
     private fun observeUserLocation() {
-        applyLocationStrategy()
         viewModelScope.launch {
-            locationRepository.getCurrentLocationFlow().collect { location ->
+            locationController.locationFlow().collect { location ->
                 // While the GPS mock simulator is running, ignore real fixes so the
                 // synthetic route drive isn't overwritten.
                 if (navigationController.isSimulating.value) return@collect
@@ -1043,7 +996,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun onLocationPermissionGranted() = applyLocationStrategy()
+    fun onLocationPermissionGranted() = locationController.refresh()
 
     fun centerMapOnUserLocation() {
         _userLocation.value?.let {
@@ -1134,12 +1087,11 @@ class MapViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         navigationController.dispose()
-        // Detach this (dying) host so the manager stops calling back into it and
-        // takes over GPS management itself for any still-running background record.
-        recordingManager.onRecordingStateChanged = null
         recordingManager.routeElevationProvider = null
-        // Only release the GPS when nothing is recording — a background recording
-        // must keep its fixes flowing via the foreground service.
-        if (!recordingManager.isRecording) locationRepository.stopLocationUpdates()
+        // The map UI is gone: drop its location needs. A still-running background
+        // recording keeps the GPS alive via the controller's recording need (and the
+        // foreground service); otherwise the controller releases the radio.
+        locationController.setNavigating(false)
+        locationController.setMapVisible(false)
     }
 }

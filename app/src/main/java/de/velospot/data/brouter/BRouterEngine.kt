@@ -21,6 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -406,12 +409,17 @@ class BRouterEngine(
     private fun decodeTrack(track: OsmTrack?): List<RoutePoint> {
         if (BuildConfig.DEBUG) Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
         if (track == null) throw NoRouteFoundException()
-        if (track.nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
-        return track.nodes.map { node ->
+        val nodes = track.nodes
+        if (nodes.isNullOrEmpty()) throw EmptyRouteGeometryException()
+        // BRouter emits every node as the same concrete subclass, so resolve the
+        // private coordinate fields + `getElev()` accessor ONCE for the track instead
+        // of reflecting per node (a long route has thousands of nodes).
+        val accessor = nodeAccessorFor(nodes.first())
+        return nodes.map { node ->
             RoutePoint(
-                latitude  = node.getCoordField("ilat") / 1_000_000.0 - 90.0,
-                longitude = node.getCoordField("ilon") / 1_000_000.0 - 180.0,
-                elevationMeters = node.getElevMetersOrNull()
+                latitude  = accessor.ilat.getInt(node) / 1_000_000.0 - 90.0,
+                longitude = accessor.ilon.getInt(node) / 1_000_000.0 - 180.0,
+                elevationMeters = accessor.elevMetersOrNull(node)
             )
         }
     }
@@ -507,41 +515,64 @@ class BRouterEngine(
         }
 
     /**
-     * Reads a private integer coordinate field (ilat / ilon) from an
-     * [OsmPathElement] by walking the class hierarchy with reflection.
-     * This is necessary because BRouter declares those fields as private
-     * in the concrete subclass while the public API offers no getter.
+     * Per-class cache of the reflective accessors used to decode BRouter nodes.
+     * Resolving the private `ilat`/`ilon` fields and the `getElev()` method is done
+     * once per concrete node class and then reused for every node of every track.
      */
-    private fun Any.getCoordField(fieldName: String): Int {
-        var cls: Class<*>? = javaClass
+    private val nodeAccessors = ConcurrentHashMap<Class<*>, NodeAccessor>()
+
+    private fun nodeAccessorFor(node: Any): NodeAccessor =
+        nodeAccessors.getOrPut(node.javaClass) {
+            NodeAccessor(
+                ilat = declaredFieldInHierarchy(node.javaClass, "ilat"),
+                ilon = declaredFieldInHierarchy(node.javaClass, "ilon"),
+                getElev = runCatching { node.javaClass.getMethod("getElev") }.getOrNull(),
+            )
+        }
+
+    /**
+     * Pre-resolved reflective accessors for a single BRouter node class.
+     *
+     * BRouter declares the integer coordinate fields (`ilat`/`ilon`) as private in
+     * a concrete `OsmPathElement` subclass with no public getter, and exposes
+     * elevation via `OsmPos.getElev()` (which returns `selev / 4.0`). Reflection
+     * keeps the engine decoupled from the exact `btools` class hierarchy.
+     */
+    private class NodeAccessor(
+        val ilat: Field,
+        val ilon: Field,
+        val getElev: Method?,
+    ) {
+        /**
+         * Terrain elevation (m) of [node], or `null` when unavailable (BRouter uses
+         * a short sentinel that maps to an absurd value) so callers fall back to GPS.
+         */
+        fun elevMetersOrNull(node: Any): Double? {
+            val m = getElev ?: return null
+            return try {
+                val v = (m.invoke(node) as? Number)?.toDouble() ?: return null
+                if (v < -1_000.0 || v > 9_000.0) null else v
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    /**
+     * Resolves a (possibly private) field by [name] by walking the class hierarchy
+     * of [start], making it accessible. Used to read BRouter's private coordinate
+     * fields that have no public getter.
+     */
+    private fun declaredFieldInHierarchy(start: Class<*>, name: String): Field {
+        var cls: Class<*>? = start
         while (cls != null) {
             try {
-                val f = cls.getDeclaredField(fieldName)
-                f.isAccessible = true
-                return f.getInt(this)
+                return cls.getDeclaredField(name).apply { isAccessible = true }
             } catch (_: NoSuchFieldException) {
                 cls = cls.superclass
             }
         }
-        error("Field '$fieldName' not found in ${javaClass.name} or any superclass")
-    }
-
-    /**
-     * Reads the node's terrain elevation in metres via BRouter's public
-     * `OsmPos.getElev()` (which returns `selev / 4.0`). Reflection is used so the
-     * engine stays decoupled from the exact `btools` class hierarchy. Returns
-     * `null` when no elevation is available (the sentinel short maps to an absurd
-     * value) so callers can fall back to GPS altitude.
-     */
-    private fun Any.getElevMetersOrNull(): Double? {
-        return try {
-            val m = javaClass.getMethod("getElev")
-            val v = (m.invoke(this) as? Number)?.toDouble() ?: return null
-            // BRouter uses a short sentinel for "no elevation"; reject absurd values.
-            if (v < -1_000.0 || v > 9_000.0) null else v
-        } catch (_: Exception) {
-            null
-        }
+        error("Field '$name' not found in ${start.name} or any superclass")
     }
 
 
