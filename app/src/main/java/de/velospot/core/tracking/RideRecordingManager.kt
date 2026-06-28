@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,6 +84,47 @@ class RideRecordingManager(
     private val _events = MutableSharedFlow<RideRecordingEvent>(extraBufferCapacity = 4)
     val events: SharedFlow<RideRecordingEvent> = _events.asSharedFlow()
 
+    /**
+     * Crash-safe stream of the in-progress recording. Each accepted fix is appended
+     * to disk so a track survives the process being killed mid-ride (see
+     * [RideRecordingPersistence]).
+     */
+    private val persistence = RideRecordingPersistence(context)
+
+    /**
+     * Serialises persistence writes onto a single IO worker so `begin → append …
+     * → clear` always run in submission order regardless of which thread fed the
+     * fix. Unbounded so a feed never blocks on disk.
+     */
+    private val persistOps = Channel<() -> Unit>(Channel.UNLIMITED)
+
+    /** Wall-clock start of the active recording (written into the persisted meta). */
+    private var recordingStartedAt = 0L
+
+    init {
+        scope.launch(Dispatchers.IO) {
+            // First, recover an orphaned recording left behind by a previous process
+            // that was killed mid-ride: save the partial track so it isn't lost, then
+            // clear the session. Runs before any new session's writes are processed.
+            runCatching {
+                if (persistence.hasActiveSession()) {
+                    persistence.recover()?.let { recovered ->
+                        recordedRidesRepository.saveRide(recovered)
+                        _events.tryEmit(RideRecordingEvent.Saved(recovered))
+                    }
+                    persistence.clear()
+                }
+            }
+            // Then drain the live write queue for the rest of the process lifetime.
+            for (op in persistOps) runCatching { op() }
+        }
+    }
+
+    /** Queues a persistence write on the single ordered IO worker (never blocks). */
+    private fun persist(op: () -> Unit) {
+        persistOps.trySend(op)
+    }
+
     val isRecording: Boolean get() = tracker.isRecording
 
     /** Whether the current recording was auto-started by navigation (vs. the FAB). */
@@ -139,9 +181,13 @@ class RideRecordingManager(
         pendingRideName = null
         sawSimulatedFix = false
         lastElevationIndex = 0
-        tracker.start(System.currentTimeMillis())
+        val startedAt = System.currentTimeMillis()
+        recordingStartedAt = startedAt
+        tracker.start(startedAt)
         _liveTrackPoints.value = emptyList()
         _trackingState.value = RideTrackingUiState.Recording(tracker.currentStats())
+        // Open the crash-recovery session before the first (seed) fix is appended.
+        persist { persistence.begin(startedAt) }
         seedLocation?.let { feed(it) }
         startTicker()
         observeLocation()
@@ -175,6 +221,9 @@ class RideRecordingManager(
         } else {
             _events.tryEmit(RideRecordingEvent.TooShort)
         }
+        // The ride is persisted to the DB now (or was too short) — drop the
+        // crash-recovery session so it isn't replayed on the next launch.
+        persist { persistence.clear() }
         finishGps()
         stopService()
         refreshExternalControls()
@@ -190,6 +239,7 @@ class RideRecordingManager(
         _trackingState.value = RideTrackingUiState.Idle
         _liveTrackPoints.value = emptyList()
         _events.tryEmit(RideRecordingEvent.Discarded)
+        persist { persistence.clear() }
         finishGps()
         stopService()
         refreshExternalControls()
@@ -245,6 +295,23 @@ class RideRecordingManager(
         if (tracker.trackPoints.size > pointsBefore) {
             val accepted = tracker.trackPoints.last()
             _liveTrackPoints.update { it + RoutePoint(accepted.latitude, accepted.longitude) }
+            // Stream the accepted fix to disk for crash recovery. Skipped for
+            // simulated (mock) fixes — those rides are debug-only and not recovered.
+            if (!suppressRealFixes) {
+                val name = pendingRideName
+                persist {
+                    persistence.appendPoint(accepted)
+                    persistence.writeMeta(
+                        startedAt = recordingStartedAt,
+                        distanceMeters = stats.distanceMeters,
+                        movingSeconds = stats.movingSeconds,
+                        maxSpeedMps = stats.maxSpeedMps,
+                        elevationGain = stats.elevationGainMeters,
+                        elevationLoss = stats.elevationLossMeters,
+                        name = name
+                    )
+                }
+            }
         }
     }
 

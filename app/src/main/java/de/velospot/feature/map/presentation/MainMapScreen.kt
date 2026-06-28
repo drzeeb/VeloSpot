@@ -52,6 +52,7 @@ import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
 import de.velospot.feature.map.presentation.markers.createMutedMarkerIcon
 import de.velospot.feature.map.presentation.markers.defaultMarkerStyleConfig
 import de.velospot.feature.map.presentation.markers.updateMarkers
+import de.velospot.feature.map.presentation.markers.updateLocationDot
 import de.velospot.feature.map.presentation.markers.updateHeatmapLayer
 import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
@@ -65,6 +66,7 @@ import de.velospot.feature.map.presentation.sheets.RideDetailSheet
 import de.velospot.feature.map.presentation.sheets.languageFlagForCode
 import de.velospot.feature.map.presentation.sheets.resolveCurrentLanguageCode
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -75,6 +77,14 @@ import org.maplibre.android.maps.MapLibreMap
 /** Duration (ms) of the gentle camera glide that follows the live position while
  *  recording a ride without navigation. */
 private const val CAMERA_FOLLOW_DURATION_MS = 600
+
+/**
+ * Debounce (ms) for redrawing the **live recording track**. Each redraw rebuilds
+ * the whole polyline GeoJSON, so when several GPS fixes arrive in a burst (e.g.
+ * batched delivery after Doze, or the debug simulator) we coalesce them into a
+ * single redraw instead of one per fix. Small enough to feel immediate.
+ */
+private const val LIVE_TRACK_REDRAW_DEBOUNCE_MS = 120L
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -290,9 +300,13 @@ fun MainMapScreen(
     val snippetSpacesFormat  = stringResource(R.string.map_snippet_spaces_format)
 
     // ── Marker update whenever relevant state changes ─────────────────────────
+    // NOTE: deliberately NOT keyed on `userLocation`. The live-location dot is moved
+    // by its own lightweight effect (`updateLocationDot` below) so a fresh GPS fix
+    // doesn't re-serialise the whole parking / favourites / saved-places GeoJSON on
+    // every fix. This pass therefore always suppresses the dot.
     LaunchedEffect(
         maplibreMap, uiState, favorites, selectedSpace,
-        userLocation, activeNavigation, zoomBucket,
+        activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
         selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike
     ) {
@@ -316,7 +330,8 @@ fun MainMapScreen(
                     favoriteIds              = favorites,
                     selectedSpaceId          = selectedSpace?.id,
                     activeNavigationSpaceId  = activeNavigation?.destination?.id,
-                    userLocation             = userLocation
+                    // The location dot is drawn by the dedicated effect below.
+                    userLocation             = null
                 ),
                 display   = MarkerDisplayConfig(
                     context = context,
@@ -337,7 +352,7 @@ fun MainMapScreen(
                     layerVisibility = layerVisibility,
                     // While navigating, NavigationManager owns the location puck
                     // (animated heading arrow), so the renderer must not draw it.
-                    suppressLocationDot = activeNavigation != null,
+                    suppressLocationDot = true,
                     // …and it owns the route polyline (travelled/remaining split).
                     suppressRoute = activeNavigation != null,
                     // Minimal nav mode: hide all non-trip markers while navigating
@@ -346,6 +361,11 @@ fun MainMapScreen(
                 )
         }
     }
+
+    // ── Live-location dot (its own lightweight effect) ────────────────────────
+    // Moved to AFTER the NavigationManager effects below: navigation start/stop both
+    // write SOURCE_LOCATION (start renders the puck, stop clears it), so the dot must
+    // get the final say when idle. See the effect after `DisposableEffect(navigationManager)`.
 
     // ── Recorded-ride heatmap overlay ─────────────────────────────────────────
     // Aggregate all recorded tracks into weighted cells (off the main thread) and
@@ -431,6 +451,25 @@ fun MainMapScreen(
         }
     }
 
+    // ── Live-location dot (its own lightweight effect) ────────────────────────
+    // Only this small source is rewritten on a fresh GPS fix, instead of the whole
+    // marker GeoJSON (the dominant per-fix cost while browsing / recording).
+    // Declared AFTER the NavigationManager effects on purpose: navigation start
+    // renders the puck into SOURCE_LOCATION and navigation stop CLEARS it — so the
+    // idle dot must run last to get the final say (otherwise `stop()` would wipe a
+    // dot drawn earlier in the same recomposition, e.g. at startup). Suppressed
+    // while navigating (the manager owns the animated puck); re-runs after a style
+    // reload to re-register the image / layer.
+    LaunchedEffect(maplibreMap, styleVersion, userLocation, activeNavigation, locationMarkerIcon) {
+        val map = maplibreMap ?: return@LaunchedEffect
+        updateLocationDot(
+            map          = map,
+            location     = userLocation,
+            locationIcon = locationMarkerIcon,
+            suppress     = activeNavigation != null
+        )
+    }
+
     // ── Camera animation ──────────────────────────────────────────────────────
     LaunchedEffect(mapCameraTarget, maplibreMap) {
         val target = mapCameraTarget ?: return@LaunchedEffect
@@ -508,6 +547,9 @@ fun MainMapScreen(
     // replaced by a green→red speed-coloured line; otherwise the plain line shows.
     LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints, selectedRide, rideViewOptions.colorTrackBySpeed) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
+        // While recording, coalesce a burst of fixes into one redraw (the effect is
+        // cancelled & restarted on each new emission, so only the last one redraws).
+        if (rideTrackingState is RideTrackingUiState.Recording) delay(LIVE_TRACK_REDRAW_DEBOUNCE_MS)
         val ride = selectedRide
         val colorBySpeed = ride != null && rideViewOptions.colorTrackBySpeed
         if (colorBySpeed) {
