@@ -18,6 +18,7 @@ import de.velospot.core.share.GpxExporter
 import de.velospot.data.brouter.ElevationPreference
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.data.gpx.GpxFileStore
 import de.velospot.core.tracking.RideRecordingManager
 import de.velospot.core.tracking.RideTrackingUiState
 import de.velospot.domain.model.AddressSearchResult
@@ -91,6 +92,7 @@ class MapViewModel @Inject constructor(
     private val segmentManager: BRouterSegmentManager,
     private val nominatimGeocoder: NominatimGeocoder,
     private val recordingManager: RideRecordingManager,
+    private val gpxFileStore: GpxFileStore,
     savedPlacesRepository: SavedPlacesRepository,
     parkedBikeRepository: ParkedBikeRepository,
     recordedRidesRepository: RecordedRidesRepository,
@@ -800,11 +802,8 @@ class MapViewModel @Inject constructor(
 
     /** Writes a single GPX document's [content] to the SAF-picked [uri]. */
     fun saveGpxToUri(uri: android.net.Uri, content: String) {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val ok = runCatching {
-                context.contentResolver.openOutputStream(uri)?.use { it.write(content.toByteArray()) }
-                    ?: error("no stream")
-            }.isSuccess
+        viewModelScope.launch {
+            val ok = gpxFileStore.writeDocument(uri, content)
             _userMessageRes.value =
                 if (ok) de.velospot.R.string.ride_export_saved
                 else de.velospot.R.string.ride_export_save_failed
@@ -814,23 +813,8 @@ class MapViewModel @Inject constructor(
     /** Writes each GPX [documents] into the SAF-picked folder [treeUri]. */
     fun saveGpxToTree(treeUri: android.net.Uri, documents: List<de.velospot.core.share.GpxDocument>) {
         if (documents.isEmpty()) return
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val resolver = context.contentResolver
-            var saved = 0
-            runCatching {
-                val parentDocId = android.provider.DocumentsContract.getTreeDocumentId(treeUri)
-                val parentUri = android.provider.DocumentsContract
-                    .buildDocumentUriUsingTree(treeUri, parentDocId)
-                for (doc in documents) {
-                    runCatching {
-                        val fileUri = android.provider.DocumentsContract.createDocument(
-                            resolver, parentUri, "application/gpx+xml", doc.fileName
-                        ) ?: return@runCatching
-                        resolver.openOutputStream(fileUri)?.use { it.write(doc.content.toByteArray()) }
-                        saved++
-                    }
-                }
-            }
+        viewModelScope.launch {
+            val saved = gpxFileStore.writeDocumentsToTree(treeUri, documents)
             _userMessageRes.value =
                 if (saved > 0) de.velospot.R.string.ride_export_saved
                 else de.velospot.R.string.ride_export_save_failed
@@ -839,28 +823,16 @@ class MapViewModel @Inject constructor(
 
     /**
      * Imports rides from the picked GPX file [uris]. Each `<trk>` becomes a ride
-     * (its `<name>` kept); a short toast reports the outcome. Parsing/persistence
-     * run off the main thread.
+     * (its `<name>` kept); a short toast reports the outcome. Parsing runs off the
+     * main thread in [GpxFileStore]; persistence goes through the ride controller.
      */
     fun importGpxFiles(uris: List<android.net.Uri>) {
         if (uris.isEmpty()) return
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            var imported = 0
-            for (uri in uris) {
-                val tracks = runCatching {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        de.velospot.core.gpx.GpxParser.parse(stream)
-                    }.orEmpty()
-                }.getOrDefault(emptyList())
-                for (track in tracks) {
-                    de.velospot.core.gpx.GpxRideFactory.toRecordedRide(track)?.let { ride ->
-                        rideTracking.importRide(ride)
-                        imported++
-                    }
-                }
-            }
+        viewModelScope.launch {
+            val rides = gpxFileStore.importRides(uris)
+            rides.forEach { rideTracking.importRide(it) }
             _userMessageRes.value =
-                if (imported > 0) de.velospot.R.string.ride_import_done
+                if (rides.isNotEmpty()) de.velospot.R.string.ride_import_done
                 else de.velospot.R.string.ride_import_failed
         }
     }
