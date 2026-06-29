@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.velospot.core.analysis.Achievement
+import de.velospot.core.analysis.BestEfforts
 import de.velospot.core.analysis.RideAnalysis
 import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.analyzeRide
 import de.velospot.core.analysis.buildRideMapData
+import de.velospot.core.analysis.computeBestEfforts
 import de.velospot.core.analysis.evaluateAchievements
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.repository.RecordedRidesRepository
@@ -29,7 +31,8 @@ sealed interface RideAnalysisUiState {
         val ride: RecordedRide,
         val analysis: RideAnalysis,
         val mapData: RideMapData,
-        val achievements: List<Achievement>
+        val achievements: List<Achievement>,
+        val bestEfforts: BestEfforts
     ) : RideAnalysisUiState
 }
 
@@ -59,7 +62,8 @@ class RideAnalysisViewModel @Inject constructor(
                     ride = ride,
                     analysis = analysis,
                     mapData = buildRideMapData(ride),
-                    achievements = evaluateAchievements(ride, analysis, rides)
+                    achievements = evaluateAchievements(ride, analysis, rides),
+                    bestEfforts = computeBestEfforts(ride)
                 )
             }
         }

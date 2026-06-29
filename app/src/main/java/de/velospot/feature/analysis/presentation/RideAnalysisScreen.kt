@@ -51,6 +51,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
 import de.velospot.core.analysis.Achievement
+import de.velospot.core.analysis.BestEfforts
 import de.velospot.core.analysis.Climb
 import de.velospot.core.analysis.ClimbCategory
 import de.velospot.core.analysis.GradientBin
@@ -121,6 +122,7 @@ fun RideAnalysisScreen(
                 analysis = s.analysis,
                 mapData = s.mapData,
                 achievements = s.achievements,
+                bestEfforts = s.bestEfforts,
                 isDarkTheme = isDarkTheme,
                 modifier = Modifier
                     .fillMaxSize()
@@ -137,6 +139,7 @@ private fun RideAnalysisContent(
     analysis: RideAnalysis,
     mapData: RideMapData,
     achievements: List<Achievement>,
+    bestEfforts: BestEfforts,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -222,6 +225,15 @@ private fun RideAnalysisContent(
                 splits = analysis.splits,
                 fastestIndex = analysis.fastestSplitIndex,
                 slowestIndex = analysis.slowestSplitIndex
+            )
+        }
+
+        // ── Best efforts (fastest distances & best times) ────────────────────
+        if (bestEfforts.fastestDistances.isNotEmpty() || bestEfforts.bestDurations.isNotEmpty()) {
+            SectionTitle(stringResource(R.string.ride_efforts_section))
+            BestEffortsSection(
+                efforts = bestEfforts,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
