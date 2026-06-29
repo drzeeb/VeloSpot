@@ -268,6 +268,7 @@
     <string name="ride_detail_close">Chiudi i dettagli del percorso</string>
     <string name="ride_detail_drag_hint">Trascina verso il basso • la mappa resta interattiva</string>
     <string name="ride_speed_chart_title">Velocità nel tempo</string>
+    <string name="ride_elevation_chart_title">Profilo altimetrico</string>
     <string name="ride_option_max_speed_bubble">Mostra fumetto velocità massima</string>
     <string name="ride_option_color_by_speed">Colora il percorso per velocità</string>
     <string name="ride_delete">Elimina percorso</string>

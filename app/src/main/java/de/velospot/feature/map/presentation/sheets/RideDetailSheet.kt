@@ -295,6 +295,24 @@ internal fun RideDetailSheet(
                         value = "≈ %,d kcal".format(estimateRideCalories(ride))
                     )
 
+                    // ── Elevation profile (only when the ride captured altitude) ─
+                    val hasElevation = remember(ride.points) {
+                        ride.points.count { it.altitudeMeters != null } >= 2
+                    }
+                    if (hasElevation) {
+                        Spacer(Modifier.height(18.dp))
+                        Text(
+                            text = stringResource(R.string.ride_elevation_chart_title),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        RideElevationProfile(
+                            points = ride.points,
+                            ascentMeters = ride.elevationGainMeters,
+                            descentMeters = ride.elevationLossMeters
+                        )
+                    }
+
                     Spacer(Modifier.height(18.dp))
 
                     // ── Speed timeline chart ─────────────────────────────────

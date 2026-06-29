@@ -266,6 +266,7 @@
     <string name="ride_detail_close">Ritdetails sluiten</string>
     <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>
     <string name="ride_speed_chart_title">Snelheid over tijd</string>
+    <string name="ride_elevation_chart_title">Hoogteprofiel</string>
     <string name="ride_option_max_speed_bubble">Maximumsnelheid-ballon tonen</string>
     <string name="ride_option_color_by_speed">Route kleuren op snelheid</string>
     <string name="ride_delete">Rit verwijderen</string>

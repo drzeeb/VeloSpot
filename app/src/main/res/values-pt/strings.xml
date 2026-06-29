@@ -266,6 +266,7 @@
     <string name="ride_detail_close">Fechar detalhes do percurso</string>
     <string name="ride_detail_drag_hint">Arraste para baixo • o mapa continua interativo</string>
     <string name="ride_speed_chart_title">Velocidade ao longo do tempo</string>
+    <string name="ride_elevation_chart_title">Perfil de elevação</string>
     <string name="ride_option_max_speed_bubble">Mostrar balão de vel. máxima</string>
     <string name="ride_option_color_by_speed">Colorir trajeto pela velocidade</string>
     <string name="ride_delete">Eliminar percurso</string>
