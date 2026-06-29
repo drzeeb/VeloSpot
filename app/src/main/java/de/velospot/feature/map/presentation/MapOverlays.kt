@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.Gradient
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayArrow
@@ -503,6 +504,28 @@ internal fun BoxScope.MapNavigationOverlay(
                             )
                             Spacer(Modifier.height(10.dp))
                             RouteElevationProfile(points = navigationUiState.route.points)
+                            // BRouter's kinematic model also yields the route's
+                            // mechanical work → a rough calorie estimate (kJ ≈ kcal).
+                            navigationUiState.route.estimatedKcal?.let { kcal ->
+                                Spacer(Modifier.height(8.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocalFireDepartment,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = stringResource(
+                                            id = R.string.navigation_route_calories,
+                                            kcal
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
 

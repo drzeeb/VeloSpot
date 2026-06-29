@@ -1,8 +1,8 @@
 package de.velospot.feature.map.presentation.ride
 
+import de.velospot.core.tracking.estimateRideCalories
 import de.velospot.domain.model.RecordedRide
 import java.util.Calendar
-import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 /**
@@ -56,8 +56,6 @@ internal data class RideStatistics(
 /** Average car tail-pipe emissions in grams of CO₂ per kilometre. */
 private const val CAR_CO2_GRAMS_PER_KM = 120.0
 
-/** Rough energy expenditure for moderate cycling, in kcal per kilometre. */
-private const val CALORIES_PER_KM = 30.0
 
 /** Earth's equatorial circumference in kilometres. */
 private const val EARTH_CIRCUMFERENCE_KM = 40_075.0
@@ -156,7 +154,7 @@ internal fun computeRideStatistics(
         ridesThisMonth = thisMonth.size,
         distanceThisMonthMeters = thisMonth.sumOf { it.distanceMeters },
         co2SavedGrams = totalDistanceKm * CAR_CO2_GRAMS_PER_KM,
-        caloriesBurned = (totalDistanceKm * CALORIES_PER_KM).roundToInt(),
+        caloriesBurned = rides.sumOf { estimateRideCalories(it) },
         earthCircumferencePercent = totalDistanceKm / EARTH_CIRCUMFERENCE_KM * 100.0
     )
 }

@@ -77,6 +77,7 @@
     <string name="elevation_level_flattest">O mais plano</string>
     <string name="common_cancel">Cancelar</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>
     <string name="duration_hours">%1$d h</string>
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
@@ -265,6 +266,7 @@
     <string name="ride_detail_close">Fechar detalhes do percurso</string>
     <string name="ride_detail_drag_hint">Arraste para baixo • o mapa continua interativo</string>
     <string name="ride_speed_chart_title">Velocidade ao longo do tempo</string>
+    <string name="ride_elevation_chart_title">Perfil de elevação</string>
     <string name="ride_option_max_speed_bubble">Mostrar balão de vel. máxima</string>
     <string name="ride_option_color_by_speed">Colorir trajeto pela velocidade</string>
     <string name="ride_delete">Eliminar percurso</string>
