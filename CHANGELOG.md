@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Realistic ETA and a calorie estimate for planned routes** — offline (BRouter) routes now use BRouter's own **kinematic travel time** for the ETA instead of a flat per-profile speed, so the estimate accounts for the rider + bike mass, power, air drag, rolling resistance and the **climb profile** (a hilly route now reads slower than a flat one of the same length). The same physics pass also yields the route's **mechanical work**, surfaced as a rough **calorie estimate** (the well-known "≈ 1 kJ of work ≈ 1 kcal burned" rule of thumb) in the navigation preview card beneath the elevation profile. Read straight from BRouter's `OsmTrack` (`getTotalSeconds()` / `energy`) in `BRouterEngine` and carried on `BikeRoute.energyJoules` / `estimatedKcal`; the live navigation ETA — which derives its average speed from the route's time — is now BRouter-consistent. The OSRM online fallback is unaffected (it provides no energy figure). Localised across all eight supported languages.
+
 ### Changed
 - **Refreshed and expanded the screenshot galleries** — the website preview gallery (`docs/index.html`), the README screenshot grid and the Google Play phone screenshots (`fastlane/metadata/android/{de-DE,en-US}/images/phoneScreenshots`) now show updated captures plus **five new screens**: the **2D / 3D map view**, **bike routing profiles**, the **round-trip generator**, **ride tracking** and the **settings** screen.
 
