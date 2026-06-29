@@ -274,6 +274,14 @@
     <string name="ride_analysis_stopped">Stëllstandzäit</string>
     <string name="ride_analysis_splits">Kilometer-Splits</string>
     <string name="ride_analysis_speed_distribution">Geschwindegkeetsverdeelung</string>
+    <string name="ride_analysis_power">Ø Leeschtung</string>
+    <string name="ride_analysis_stops">Stopps</string>
+    <string name="ride_analysis_longest_stop">Längsten Stopp</string>
+    <string name="ride_analysis_climbs">Klammen</string>
+    <string name="ride_analysis_gradient_distribution">Steigungsverdeelung</string>
+    <string name="ride_analysis_moving_share">Ënnerwee vs. gestoppt</string>
+    <string name="ride_analysis_track_quality">Trackqualitéit</string>
+    <string name="ride_analysis_track_quality_summary">%1$d GPS-Punkten · ~%2$d m Genauegkeet · %3$d%% ongenau</string>
     <string name="ride_option_max_speed_bubble">Maximalvitesse-Bubble weisen</string>
     <string name="ride_option_color_by_speed">Streck no Vitesse afierwen</string>
     <string name="ride_delete">Tour läschen</string>

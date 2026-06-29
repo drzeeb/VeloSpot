@@ -280,6 +280,14 @@
     <string name="ride_analysis_stopped">Standzeit</string>
     <string name="ride_analysis_splits">Kilometer-Splits</string>
     <string name="ride_analysis_speed_distribution">Geschwindigkeitsverteilung</string>
+    <string name="ride_analysis_power">Ø Leistung</string>
+    <string name="ride_analysis_stops">Stopps</string>
+    <string name="ride_analysis_longest_stop">Längster Stopp</string>
+    <string name="ride_analysis_climbs">Anstiege</string>
+    <string name="ride_analysis_gradient_distribution">Steigungsverteilung</string>
+    <string name="ride_analysis_moving_share">Fahrt vs. Pause</string>
+    <string name="ride_analysis_track_quality">Datenqualität</string>
+    <string name="ride_analysis_track_quality_summary">%1$d GPS-Punkte · ~%2$d m Genauigkeit · %3$d%% ungenau</string>
     <string name="ride_option_max_speed_bubble">Höchstgeschwindigkeit anzeigen</string>
     <string name="ride_option_color_by_speed">Strecke nach Tempo einfärben</string>
     <string name="ride_delete">Fahrt löschen</string>

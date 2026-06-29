@@ -275,6 +275,14 @@
     <string name="ride_analysis_stopped">Tiempo detenido</string>
     <string name="ride_analysis_splits">Parciales por kilómetro</string>
     <string name="ride_analysis_speed_distribution">Distribución de velocidad</string>
+    <string name="ride_analysis_power">Potencia media</string>
+    <string name="ride_analysis_stops">Paradas</string>
+    <string name="ride_analysis_longest_stop">Parada más larga</string>
+    <string name="ride_analysis_climbs">Subidas</string>
+    <string name="ride_analysis_gradient_distribution">Distribución de pendientes</string>
+    <string name="ride_analysis_moving_share">En movimiento vs. parado</string>
+    <string name="ride_analysis_track_quality">Calidad del recorrido</string>
+    <string name="ride_analysis_track_quality_summary">%1$d puntos GPS · ~%2$d m de precisión · %3$d%% imprecisos</string>
     <string name="ride_option_max_speed_bubble">Mostrar burbuja de vel. máxima</string>
     <string name="ride_option_color_by_speed">Colorear ruta por velocidad</string>
     <string name="ride_delete">Eliminar ruta</string>
