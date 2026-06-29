@@ -38,11 +38,14 @@ import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.RideMarker
 import de.velospot.core.analysis.RideMarkerType
 import de.velospot.core.map.RideSpeedSegments
+import de.velospot.core.format.formatRideSpeed
 import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.RecordedRide
 import de.velospot.feature.map.presentation.mapStyleUrl
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
+import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
 import de.velospot.feature.map.presentation.markers.drawableToBitmap
+import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
 import de.velospot.feature.map.presentation.markers.updateTrackLayer
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.rememberMapViewWithLifecycle
@@ -65,12 +68,10 @@ import kotlin.math.roundToInt
 // MapView + Style instance, independent of the main map's layers).
 private const val SRC_MARKERS = "vs-analysis-markers-source"
 private const val LYR_MARKERS = "vs-analysis-markers-layer"
-private const val LYR_MARKER_LABELS = "vs-analysis-marker-labels-layer"
 private const val SRC_REPLAY = "vs-analysis-replay-source"
 private const val LYR_REPLAY = "vs-analysis-replay-layer"
 private const val PROP_COLOR = "markerColor"
 private const val PROP_RADIUS = "markerRadius"
-private const val PROP_LABEL = "markerLabel"
 private const val PROP_FRAME = "frameImage"
 private const val PROP_BEARING = "bearing"
 
@@ -196,6 +197,7 @@ fun RideReplayMap(
                     updateTrackLayer(loaded, ride.points.map { it.latitude to it.longitude }, 0x2962FF)
                 }
                 addRideMarkers(loaded, mapData.markers)
+                addTopSpeedBubble(loaded, mapData.markers, maxSpeedMps)
                 registerCyclistFrames(loaded, context)
                 addReplayCyclist(loaded)
                 fitCameraToTrack(map, mapData.track)
@@ -264,13 +266,15 @@ private fun markerRadius(type: RideMarkerType): Float = when (type) {
     RideMarkerType.STOP -> 6f
 }
 
-/** Adds the marker circles (data-driven colour/size) and km-number labels. */
+/** Adds the marker circles (data-driven colour/size) for start, finish & stops. */
 private fun addRideMarkers(style: Style, markers: List<RideMarker>) {
-    val features = markers.map { m ->
+    // The top-speed marker is drawn as its own speech bubble (see
+    // addTopSpeedBubble); only the plain dots are rendered here.
+    val dots = markers.filter { it.type != RideMarkerType.TOP_SPEED }
+    val features = dots.map { m ->
         Feature.fromGeometry(Point.fromLngLat(m.point.longitude, m.point.latitude)).apply {
             addStringProperty(PROP_COLOR, markerColor(m.type))
             addNumberProperty(PROP_RADIUS, markerRadius(m.type))
-            m.label?.let { addStringProperty(PROP_LABEL, it) }
         }
     }
     (style.getSource(SRC_MARKERS) as? GeoJsonSource)?.setGeoJson(FeatureCollection.fromFeatures(features))
@@ -286,19 +290,18 @@ private fun addRideMarkers(style: Style, markers: List<RideMarker>) {
             )
         )
     }
-    if (style.getLayer(LYR_MARKER_LABELS) == null) {
-        style.addLayer(
-            SymbolLayer(LYR_MARKER_LABELS, SRC_MARKERS).withProperties(
-                PropertyFactory.textField(Expression.get(PROP_LABEL)),
-                PropertyFactory.textFont(arrayOf("Noto Sans Bold")),
-                PropertyFactory.textSize(11f),
-                PropertyFactory.textColor("#FFFFFF"),
-                PropertyFactory.textAllowOverlap(true),
-                PropertyFactory.textIgnorePlacement(true),
-                PropertyFactory.textAnchor(Property.TEXT_ANCHOR_CENTER)
-            )
-        )
-    }
+}
+
+/**
+ * Draws the **top-speed** marker as a clean red speech bubble carrying the peak
+ * speed — the exact same look as the "max speed" pin on the main map (reusing
+ * `createSpeedBubbleIcon` + `updateMaxSpeedMarker`).
+ */
+private fun addTopSpeedBubble(style: Style, markers: List<RideMarker>, maxSpeedMps: Double) {
+    val top = markers.firstOrNull { it.type == RideMarkerType.TOP_SPEED } ?: return
+    if (maxSpeedMps <= 0.0) return
+    val icon = createSpeedBubbleIcon(formatRideSpeed(maxSpeedMps))
+    updateMaxSpeedMarker(style, top.point.latitude to top.point.longitude, icon)
 }
 
 /**

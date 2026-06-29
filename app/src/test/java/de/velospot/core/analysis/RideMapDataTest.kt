@@ -56,12 +56,15 @@ class RideMapDataTest {
     }
 
     @Test
-    fun `kilometre markers are produced for a multi-kilometre ride`() {
-        // ~2.2 km → at least two km markers, labelled 1, 2, …
+    fun `no kilometre markers are placed on the map`() {
         val data = buildRideMapData(straightRide(400))
-        val kms = data.markers.filter { it.type == RideMarkerType.KILOMETRE }
-        assertTrue("expected ≥ 2 km markers, got ${kms.size}", kms.size >= 2)
-        assertEquals("1", kms.first().label)
+        assertTrue(data.markers.none { it.type == RideMarkerType.KILOMETRE })
+    }
+
+    @Test
+    fun `a top-speed marker is placed when the ride has a peak speed`() {
+        val data = buildRideMapData(straightRide(100))
+        assertTrue(data.markers.any { it.type == RideMarkerType.TOP_SPEED })
     }
 
     @Test

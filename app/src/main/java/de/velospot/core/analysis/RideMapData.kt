@@ -35,7 +35,6 @@ data class RideMapData(
     val replayFrames: List<GeoPoint>
 )
 
-private const val SPLIT_METERS = 1_000.0
 private const val STOP_SPEED_MPS = 0.7
 private const val MIN_STOP_SECONDS = 5L
 private const val MAX_GAP_MILLIS = 60_000L
@@ -53,7 +52,6 @@ fun buildRideMapData(ride: RecordedRide, replayFrameCount: Int = 600): RideMapDa
     val markers = ArrayList<RideMarker>()
     markers += RideMarker(track.first(), RideMarkerType.START)
     markers += RideMarker(track.last(), RideMarkerType.FINISH)
-    markers += buildKmMarkers(pts)
     RideMaxSpeedPoint.find(ride)?.let {
         markers += RideMarker(GeoPoint(it.latitude, it.longitude), RideMarkerType.TOP_SPEED)
     }
@@ -62,31 +60,6 @@ fun buildRideMapData(ride: RecordedRide, replayFrameCount: Int = 600): RideMapDa
     return RideMapData(track, markers, buildReplayFrames(pts, replayFrameCount))
 }
 
-/** A marker at each whole-kilometre point, interpolated along the track. */
-private fun buildKmMarkers(pts: List<TrackPoint>): List<RideMarker> {
-    val out = ArrayList<RideMarker>()
-    var cumulative = 0.0
-    var nextKm = SPLIT_METERS
-    for (i in 1 until pts.size) {
-        val a = pts[i - 1]
-        val b = pts[i]
-        val seg = GeoMath.distanceMeters(a.latitude, a.longitude, b.latitude, b.longitude)
-        while (cumulative + seg >= nextKm) {
-            val f = if (seg > 0) (nextKm - cumulative) / seg else 0.0
-            out += RideMarker(
-                point = GeoPoint(
-                    latitude = GeoMath.lerp(a.latitude, b.latitude, f),
-                    longitude = GeoMath.lerp(a.longitude, b.longitude, f)
-                ),
-                type = RideMarkerType.KILOMETRE,
-                label = (nextKm / SPLIT_METERS).toInt().toString()
-            )
-            nextKm += SPLIT_METERS
-        }
-        cumulative += seg
-    }
-    return out
-}
 
 /** A marker at the midpoint of every sustained standstill on the ride. */
 private fun buildStopMarkers(pts: List<TrackPoint>): List<RideMarker> {
