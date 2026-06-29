@@ -1,5 +1,7 @@
 package de.velospot.feature.analysis.presentation
 
+import android.annotation.SuppressLint
+import android.view.MotionEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,7 +16,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +28,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -37,8 +38,11 @@ import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.RideMarker
 import de.velospot.core.analysis.RideMarkerType
 import de.velospot.core.map.RideSpeedSegments
+import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.RecordedRide
 import de.velospot.feature.map.presentation.mapStyleUrl
+import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
+import de.velospot.feature.map.presentation.markers.drawableToBitmap
 import de.velospot.feature.map.presentation.markers.updateTrackLayer
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.rememberMapViewWithLifecycle
@@ -67,9 +71,22 @@ private const val LYR_REPLAY = "vs-analysis-replay-layer"
 private const val PROP_COLOR = "markerColor"
 private const val PROP_RADIUS = "markerRadius"
 private const val PROP_LABEL = "markerLabel"
+private const val PROP_FRAME = "frameImage"
+private const val PROP_BEARING = "bearing"
 
 /** Wall-clock duration of one full replay pass, in milliseconds. */
 private const val REPLAY_DURATION_MS = 14_000f
+
+/** Number of pedalling frames rendered for the riding cyclist avatar. */
+private const val PEDAL_FRAME_COUNT = 8
+/** Ground distance (m) over which the legs complete one full pedal cycle. */
+private const val PEDAL_CYCLE_METERS = 6.0
+/** Below this per-frame movement (m) the rider is treated as standing still. */
+private const val MOVING_EPSILON_METERS = 0.3
+
+private fun cyclistFrameImageId(i: Int) = "vs-replay-cyclist-$i"
+private fun cyclistIdleImageId() = "vs-replay-cyclist-idle"
+
 
 /**
  * An embedded, interactive map for the ride analysis screen: the ride's track
@@ -78,6 +95,7 @@ private const val REPLAY_DURATION_MS = 14_000f
  * (time-based, so it pauses where you stopped). Controlled by a play/restart
  * button and a scrub slider.
  */
+@SuppressLint("ClickableViewAccessibility")
 @Composable
 fun RideReplayMap(
     ride: RecordedRide,
@@ -86,12 +104,26 @@ fun RideReplayMap(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val mapView = rememberMapViewWithLifecycle(enabled = true)
     var progress by remember { mutableFloatStateOf(0f) }
     var isPlaying by remember { mutableStateOf(false) }
     var style by remember { mutableStateOf<Style?>(null) }
+    var lastBearing by remember { mutableFloatStateOf(0f) }
 
     val segments = remember(ride.id) { RideSpeedSegments.build(ride.points) }
+    // Cumulative ground distance at each replay frame, so the pedalling cadence
+    // tracks distance covered (and freezes when the dot is paused at a stop).
+    val frameCumDist = remember(mapData) {
+        val f = mapData.replayFrames
+        DoubleArray(f.size).also { arr ->
+            for (i in 1 until f.size) {
+                arr[i] = arr[i - 1] + GeoMath.distanceMeters(
+                    f[i - 1].latitude, f[i - 1].longitude, f[i].latitude, f[i].longitude
+                )
+            }
+        }
+    }
 
     Column(modifier) {
         Box(
@@ -101,8 +133,26 @@ fun RideReplayMap(
                 .clip(RoundedCornerShape(16.dp))
         ) {
             if (mapView != null) {
+                val mv = mapView
                 AndroidView(
-                    factory = { mapView },
+                    factory = {
+                        // Let the map handle its own pan/zoom even though it lives
+                        // inside a vertical scroll: on touch-down ask the Compose
+                        // parent to stop intercepting the gesture (otherwise the
+                        // page scroll steals every drag and the map feels dead).
+                        mv.setOnTouchListener { v, event ->
+                            when (event.actionMasked) {
+                                MotionEvent.ACTION_DOWN,
+                                MotionEvent.ACTION_MOVE ->
+                                    v.parent?.requestDisallowInterceptTouchEvent(true)
+                                MotionEvent.ACTION_UP,
+                                MotionEvent.ACTION_CANCEL ->
+                                    v.parent?.requestDisallowInterceptTouchEvent(false)
+                            }
+                            false // never consume — the map still processes the event
+                        }
+                        mv
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -139,14 +189,15 @@ fun RideReplayMap(
         val mv = mapView ?: return@LaunchedEffect
         mv.getMapAsync { map ->
             map.setStyle(mapStyleUrl(isDarkTheme)) { loaded ->
-                val speedColoured = segments.any { it.speedMps > 0.0 } && ride.maxSpeedMps > 0.0
+                val speedColoured = segments.any { it.speedMps > 0.0 } && maxSpeedMps > 0.0
                 if (speedColoured) {
-                    updateTrackSpeedLayer(loaded, segments, ride.maxSpeedMps, visible = true)
+                    updateTrackSpeedLayer(loaded, segments, maxSpeedMps, visible = true)
                 } else {
                     updateTrackLayer(loaded, ride.points.map { it.latitude to it.longitude }, 0x2962FF)
                 }
                 addRideMarkers(loaded, mapData.markers)
-                addReplayDot(loaded)
+                registerCyclistFrames(loaded, context)
+                addReplayCyclist(loaded)
                 fitCameraToTrack(map, mapData.track)
                 style = loaded
             }
@@ -166,15 +217,34 @@ fun RideReplayMap(
         }
     }
 
-    // Move the replay dot whenever the progress (or the loaded style) changes.
+    // Move + animate the riding cyclist whenever progress (or the style) changes.
     LaunchedEffect(progress, style) {
         val s = style ?: return@LaunchedEffect
         val frames = mapData.replayFrames
         if (frames.isEmpty()) return@LaunchedEffect
         val idx = (progress * (frames.size - 1)).roundToInt().coerceIn(0, frames.size - 1)
-        val p = frames[idx]
+        val cur = frames[idx]
+        val prev = frames[(idx - 1).coerceAtLeast(0)]
+        val moved = GeoMath.distanceMeters(prev.latitude, prev.longitude, cur.latitude, cur.longitude)
+
+        val image: String
+        if (moved > MOVING_EPSILON_METERS) {
+            lastBearing = GeoMath.bearingDegrees(
+                prev.latitude, prev.longitude, cur.latitude, cur.longitude
+            ).toFloat()
+            val cycle = (frameCumDist[idx] / PEDAL_CYCLE_METERS) * PEDAL_FRAME_COUNT
+            val frameNo = ((cycle.toInt() % PEDAL_FRAME_COUNT) + PEDAL_FRAME_COUNT) % PEDAL_FRAME_COUNT
+            image = cyclistFrameImageId(frameNo)
+        } else {
+            // Standing still (start or a stop) → foot-down idle pose.
+            image = cyclistIdleImageId()
+        }
+
         (s.getSource(SRC_REPLAY) as? GeoJsonSource)?.setGeoJson(
-            Feature.fromGeometry(Point.fromLngLat(p.longitude, p.latitude))
+            Feature.fromGeometry(Point.fromLngLat(cur.longitude, cur.latitude)).apply {
+                addStringProperty(PROP_FRAME, image)
+                addNumberProperty(PROP_BEARING, lastBearing.toDouble())
+            }
         )
     }
 }
@@ -231,18 +301,45 @@ private fun addRideMarkers(style: Style, markers: List<RideMarker>) {
     }
 }
 
-/** Registers the (initially empty) animated replay dot on top of everything. */
-private fun addReplayDot(style: Style) {
+/**
+ * Renders and registers the riding cyclist avatar frames: [PEDAL_FRAME_COUNT]
+ * pedalling poses (cycled by distance to fake the legs turning) plus a foot-down
+ * idle pose shown while standing still. Reuses the app's `createLocationMarkerIcon`
+ * so the replay rider matches the live map avatar.
+ */
+private fun registerCyclistFrames(style: Style, context: android.content.Context) {
+    for (i in 0 until PEDAL_FRAME_COUNT) {
+        val drawable = createLocationMarkerIcon(
+            context = context,
+            isNavigationActive = false,
+            pedalPhase = i.toFloat() / PEDAL_FRAME_COUNT,
+            idle = false
+        )
+        style.addImage(cyclistFrameImageId(i), drawableToBitmap(drawable))
+    }
+    val idle = createLocationMarkerIcon(context, isNavigationActive = false, idle = true)
+    style.addImage(cyclistIdleImageId(), drawableToBitmap(idle))
+}
+
+/**
+ * Registers the (initially empty) animated replay marker on top of everything:
+ * the cyclist avatar, its frame chosen per-feature ([PROP_FRAME]) and rotated to
+ * the travel heading ([PROP_BEARING]) so it heads along the track.
+ */
+private fun addReplayCyclist(style: Style) {
     if (style.getSource(SRC_REPLAY) == null) {
         style.addSource(GeoJsonSource(SRC_REPLAY, FeatureCollection.fromFeatures(emptyList())))
     }
     if (style.getLayer(LYR_REPLAY) == null) {
         style.addLayer(
-            CircleLayer(LYR_REPLAY, SRC_REPLAY).withProperties(
-                PropertyFactory.circleRadius(8f),
-                PropertyFactory.circleColor("#2962FF"),
-                PropertyFactory.circleStrokeColor("#FFFFFF"),
-                PropertyFactory.circleStrokeWidth(3f)
+            SymbolLayer(LYR_REPLAY, SRC_REPLAY).withProperties(
+                PropertyFactory.iconImage(Expression.get(PROP_FRAME)),
+                PropertyFactory.iconRotate(Expression.get(PROP_BEARING)),
+                PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
+                PropertyFactory.iconSize(0.5f),
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconIgnorePlacement(true),
+                PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER)
             )
         )
     }
