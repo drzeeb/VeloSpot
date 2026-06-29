@@ -267,6 +267,13 @@
     <string name="ride_detail_drag_hint">Erof zéien • d\'Kaart bleift benotzbar</string>
     <string name="ride_speed_chart_title">Vitesse iwwer Zäit</string>
     <string name="ride_elevation_chart_title">Héichtprofil</string>
+    <!-- Detailed ride analysis screen -->
+    <string name="ride_open_analysis">Detailanalyse opmaachen</string>
+    <string name="ride_analysis_title">Tour-Analyse</string>
+    <string name="ride_analysis_back">Zréck</string>
+    <string name="ride_analysis_stopped">Stëllstandzäit</string>
+    <string name="ride_analysis_splits">Kilometer-Splits</string>
+    <string name="ride_analysis_speed_distribution">Geschwindegkeetsverdeelung</string>
     <string name="ride_option_max_speed_bubble">Maximalvitesse-Bubble weisen</string>
     <string name="ride_option_color_by_speed">Streck no Vitesse afierwen</string>
     <string name="ride_delete">Tour läschen</string>

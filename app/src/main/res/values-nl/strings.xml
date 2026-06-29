@@ -267,6 +267,13 @@
     <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>
     <string name="ride_speed_chart_title">Snelheid over tijd</string>
     <string name="ride_elevation_chart_title">Hoogteprofiel</string>
+    <!-- Detailed ride analysis screen -->
+    <string name="ride_open_analysis">Gedetailleerde analyse openen</string>
+    <string name="ride_analysis_title">Ritanalyse</string>
+    <string name="ride_analysis_back">Terug</string>
+    <string name="ride_analysis_stopped">Stilstaande tijd</string>
+    <string name="ride_analysis_splits">Kilometertijden</string>
+    <string name="ride_analysis_speed_distribution">Snelheidsverdeling</string>
     <string name="ride_option_max_speed_bubble">Maximumsnelheid-ballon tonen</string>
     <string name="ride_option_color_by_speed">Route kleuren op snelheid</string>
     <string name="ride_delete">Rit verwijderen</string>

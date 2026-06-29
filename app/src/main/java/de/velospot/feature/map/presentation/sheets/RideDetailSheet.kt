@@ -29,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -89,7 +90,8 @@ internal fun RideDetailSheet(
     onDismiss: () -> Unit,
     onDelete: (String) -> Unit,
     onRename: (String, String?) -> Unit,
-    onSetArchived: (String, Boolean) -> Unit
+    onSetArchived: (String, Boolean) -> Unit,
+    onOpenAnalysis: (String) -> Unit = {}
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -327,6 +329,21 @@ internal fun RideDetailSheet(
                     )
 
                     Spacer(Modifier.height(16.dp))
+
+                    // ── Open the full-screen, in-depth ride analysis ─────────
+                    Button(
+                        onClick = { onOpenAnalysis(ride.id) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                            contentDescription = null
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(text = stringResource(R.string.ride_open_analysis))
+                    }
+
+                    Spacer(Modifier.height(8.dp))
 
                     // ── Share as a "VeloSpot Wrapped" card ───────────────────
                     Button(

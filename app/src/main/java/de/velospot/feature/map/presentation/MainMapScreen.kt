@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -100,6 +101,7 @@ private const val SPLASH_REVEAL_MS = 1150L
 fun MainMapScreen(
     isDarkTheme: Boolean = false,
     onDarkThemeToggle: () -> Unit = {},
+    onOpenRideAnalysis: (String) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -225,7 +227,9 @@ fun MainMapScreen(
     // is free again: the splash then plays its cool "GPS-lock" reveal animation for a
     // fixed beat and fades/scales away to the live map.
     val mapReady = styleVersion > 0
-    var showSplash by remember { mutableStateOf(true) }
+    // Saveable so the splash doesn't replay when returning from another screen
+    // (e.g. the ride analysis): the map destination's state survives on the back stack.
+    var showSplash by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(mapReady) {
         if (mapReady) {
             delay(SPLASH_REVEAL_MS)   // let the smooth reveal animation play out
@@ -795,7 +799,8 @@ fun MainMapScreen(
                 },
                 onDelete  = { id -> viewModel.deleteRecordedRide(id) },
                 onRename  = { id, name -> viewModel.renameRecordedRide(id, name) },
-                onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) }
+                onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) },
+                onOpenAnalysis = onOpenRideAnalysis
             )
         }
 

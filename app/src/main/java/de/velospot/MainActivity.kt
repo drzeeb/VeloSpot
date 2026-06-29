@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.core.locale.LanguagePreferences
 import de.velospot.core.theme.DarkModePreferences
-import de.velospot.feature.map.presentation.MainMapScreen
+import de.velospot.ui.navigation.VeloSpotNavHost
 import de.velospot.ui.theme.VeloSpotTheme
 
 @AndroidEntryPoint
@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
 
             VeloSpotTheme(darkTheme = darkThemeEnabled) {
                 Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
-                    MainMapScreen(
+                    VeloSpotNavHost(
                         isDarkTheme = darkThemeEnabled,
                         onDarkThemeToggle = {
                             darkThemeEnabled = !darkThemeEnabled
