@@ -33,3 +33,8 @@ keystore.properties
 
 # Kotlin compiler artifacts
 .kotlin/
+
+# Generated Play Store marketing assets (regenerated on demand via the scripts
+# inside the folder) — keep the large rasterised PNG/JPG out of version control.
+/playstore
+

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Refreshed and expanded the screenshot galleries** — the website preview gallery (`docs/index.html`), the README screenshot grid and the Google Play phone screenshots (`fastlane/metadata/android/{de-DE,en-US}/images/phoneScreenshots`) now show updated captures plus **five new screens**: the **2D / 3D map view**, **bike routing profiles**, the **round-trip generator**, **ride tracking** and the **settings** screen.
+
+### Build
+- The locally-generated Play Store marketing assets directory (`playstore/`) is now **git-ignored** so large rasterised icons / feature graphics stay out of version control.
+
 ## [v1.0.24] - 2026-06-28
 
 ### Added
