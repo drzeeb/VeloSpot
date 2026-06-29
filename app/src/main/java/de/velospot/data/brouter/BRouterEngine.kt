@@ -115,7 +115,7 @@ class BRouterEngine(
             // (BRouter otherwise connects the start to the nearest network node, which
             // can sit *behind* the rider, and routes out-and-back).
             val gpsStartDir: Int? = from.bearing?.let { ((it.toInt() % 360) + 360) % 360 }
-            var points = runBrouterWithStartWayFallback(profilePath, from, to, gpsStartDir, elevation)
+            var route = runBrouterWithStartWayFallback(profilePath, from, to, gpsStartDir, elevation)
 
             // Standstill start (no GPS heading): if the route still opens with a
             // reversal, recompute once telling BRouter the route's own forward
@@ -125,15 +125,15 @@ class BRouterEngine(
             // Skip this on long routes: the second pass recomputes the *entire* route,
             // which is very expensive on 100 km+ trips, while the start spur is
             // negligible relative to the total distance — not worth doubling the work.
-            if (gpsStartDir == null && haversineDistanceMeters(points) <= START_UTURN_MAX_ROUTE_M) {
-                startUTurnForwardDir(points, to)?.let { forwardDir ->
+            if (gpsStartDir == null && haversineDistanceMeters(route.points) <= START_UTURN_MAX_ROUTE_M) {
+                startUTurnForwardDir(route.points, to)?.let { forwardDir ->
                     // The second pass forces a start direction, which BRouter may not be
                     // able to satisfy (one-way nets, dead-ends). If it can't find a route
                     // it returns an empty/absent track — don't let that discard the valid
                     // first-pass result and fail the whole request ("route data
                     // incomplete"); only adopt the recomputed route when it succeeded.
                     runCatching { runBrouter(profilePath, from, to, forwardDir, elevation) }
-                        .onSuccess { recomputed -> if (recomputed.isNotEmpty()) points = recomputed }
+                        .onSuccess { recomputed -> if (recomputed.points.isNotEmpty()) route = recomputed }
                         .onFailure { e ->
                             if (e is CancellationException) throw e
                             Log.w(TAG, "Start-U-turn second pass failed; keeping first-pass route", e)
@@ -141,7 +141,7 @@ class BRouterEngine(
                 }
             }
 
-            bikeRouteFrom(points, profile)
+            bikeRouteFrom(route, profile)
         } catch (e: CancellationException)      { throw e }
         catch (e: NoRouteFoundException)        { throw e }
         catch (e: EmptyRouteGeometryException)  { throw e }
@@ -322,7 +322,7 @@ class BRouterEngine(
         to: GeoCoordinate,
         startDir: Int?,
         elevation: ElevationPreference
-    ): List<RoutePoint> = try {
+    ): DecodedTrack = try {
         runBrouter(profilePath, from, to, startDir, elevation)
     } catch (e: NoRouteFoundException) {
         Log.w(TAG, "No route on first pass; retrying without the start-way guard", e)
@@ -336,7 +336,8 @@ class BRouterEngine(
      * Runs one BRouter calculation from [from] to [to] with an optional
      * [startDir] (compass degrees) hint. Fresh waypoint nodes are created per call
      * because BRouter mutates their matching state, so they must not be reused
-     * across the two passes. Returns the decoded route points.
+     * across the two passes. Returns the decoded route (geometry + BRouter's own
+     * physics-based travel time and energy).
      */
     private suspend fun runBrouter(
         profilePath: String,
@@ -345,7 +346,7 @@ class BRouterEngine(
         startDir: Int?,
         elevation: ElevationPreference,
         allowStartOnAnyWay: Boolean = false
-    ): List<RoutePoint> {
+    ): DecodedTrack {
         val rc = RoutingContext().apply {
             localFunction = profilePath          // path to .brf WITHOUT extension
             memoryclass = nodesCacheMemoryMb     // bigger node cache → fewer disk reloads
@@ -400,13 +401,16 @@ class BRouterEngine(
     }
 
     /**
-     * Decodes BRouter's [OsmTrack] nodes into [RoutePoint]s (lat/lon + terrain
-     * elevation). Shared by the point-to-point and round-trip passes.
+     * Decodes BRouter's [OsmTrack] into a [DecodedTrack]: the geometry nodes
+     * ([RoutePoint]s with terrain elevation) plus the track-level figures BRouter's
+     * kinematic model produced — the total travel time ([OsmTrack.getTotalSeconds])
+     * and the mechanical energy ([OsmTrack.energy], Joules). Shared by the
+     * point-to-point and round-trip passes.
      *
      * @throws NoRouteFoundException when no track was produced.
      * @throws EmptyRouteGeometryException when the track carries no nodes.
      */
-    private fun decodeTrack(track: OsmTrack?): List<RoutePoint> {
+    private fun decodeTrack(track: OsmTrack?): DecodedTrack {
         if (BuildConfig.DEBUG) Log.d(TAG, "foundTrack = $track  nodes=${track?.nodes?.size}")
         if (track == null) throw NoRouteFoundException()
         val nodes = track.nodes
@@ -415,27 +419,60 @@ class BRouterEngine(
         // private coordinate fields + `getElev()` accessor ONCE for the track instead
         // of reflecting per node (a long route has thousands of nodes).
         val accessor = nodeAccessorFor(nodes.first())
-        return nodes.map { node ->
+        val points = nodes.map { node ->
             RoutePoint(
                 latitude  = accessor.ilat.getInt(node) / 1_000_000.0 - 90.0,
                 longitude = accessor.ilon.getInt(node) / 1_000_000.0 - 180.0,
                 elevationMeters = accessor.elevMetersOrNull(node)
             )
         }
+        // `energy` and `getTotalSeconds()` are public on OsmTrack — read directly
+        // (no reflection). They are only meaningful when the profile drives BRouter's
+        // kinematic model (all bundled `.brf`s set totalMass/bikerPower/maxSpeed), so
+        // we treat non-positive values as "unavailable" in [bikeRouteFrom].
+        return DecodedTrack(
+            points = points,
+            totalSeconds = track.getTotalSeconds(),
+            energyJoules = track.energy.toDouble()
+        )
     }
+
+    /**
+     * One decoded BRouter result: the route geometry plus the track-level figures
+     * from BRouter's kinematic model (travel time and mechanical energy).
+     */
+    private class DecodedTrack(
+        val points: List<RoutePoint>,
+        /** BRouter's physics-based total travel time in seconds (0 when unavailable). */
+        val totalSeconds: Int,
+        /** Mechanical work for the whole route in Joules (0 when unavailable). */
+        val energyJoules: Double
+    )
 
     /** Absolute path to a profile's `.brf` file in internal storage. */
     private fun profilePathFor(profile: BRouterProfile): String =
         File(profilesDir, "${profile.fileName}.brf").absolutePath
 
-    /** Wraps decoded [points] into a [BikeRoute], deriving distance + ETA from [profile]. */
-    private fun bikeRouteFrom(points: List<RoutePoint>, profile: BRouterProfile): BikeRoute {
-        val distanceMeters = haversineDistanceMeters(points)
+    /**
+     * Wraps a [decoded] BRouter result into a [BikeRoute]. The ETA prefers BRouter's
+     * own kinematic travel time (which accounts for rider+bike mass, power, drag,
+     * rolling resistance and the climb profile) and only falls back to the flat
+     * per-profile speed when BRouter produced no time. The mechanical energy is
+     * carried through for the calorie estimate.
+     */
+    private fun bikeRouteFrom(decoded: DecodedTrack, profile: BRouterProfile): BikeRoute {
+        val distanceMeters = haversineDistanceMeters(decoded.points)
+        val durationSeconds = if (decoded.totalSeconds > 0) {
+            decoded.totalSeconds.toDouble()
+        } else {
+            distanceMeters / profile.typicalSpeedMs
+        }
         return BikeRoute(
-            points          = points,
+            points          = decoded.points,
             distanceMeters  = distanceMeters,
-            durationSeconds = distanceMeters / profile.typicalSpeedMs,
-            source          = RoutingSource.BROUTER_OFFLINE
+            durationSeconds = durationSeconds,
+            source          = RoutingSource.BROUTER_OFFLINE,
+            energyJoules    = decoded.energyJoules.takeIf { it > 0.0 }
         )
     }
 

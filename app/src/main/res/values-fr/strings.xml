@@ -77,6 +77,7 @@
     <string name="elevation_level_flattest">Le plus plat</string>
     <string name="common_cancel">Annuler</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
+    <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>
     <string name="duration_hours">%1$d h</string>
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
