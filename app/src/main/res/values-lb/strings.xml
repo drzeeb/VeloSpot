@@ -282,6 +282,9 @@
     <string name="ride_analysis_moving_share">Ënnerwee vs. gestoppt</string>
     <string name="ride_analysis_track_quality">Trackqualitéit</string>
     <string name="ride_analysis_track_quality_summary">%1$d GPS-Punkten · ~%2$d m Genauegkeet · %3$d%% ongenau</string>
+    <string name="ride_analysis_map">Kaart &amp; Replay</string>
+    <string name="ride_replay_play">Replay ofspillen</string>
+    <string name="ride_replay_pause">Replay nei starten</string>
     <string name="ride_option_max_speed_bubble">Maximalvitesse-Bubble weisen</string>
     <string name="ride_option_color_by_speed">Streck no Vitesse afierwen</string>
     <string name="ride_delete">Tour läschen</string>

@@ -51,6 +51,7 @@ import de.velospot.core.analysis.ClimbCategory
 import de.velospot.core.analysis.GradientBin
 import de.velospot.core.analysis.KmSplit
 import de.velospot.core.analysis.RideAnalysis
+import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.SpeedBin
 import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
@@ -71,6 +72,7 @@ import kotlin.math.roundToInt
 @Composable
 fun RideAnalysisScreen(
     onBack: () -> Unit,
+    isDarkTheme: Boolean = false,
     viewModel: RideAnalysisViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -112,6 +114,8 @@ fun RideAnalysisScreen(
             is RideAnalysisUiState.Ready -> RideAnalysisContent(
                 ride = s.ride,
                 analysis = s.analysis,
+                mapData = s.mapData,
+                isDarkTheme = isDarkTheme,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
@@ -125,6 +129,8 @@ fun RideAnalysisScreen(
 private fun RideAnalysisContent(
     ride: RecordedRide,
     analysis: RideAnalysis,
+    mapData: RideMapData,
+    isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -146,6 +152,18 @@ private fun RideAnalysisContent(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        // ── Map with speed-coloured track, markers & animated replay ─────────
+        if (mapData.track.size >= 2) {
+            SectionTitle(stringResource(R.string.ride_analysis_map))
+            RideReplayMap(
+                ride = ride,
+                mapData = mapData,
+                maxSpeedMps = analysis.maxSpeedMps,
+                isDarkTheme = isDarkTheme,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 

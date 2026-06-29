@@ -45,7 +45,10 @@ fun VeloSpotNavHost(
                 navArgument(RideAnalysisViewModel.ARG_RIDE_ID) { type = NavType.StringType }
             )
         ) {
-            RideAnalysisScreen(onBack = { navController.popBackStack() })
+            RideAnalysisScreen(
+                onBack = { navController.popBackStack() },
+                isDarkTheme = isDarkTheme
+            )
         }
     }
 }
