@@ -3,6 +3,7 @@ package de.velospot.core.analysis
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -86,5 +87,39 @@ class RideAnalysisTest {
     fun `calories are positive for a real ride`() {
         val a = analyzeRide(straightRide(400))
         assertTrue(a.caloriesKcal > 0)
+    }
+
+    @Test
+    fun `average power is positive for a real ride`() {
+        val a = analyzeRide(straightRide(400))
+        assertTrue("expected positive power, was ${a.avgPowerWatts}", a.avgPowerWatts > 0)
+    }
+
+    @Test
+    fun `track quality reflects the fixes' accuracy`() {
+        val a = analyzeRide(straightRide(50))
+        assertEquals(5.0, a.trackQuality.avgAccuracyMeters!!, 0.001)
+        assertEquals(0.0, a.trackQuality.poorFixFraction, 0.001)
+        assertEquals(50, a.trackQuality.pointCount)
+    }
+
+    @Test
+    fun `a sustained ascent is detected and categorised`() {
+        // straightRide climbs 1 m every ~5.57 m → a long, real climb.
+        val a = analyzeRide(straightRide(400))
+        assertTrue("expected at least one climb", a.climbs.isNotEmpty())
+        val climb = a.climbs.first()
+        assertTrue("ascent should be substantial, was ${climb.ascentMeters}", climb.ascentMeters > 50.0)
+        assertNotEquals(ClimbCategory.UNCATEGORIZED, climb.category)
+        assertTrue("avg gradient should be positive", climb.avgGradientPercent > 0.0)
+        assertTrue("VAM should be positive", climb.vamMetersPerHour > 0.0)
+    }
+
+    @Test
+    fun `gradient histogram puts a climbing ride in the uphill bands`() {
+        val a = analyzeRide(straightRide(400))
+        val uphillMeters = a.gradientHistogram.filter { it.fromPercent >= 2 }.sumOf { it.meters }
+        val downhillMeters = a.gradientHistogram.filter { it.toPercent <= -2 }.sumOf { it.meters }
+        assertTrue("uphill distance should dominate", uphillMeters > downhillMeters)
     }
 }
