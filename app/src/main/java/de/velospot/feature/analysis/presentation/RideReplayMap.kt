@@ -42,7 +42,8 @@ import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.RecordedRide
 import de.velospot.feature.map.presentation.mapStyleUrl
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
-import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
+import de.velospot.feature.map.presentation.markers.createAnalysisBubbleIcon
+import de.velospot.feature.map.presentation.markers.RideBubbleGlyph
 import de.velospot.feature.map.presentation.markers.drawableToBitmap
 import de.velospot.feature.map.presentation.markers.updateTrackLayer
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
@@ -267,6 +268,14 @@ private fun bubbleColor(type: RideMarkerType): Int = when (type) {
     else -> 0xFFE53935.toInt()
 }
 
+/** Pictograph identifying what each value bubble means. */
+private fun bubbleGlyph(type: RideMarkerType): RideBubbleGlyph = when (type) {
+    RideMarkerType.MAX_GRADIENT -> RideBubbleGlyph.GRADIENT
+    RideMarkerType.HIGH_POINT -> RideBubbleGlyph.PEAK
+    RideMarkerType.STOP -> RideBubbleGlyph.PAUSE
+    else -> RideBubbleGlyph.SPEED
+}
+
 /** Adds the plain start & finish dots (value markers are bubbles, see below). */
 private fun addRideMarkers(style: Style, markers: List<RideMarker>) {
     val dots = markers.filter { it.type == RideMarkerType.START || it.type == RideMarkerType.FINISH }
@@ -302,7 +311,7 @@ private fun addValueBubbles(style: Style, markers: List<RideMarker>) {
     }
     val features = bubbles.mapIndexed { i, m ->
         val imageId = "vs-analysis-bubble-$i"
-        style.addImage(imageId, createSpeedBubbleIcon(m.label!!, fillColor = bubbleColor(m.type)))
+        style.addImage(imageId, createAnalysisBubbleIcon(m.label!!, bubbleColor(m.type), bubbleGlyph(m.type)))
         Feature.fromGeometry(Point.fromLngLat(m.point.longitude, m.point.latitude)).apply {
             addStringProperty(PROP_BUBBLE, imageId)
         }

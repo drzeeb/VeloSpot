@@ -519,6 +519,134 @@ internal fun createSpeedBubbleIcon(
     return bitmap
 }
 
+/** Identifies what an analysis value bubble means, drawn as a leading pictograph. */
+internal enum class RideBubbleGlyph { SPEED, GRADIENT, PEAK, PAUSE }
+
+/**
+ * A labelled value bubble for the **ride-analysis map**. Like [createSpeedBubbleIcon]
+ * but with two fixes for that screen: a leading white **pictograph** that says what
+ * the value means (so a bare `"128 m"` reads as a summit, not a distance), and a
+ * **dark outline** that stays crisp on the light basemap (the plain white keyline
+ * was invisible against it). The tail tip sits at the bottom-centre, so an
+ * `ICON_ANCHOR_BOTTOM` layer plants it on the GPS point.
+ */
+internal fun createAnalysisBubbleIcon(
+    label: String,
+    fillColor: Int,
+    glyph: RideBubbleGlyph,
+    textColor: Int = Color.WHITE
+): Bitmap {
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = textColor
+        textSize = 34f
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    }
+    val fm = textPaint.fontMetrics
+    val textWidth = textPaint.measureText(label)
+    val textHeight = fm.descent - fm.ascent
+
+    val glyphSize = textHeight * 0.9f
+    val glyphGap = 12f
+    val padH = 24f
+    val padV = 16f
+    val outline = 3f
+    val tailW = 22f
+    val tailH = 16f
+    val pad = 7f
+
+    val contentW = glyphSize + glyphGap + textWidth
+    val bubbleW = contentW + padH * 2
+    val bubbleH = textHeight + padV * 2
+    val width = (bubbleW + outline * 2 + pad * 2).roundToInt()
+    val height = (bubbleH + tailH + outline * 2 + pad * 2).roundToInt()
+
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val cx = width / 2f
+    val left = pad + outline
+    val top = pad + outline
+    val right = width - pad - outline
+    val bottom = top + bubbleH
+    val radius = bubbleH / 2f
+
+    val bubblePath = Path().apply {
+        addRoundRect(RectF(left, top, right, bottom), radius, radius, Path.Direction.CW)
+        moveTo(cx - tailW / 2f, bottom - 1f)
+        lineTo(cx, bottom + tailH)
+        lineTo(cx + tailW / 2f, bottom - 1f)
+        close()
+    }
+
+    // Soft drop shadow so the bubble lifts off the basemap.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x55000000
+        maskFilter = BlurMaskFilter(6f, BlurMaskFilter.Blur.NORMAL)
+    })
+    // Dark outline — crisp on a light map (unlike the white keyline).
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = "#1A1A1A".toColorInt()
+        style = Paint.Style.STROKE
+        strokeWidth = outline * 2f
+        strokeJoin = Paint.Join.ROUND
+    })
+    // Filled bubble.
+    canvas.drawPath(bubblePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = fillColor
+        style = Paint.Style.FILL
+    })
+
+    // Leading pictograph, then the value text.
+    val contentLeft = left + padH
+    val glyphCx = contentLeft + glyphSize / 2f
+    val glyphCy = (top + bottom) / 2f
+    drawBubbleGlyph(canvas, glyph, glyphCx, glyphCy, glyphSize, textColor)
+
+    val textX = contentLeft + glyphSize + glyphGap
+    val baseline = top + padV - fm.ascent
+    canvas.drawText(label, textX, baseline, textPaint)
+
+    return bitmap
+}
+
+/** Draws the small white pictograph at the left of an analysis value bubble. */
+private fun drawBubbleGlyph(
+    canvas: Canvas, glyph: RideBubbleGlyph, cx: Float, cy: Float, size: Float, color: Int
+) {
+    val s = size / 2f
+    val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        style = Paint.Style.STROKE
+        strokeWidth = size * 0.16f
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color; style = Paint.Style.FILL }
+    when (glyph) {
+        RideBubbleGlyph.PEAK -> canvas.drawPath(Path().apply {
+            // Mountain: up-pointing triangle.
+            moveTo(cx, cy - s); lineTo(cx + s, cy + s); lineTo(cx - s, cy + s); close()
+        }, fillPaint)
+        RideBubbleGlyph.GRADIENT -> canvas.drawPath(Path().apply {
+            // Ramp: right triangle rising to the right.
+            moveTo(cx - s, cy + s); lineTo(cx + s, cy + s); lineTo(cx + s, cy - s); close()
+        }, fillPaint)
+        RideBubbleGlyph.PAUSE -> {
+            // Two rounded bars (a "pause" symbol).
+            val barW = size * 0.24f
+            val gap = size * 0.16f
+            val r = barW / 2f
+            canvas.drawRoundRect(cx - gap - barW, cy - s, cx - gap, cy + s, r, r, fillPaint)
+            canvas.drawRoundRect(cx + gap, cy - s, cx + gap + barW, cy + s, r, r, fillPaint)
+        }
+        RideBubbleGlyph.SPEED -> {
+            // Gauge: a 240° arc with a needle.
+            canvas.drawArc(RectF(cx - s, cy - s, cx + s, cy + s), 150f, 240f, false, strokePaint)
+            canvas.drawLine(cx, cy, cx + s * 0.65f, cy - s * 0.5f, strokePaint)
+        }
+    }
+}
+
 /** Builds a five-pointed star [Path] centred at ([centerX], [centerY]). */
 private fun starPath(centerX: Float, centerY: Float, outerRadius: Float, innerRadius: Float): Path {
     val path = Path()
