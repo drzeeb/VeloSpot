@@ -273,6 +273,13 @@
     <string name="ride_detail_drag_hint">Nach unten ziehen • Karte bleibt bedienbar</string>
     <string name="ride_speed_chart_title">Geschwindigkeit über Zeit</string>
     <string name="ride_elevation_chart_title">Höhenprofil</string>
+    <!-- Detailed ride analysis screen -->
+    <string name="ride_open_analysis">Detailansicht öffnen</string>
+    <string name="ride_analysis_title">Fahrtanalyse</string>
+    <string name="ride_analysis_back">Zurück</string>
+    <string name="ride_analysis_stopped">Standzeit</string>
+    <string name="ride_analysis_splits">Kilometer-Splits</string>
+    <string name="ride_analysis_speed_distribution">Geschwindigkeitsverteilung</string>
     <string name="ride_option_max_speed_bubble">Höchstgeschwindigkeit anzeigen</string>
     <string name="ride_option_color_by_speed">Strecke nach Tempo einfärben</string>
     <string name="ride_delete">Fahrt löschen</string>

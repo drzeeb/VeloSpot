@@ -269,6 +269,13 @@
     <string name="ride_detail_drag_hint">Trascina verso il basso • la mappa resta interattiva</string>
     <string name="ride_speed_chart_title">Velocità nel tempo</string>
     <string name="ride_elevation_chart_title">Profilo altimetrico</string>
+    <!-- Detailed ride analysis screen -->
+    <string name="ride_open_analysis">Apri analisi dettagliata</string>
+    <string name="ride_analysis_title">Analisi del percorso</string>
+    <string name="ride_analysis_back">Indietro</string>
+    <string name="ride_analysis_stopped">Tempo da fermo</string>
+    <string name="ride_analysis_splits">Parziali al chilometro</string>
+    <string name="ride_analysis_speed_distribution">Distribuzione della velocità</string>
     <string name="ride_option_max_speed_bubble">Mostra fumetto velocità massima</string>
     <string name="ride_option_color_by_speed">Colora il percorso per velocità</string>
     <string name="ride_delete">Elimina percorso</string>
