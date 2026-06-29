@@ -135,6 +135,23 @@
     <string name="ride_replay_pause">Restart replay</string>
     <string name="ride_analysis_show_all">Show all (%1$d)</string>
     <string name="ride_analysis_show_less">Show less</string>
+    <!-- Ride achievements / badges -->
+    <string name="ach_section">Achievements</string>
+    <string name="ach_personal_record">Personal record</string>
+    <string name="ach_half_century">Half-century</string>
+    <string name="ach_century">Century</string>
+    <string name="ach_hill_climber">Hill climber</string>
+    <string name="ach_summit_seeker">Summit seeker</string>
+    <string name="ach_kom">King of the Mountain</string>
+    <string name="ach_speed_demon">Speed demon</string>
+    <string name="ach_endurance">Endurance</string>
+    <string name="ach_calorie_crusher">Calorie crusher</string>
+    <string name="ach_early_bird">Early bird</string>
+    <string name="ach_night_owl">Night owl</string>
+    <string name="ach_pr_distance">Longest ride</string>
+    <string name="ach_pr_climbing">Most climbing</string>
+    <string name="ach_pr_pace">Fastest pace</string>
+    <string name="ach_pr_top_speed">Top-speed record</string>
     <string name="ride_option_max_speed_bubble">Show max speed bubble</string>
     <string name="ride_option_color_by_speed">Colour track by speed</string>
     <string name="ride_delete">Delete ride</string>

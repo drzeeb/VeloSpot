@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
+import de.velospot.core.analysis.Achievement
 import de.velospot.core.analysis.Climb
 import de.velospot.core.analysis.ClimbCategory
 import de.velospot.core.analysis.GradientBin
@@ -119,6 +120,7 @@ fun RideAnalysisScreen(
                 ride = s.ride,
                 analysis = s.analysis,
                 mapData = s.mapData,
+                achievements = s.achievements,
                 isDarkTheme = isDarkTheme,
                 modifier = Modifier
                     .fillMaxSize()
@@ -134,6 +136,7 @@ private fun RideAnalysisContent(
     ride: RecordedRide,
     analysis: RideAnalysis,
     mapData: RideMapData,
+    achievements: List<Achievement>,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -165,6 +168,15 @@ private fun RideAnalysisContent(
                 mapData = mapData,
                 maxSpeedMps = analysis.maxSpeedMps,
                 isDarkTheme = isDarkTheme,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // ── Achievements / badges earned on this ride ────────────────────────
+        if (achievements.isNotEmpty()) {
+            SectionTitle(stringResource(R.string.ach_section))
+            AchievementsRow(
+                achievements = achievements,
                 modifier = Modifier.fillMaxWidth()
             )
         }
