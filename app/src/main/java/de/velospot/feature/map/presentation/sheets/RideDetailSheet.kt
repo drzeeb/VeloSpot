@@ -66,6 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
+import de.velospot.core.tracking.estimateRideCalories
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
 import de.velospot.feature.map.presentation.ride.RideShareDialog
@@ -285,6 +286,14 @@ internal fun RideDetailSheet(
                             value = "↓ " + formatRideElevation(ride.elevationLossMeters)
                         )
                     }
+
+                    // ── Estimated calories burned ─────────────────────────────
+                    Spacer(Modifier.height(10.dp))
+                    StatBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = stringResource(R.string.ride_stats_calories),
+                        value = "≈ %,d kcal".format(estimateRideCalories(ride))
+                    )
 
                     Spacer(Modifier.height(18.dp))
 

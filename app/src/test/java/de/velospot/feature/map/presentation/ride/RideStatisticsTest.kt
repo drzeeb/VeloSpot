@@ -1,6 +1,7 @@
 package de.velospot.feature.map.presentation.ride
 
 import de.velospot.domain.model.RecordedRide
+import de.velospot.core.tracking.estimateRideCalories
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -120,14 +121,27 @@ class RideStatisticsTest {
 
     @Test
     fun `fun facts scale with total distance`() {
-        // 10 km total → CO2 = 10 * 120 g = 1200 g; calories = 10 * 30 = 300 kcal.
-        val stats = computeRideStatistics(
-            listOf(ride("a", now - dayMs, distanceMeters = 10_000.0)),
-            now
-        )
+        // 10 km total → CO2 = 10 * 120 g = 1200 g. Calories are now a physics-based
+        // estimate (rolling + drag + climb), summed per ride, so we assert the total
+        // matches the shared estimator rather than a flat kcal/km figure.
+        val r = ride("a", now - dayMs, distanceMeters = 10_000.0)
+        val stats = computeRideStatistics(listOf(r), now)
         assertEquals(1_200.0, stats.co2SavedGrams, 0.001)
-        assertEquals(300, stats.caloriesBurned)
+        assertEquals(estimateRideCalories(r), stats.caloriesBurned)
+        assertTrue(stats.caloriesBurned > 0)
         assertTrue(stats.earthCircumferencePercent > 0.0)
+    }
+
+    @Test
+    fun `calories sum across rides and exclude mock rides`() {
+        val real1 = ride("r1", now - 2 * dayMs, distanceMeters = 8_000.0, gain = 60.0)
+        val real2 = ride("r2", now - 1 * dayMs, distanceMeters = 4_000.0, gain = 20.0)
+        val mock = ride("m", now - dayMs, distanceMeters = 9_000.0).copy(isMock = true)
+        val stats = computeRideStatistics(listOf(real1, real2, mock), now)
+        assertEquals(
+            estimateRideCalories(real1) + estimateRideCalories(real2),
+            stats.caloriesBurned
+        )
     }
 
     @Test
