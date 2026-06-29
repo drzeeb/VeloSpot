@@ -8,7 +8,6 @@ import de.velospot.core.format.formatRideSpeed
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -58,9 +57,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -69,7 +65,6 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.tracking.estimateRideCalories
 import de.velospot.domain.model.RecordedRide
-import de.velospot.domain.model.TrackPoint
 import de.velospot.feature.map.presentation.ride.RideShareDialog
 import kotlinx.coroutines.launch
 
@@ -297,36 +292,6 @@ internal fun RideDetailSheet(
                         value = "≈ %,d kcal".format(estimateRideCalories(ride))
                     )
 
-                    // ── Elevation profile (only when the ride captured altitude) ─
-                    val hasElevation = remember(ride.points) {
-                        ride.points.count { it.altitudeMeters != null } >= 2
-                    }
-                    if (hasElevation) {
-                        Spacer(Modifier.height(18.dp))
-                        Text(
-                            text = stringResource(R.string.ride_elevation_chart_title),
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        RideElevationProfile(
-                            points = ride.points,
-                            ascentMeters = ride.elevationGainMeters,
-                            descentMeters = ride.elevationLossMeters
-                        )
-                    }
-
-                    Spacer(Modifier.height(18.dp))
-
-                    // ── Speed timeline chart ─────────────────────────────────
-                    Text(
-                        text = stringResource(R.string.ride_speed_chart_title),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    SpeedChart(
-                        points = ride.points,
-                        maxSpeedMps = ride.maxSpeedMps
-                    )
 
                     Spacer(Modifier.height(16.dp))
 
@@ -463,72 +428,5 @@ private fun StatBox(label: String, value: String, modifier: Modifier = Modifier)
     }
 }
 
-/**
- * Minimal line/area chart of speed (km/h) over the ride's track samples — the
- * "timeline" the user asked for. Drawn with a plain [Canvas] so no charting
- * dependency is needed.
- */
-@Composable
-private fun SpeedChart(points: List<TrackPoint>, maxSpeedMps: Double) {
-    val lineColor = MaterialTheme.colorScheme.primary
-    val fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-    val gridColor = MaterialTheme.colorScheme.outlineVariant
-
-    val speeds = points.map { (it.speedMps ?: 0f).toDouble() }
-    val maxSpeed = maxOf(maxSpeedMps, speeds.maxOrNull() ?: 0.0, 1.0)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-        )
-    ) {
-        Box(modifier = Modifier.padding(12.dp)) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-            ) {
-                val w = size.width
-                val h = size.height
-                // Baseline grid.
-                drawLine(
-                    color = gridColor,
-                    start = Offset(0f, h),
-                    end = Offset(w, h),
-                    strokeWidth = 1.5f
-                )
-                if (speeds.size < 2) return@Canvas
-
-                val stepX = w / (speeds.size - 1)
-                fun y(v: Double) = (h - (v / maxSpeed * h)).toFloat()
-
-                val linePath = Path()
-                val fillPath = Path()
-                speeds.forEachIndexed { index, v ->
-                    val x = index * stepX
-                    val py = y(v)
-                    if (index == 0) {
-                        linePath.moveTo(x, py)
-                        fillPath.moveTo(x, h)
-                        fillPath.lineTo(x, py)
-                    } else {
-                        linePath.lineTo(x, py)
-                        fillPath.lineTo(x, py)
-                    }
-                }
-                fillPath.lineTo(w, h)
-                fillPath.close()
-
-                drawPath(path = fillPath, color = fillColor)
-                drawPath(
-                    path = linePath,
-                    color = lineColor,
-                    style = Stroke(width = 3f)
-                )
-            }
-        }
-    }
-}
 
 
