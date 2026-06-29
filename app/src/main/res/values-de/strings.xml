@@ -293,6 +293,23 @@
     <string name="ride_replay_pause">Replay neu starten</string>
     <string name="ride_analysis_show_all">Alle anzeigen (%1$d)</string>
     <string name="ride_analysis_show_less">Weniger anzeigen</string>
+    <!-- Ride achievements / badges -->
+    <string name="ach_section">Erfolge</string>
+    <string name="ach_personal_record">Persönlicher Rekord</string>
+    <string name="ach_half_century">Halbe Hundert</string>
+    <string name="ach_century">Hunderter</string>
+    <string name="ach_hill_climber">Bergfahrer</string>
+    <string name="ach_summit_seeker">Gipfelstürmer</string>
+    <string name="ach_kom">König der Berge</string>
+    <string name="ach_speed_demon">Raser</string>
+    <string name="ach_endurance">Ausdauer</string>
+    <string name="ach_calorie_crusher">Kalorienkiller</string>
+    <string name="ach_early_bird">Frühaufsteher</string>
+    <string name="ach_night_owl">Nachteule</string>
+    <string name="ach_pr_distance">Längste Fahrt</string>
+    <string name="ach_pr_climbing">Meiste Höhenmeter</string>
+    <string name="ach_pr_pace">Schnellster Schnitt</string>
+    <string name="ach_pr_top_speed">Topspeed-Rekord</string>
     <string name="ride_option_max_speed_bubble">Höchstgeschwindigkeit anzeigen</string>
     <string name="ride_option_color_by_speed">Strecke nach Tempo einfärben</string>
     <string name="ride_delete">Fahrt löschen</string>

@@ -289,6 +289,23 @@
     <string name="ride_replay_pause">Riavvia replay</string>
     <string name="ride_analysis_show_all">Mostra tutto (%1$d)</string>
     <string name="ride_analysis_show_less">Mostra meno</string>
+    <!-- Ride achievements / badges -->
+    <string name="ach_section">Obiettivi</string>
+    <string name="ach_personal_record">Record personale</string>
+    <string name="ach_half_century">Mezzo secolo</string>
+    <string name="ach_century">Secolo</string>
+    <string name="ach_hill_climber">Scalatore</string>
+    <string name="ach_summit_seeker">Cacciatore di vette</string>
+    <string name="ach_kom">Re della montagna</string>
+    <string name="ach_speed_demon">Centauro</string>
+    <string name="ach_endurance">Resistenza</string>
+    <string name="ach_calorie_crusher">Brucia-calorie</string>
+    <string name="ach_early_bird">Mattiniero</string>
+    <string name="ach_night_owl">Nottambulo</string>
+    <string name="ach_pr_distance">Uscita più lunga</string>
+    <string name="ach_pr_climbing">Più dislivello</string>
+    <string name="ach_pr_pace">Andatura più veloce</string>
+    <string name="ach_pr_top_speed">Record di velocità</string>
     <string name="ride_option_max_speed_bubble">Mostra fumetto velocità massima</string>
     <string name="ride_option_color_by_speed">Colora il percorso per velocità</string>
     <string name="ride_delete">Elimina percorso</string>

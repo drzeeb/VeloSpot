@@ -4,10 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.velospot.core.analysis.Achievement
 import de.velospot.core.analysis.RideAnalysis
 import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.analyzeRide
 import de.velospot.core.analysis.buildRideMapData
+import de.velospot.core.analysis.evaluateAchievements
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.repository.RecordedRidesRepository
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +28,8 @@ sealed interface RideAnalysisUiState {
     data class Ready(
         val ride: RecordedRide,
         val analysis: RideAnalysis,
-        val mapData: RideMapData
+        val mapData: RideMapData,
+        val achievements: List<Achievement>
     ) : RideAnalysisUiState
 }
 
@@ -46,10 +49,19 @@ class RideAnalysisViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<RideAnalysisUiState> = repository.getRidesFlow()
-        .map { rides -> rides.firstOrNull { it.id == rideId } }
-        .map { ride ->
-            if (ride == null) RideAnalysisUiState.NotFound
-            else RideAnalysisUiState.Ready(ride, analyzeRide(ride), buildRideMapData(ride))
+        .map { rides ->
+            val ride = rides.firstOrNull { it.id == rideId }
+            if (ride == null) {
+                RideAnalysisUiState.NotFound
+            } else {
+                val analysis = analyzeRide(ride)
+                RideAnalysisUiState.Ready(
+                    ride = ride,
+                    analysis = analysis,
+                    mapData = buildRideMapData(ride),
+                    achievements = evaluateAchievements(ride, analysis, rides)
+                )
+            }
         }
         .flowOn(Dispatchers.Default) // analysis can be heavy on long rides
         .stateIn(
