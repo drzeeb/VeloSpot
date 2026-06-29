@@ -21,22 +21,59 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.RoutePoint
+import de.velospot.domain.model.TrackPoint
 import kotlin.math.roundToInt
 
 /**
- * Compact elevation profile of a route — distance on the x-axis, terrain height
- * on the y-axis — drawn with a plain [Canvas] (no charting dependency). Only
- * shown for routes that carry per-node elevation (BRouter offline; the online
- * OSRM fallback has none), so the composable renders nothing when there are
- * fewer than two elevation samples.
+ * Compact elevation profile of a **planned route** — distance on the x-axis,
+ * terrain height on the y-axis — drawn with a plain [Canvas] (no charting
+ * dependency). Only shown for routes that carry per-node elevation (BRouter
+ * offline; the online OSRM fallback has none), so the composable renders nothing
+ * when there are fewer than two elevation samples.
  */
 @Composable
 internal fun RouteElevationProfile(
     points: List<RoutePoint>,
     modifier: Modifier = Modifier
 ) {
-    val profile = remember(points) { buildElevationProfile(points) } ?: return
+    val profile = remember(points) {
+        buildElevationProfile(points.map { ElevSample(it.latitude, it.longitude, it.elevationMeters) })
+    } ?: return
+    ElevationProfileChart(profile, modifier)
+}
 
+/**
+ * Elevation profile of a **recorded ride**, built from the captured GPS track.
+ *
+ * GPS-only altitude is noisy, so the plotted line is low-pass filtered (matching
+ * the recorder's own altitude smoothing). The ascent/descent figures shown are the
+ * ride's **stored** (already-smoothed) [ascentMeters]/[descentMeters] so they stay
+ * consistent with the elevation stat boxes, rather than re-derived from the raw
+ * per-fix deltas. Renders nothing when the ride carries fewer than two altitude
+ * samples (e.g. some mock rides).
+ */
+@Composable
+internal fun RideElevationProfile(
+    points: List<TrackPoint>,
+    ascentMeters: Double,
+    descentMeters: Double,
+    modifier: Modifier = Modifier
+) {
+    val profile = remember(points, ascentMeters, descentMeters) {
+        buildElevationProfile(
+            samples = points.map { ElevSample(it.latitude, it.longitude, it.altitudeMeters) },
+            smooth = true
+        )?.copy(ascentMeters = ascentMeters, descentMeters = descentMeters)
+    } ?: return
+    ElevationProfileChart(profile, modifier)
+}
+
+/** Shared Canvas rendering for [RouteElevationProfile] and [RideElevationProfile]. */
+@Composable
+private fun ElevationProfileChart(
+    profile: ElevationProfileData,
+    modifier: Modifier = Modifier
+) {
     val lineColor = MaterialTheme.colorScheme.primary
     val fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
     val gridColor = MaterialTheme.colorScheme.outlineVariant
@@ -115,28 +152,44 @@ private data class ElevationProfileData(
     val descentMeters: Double
 )
 
-/** Builds the elevation profile, or `null` when too few elevation samples exist. */
-private fun buildElevationProfile(points: List<RoutePoint>): ElevationProfileData? {
-    val withElev = points.filter { it.elevationMeters != null }
+/** One position sample with an optional elevation (terrain or GPS altitude). */
+private data class ElevSample(val latitude: Double, val longitude: Double, val elevation: Double?)
+
+/** Exponential smoothing factor for noisy GPS altitude (matches the recorder). */
+private const val ALT_SMOOTHING_ALPHA = 0.3
+
+/**
+ * Builds the elevation profile from [samples], or `null` when fewer than two carry
+ * an elevation. When [smooth] is set, the elevation series is low-pass filtered
+ * (for noisy GPS altitude); distances always come from the raw coordinates.
+ */
+private fun buildElevationProfile(
+    samples: List<ElevSample>,
+    smooth: Boolean = false
+): ElevationProfileData? {
+    val withElev = samples.filter { it.elevation != null }
     if (withElev.size < 2) return null
 
-    val distances = ArrayList<Double>(withElev.size)
+    // Elevation series (optionally EMA-smoothed to tame GPS jitter).
     val elevations = ArrayList<Double>(withElev.size)
+    var ema = withElev.first().elevation!!
+    for ((i, p) in withElev.withIndex()) {
+        ema = if (!smooth || i == 0) p.elevation!! else ema + ALT_SMOOTHING_ALPHA * (p.elevation!! - ema)
+        elevations.add(ema)
+    }
+
+    val distances = ArrayList<Double>(withElev.size)
     var cumulative = 0.0
     var ascent = 0.0
     var descent = 0.0
-    var prev: RoutePoint? = null
-    for (p in withElev) {
-        val e = p.elevationMeters!!
+    var prev: ElevSample? = null
+    for ((i, p) in withElev.withIndex()) {
         if (prev != null) {
-            cumulative += GeoMath.distanceMeters(
-                prev.latitude, prev.longitude, p.latitude, p.longitude
-            )
-            val delta = e - prev.elevationMeters!!
+            cumulative += GeoMath.distanceMeters(prev.latitude, prev.longitude, p.latitude, p.longitude)
+            val delta = elevations[i] - elevations[i - 1]
             if (delta > 0) ascent += delta else descent += -delta
         }
         distances.add(cumulative)
-        elevations.add(e)
         prev = p
     }
     return ElevationProfileData(

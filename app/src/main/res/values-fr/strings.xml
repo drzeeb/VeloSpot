@@ -267,6 +267,7 @@
     <string name="ride_detail_close">Fermer les détails du trajet</string>
     <string name="ride_detail_drag_hint">Glissez vers le bas • la carte reste interactive</string>
     <string name="ride_speed_chart_title">Vitesse dans le temps</string>
+    <string name="ride_elevation_chart_title">Profil altimétrique</string>
     <string name="ride_option_max_speed_bubble">Afficher la bulle de vitesse max</string>
     <string name="ride_option_color_by_speed">Colorer le tracé selon la vitesse</string>
     <string name="ride_delete">Supprimer le trajet</string>
