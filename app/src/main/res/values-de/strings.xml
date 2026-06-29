@@ -291,6 +291,8 @@
     <string name="ride_analysis_map">Karte &amp; Replay</string>
     <string name="ride_replay_play">Replay abspielen</string>
     <string name="ride_replay_pause">Replay neu starten</string>
+    <string name="ride_analysis_show_all">Alle anzeigen (%1$d)</string>
+    <string name="ride_analysis_show_less">Weniger anzeigen</string>
     <string name="ride_option_max_speed_bubble">Höchstgeschwindigkeit anzeigen</string>
     <string name="ride_option_color_by_speed">Strecke nach Tempo einfärben</string>
     <string name="ride_delete">Fahrt löschen</string>

@@ -12,8 +12,8 @@ class RideMapDataTest {
     private fun straightRide(count: Int, withStop: Boolean = false): RecordedRide {
         val stepLat = 0.00005
         val points = (0 until count).map { i ->
-            // Optionally inject a standstill in the middle (no movement, slow speed).
-            val moving = !(withStop && i in (count / 2)..(count / 2 + 10))
+            // Optionally inject a ~26 s standstill in the middle (no movement).
+            val moving = !(withStop && i in (count / 2)..(count / 2 + 25))
             val lat = if (moving || i <= count / 2) i * stepLat else (count / 2) * stepLat
             TrackPoint(
                 latitude = lat,
@@ -56,15 +56,34 @@ class RideMapDataTest {
     }
 
     @Test
-    fun `no kilometre markers are placed on the map`() {
+    fun `no kilometre split markers are placed on the map`() {
+        // KILOMETRE markers were removed; only meaningful value markers remain.
         val data = buildRideMapData(straightRide(400))
-        assertTrue(data.markers.none { it.type == RideMarkerType.KILOMETRE })
+        val types = data.markers.map { it.type }.toSet()
+        assertTrue(types.all {
+            it in setOf(
+                RideMarkerType.START, RideMarkerType.FINISH, RideMarkerType.TOP_SPEED,
+                RideMarkerType.MAX_GRADIENT, RideMarkerType.HIGH_POINT, RideMarkerType.STOP
+            )
+        })
     }
 
     @Test
     fun `a top-speed marker is placed when the ride has a peak speed`() {
         val data = buildRideMapData(straightRide(100))
         assertTrue(data.markers.any { it.type == RideMarkerType.TOP_SPEED })
+    }
+
+    @Test
+    fun `steepest and high-point markers carry a value label on a climbing ride`() {
+        // straightRide gains ~1 m every ~5.57 m → a steep, climbing ride.
+        val data = buildRideMapData(straightRide(400))
+        val steep = data.markers.firstOrNull { it.type == RideMarkerType.MAX_GRADIENT }
+        val high = data.markers.firstOrNull { it.type == RideMarkerType.HIGH_POINT }
+        assertTrue("expected a steepest-gradient marker", steep != null)
+        assertTrue("steepest marker should carry a % label", steep!!.label!!.endsWith("%"))
+        assertTrue("expected a high-point marker", high != null)
+        assertTrue("high-point marker should carry an elevation label", high!!.label!!.endsWith("m"))
     }
 
     @Test
@@ -77,9 +96,11 @@ class RideMapDataTest {
     }
 
     @Test
-    fun `a standstill produces a stop marker`() {
-        val data = buildRideMapData(straightRide(120, withStop = true))
-        assertTrue(data.markers.any { it.type == RideMarkerType.STOP })
+    fun `a long standstill produces a stop marker with its duration`() {
+        val data = buildRideMapData(straightRide(160, withStop = true))
+        val stop = data.markers.firstOrNull { it.type == RideMarkerType.STOP }
+        assertTrue("expected a stop marker", stop != null)
+        assertTrue("stop marker should carry a duration label", stop!!.label != null)
     }
 }
 

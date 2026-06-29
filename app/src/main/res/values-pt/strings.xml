@@ -285,6 +285,8 @@
     <string name="ride_analysis_map">Mapa e repetição</string>
     <string name="ride_replay_play">Reproduzir repetição</string>
     <string name="ride_replay_pause">Reiniciar repetição</string>
+    <string name="ride_analysis_show_all">Mostrar tudo (%1$d)</string>
+    <string name="ride_analysis_show_less">Mostrar menos</string>
     <string name="ride_option_max_speed_bubble">Mostrar balão de vel. máxima</string>
     <string name="ride_option_color_by_speed">Colorir trajeto pela velocidade</string>
     <string name="ride_delete">Eliminar percurso</string>

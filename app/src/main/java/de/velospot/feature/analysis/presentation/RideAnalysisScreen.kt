@@ -27,9 +27,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -286,9 +290,13 @@ private fun StatTile(label: String, value: String, highlight: Boolean = false) {
 private fun SplitBars(splits: List<KmSplit>, fastestIndex: Int, slowestIndex: Int) {
     val maxAvg = splits.maxOf { it.avgSpeedMps }.coerceAtLeast(0.1)
     val track = MaterialTheme.colorScheme.surfaceContainerHighest
+    // Long lists are collapsed to the first few rows with a show-all toggle.
+    val collapsible = splits.size > SPLIT_COLLAPSE_THRESHOLD
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val visibleSplits = if (collapsible && !expanded) splits.take(SPLIT_COLLAPSE_THRESHOLD) else splits
     var cumulative = 0.0
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        splits.forEach { split ->
+        visibleSplits.forEach { split ->
             cumulative += split.distanceMeters
             val fraction = (split.avgSpeedMps / maxAvg).toFloat().coerceIn(0.04f, 1f)
             val barColor = when (split.index) {
@@ -328,6 +336,14 @@ private fun SplitBars(splits: List<KmSplit>, fastestIndex: Int, slowestIndex: In
                     modifier = Modifier
                         .width(72.dp)
                         .padding(start = 8.dp)
+                )
+            }
+        }
+        if (collapsible) {
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(
+                    text = if (expanded) stringResource(R.string.ride_analysis_show_less)
+                    else stringResource(R.string.ride_analysis_show_all, splits.size)
                 )
             }
         }
@@ -586,6 +602,9 @@ private fun LegendRow(color: Color, label: String, value: String) {
 }
 
 private val ANALYSIS_DATE_FORMAT: DateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM)
+
+/** Above this many kilometre splits the list collapses behind a "show all" toggle. */
+private const val SPLIT_COLLAPSE_THRESHOLD = 8
 
 private fun RecordedRide.titleText(): String =
     name?.takeIf { it.isNotBlank() } ?: ANALYSIS_DATE_FORMAT.format(Date(startedAt))

@@ -38,14 +38,12 @@ import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.RideMarker
 import de.velospot.core.analysis.RideMarkerType
 import de.velospot.core.map.RideSpeedSegments
-import de.velospot.core.format.formatRideSpeed
 import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.RecordedRide
 import de.velospot.feature.map.presentation.mapStyleUrl
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
 import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
 import de.velospot.feature.map.presentation.markers.drawableToBitmap
-import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
 import de.velospot.feature.map.presentation.markers.updateTrackLayer
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.rememberMapViewWithLifecycle
@@ -68,10 +66,12 @@ import kotlin.math.roundToInt
 // MapView + Style instance, independent of the main map's layers).
 private const val SRC_MARKERS = "vs-analysis-markers-source"
 private const val LYR_MARKERS = "vs-analysis-markers-layer"
+private const val SRC_BUBBLES = "vs-analysis-bubbles-source"
+private const val LYR_BUBBLES = "vs-analysis-bubbles-layer"
 private const val SRC_REPLAY = "vs-analysis-replay-source"
 private const val LYR_REPLAY = "vs-analysis-replay-layer"
 private const val PROP_COLOR = "markerColor"
-private const val PROP_RADIUS = "markerRadius"
+private const val PROP_BUBBLE = "bubbleImage"
 private const val PROP_FRAME = "frameImage"
 private const val PROP_BEARING = "bearing"
 
@@ -197,7 +197,7 @@ fun RideReplayMap(
                     updateTrackLayer(loaded, ride.points.map { it.latitude to it.longitude }, 0x2962FF)
                 }
                 addRideMarkers(loaded, mapData.markers)
-                addTopSpeedBubble(loaded, mapData.markers, maxSpeedMps)
+                addValueBubbles(loaded, mapData.markers)
                 registerCyclistFrames(loaded, context)
                 addReplayCyclist(loaded)
                 fitCameraToTrack(map, mapData.track)
@@ -251,30 +251,28 @@ fun RideReplayMap(
     }
 }
 
-private fun markerColor(type: RideMarkerType): String = when (type) {
-    RideMarkerType.START -> "#2E7D32"
+// Plain start / finish dots. The value markers (top speed, steepest, high point,
+// stops) are drawn as labelled bubbles instead — see addValueBubbles.
+private fun dotColor(type: RideMarkerType): String = when (type) {
     RideMarkerType.FINISH -> "#C62828"
-    RideMarkerType.TOP_SPEED -> "#F9A825"
-    RideMarkerType.STOP -> "#616161"
-    RideMarkerType.KILOMETRE -> "#1565C0"
+    else -> "#2E7D32" // START (and any non-bubble fallback)
 }
 
-private fun markerRadius(type: RideMarkerType): Float = when (type) {
-    RideMarkerType.START, RideMarkerType.FINISH -> 9f
-    RideMarkerType.TOP_SPEED -> 8f
-    RideMarkerType.KILOMETRE -> 7f
-    RideMarkerType.STOP -> 6f
+/** Bubble fill colour per value marker (matches the on-map "max speed" red). */
+private fun bubbleColor(type: RideMarkerType): Int = when (type) {
+    RideMarkerType.TOP_SPEED -> 0xFFE53935.toInt()    // red — fastest
+    RideMarkerType.MAX_GRADIENT -> 0xFFEF6C00.toInt() // deep orange — steepest
+    RideMarkerType.HIGH_POINT -> 0xFF1565C0.toInt()   // blue — highest
+    RideMarkerType.STOP -> 0xFF455A64.toInt()         // blue-grey — a pause
+    else -> 0xFFE53935.toInt()
 }
 
-/** Adds the marker circles (data-driven colour/size) for start, finish & stops. */
+/** Adds the plain start & finish dots (value markers are bubbles, see below). */
 private fun addRideMarkers(style: Style, markers: List<RideMarker>) {
-    // The top-speed marker is drawn as its own speech bubble (see
-    // addTopSpeedBubble); only the plain dots are rendered here.
-    val dots = markers.filter { it.type != RideMarkerType.TOP_SPEED }
+    val dots = markers.filter { it.type == RideMarkerType.START || it.type == RideMarkerType.FINISH }
     val features = dots.map { m ->
         Feature.fromGeometry(Point.fromLngLat(m.point.longitude, m.point.latitude)).apply {
-            addStringProperty(PROP_COLOR, markerColor(m.type))
-            addNumberProperty(PROP_RADIUS, markerRadius(m.type))
+            addStringProperty(PROP_COLOR, dotColor(m.type))
         }
     }
     (style.getSource(SRC_MARKERS) as? GeoJsonSource)?.setGeoJson(FeatureCollection.fromFeatures(features))
@@ -283,7 +281,7 @@ private fun addRideMarkers(style: Style, markers: List<RideMarker>) {
     if (style.getLayer(LYR_MARKERS) == null) {
         style.addLayer(
             CircleLayer(LYR_MARKERS, SRC_MARKERS).withProperties(
-                PropertyFactory.circleRadius(Expression.get(PROP_RADIUS)),
+                PropertyFactory.circleRadius(9f),
                 PropertyFactory.circleColor(Expression.get(PROP_COLOR)),
                 PropertyFactory.circleStrokeColor("#FFFFFF"),
                 PropertyFactory.circleStrokeWidth(2f)
@@ -293,15 +291,35 @@ private fun addRideMarkers(style: Style, markers: List<RideMarker>) {
 }
 
 /**
- * Draws the **top-speed** marker as a clean red speech bubble carrying the peak
- * speed — the exact same look as the "max speed" pin on the main map (reusing
- * `createSpeedBubbleIcon` + `updateMaxSpeedMarker`).
+ * Draws every **value marker** (top speed, steepest gradient, high point, stops)
+ * as a clean speech bubble carrying its value — the exact same bubble look as the
+ * "max speed" pin on the main map (`createSpeedBubbleIcon`), tinted per type. Each
+ * bubble's tail tip sits on its GPS point (anchored bottom).
  */
-private fun addTopSpeedBubble(style: Style, markers: List<RideMarker>, maxSpeedMps: Double) {
-    val top = markers.firstOrNull { it.type == RideMarkerType.TOP_SPEED } ?: return
-    if (maxSpeedMps <= 0.0) return
-    val icon = createSpeedBubbleIcon(formatRideSpeed(maxSpeedMps))
-    updateMaxSpeedMarker(style, top.point.latitude to top.point.longitude, icon)
+private fun addValueBubbles(style: Style, markers: List<RideMarker>) {
+    val bubbles = markers.filter {
+        it.label != null && it.type != RideMarkerType.START && it.type != RideMarkerType.FINISH
+    }
+    val features = bubbles.mapIndexed { i, m ->
+        val imageId = "vs-analysis-bubble-$i"
+        style.addImage(imageId, createSpeedBubbleIcon(m.label!!, fillColor = bubbleColor(m.type)))
+        Feature.fromGeometry(Point.fromLngLat(m.point.longitude, m.point.latitude)).apply {
+            addStringProperty(PROP_BUBBLE, imageId)
+        }
+    }
+    (style.getSource(SRC_BUBBLES) as? GeoJsonSource)?.setGeoJson(FeatureCollection.fromFeatures(features))
+        ?: style.addSource(GeoJsonSource(SRC_BUBBLES, FeatureCollection.fromFeatures(features)))
+
+    if (style.getLayer(LYR_BUBBLES) == null) {
+        style.addLayer(
+            SymbolLayer(LYR_BUBBLES, SRC_BUBBLES).withProperties(
+                PropertyFactory.iconImage(Expression.get(PROP_BUBBLE)),
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconIgnorePlacement(true),
+                PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
+            )
+        )
+    }
 }
 
 /**

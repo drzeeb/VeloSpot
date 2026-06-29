@@ -1,21 +1,25 @@
 package de.velospot.core.analysis
 
+import de.velospot.core.format.formatRideDuration
+import de.velospot.core.format.formatRideElevation
+import de.velospot.core.format.formatRideSpeed
 import de.velospot.core.map.RideMaxSpeedPoint
 import de.velospot.core.navigation.GeoMath
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
+import kotlin.math.roundToInt
 
 /** A bare WGS84 coordinate, used by the analysis map layer. */
 data class GeoPoint(val latitude: Double, val longitude: Double)
 
 /** Kind of point-of-interest drawn on the ride analysis map. */
-enum class RideMarkerType { START, FINISH, TOP_SPEED, STOP, KILOMETRE }
+enum class RideMarkerType { START, FINISH, TOP_SPEED, MAX_GRADIENT, HIGH_POINT, STOP }
 
-/** A single marker on the analysis map (optionally carrying a short label). */
+/** A single marker on the analysis map (optionally carrying a short value label). */
 data class RideMarker(
     val point: GeoPoint,
     val type: RideMarkerType,
-    /** Short label, e.g. the kilometre number; `null` for unlabelled markers. */
+    /** Short value label (e.g. `"31 km/h"`, `"12%"`, `"1:20"`); `null` for plain dots. */
     val label: String? = null
 )
 
@@ -36,8 +40,15 @@ data class RideMapData(
 )
 
 private const val STOP_SPEED_MPS = 0.7
-private const val MIN_STOP_SECONDS = 5L
 private const val MAX_GAP_MILLIS = 60_000L
+/** Only stops at least this long get a map marker (shorter ones would clutter). */
+private const val MIN_STOP_MARKER_SECONDS = 20L
+/** Window length (m) over which the steepest sustained gradient is measured. */
+private const val GRADIENT_WINDOW_METERS = 100.0
+/** Don't mark a "steepest point" below this gradient (a flat ride has none). */
+private const val MIN_MARKED_GRADIENT_PERCENT = 4.0
+/** Don't mark a "high point" unless the ride climbs at least this much overall. */
+private const val MIN_ELEVATION_RANGE_METERS = 20.0
 
 /**
  * Builds the [RideMapData] for [ride]. [replayFrameCount] controls how many
@@ -53,15 +64,68 @@ fun buildRideMapData(ride: RecordedRide, replayFrameCount: Int = 600): RideMapDa
     markers += RideMarker(track.first(), RideMarkerType.START)
     markers += RideMarker(track.last(), RideMarkerType.FINISH)
     RideMaxSpeedPoint.find(ride)?.let {
-        markers += RideMarker(GeoPoint(it.latitude, it.longitude), RideMarkerType.TOP_SPEED)
+        markers += RideMarker(
+            point = GeoPoint(it.latitude, it.longitude),
+            type = RideMarkerType.TOP_SPEED,
+            label = formatRideSpeed(ride.maxSpeedMps)
+        )
     }
+    buildMaxGradientMarker(pts)?.let { markers += it }
+    buildHighPointMarker(pts)?.let { markers += it }
     markers += buildStopMarkers(pts)
 
     return RideMapData(track, markers, buildReplayFrames(pts, replayFrameCount))
 }
 
+/** The steepest sustained (~[GRADIENT_WINDOW_METERS]) uphill stretch, with its %. */
+private fun buildMaxGradientMarker(pts: List<TrackPoint>): RideMarker? {
+    var bestGradient = 0.0
+    var bestPoint: TrackPoint? = null
+    for (i in pts.indices) {
+        if (pts[i].altitudeMeters == null) continue
+        var windowM = 0.0
+        var gain = 0.0
+        var k = i + 1
+        while (k < pts.size && windowM < GRADIENT_WINDOW_METERS) {
+            val a = pts[k - 1]; val b = pts[k]
+            windowM += GeoMath.distanceMeters(a.latitude, a.longitude, b.latitude, b.longitude)
+            val altA = a.altitudeMeters; val altB = b.altitudeMeters
+            if (altA != null && altB != null) gain += altB - altA
+            k++
+        }
+        if (windowM >= GRADIENT_WINDOW_METERS * 0.5) {
+            val gradient = gain / windowM * 100.0
+            if (gradient > bestGradient) {
+                bestGradient = gradient
+                bestPoint = pts[(i + k) / 2] // middle of the window
+            }
+        }
+    }
+    val p = bestPoint ?: return null
+    if (bestGradient < MIN_MARKED_GRADIENT_PERCENT) return null
+    return RideMarker(
+        point = GeoPoint(p.latitude, p.longitude),
+        type = RideMarkerType.MAX_GRADIENT,
+        label = "${bestGradient.roundToInt()}%"
+    )
+}
 
-/** A marker at the midpoint of every sustained standstill on the ride. */
+/** The highest point of the ride (when it has meaningful elevation variation). */
+private fun buildHighPointMarker(pts: List<TrackPoint>): RideMarker? {
+    val withAlt = pts.filter { it.altitudeMeters != null }
+    if (withAlt.size < 2) return null
+    val highest = withAlt.maxByOrNull { it.altitudeMeters!! } ?: return null
+    val highestAlt = highest.altitudeMeters ?: return null
+    val lowest = withAlt.minOf { it.altitudeMeters!! }
+    if (highestAlt - lowest < MIN_ELEVATION_RANGE_METERS) return null
+    return RideMarker(
+        point = GeoPoint(highest.latitude, highest.longitude),
+        type = RideMarkerType.HIGH_POINT,
+        label = formatRideElevation(highestAlt)
+    )
+}
+
+/** A marker (with its duration) at the midpoint of every notable standstill. */
 private fun buildStopMarkers(pts: List<TrackPoint>): List<RideMarker> {
     val out = ArrayList<RideMarker>()
     var runStart = -1
@@ -69,9 +133,13 @@ private fun buildStopMarkers(pts: List<TrackPoint>): List<RideMarker> {
     var runMillis = 0L
 
     fun flush() {
-        if (runStart >= 0 && runMillis >= MIN_STOP_SECONDS * 1000) {
+        if (runStart >= 0 && runMillis >= MIN_STOP_MARKER_SECONDS * 1000) {
             val mid = pts[(runStart + runEnd) / 2]
-            out += RideMarker(GeoPoint(mid.latitude, mid.longitude), RideMarkerType.STOP)
+            out += RideMarker(
+                point = GeoPoint(mid.latitude, mid.longitude),
+                type = RideMarkerType.STOP,
+                label = formatRideDuration(runMillis / 1000)
+            )
         }
         runStart = -1; runEnd = -1; runMillis = 0L
     }
