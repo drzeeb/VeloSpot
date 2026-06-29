@@ -249,15 +249,19 @@ private fun SplitBars(splits: List<KmSplit>, fastestIndex: Int, slowestIndex: In
                             .clip(RoundedCornerShape(6.dp))
                             .background(barColor)
                     )
-                    Text(
-                        text = formatRideSpeed(split.avgSpeedMps),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 8.dp)
-                    )
                 }
+                // Speed label sits outside the bar so it stays readable
+                // regardless of the bar's fill colour.
+                Text(
+                    text = formatRideSpeed(split.avgSpeedMps),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier
+                        .width(72.dp)
+                        .padding(start = 8.dp)
+                )
             }
         }
     }
