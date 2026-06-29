@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.velospot.core.analysis.RideAnalysis
+import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.analyzeRide
+import de.velospot.core.analysis.buildRideMapData
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.repository.RecordedRidesRepository
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +23,11 @@ sealed interface RideAnalysisUiState {
     data object Loading : RideAnalysisUiState
     /** The ride id wasn't found (e.g. it was deleted while the screen was open). */
     data object NotFound : RideAnalysisUiState
-    data class Ready(val ride: RecordedRide, val analysis: RideAnalysis) : RideAnalysisUiState
+    data class Ready(
+        val ride: RecordedRide,
+        val analysis: RideAnalysis,
+        val mapData: RideMapData
+    ) : RideAnalysisUiState
 }
 
 /**
@@ -43,7 +49,7 @@ class RideAnalysisViewModel @Inject constructor(
         .map { rides -> rides.firstOrNull { it.id == rideId } }
         .map { ride ->
             if (ride == null) RideAnalysisUiState.NotFound
-            else RideAnalysisUiState.Ready(ride, analyzeRide(ride))
+            else RideAnalysisUiState.Ready(ride, analyzeRide(ride), buildRideMapData(ride))
         }
         .flowOn(Dispatchers.Default) // analysis can be heavy on long rides
         .stateIn(

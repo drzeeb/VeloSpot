@@ -282,6 +282,11 @@
     <string name="ride_analysis_moving_share">Rijdend vs. gestopt</string>
     <string name="ride_analysis_track_quality">Trackkwaliteit</string>
     <string name="ride_analysis_track_quality_summary">%1$d GPS-punten · ~%2$d m nauwkeurigheid · %3$d%% onnauwkeurig</string>
+    <string name="ride_analysis_map">Kaart en herhaling</string>
+    <string name="ride_replay_play">Herhaling afspelen</string>
+    <string name="ride_replay_pause">Herhaling herstarten</string>
+    <string name="ride_analysis_show_all">Alles tonen (%1$d)</string>
+    <string name="ride_analysis_show_less">Minder tonen</string>
     <string name="ride_option_max_speed_bubble">Maximumsnelheid-ballon tonen</string>
     <string name="ride_option_color_by_speed">Route kleuren op snelheid</string>
     <string name="ride_delete">Rit verwijderen</string>

@@ -27,9 +27,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +55,7 @@ import de.velospot.core.analysis.ClimbCategory
 import de.velospot.core.analysis.GradientBin
 import de.velospot.core.analysis.KmSplit
 import de.velospot.core.analysis.RideAnalysis
+import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.SpeedBin
 import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
@@ -71,6 +76,7 @@ import kotlin.math.roundToInt
 @Composable
 fun RideAnalysisScreen(
     onBack: () -> Unit,
+    isDarkTheme: Boolean = false,
     viewModel: RideAnalysisViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -112,6 +118,8 @@ fun RideAnalysisScreen(
             is RideAnalysisUiState.Ready -> RideAnalysisContent(
                 ride = s.ride,
                 analysis = s.analysis,
+                mapData = s.mapData,
+                isDarkTheme = isDarkTheme,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
@@ -125,6 +133,8 @@ fun RideAnalysisScreen(
 private fun RideAnalysisContent(
     ride: RecordedRide,
     analysis: RideAnalysis,
+    mapData: RideMapData,
+    isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -146,6 +156,18 @@ private fun RideAnalysisContent(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        // ── Map with speed-coloured track, markers & animated replay ─────────
+        if (mapData.track.size >= 2) {
+            SectionTitle(stringResource(R.string.ride_analysis_map))
+            RideReplayMap(
+                ride = ride,
+                mapData = mapData,
+                maxSpeedMps = analysis.maxSpeedMps,
+                isDarkTheme = isDarkTheme,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 
@@ -268,9 +290,13 @@ private fun StatTile(label: String, value: String, highlight: Boolean = false) {
 private fun SplitBars(splits: List<KmSplit>, fastestIndex: Int, slowestIndex: Int) {
     val maxAvg = splits.maxOf { it.avgSpeedMps }.coerceAtLeast(0.1)
     val track = MaterialTheme.colorScheme.surfaceContainerHighest
+    // Long lists are collapsed to the first few rows with a show-all toggle.
+    val collapsible = splits.size > SPLIT_COLLAPSE_THRESHOLD
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val visibleSplits = if (collapsible && !expanded) splits.take(SPLIT_COLLAPSE_THRESHOLD) else splits
     var cumulative = 0.0
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        splits.forEach { split ->
+        visibleSplits.forEach { split ->
             cumulative += split.distanceMeters
             val fraction = (split.avgSpeedMps / maxAvg).toFloat().coerceIn(0.04f, 1f)
             val barColor = when (split.index) {
@@ -310,6 +336,14 @@ private fun SplitBars(splits: List<KmSplit>, fastestIndex: Int, slowestIndex: In
                     modifier = Modifier
                         .width(72.dp)
                         .padding(start = 8.dp)
+                )
+            }
+        }
+        if (collapsible) {
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(
+                    text = if (expanded) stringResource(R.string.ride_analysis_show_less)
+                    else stringResource(R.string.ride_analysis_show_all, splits.size)
                 )
             }
         }
@@ -568,6 +602,9 @@ private fun LegendRow(color: Color, label: String, value: String) {
 }
 
 private val ANALYSIS_DATE_FORMAT: DateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM)
+
+/** Above this many kilometre splits the list collapses behind a "show all" toggle. */
+private const val SPLIT_COLLAPSE_THRESHOLD = 8
 
 private fun RecordedRide.titleText(): String =
     name?.takeIf { it.isNotBlank() } ?: ANALYSIS_DATE_FORMAT.format(Date(startedAt))

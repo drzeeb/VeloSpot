@@ -284,6 +284,11 @@
     <string name="ride_analysis_moving_share">In movimento vs. fermo</string>
     <string name="ride_analysis_track_quality">Qualità della traccia</string>
     <string name="ride_analysis_track_quality_summary">%1$d punti GPS · ~%2$d m di precisione · %3$d%% imprecisi</string>
+    <string name="ride_analysis_map">Mappa e replay</string>
+    <string name="ride_replay_play">Avvia replay</string>
+    <string name="ride_replay_pause">Riavvia replay</string>
+    <string name="ride_analysis_show_all">Mostra tutto (%1$d)</string>
+    <string name="ride_analysis_show_less">Mostra meno</string>
     <string name="ride_option_max_speed_bubble">Mostra fumetto velocità massima</string>
     <string name="ride_option_color_by_speed">Colora il percorso per velocità</string>
     <string name="ride_delete">Elimina percorso</string>
