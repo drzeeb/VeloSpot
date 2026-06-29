@@ -287,6 +287,10 @@
     <string name="ride_replay_pause">Herhaling herstarten</string>
     <string name="ride_analysis_show_all">Alles tonen (%1$d)</string>
     <string name="ride_analysis_show_less">Minder tonen</string>
+    <!-- Best efforts (peak table) -->
+    <string name="ride_efforts_section">Beste prestaties</string>
+    <string name="ride_efforts_fastest_distances">Snelste afstanden</string>
+    <string name="ride_efforts_best_times">Beste prestaties op tijd</string>
     <!-- Ride achievements / badges -->
     <string name="ach_section">Prestaties</string>
     <string name="ach_personal_record">Persoonlijk record</string>

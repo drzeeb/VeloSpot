@@ -287,6 +287,10 @@
     <string name="ride_replay_pause">Replay nei starten</string>
     <string name="ride_analysis_show_all">All uweisen (%1$d)</string>
     <string name="ride_analysis_show_less">Manner uweisen</string>
+    <!-- Best efforts (peak table) -->
+    <string name="ride_efforts_section">Bestleeschtungen</string>
+    <string name="ride_efforts_fastest_distances">Séierste Distanzen</string>
+    <string name="ride_efforts_best_times">Bescht Zäiten</string>
     <!-- Ride achievements / badges -->
     <string name="ach_section">Erfolleger</string>
     <string name="ach_personal_record">Perséinleche Rekord</string>

@@ -135,6 +135,10 @@
     <string name="ride_replay_pause">Restart replay</string>
     <string name="ride_analysis_show_all">Show all (%1$d)</string>
     <string name="ride_analysis_show_less">Show less</string>
+    <!-- Best efforts (peak table) -->
+    <string name="ride_efforts_section">Best efforts</string>
+    <string name="ride_efforts_fastest_distances">Fastest distances</string>
+    <string name="ride_efforts_best_times">Best efforts by time</string>
     <!-- Ride achievements / badges -->
     <string name="ach_section">Achievements</string>
     <string name="ach_personal_record">Personal record</string>
