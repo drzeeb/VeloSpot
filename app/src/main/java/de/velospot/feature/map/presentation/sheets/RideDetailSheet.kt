@@ -66,6 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
+import de.velospot.core.tracking.estimateRideCalories
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
 import de.velospot.feature.map.presentation.ride.RideShareDialog
@@ -283,6 +284,32 @@ internal fun RideDetailSheet(
                             modifier = Modifier.weight(1f),
                             label = stringResource(R.string.ride_stat_elevation_loss),
                             value = "↓ " + formatRideElevation(ride.elevationLossMeters)
+                        )
+                    }
+
+                    // ── Estimated calories burned ─────────────────────────────
+                    Spacer(Modifier.height(10.dp))
+                    StatBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = stringResource(R.string.ride_stats_calories),
+                        value = "≈ %,d kcal".format(estimateRideCalories(ride))
+                    )
+
+                    // ── Elevation profile (only when the ride captured altitude) ─
+                    val hasElevation = remember(ride.points) {
+                        ride.points.count { it.altitudeMeters != null } >= 2
+                    }
+                    if (hasElevation) {
+                        Spacer(Modifier.height(18.dp))
+                        Text(
+                            text = stringResource(R.string.ride_elevation_chart_title),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        RideElevationProfile(
+                            points = ride.points,
+                            ascentMeters = ride.elevationGainMeters,
+                            descentMeters = ride.elevationLossMeters
                         )
                     }
 

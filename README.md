@@ -109,8 +109,12 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany ðŸ‡©ðŸ
 | Map overview | Dark map mode | Map layers |
 | :---: | :---: | :---: |
 | ![Map overview](docs/screenshots/map-overview.jpeg) | ![Dark map mode](docs/screenshots/dark-mode.jpeg) | ![Map layers](docs/screenshots/layers.jpeg) |
-| **Address search** | **Parking details** | **Favorites** |
-| ![Address search](docs/screenshots/searchbar.jpeg) | ![Parking details](docs/screenshots/parking-details.jpeg) | ![Favorites](docs/screenshots/favorites-sheet.jpeg) |
+| **Address search** | **Found location** | **Parking details** |
+| ![Address search](docs/screenshots/searchbar.jpeg) | ![Found location](docs/screenshots/found-location.jpeg) | ![Parking details](docs/screenshots/parking-details.jpeg) |
+| **Favorites** | **2D / 3D map view** | **Bike routing profiles** |
+| ![Favorites](docs/screenshots/favorites-sheet.jpeg) | ![2D / 3D map view](docs/screenshots/map-2d-3d.jpeg) | ![Bike routing profiles](docs/screenshots/routing-profiles.jpeg) |
+| **Round trip** | **Ride tracking** | **Settings** |
+| ![Round trip](docs/screenshots/round-tour.jpeg) | ![Ride tracking](docs/screenshots/track-view.jpeg) | ![Settings](docs/screenshots/settings.jpeg) |
 
 > More screenshots and a live feature overview are on the [GitHub Pages site](https://drzeeb.github.io/VeloSpot/).
 
