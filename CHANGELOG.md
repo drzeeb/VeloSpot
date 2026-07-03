@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Build
 - The locally-generated Play Store marketing assets directory (`playstore/`) is now **git-ignored** so large rasterised icons / feature graphics stay out of version control.
+- **Fixed the F-Droid build under Hilt/Dagger 2.60** — the components Hilt now generates reference `@CanIgnoreReturnValue` from `com.google.errorprone:error_prone_annotations`, which the Google Play flavor pulled in transitively via Play Services but the F-Droid flavor did not, so `:app:hiltJavaCompileFdroidDebug` failed to compile. The annotation library is now declared explicitly (`compileOnly`) for all flavors.
 
 ## [v1.0.24] - 2026-06-28
 

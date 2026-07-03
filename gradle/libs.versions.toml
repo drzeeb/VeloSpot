@@ -23,6 +23,7 @@ ksp = "2.3.9"
 mockitoCore = "5.23.0"
 mockitoKotlin = "6.3.0"
 androidxTestUiautomator = "2.3.0"
+errorProneAnnotations = "2.36.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -61,6 +62,7 @@ kotlinxCoroutinesTest = { group = "org.jetbrains.kotlinx", name = "kotlinx-corou
 mockitoCore = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }
 mockitoKotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidxTestUiautomator" }
+errorProneAnnotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorProneAnnotations" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
