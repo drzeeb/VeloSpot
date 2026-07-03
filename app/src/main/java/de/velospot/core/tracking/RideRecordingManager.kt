@@ -144,9 +144,14 @@ class RideRecordingManager(
     var suppressRealFixes: Boolean = false
 
     /**
-     * Set the moment the active recording receives its first simulated fix (from
-     * the debug route simulator / "Mock tool"). Carried onto the saved ride as
-     * [RecordedRide.isMock]. Reset on every [start].
+     * Set when the active recording is driven by the debug route simulator / "Mock
+     * tool" (via [markMockRecording], called the moment the simulator actually
+     * starts). Carried onto the saved ride as [RecordedRide.isMock]. Reset on every
+     * [start].
+     *
+     * Deliberately **not** raised by every [feedExternal] call: the navigation puck
+     * is braked with a synthetic speed-0 fix through the same external path when a
+     * *normal* navigation ends, which must never flag the real ride as a mock.
      */
     @Volatile
     private var sawSimulatedFix: Boolean = false
@@ -254,13 +259,24 @@ class RideRecordingManager(
 
     /**
      * Feeds an externally-sourced fix (the debug route simulator) into the tracker,
-     * bypassing the real-GPS suppression gate.
+     * bypassing the real-GPS suppression gate. Does **not** by itself mark the ride
+     * as a mock — that is done explicitly via [markMockRecording] when the simulator
+     * actually starts — so the speed-0 "brake" fix fed when a normal navigation ends
+     * never flags a real ride.
      */
     fun feedExternal(location: GeoCoordinate) {
         if (tracker.isRecording) {
-            sawSimulatedFix = true
             feed(location)
         }
+    }
+
+    /**
+     * Flags the active recording as a mock (route-simulator) ride, so it is saved
+     * with [RecordedRide.isMock] = `true`. Called the moment the debug simulator
+     * genuinely starts driving the active navigation route.
+     */
+    fun markMockRecording() {
+        if (tracker.isRecording) sawSimulatedFix = true
     }
 
     // ── Internals ──────────────────────────────────────────────────────────────
