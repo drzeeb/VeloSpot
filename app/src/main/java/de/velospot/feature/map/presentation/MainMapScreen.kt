@@ -590,7 +590,13 @@ fun MainMapScreen(
     // ── Recorded-ride track polyline (live recording or a reopened ride) ──────
     // When inspecting a past ride with "colour by speed" on, the flat line is
     // replaced by a green→red speed-coloured line; otherwise the plain line shows.
-    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints, selectedRide, rideViewOptions.colorTrackBySpeed) {
+    //
+    // While navigating, the raw GPS track is deliberately NOT drawn: the
+    // NavigationManager already renders the planned route with a travelled/remaining
+    // split (and reroutes if the rider leaves it), so overlaying the jagged raw-GPS
+    // recording line on top looks messy and redundant. The real GPS fixes are still
+    // recorded for the ride analysis — only their on-map polyline is suppressed here.
+    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints, selectedRide, activeNavigation != null, rideViewOptions.colorTrackBySpeed) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         // While recording, coalesce a burst of fixes into one redraw (the effect is
         // cancelled & restarted on each new emission, so only the last one redraws).
@@ -609,9 +615,16 @@ fun MainMapScreen(
             updateTrackSpeedLayer(style, segments, ride.maxSpeedMps, visible = true)
         } else {
             updateTrackSpeedLayer(style, emptyList(), 0.0, visible = false)
+            // Suppress the live recording polyline while the navigation route owns
+            // the map; still draw the track when just recording or inspecting a ride.
+            val points = if (activeNavigation != null && ride == null) {
+                emptyList()
+            } else {
+                rideTrackPoints.map { it.latitude to it.longitude }
+            }
             de.velospot.feature.map.presentation.markers.updateTrackLayer(
                 style = style,
-                points = rideTrackPoints.map { it.latitude to it.longitude },
+                points = points,
                 colorInt = markerStyleConfig.routeColor
             )
         }

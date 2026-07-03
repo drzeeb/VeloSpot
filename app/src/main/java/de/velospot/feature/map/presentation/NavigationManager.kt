@@ -107,8 +107,16 @@ class NavigationManager(private val context: Context) {
         const val INTRO_ZOOM_EPS = 0.25
 
         // ── Dead-reckoning (smooth motion between sparse GPS fixes) ────────────
-        /** Time constant (s) for easing the dead-reckoning speed; bigger = gentler. */
+        /** Time constant (s) for easing the dead-reckoning speed **up** (gentle accel). */
         const val SPEED_SMOOTHING_TAU_S = 0.9
+
+        /**
+         * Time constant (s) for easing the dead-reckoning speed **down** (braking).
+         * Much shorter than the accel constant so the puck stops promptly when the
+         * rider does — e.g. at a red light — instead of coasting on for a second or
+         * two on the long tail of a symmetric ease.
+         */
+        const val SPEED_DECEL_TAU_S = 0.22
 
         /** Clamp the dead-reckoning speed so a glitchy fix can't fling the puck. */
         const val MAX_DEADRECKON_SPEED_MPS = 25.0
@@ -118,6 +126,21 @@ class NavigationManager(private val context: Context) {
 
         /** Fraction of the (small) along-route error corrected on each GPS fix. */
         const val POSITION_CORRECTION = 0.35
+
+        /**
+         * Stronger along-route error correction applied on a fix while the rider is
+         * (near) **stopped**, so any residual coast is pulled back onto the true
+         * position within a fix or two rather than drifting ahead of the rider.
+         */
+        const val POSITION_CORRECTION_STOPPED = 0.85
+
+        /**
+         * At/below this target speed (m/s ≈ 1.4 km/h) the rider is treated as
+         * standing still: the dead-reckoning speed is snapped straight to zero (so
+         * the puck freezes on the spot) and the stronger stopped-position correction
+         * is used.
+         */
+        const val DEADRECKON_STOP_SPEED_MPS = 0.4
 
         /**
          * Along-route distance (m) per full pedal revolution of the animated
@@ -533,10 +556,14 @@ class NavigationManager(private val context: Context) {
             predicting = true
         } else {
             val error = measuredDist - predictedDistanceM
+            // Pull the cursor back onto the true position harder while (near) stopped
+            // so any residual coast is corrected within a fix or two.
+            val correction = if (targetSpeedMps <= DEADRECKON_STOP_SPEED_MPS)
+                POSITION_CORRECTION_STOPPED else POSITION_CORRECTION
             predictedDistanceM = if (kotlin.math.abs(error) > POSITION_RESYNC_THRESHOLD_M) {
                 measuredDist
             } else {
-                predictedDistanceM + error * POSITION_CORRECTION
+                predictedDistanceM + error * correction
             }
         }
         lastFixTimeMs = now
@@ -746,10 +773,23 @@ class NavigationManager(private val context: Context) {
         // rider's (eased) speed so motion is continuous between sparse GPS fixes;
         // the cur→tgt easing below then absorbs the small per-fix correction.
         if (predicting && routeLengthM > 0.0) {
+            // Brake much faster than we accelerate: when the target speed drops
+            // (rider slowing / stopping) ease the speed down on the short decel
+            // constant so the puck halts promptly instead of gliding past the stop
+            // line; ramp back up gently when the rider sets off again.
+            val speedTau = if (targetSpeedMps < smoothedSpeedMps) SPEED_DECEL_TAU_S
+                           else SPEED_SMOOTHING_TAU_S
             smoothedSpeedMps = GeoMath.lerp(
                 smoothedSpeedMps, targetSpeedMps,
-                NavigationCamera.smoothingAlpha(dt, SPEED_SMOOTHING_TAU_S)
+                NavigationCamera.smoothingAlpha(dt, speedTau)
             )
+            // Snap the last crawl to a dead stop so the puck fully freezes when the
+            // rider is standing still (e.g. at a red light) rather than creeping.
+            if (targetSpeedMps <= DEADRECKON_STOP_SPEED_MPS &&
+                smoothedSpeedMps < DEADRECKON_STOP_SPEED_MPS
+            ) {
+                smoothedSpeedMps = 0.0
+            }
             predictedDistanceM = (predictedDistanceM + smoothedSpeedMps * dt)
                 .coerceIn(0.0, routeLengthM)
             val (pLat, pLon) = pointAtDistanceMeters(predictedDistanceM)

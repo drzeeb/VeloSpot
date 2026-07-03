@@ -103,6 +103,9 @@ class RideTrackingController(
     /** Feeds a (simulated) GPS fix into the active recording. */
     fun feed(location: GeoCoordinate) = manager.feedExternal(location)
 
+    /** Flags the active recording as a mock (route-simulator) ride. */
+    fun markMock() = manager.markMockRecording()
+
     /** Resets the elevation-match cursor when the active route changes. */
     fun onRouteChanged() = manager.onRouteChanged()
 
