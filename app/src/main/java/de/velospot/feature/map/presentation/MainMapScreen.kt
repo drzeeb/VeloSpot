@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -100,6 +101,7 @@ private const val SPLASH_REVEAL_MS = 1150L
 fun MainMapScreen(
     isDarkTheme: Boolean = false,
     onDarkThemeToggle: () -> Unit = {},
+    onOpenRideAnalysis: (String) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -225,7 +227,9 @@ fun MainMapScreen(
     // is free again: the splash then plays its cool "GPS-lock" reveal animation for a
     // fixed beat and fades/scales away to the live map.
     val mapReady = styleVersion > 0
-    var showSplash by remember { mutableStateOf(true) }
+    // Saveable so the splash doesn't replay when returning from another screen
+    // (e.g. the ride analysis): the map destination's state survives on the back stack.
+    var showSplash by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(mapReady) {
         if (mapReady) {
             delay(SPLASH_REVEAL_MS)   // let the smooth reveal animation play out
@@ -586,7 +590,13 @@ fun MainMapScreen(
     // ── Recorded-ride track polyline (live recording or a reopened ride) ──────
     // When inspecting a past ride with "colour by speed" on, the flat line is
     // replaced by a green→red speed-coloured line; otherwise the plain line shows.
-    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints, selectedRide, rideViewOptions.colorTrackBySpeed) {
+    //
+    // While navigating, the raw GPS track is deliberately NOT drawn: the
+    // NavigationManager already renders the planned route with a travelled/remaining
+    // split (and reroutes if the rider leaves it), so overlaying the jagged raw-GPS
+    // recording line on top looks messy and redundant. The real GPS fixes are still
+    // recorded for the ride analysis — only their on-map polyline is suppressed here.
+    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints, selectedRide, activeNavigation != null, rideViewOptions.colorTrackBySpeed) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         // While recording, coalesce a burst of fixes into one redraw (the effect is
         // cancelled & restarted on each new emission, so only the last one redraws).
@@ -605,9 +615,16 @@ fun MainMapScreen(
             updateTrackSpeedLayer(style, segments, ride.maxSpeedMps, visible = true)
         } else {
             updateTrackSpeedLayer(style, emptyList(), 0.0, visible = false)
+            // Suppress the live recording polyline while the navigation route owns
+            // the map; still draw the track when just recording or inspecting a ride.
+            val points = if (activeNavigation != null && ride == null) {
+                emptyList()
+            } else {
+                rideTrackPoints.map { it.latitude to it.longitude }
+            }
             de.velospot.feature.map.presentation.markers.updateTrackLayer(
                 style = style,
-                points = rideTrackPoints.map { it.latitude to it.longitude },
+                points = points,
                 colorInt = markerStyleConfig.routeColor
             )
         }
@@ -795,7 +812,8 @@ fun MainMapScreen(
                 },
                 onDelete  = { id -> viewModel.deleteRecordedRide(id) },
                 onRename  = { id, name -> viewModel.renameRecordedRide(id, name) },
-                onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) }
+                onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) },
+                onOpenAnalysis = onOpenRideAnalysis
             )
         }
 

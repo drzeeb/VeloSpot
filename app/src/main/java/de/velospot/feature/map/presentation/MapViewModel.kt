@@ -195,6 +195,7 @@ class MapViewModel @Inject constructor(
         // type-inference into a recursion (the referenced members carry explicit
         // signatures, breaking the cycle).
         onSimulatedFix = ::onSimulatedNavigationFix,
+        onSimulationStarted = ::onRouteSimulationStarted,
         onArrivedAtParkingSpot = ::onArrivedAtParkingSpot,
         onArrivedAtDestination = ::onArrivedAtDestination,
         onNavigationStarted = ::onNavigationStarted,
@@ -221,6 +222,16 @@ class MapViewModel @Inject constructor(
     private fun onSimulatedNavigationFix(fix: GeoCoordinate) {
         _userLocation.value = fix
         if (rideTracking.isRecording) rideTracking.feed(fix)
+    }
+
+    /**
+     * Flags the auto-recorded ride as a **mock** the moment the debug route
+     * simulator actually starts driving the route — so only simulator rides are
+     * saved as mocks, not real navigations (whose puck is braked with a synthetic
+     * speed-0 fix through the same path when navigation ends).
+     */
+    private fun onRouteSimulationStarted() {
+        if (rideTracking.isRecording) rideTracking.markMock()
     }
 
     /** Parks the bike at a reached parking spot and shows an arrival confirmation. */

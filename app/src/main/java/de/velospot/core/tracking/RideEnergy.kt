@@ -43,14 +43,29 @@ fun estimateRideCalories(
     elevationGainMeters: Double,
     totalMassKg: Double = DEFAULT_TOTAL_MASS_KG
 ): Int {
-    if (distanceMeters <= 0.0) return 0
+    val workJoules = estimateRideWorkJoules(distanceMeters, movingSeconds, elevationGainMeters, totalMassKg)
+    // kJ of mechanical work ≈ kcal of metabolic energy burned (see KDoc).
+    return (workJoules / 1_000.0).roundToInt()
+}
+
+/**
+ * The raw **mechanical work** (in Joules) of a ride, from the same model as
+ * [estimateRideCalories]. Exposed so callers can derive other figures — e.g. the
+ * average mechanical power, `work / movingSeconds`. Returns `0` for an
+ * empty/zero-distance ride.
+ */
+fun estimateRideWorkJoules(
+    distanceMeters: Double,
+    movingSeconds: Long,
+    elevationGainMeters: Double,
+    totalMassKg: Double = DEFAULT_TOTAL_MASS_KG
+): Double {
+    if (distanceMeters <= 0.0) return 0.0
     val avgSpeedMps = if (movingSeconds > 0) distanceMeters / movingSeconds else 0.0
     val rolling  = ROLLING_RESISTANCE * totalMassKg * GRAVITY * distanceMeters
     val drag     = 0.5 * AIR_DENSITY * DRAG_AREA * avgSpeedMps * avgSpeedMps * distanceMeters
     val climbing = totalMassKg * GRAVITY * elevationGainMeters.coerceAtLeast(0.0)
-    val workJoules = rolling + drag + climbing
-    // kJ of mechanical work ≈ kcal of metabolic energy burned (see KDoc).
-    return (workJoules / 1_000.0).roundToInt()
+    return rolling + drag + climbing
 }
 
 /** Rider + bike mass (kg). Matches the BRouter trekking profile's `totalMass`. */

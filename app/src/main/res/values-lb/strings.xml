@@ -267,6 +267,47 @@
     <string name="ride_detail_drag_hint">Erof zéien • d\'Kaart bleift benotzbar</string>
     <string name="ride_speed_chart_title">Vitesse iwwer Zäit</string>
     <string name="ride_elevation_chart_title">Héichtprofil</string>
+    <!-- Detailed ride analysis screen -->
+    <string name="ride_open_analysis">Detailanalyse opmaachen</string>
+    <string name="ride_analysis_title">Tour-Analyse</string>
+    <string name="ride_analysis_back">Zréck</string>
+    <string name="ride_analysis_stopped">Stëllstandzäit</string>
+    <string name="ride_analysis_splits">Kilometer-Splits</string>
+    <string name="ride_analysis_speed_distribution">Geschwindegkeetsverdeelung</string>
+    <string name="ride_analysis_power">Ø Leeschtung</string>
+    <string name="ride_analysis_stops">Stopps</string>
+    <string name="ride_analysis_longest_stop">Längsten Stopp</string>
+    <string name="ride_analysis_climbs">Klammen</string>
+    <string name="ride_analysis_gradient_distribution">Steigungsverdeelung</string>
+    <string name="ride_analysis_moving_share">Ënnerwee vs. gestoppt</string>
+    <string name="ride_analysis_track_quality">Trackqualitéit</string>
+    <string name="ride_analysis_track_quality_summary">%1$d GPS-Punkten · ~%2$d m Genauegkeet · %3$d%% ongenau</string>
+    <string name="ride_analysis_map">Kaart &amp; Replay</string>
+    <string name="ride_replay_play">Replay ofspillen</string>
+    <string name="ride_replay_pause">Replay nei starten</string>
+    <string name="ride_analysis_show_all">All uweisen (%1$d)</string>
+    <string name="ride_analysis_show_less">Manner uweisen</string>
+    <!-- Best efforts (peak table) -->
+    <string name="ride_efforts_section">Bestleeschtungen</string>
+    <string name="ride_efforts_fastest_distances">Séierste Distanzen</string>
+    <string name="ride_efforts_best_times">Bescht Zäiten</string>
+    <!-- Ride achievements / badges -->
+    <string name="ach_section">Erfolleger</string>
+    <string name="ach_personal_record">Perséinleche Rekord</string>
+    <string name="ach_half_century">Hallwhonnert</string>
+    <string name="ach_century">Honnert</string>
+    <string name="ach_hill_climber">Bergfuerer</string>
+    <string name="ach_summit_seeker">Gipfelstiermer</string>
+    <string name="ach_kom">Kinnek vum Bierg</string>
+    <string name="ach_speed_demon">Raser</string>
+    <string name="ach_endurance">Ausdauer</string>
+    <string name="ach_calorie_crusher">Kaloriekiller</string>
+    <string name="ach_early_bird">Fréiopsteher</string>
+    <string name="ach_night_owl">Nuetseil</string>
+    <string name="ach_pr_distance">Längste Fahrt</string>
+    <string name="ach_pr_climbing">Meescht Héichtemeter</string>
+    <string name="ach_pr_pace">Séierste Schnëtt</string>
+    <string name="ach_pr_top_speed">Topspeed-Rekord</string>
     <string name="ride_option_max_speed_bubble">Maximalvitesse-Bubble weisen</string>
     <string name="ride_option_color_by_speed">Streck no Vitesse afierwen</string>
     <string name="ride_delete">Tour läschen</string>

@@ -268,6 +268,47 @@
     <string name="ride_detail_drag_hint">Arrastra hacia abajo • el mapa sigue interactivo</string>
     <string name="ride_speed_chart_title">Velocidad en el tiempo</string>
     <string name="ride_elevation_chart_title">Perfil de elevación</string>
+    <!-- Detailed ride analysis screen -->
+    <string name="ride_open_analysis">Abrir análisis detallado</string>
+    <string name="ride_analysis_title">Análisis del trayecto</string>
+    <string name="ride_analysis_back">Atrás</string>
+    <string name="ride_analysis_stopped">Tiempo detenido</string>
+    <string name="ride_analysis_splits">Parciales por kilómetro</string>
+    <string name="ride_analysis_speed_distribution">Distribución de velocidad</string>
+    <string name="ride_analysis_power">Potencia media</string>
+    <string name="ride_analysis_stops">Paradas</string>
+    <string name="ride_analysis_longest_stop">Parada más larga</string>
+    <string name="ride_analysis_climbs">Subidas</string>
+    <string name="ride_analysis_gradient_distribution">Distribución de pendientes</string>
+    <string name="ride_analysis_moving_share">En movimiento vs. parado</string>
+    <string name="ride_analysis_track_quality">Calidad del recorrido</string>
+    <string name="ride_analysis_track_quality_summary">%1$d puntos GPS · ~%2$d m de precisión · %3$d%% imprecisos</string>
+    <string name="ride_analysis_map">Mapa y repetición</string>
+    <string name="ride_replay_play">Reproducir repetición</string>
+    <string name="ride_replay_pause">Reiniciar repetición</string>
+    <string name="ride_analysis_show_all">Mostrar todo (%1$d)</string>
+    <string name="ride_analysis_show_less">Mostrar menos</string>
+    <!-- Best efforts (peak table) -->
+    <string name="ride_efforts_section">Mejores esfuerzos</string>
+    <string name="ride_efforts_fastest_distances">Distancias más rápidas</string>
+    <string name="ride_efforts_best_times">Mejores esfuerzos por tiempo</string>
+    <!-- Ride achievements / badges -->
+    <string name="ach_section">Logros</string>
+    <string name="ach_personal_record">Récord personal</string>
+    <string name="ach_half_century">Medio centenar</string>
+    <string name="ach_century">Centenar</string>
+    <string name="ach_hill_climber">Escalador</string>
+    <string name="ach_summit_seeker">Cazador de cumbres</string>
+    <string name="ach_kom">Rey de la montaña</string>
+    <string name="ach_speed_demon">Demonio de la velocidad</string>
+    <string name="ach_endurance">Resistencia</string>
+    <string name="ach_calorie_crusher">Quemacalorías</string>
+    <string name="ach_early_bird">Madrugador</string>
+    <string name="ach_night_owl">Ave nocturna</string>
+    <string name="ach_pr_distance">Ruta más larga</string>
+    <string name="ach_pr_climbing">Más desnivel</string>
+    <string name="ach_pr_pace">Ritmo más rápido</string>
+    <string name="ach_pr_top_speed">Récord de velocidad</string>
     <string name="ride_option_max_speed_bubble">Mostrar burbuja de vel. máxima</string>
     <string name="ride_option_color_by_speed">Colorear ruta por velocidad</string>
     <string name="ride_delete">Eliminar ruta</string>

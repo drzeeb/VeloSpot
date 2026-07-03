@@ -1,3 +1,32 @@
+# VeloSpot helper scripts
+
+This directory holds offline developer tooling. See the sections below.
+
+---
+
+# Recorded-ride GPS analysis (`analyze_recorded_rides.py`)
+
+Read-only analysis of the app's `velospot_rides` database, used to tune the GPS
+outlier thresholds in `app/.../core/tracking/RideTracker.kt`. It reports the
+distributions behind each gate (accuracy, segment speed, acceleration, fix
+interval, altitude jumps) and shows how the altitude-outlier gate affects the
+recorded ascent. Only aggregate statistics are printed — no coordinates — so the
+output contains no personal location data. The script never modifies the database.
+
+Pull the database from a connected, debuggable device:
+
+```bash
+adb exec-out run-as de.velospot cat databases/velospot_rides.db > rides.db
+```
+
+Then analyse the most recent rides:
+
+```bash
+python analyze_recorded_rides.py --db rides.db --limit 3
+```
+
+---
+
 # OSM Bicycle Parking Extractor
 
 Extracts all `amenity=bicycle_parking` nodes from an OpenStreetMap PBF file and writes

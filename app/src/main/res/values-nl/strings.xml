@@ -267,6 +267,47 @@
     <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>
     <string name="ride_speed_chart_title">Snelheid over tijd</string>
     <string name="ride_elevation_chart_title">Hoogteprofiel</string>
+    <!-- Detailed ride analysis screen -->
+    <string name="ride_open_analysis">Gedetailleerde analyse openen</string>
+    <string name="ride_analysis_title">Ritanalyse</string>
+    <string name="ride_analysis_back">Terug</string>
+    <string name="ride_analysis_stopped">Stilstaande tijd</string>
+    <string name="ride_analysis_splits">Kilometertijden</string>
+    <string name="ride_analysis_speed_distribution">Snelheidsverdeling</string>
+    <string name="ride_analysis_power">Gem. vermogen</string>
+    <string name="ride_analysis_stops">Stops</string>
+    <string name="ride_analysis_longest_stop">Langste stop</string>
+    <string name="ride_analysis_climbs">Klimmen</string>
+    <string name="ride_analysis_gradient_distribution">Verdeling van helling</string>
+    <string name="ride_analysis_moving_share">Rijdend vs. gestopt</string>
+    <string name="ride_analysis_track_quality">Trackkwaliteit</string>
+    <string name="ride_analysis_track_quality_summary">%1$d GPS-punten · ~%2$d m nauwkeurigheid · %3$d%% onnauwkeurig</string>
+    <string name="ride_analysis_map">Kaart en herhaling</string>
+    <string name="ride_replay_play">Herhaling afspelen</string>
+    <string name="ride_replay_pause">Herhaling herstarten</string>
+    <string name="ride_analysis_show_all">Alles tonen (%1$d)</string>
+    <string name="ride_analysis_show_less">Minder tonen</string>
+    <!-- Best efforts (peak table) -->
+    <string name="ride_efforts_section">Beste prestaties</string>
+    <string name="ride_efforts_fastest_distances">Snelste afstanden</string>
+    <string name="ride_efforts_best_times">Beste prestaties op tijd</string>
+    <!-- Ride achievements / badges -->
+    <string name="ach_section">Prestaties</string>
+    <string name="ach_personal_record">Persoonlijk record</string>
+    <string name="ach_half_century">Halve eeuw</string>
+    <string name="ach_century">Eeuw</string>
+    <string name="ach_hill_climber">Klimmer</string>
+    <string name="ach_summit_seeker">Toppenjager</string>
+    <string name="ach_kom">Koning van de berg</string>
+    <string name="ach_speed_demon">Snelheidsduivel</string>
+    <string name="ach_endurance">Uithouding</string>
+    <string name="ach_calorie_crusher">Calorieverbrander</string>
+    <string name="ach_early_bird">Vroege vogel</string>
+    <string name="ach_night_owl">Nachtbraker</string>
+    <string name="ach_pr_distance">Langste rit</string>
+    <string name="ach_pr_climbing">Meeste hoogtemeters</string>
+    <string name="ach_pr_pace">Snelste tempo</string>
+    <string name="ach_pr_top_speed">Topsnelheidsrecord</string>
     <string name="ride_option_max_speed_bubble">Maximumsnelheid-ballon tonen</string>
     <string name="ride_option_color_by_speed">Route kleuren op snelheid</string>
     <string name="ride_delete">Rit verwijderen</string>

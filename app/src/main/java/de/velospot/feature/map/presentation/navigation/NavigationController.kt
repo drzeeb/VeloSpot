@@ -45,6 +45,8 @@ class NavigationController(
     private val customPinDestinationId: String,
     private val syntheticDestinationIds: Set<String>,
     private val onSimulatedFix: (GeoCoordinate) -> Unit,
+    /** Invoked the moment the debug route simulator actually starts driving. */
+    private val onSimulationStarted: () -> Unit = {},
     private val onArrivedAtParkingSpot: (Double, Double) -> Unit,
     private val onArrivedAtDestination: () -> Unit,
     private val onNavigationStarted: () -> Unit,
@@ -327,6 +329,7 @@ class NavigationController(
         simulationRouteRef = route.points
 
         _isSimulating.value = true
+        onSimulationStarted()
         routeSimulator.start(
             scope = scope,
             route = route.points,
