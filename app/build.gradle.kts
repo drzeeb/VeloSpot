@@ -153,6 +153,11 @@ dependencies {
     implementation(libs.hiltAndroid)
     ksp(libs.hiltAndroidCompiler)
     implementation(libs.androidxHiltNavigationCompose)
+    // Hilt/Dagger's generated components reference @CanIgnoreReturnValue from
+    // error_prone_annotations. The googlePlay flavor gets it transitively via
+    // play-services, but the fdroid flavor does not, so declare it explicitly for
+    // all flavors (compile-time only annotation).
+    compileOnly(libs.errorProneAnnotations)
 
     implementation(libs.retrofitCore)
     implementation(libs.retrofitConverterMoshi)
