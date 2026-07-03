@@ -147,12 +147,44 @@ class RideTrackerTest {
         tracker.addPoint(0.0000, baseLon, 0L, speedMps = 1f, altitudeMeters = null, accuracyMeters = 6f)
         tracker.addPoint(0.0001, baseLon, 10_000L, speedMps = 1f, altitudeMeters = null, accuracyMeters = 6f)
         val before = tracker.currentStats().distanceMeters
-        // Next fix jumps ~22 m (0.0002°) in just 1 s → ~22 m/s and an acceleration
-        // of ~21 m/s² from the 1.1 m/s baseline. Under the 90 km/h absolute cap but
-        // physically impossible for a bike → must be rejected outright.
-        val stats = tracker.addPoint(0.0003, baseLon, 11_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        // Next fix jumps ~15 m (0.000135°) in just 1 s → ~15 m/s and an acceleration
+        // of ~14 m/s² from the 1.1 m/s baseline. Comfortably under the ~79 km/h
+        // absolute cap but physically impossible for a bike → must be rejected by
+        // the acceleration gate.
+        val stats = tracker.addPoint(0.000235, baseLon, 11_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
         assertEquals("drift spike adds no distance", before, stats.distanceMeters, 0.001)
         assertEquals("drift spike adds no track point", 2, stats.pointCount)
+    }
+
+    @Test
+    fun `gross altitude spike does not inflate elevation`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        // Steady altitude ~100 m while riding, then a single GPS altitude spike to
+        // 160 m (a +60 m jump, as seen on real rides) and back. The spike must be
+        // rejected so it cannot inject phantom ascent.
+        val altitudes = listOf(100.0, 100.5, 101.0, 160.0, 101.5, 102.0)
+        altitudes.forEachIndexed { i, alt ->
+            tracker.addPoint(0.0005 * i, baseLon, i * 5_000L, speedMps = 5f, altitudeMeters = alt)
+        }
+        val stats = tracker.currentStats()
+        // The real trend rose only ~2 m (under the 3 m dead-band) → no phantom climb
+        // from the 60 m spike.
+        assertEquals(0.0, stats.elevationGainMeters, 0.001)
+        assertEquals(0.0, stats.elevationLossMeters, 0.001)
+    }
+
+    @Test
+    fun `burst fix within the minimum interval is dropped`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        tracker.addPoint(baseLat, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
+        // A second fix only 30 ms later that moved ~8 m → an absurd ~270 m/s derived
+        // speed. It is a GPS burst / duplicate and must be dropped outright so it
+        // cannot appear as a spike at the end of the track.
+        val stats = tracker.addPoint(0.00007, baseLon, 30L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
+        assertEquals(0.0, stats.distanceMeters, 0.001)
+        assertEquals(1, stats.pointCount)
     }
 
     @Test
@@ -175,11 +207,12 @@ class RideTrackerTest {
         // Three fixes marching north; the stored coordinate of each is the average
         // of the (up to 3) most recent raw fixes, so the second point sits at the
         // midpoint of the first two — visibly smoother than the raw zig-zag.
+        // ~111 m every 10 s (~11 m/s) stays comfortably under the speed cap.
         tracker.addPoint(0.000, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
-        tracker.addPoint(0.001, baseLon, 5_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.001, baseLon, 10_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
         val ride = run {
-            tracker.addPoint(0.002, baseLon, 10_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
-            tracker.stop(10_000L)
+            tracker.addPoint(0.002, baseLon, 20_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+            tracker.stop(20_000L)
         }
         requireNotNull(ride)
         // Point 0: window [0.000] → 0.000. Point 1: window [0,0.001] → 0.0005.

@@ -110,6 +110,18 @@ class RideTracker {
             return currentStats()
         }
 
+        // Burst / duplicate gate: the receiver occasionally emits two fixes only
+        // milliseconds apart (or a synthetic same-timestamp fix at ride end). The
+        // near-zero interval makes the position-derived speed explode (a few metres
+        // over a few ms → hundreds of m/s), so such fixes carry no new information
+        // and only inject artefacts (seen as a 290–315 m/s spike on the last point
+        // of real recordings). Drop anything arriving faster than the minimum
+        // plausible fix interval — including non-monotonic (dt ≤ 0) timestamps.
+        val lastFix = points.lastOrNull()
+        if (lastFix != null && timestamp - lastFix.timestamp < MIN_FIX_INTERVAL_MILLIS) {
+            return currentStats()
+        }
+
         val previous = points.lastOrNull()
         var pointSpeed = speedMps
 
@@ -186,17 +198,31 @@ class RideTracker {
         // by a clear margin — otherwise a parked bike would rack up phantom metres.
         if (altitudeMeters != null) {
             val prevSmoothed = smoothedAltitude
-            val smoothed = if (prevSmoothed == null) altitudeMeters
-                           else prevSmoothed + ALT_SMOOTHING_ALPHA * (altitudeMeters - prevSmoothed)
-            smoothedAltitude = smoothed
-            val base = lastRegisteredAltitude
-            if (base == null) {
-                lastRegisteredAltitude = smoothed
+            // Altitude outlier gate: GPS-only altitude can jump ±60 m between two
+            // fixes while the bike barely moved (a vertical velocity of ~20 m/s —
+            // physically impossible). Feeding such a spike into the low-pass filter
+            // still injects a large phantom step (e.g. +60 m × α = +18 m, far past
+            // the dead-band), which is what inflated recorded ascents to ~400 m on
+            // rides whose real gain was single-digit metres. Skip the altitude
+            // accounting for a fix that jumps more than a plausible step from the
+            // current smoothed baseline; the raw value is still kept on the point.
+            if (prevSmoothed != null &&
+                abs(altitudeMeters - prevSmoothed) > MAX_ALTITUDE_STEP_METERS
+            ) {
+                // Implausible altitude spike — ignore for gain/loss and smoothing.
             } else {
-                val delta = smoothed - base
-                if (abs(delta) >= ELEVATION_THRESHOLD_METERS) {
-                    if (delta > 0) elevationGain += delta else elevationLoss += -delta
+                val smoothed = if (prevSmoothed == null) altitudeMeters
+                               else prevSmoothed + ALT_SMOOTHING_ALPHA * (altitudeMeters - prevSmoothed)
+                smoothedAltitude = smoothed
+                val base = lastRegisteredAltitude
+                if (base == null) {
                     lastRegisteredAltitude = smoothed
+                } else {
+                    val delta = smoothed - base
+                    if (abs(delta) >= ELEVATION_THRESHOLD_METERS) {
+                        if (delta > 0) elevationGain += delta else elevationLoss += -delta
+                        lastRegisteredAltitude = smoothed
+                    }
                 }
             }
         }
@@ -295,16 +321,17 @@ class RideTracker {
         private const val MIN_SEGMENT_METERS = 1.5
         /** Speed above which the rider counts as "moving" (~2.9 km/h). */
         private const val MOVING_SPEED_THRESHOLD_MPS = 0.8
-        /** Reject fixes implying a faster-than-plausible bike speed (~90 km/h). */
-        private const val MAX_PLAUSIBLE_SPEED_MPS = 25.0
+        /** Reject fixes implying a faster-than-plausible bike speed (~79 km/h). */
+        private const val MAX_PLAUSIBLE_SPEED_MPS = 22.0
         /**
          * Reject fixes implying a physically impossible change of speed between two
-         * reliable segments. 6 m/s² is ~0.6 g — well beyond a cyclist's real sprint
-         * or hard braking (≈1–4 m/s²), so it still passes genuine fast descents and
-         * stops while catching the abrupt "0 → 40 km/h in 1 s" GPS-drift jumps that
-         * stay under the absolute [MAX_PLAUSIBLE_SPEED_MPS] gate.
+         * reliable segments. 4 m/s² is ~0.4 g — still well beyond a cyclist's real
+         * sprint or hard braking (real rides measure a 95th-percentile |accel| of
+         * ~0.8–1.6 m/s²), so it passes genuine fast descents and stops while catching
+         * the abrupt "0 → 40 km/h in 1 s" GPS-drift jumps that stay under the absolute
+         * [MAX_PLAUSIBLE_SPEED_MPS] gate.
          */
-        private const val MAX_PLAUSIBLE_ACCEL_MPS2 = 6.0
+        private const val MAX_PLAUSIBLE_ACCEL_MPS2 = 4.0
         /**
          * Minimum interval between two fixes for their position-derived speed to be
          * trusted as a *baseline* when validating the reported speed. Below ~1 s the
@@ -312,6 +339,14 @@ class RideTracker {
          * corroborate (or reject) a peak-speed sample.
          */
         private const val MIN_SPEED_BASELINE_MILLIS = 1_000L
+        /**
+         * Minimum interval below which an incoming fix is discarded as a GPS burst /
+         * duplicate. Real fixes arrive at roughly a 1–3 s cadence; two samples only a
+         * few milliseconds apart (or with a non-monotonic timestamp) blow up the
+         * position-derived speed (hundreds of m/s) and were seen polluting the last
+         * point of real rides. Anything faster than this carries no new information.
+         */
+        private const val MIN_FIX_INTERVAL_MILLIS = 250L
         /**
          * How far the reported (GPS Doppler) speed may exceed the corroborating
          * position-derived speed before it's treated as a sensor spike and ignored
@@ -323,10 +358,11 @@ class RideTracker {
          * Reject fixes whose reported horizontal accuracy (1σ radius) is worse than
          * this. GPS multipath in urban canyons / under 3D building shadow — exactly
          * where the drift spikes appear — produces fixes with tens of metres of
-         * error; dropping them is the single biggest win against drift. Generous
-         * enough not to starve the track on an honestly-weak signal.
+         * error; dropping them is the single biggest win against drift. Real rides
+         * cluster around ~4 m with a thin 20–28 m multipath tail, so 25 m trims that
+         * tail while barely touching the honestly-weak fixes.
          */
-        private const val MAX_ACCURACY_METERS = 30.0
+        private const val MAX_ACCURACY_METERS = 25.0
         /** Ignore fixes separated by more than this (GPS dropout) for distance. */
         private const val MAX_GAP_MILLIS = 60_000L
         /**
@@ -340,6 +376,15 @@ class RideTracker {
         private const val ALT_SMOOTHING_ALPHA = 0.3
         /** Minimum *smoothed* altitude change counted as real ascent/descent. */
         private const val ELEVATION_THRESHOLD_METERS = 3.0
+        /**
+         * Maximum altitude change between a fix and the current smoothed baseline
+         * that is still treated as real. GPS-only altitude routinely spikes by
+         * 15–60 m between consecutive fixes; anything beyond this is discarded from
+         * the elevation accounting (a bike cannot climb/descend ~12 m in one ~3 s
+         * fix). Without this gate the ±60 m spikes inflated recorded ascents by an
+         * order of magnitude (≈400 m instead of the real ≈5–10 m).
+         */
+        private const val MAX_ALTITUDE_STEP_METERS = 12.0
 
         private const val MIN_POINTS = 2
         private const val MIN_DISTANCE_METERS = 20.0
