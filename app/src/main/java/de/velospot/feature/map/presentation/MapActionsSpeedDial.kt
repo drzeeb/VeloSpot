@@ -96,7 +96,18 @@ internal fun BoxScope.MapActionsSpeedDial(
                     // Both the mini-FAB and its label trigger the same action, so
                     // the (larger) text is a tap target too, not just the icon.
                     val trigger = { expanded = false; action.onClick() }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        // Make the whole row (icon + the gap between + label) a single
+                        // tap target; without this, taps landing in the transparent gap
+                        // fell through to the scrim and just closed the menu. No ripple
+                        // here (the FAB and label keep their own) so it stays subtle.
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = trigger
+                        )
+                    ) {
                         SmallFloatingActionButton(
                             onClick = trigger,
                             containerColor = MaterialTheme.colorScheme.surface,
