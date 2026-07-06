@@ -5,15 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import de.velospot.core.display.KeepScreenOnPreferences
 import de.velospot.core.location.LocationController
 import de.velospot.core.map.LayerVisibility
-import de.velospot.core.map.LayerVisibilityPreferences
 import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.map.RideViewOptions
-import de.velospot.core.map.RideViewPreferences
-import de.velospot.core.navigation.NavigationModePreferences
-import de.velospot.core.navigation.VoiceGuidancePreferences
 import de.velospot.core.routing.OfflineRoutingPreferences
 import de.velospot.core.share.GpxExporter
 import de.velospot.data.brouter.ElevationPreference
@@ -38,6 +33,7 @@ import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
+import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.PlannedRoutesRepository
 import de.velospot.domain.repository.RecordedRidesRepository
@@ -109,6 +105,7 @@ class MapViewModel @Inject constructor(
     parkedBikeRepository: ParkedBikeRepository,
     private val recordedRidesRepository: RecordedRidesRepository,
     plannedRoutesRepository: PlannedRoutesRepository,
+    private val mapSettings: MapSettingsRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -450,13 +447,13 @@ class MapViewModel @Inject constructor(
     fun consumeUserMessage() { _userMessageRes.value = null }
 
     /** Which pin categories ("layers") are currently shown on the map. */
-    private val _layerVisibility = MutableStateFlow(LayerVisibilityPreferences.get(context))
-    val layerVisibility: StateFlow<LayerVisibility> = _layerVisibility.asStateFlow()
+    val layerVisibility: StateFlow<LayerVisibility> =
+        mapSettings.layerVisibility
+            .stateIn(viewModelScope, SharingStarted.Eagerly, LayerVisibility())
 
     /** Toggles a pin layer's visibility and persists the choice. */
     fun setLayerVisible(category: MapLayerCategory, visible: Boolean) {
-        LayerVisibilityPreferences.setVisible(context, category, visible)
-        _layerVisibility.update { it.withVisibility(category, visible) }
+        viewModelScope.launch { mapSettings.setLayerVisible(category, visible) }
     }
 
     /**
@@ -464,41 +461,36 @@ class MapViewModel @Inject constructor(
      * heading-up view (`false`). Persisted across sessions and applied live to
      * the `NavigationManager`, so toggling it mid-navigation re-tilts the camera.
      */
-    private val _is3DNavigation = MutableStateFlow(NavigationModePreferences.is3DEnabled(context))
-    val is3DNavigation: StateFlow<Boolean> = _is3DNavigation.asStateFlow()
+    val is3DNavigation: StateFlow<Boolean> =
+        mapSettings.is3DNavigation.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     /** Switches the navigation perspective between 3D and 2D and persists it. */
     fun setNavigation3DEnabled(enabled: Boolean) {
-        NavigationModePreferences.set3DEnabled(context, enabled)
-        _is3DNavigation.value = enabled
+        viewModelScope.launch { mapSettings.set3DNavigation(enabled) }
     }
 
     /**
      * Whether spoken turn-by-turn voice guidance (Text-to-Speech) is enabled.
      * Persisted across sessions; defaults to disabled (opt-in).
      */
-    private val _voiceGuidanceEnabled =
-        MutableStateFlow(VoiceGuidancePreferences.isVoiceGuidanceEnabled(context))
-    val voiceGuidanceEnabled: StateFlow<Boolean> = _voiceGuidanceEnabled.asStateFlow()
+    val voiceGuidanceEnabled: StateFlow<Boolean> =
+        mapSettings.voiceGuidanceEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /** Toggles spoken voice guidance on/off and persists the choice. */
     fun setVoiceGuidanceEnabled(enabled: Boolean) {
-        VoiceGuidancePreferences.setVoiceGuidanceEnabled(context, enabled)
-        _voiceGuidanceEnabled.value = enabled
+        viewModelScope.launch { mapSettings.setVoiceGuidance(enabled) }
     }
 
     /**
      * Whether the display is kept awake during a follow session (active navigation
      * or a live ride recording). Persisted across sessions; defaults to enabled.
      */
-    private val _keepScreenOnEnabled =
-        MutableStateFlow(KeepScreenOnPreferences.isKeepScreenOnEnabled(context))
-    val keepScreenOnEnabled: StateFlow<Boolean> = _keepScreenOnEnabled.asStateFlow()
+    val keepScreenOnEnabled: StateFlow<Boolean> =
+        mapSettings.keepScreenOnEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     /** Toggles the keep-display-awake behaviour on/off and persists the choice. */
     fun setKeepScreenOnEnabled(enabled: Boolean) {
-        KeepScreenOnPreferences.setKeepScreenOnEnabled(context, enabled)
-        _keepScreenOnEnabled.value = enabled
+        viewModelScope.launch { mapSettings.setKeepScreenOn(enabled) }
     }
 
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
@@ -737,7 +729,7 @@ class MapViewModel @Inject constructor(
         moveCamera = { target -> _mapCameraTarget.value = target },
         // Full ride tracks are only loaded while the heatmap or ridden-tracks
         // overlay is actually visible; otherwise no track is ever deserialised.
-        overlayTracksNeeded = _layerVisibility
+        overlayTracksNeeded = layerVisibility
             .map { it.showHeatmap || it.showTracks }
             .distinctUntilChanged(),
         // Turn a finished ride of a planned route into a leaderboard attempt.
@@ -761,19 +753,17 @@ class MapViewModel @Inject constructor(
      * bubble + colour-by-speed track). Global and remembered across sessions, so
      * the last-used settings apply to every ride opened afterwards.
      */
-    private val _rideViewOptions = MutableStateFlow(RideViewPreferences.get(context))
-    val rideViewOptions: StateFlow<RideViewOptions> = _rideViewOptions.asStateFlow()
+    val rideViewOptions: StateFlow<RideViewOptions> =
+        mapSettings.rideViewOptions.stateIn(viewModelScope, SharingStarted.Eagerly, RideViewOptions())
 
     /** Toggles the on-map "max speed" bubble for inspected rides and persists it. */
     fun setMaxSpeedBubbleEnabled(enabled: Boolean) {
-        RideViewPreferences.setShowMaxSpeedBubble(context, enabled)
-        _rideViewOptions.update { it.copy(showMaxSpeedBubble = enabled) }
+        viewModelScope.launch { mapSettings.setShowMaxSpeedBubble(enabled) }
     }
 
     /** Toggles colouring an inspected ride's track by speed and persists it. */
     fun setColorTrackBySpeedEnabled(enabled: Boolean) {
-        RideViewPreferences.setColorTrackBySpeed(context, enabled)
-        _rideViewOptions.update { it.copy(colorTrackBySpeed = enabled) }
+        viewModelScope.launch { mapSettings.setColorTrackBySpeed(enabled) }
     }
 
     val isRecordingRide: Boolean get() = rideTracking.isRecording

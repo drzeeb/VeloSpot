@@ -1,7 +1,5 @@
 package de.velospot.core.map
 
-import android.content.Context
-import androidx.core.content.edit
 
 /**
  * The toggleable map pin categories ("layers").
@@ -48,39 +46,4 @@ data class LayerVisibility(
     }
 }
 
-/**
- * Persists [LayerVisibility] across app restarts. Pin layers default to visible,
- * the recorded-ride heatmap to hidden.
- */
-object LayerVisibilityPreferences {
-
-    private const val PREFS_NAME      = "velospot_layers"
-    private const val KEY_PARKING     = "layer_parking_visible"
-    private const val KEY_FAVORITES   = "layer_favorites_visible"
-    private const val KEY_SAVED       = "layer_saved_visible"
-    private const val KEY_HEATMAP     = "layer_heatmap_visible"
-    private const val KEY_TRACKS      = "layer_tracks_visible"
-
-    fun get(context: Context): LayerVisibility {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return LayerVisibility(
-            showParking     = prefs.getBoolean(KEY_PARKING, true),
-            showFavorites   = prefs.getBoolean(KEY_FAVORITES, true),
-            showSavedPlaces = prefs.getBoolean(KEY_SAVED, true),
-            showHeatmap     = prefs.getBoolean(KEY_HEATMAP, false),
-            showTracks      = prefs.getBoolean(KEY_TRACKS, false)
-        )
-    }
-
-    fun setVisible(context: Context, category: MapLayerCategory, visible: Boolean) {
-        val key = when (category) {
-            MapLayerCategory.PARKING      -> KEY_PARKING
-            MapLayerCategory.FAVORITES    -> KEY_FAVORITES
-            MapLayerCategory.SAVED_PLACES -> KEY_SAVED
-            MapLayerCategory.HEATMAP      -> KEY_HEATMAP
-            MapLayerCategory.TRACKS       -> KEY_TRACKS
-        }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { putBoolean(key, visible) }
-    }
-}
 
