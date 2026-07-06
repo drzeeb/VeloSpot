@@ -19,6 +19,7 @@ maplibre = "13.3.1"
 room = "2.8.4"
 playServicesLocation = "21.4.0"
 coroutines = "1.11.0"
+datastore = "1.1.7"
 ksp = "2.3.9"
 mockitoCore = "5.23.0"
 mockitoKotlin = "6.3.0"
@@ -57,6 +58,7 @@ maplibreAndroid = { group = "org.maplibre.gl", name = "android-sdk", version.ref
 roomRuntime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 roomKtx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 roomCompiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidxDatastorePreferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 playServicesLocation = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 kotlinxCoroutinesTest = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 mockitoCore = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }

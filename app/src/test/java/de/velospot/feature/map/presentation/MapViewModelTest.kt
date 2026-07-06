@@ -1,6 +1,9 @@
 package de.velospot.feature.map.presentation
 
 import android.content.Context
+import de.velospot.core.map.LayerVisibility
+import de.velospot.core.map.MapLayerCategory
+import de.velospot.core.map.RideViewOptions
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.domain.model.BikeParkingSpace
@@ -20,6 +23,7 @@ import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
+import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
@@ -146,6 +150,7 @@ class MapViewModelTest {
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
             plannedRoutesRepository = FakePlannedRoutesRepository(),
+            mapSettings           = FakeMapSettingsRepository(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }
@@ -703,10 +708,36 @@ private class FakeRecordedRidesRepository : RecordedRidesRepository {
     )
 }
 
+private class FakeMapSettingsRepository : MapSettingsRepository {
+    private val _layerVisibility = MutableStateFlow(LayerVisibility())
+    override val layerVisibility: Flow<LayerVisibility> = _layerVisibility
+    private val _is3DNavigation = MutableStateFlow(true)
+    override val is3DNavigation: Flow<Boolean> = _is3DNavigation
+    private val _voiceGuidance = MutableStateFlow(false)
+    override val voiceGuidanceEnabled: Flow<Boolean> = _voiceGuidance
+    private val _keepScreenOn = MutableStateFlow(true)
+    override val keepScreenOnEnabled: Flow<Boolean> = _keepScreenOn
+    private val _rideViewOptions = MutableStateFlow(RideViewOptions())
+    override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
+
+    override suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean) {
+        _layerVisibility.value = _layerVisibility.value.withVisibility(category, visible)
+    }
+
+    override suspend fun set3DNavigation(enabled: Boolean) { _is3DNavigation.value = enabled }
+    override suspend fun setVoiceGuidance(enabled: Boolean) { _voiceGuidance.value = enabled }
+    override suspend fun setKeepScreenOn(enabled: Boolean) { _keepScreenOn.value = enabled }
+    override suspend fun setShowMaxSpeedBubble(enabled: Boolean) {
+        _rideViewOptions.value = _rideViewOptions.value.copy(showMaxSpeedBubble = enabled)
+    }
+    override suspend fun setColorTrackBySpeed(enabled: Boolean) {
+        _rideViewOptions.value = _rideViewOptions.value.copy(colorTrackBySpeed = enabled)
+    }
+}
+
 private class FakeLocationRepository(
     initialLocation: GeoCoordinate? = null
-) : LocationRepository {
-    private val locationFlow = MutableStateFlow(initialLocation)
+) : LocationRepository {    private val locationFlow = MutableStateFlow(initialLocation)
     var startUpdatesCallCount: Int = 0
         private set
 
