@@ -17,6 +17,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Loop
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -736,7 +743,9 @@ fun MainMapScreen(
             onOpenRides           = screenUiState::openRides,
             onOpenRoundTrip       = screenUiState::openRoundTrip,
             onStartRoutePlanning  = viewModel::startRoutePlanning,
-            onOpenPlannedRoutes   = screenUiState::openPlannedRoutes
+            onOpenPlannedRoutes   = screenUiState::openPlannedRoutes,
+            onOpenDisplaySettings = screenUiState::openDisplaySettings,
+            onOpenNavRouting      = screenUiState::openNavRouting
         )
         Row(
             modifier = Modifier
@@ -765,6 +774,68 @@ fun MainMapScreen(
                 state = menuState,
                 actions = menuActions
             )
+        }
+        // Settings sub-sheets (grouped so the main Settings list stays short).
+        if (screenUiState.isDisplaySettingsSheetVisible) {
+            de.velospot.feature.map.presentation.sheets.DisplaySettingsSheet(
+                state = menuState,
+                actions = menuActions,
+                onDismiss = screenUiState::closeDisplaySettings
+            )
+        }
+        if (screenUiState.isNavRoutingSheetVisible) {
+            de.velospot.feature.map.presentation.sheets.NavigationRoutingSheet(
+                state = menuState,
+                actions = menuActions,
+                onDismiss = screenUiState::closeNavRouting
+            )
+        }
+
+        // ── Map actions speed-dial (bottom-left FAB) ─────────────────────────
+        // The frequent things a rider *does* — plan a route, round trip, park the
+        // bike, rides, saved routes, favourites — fan out from a single FAB, so the
+        // Settings sheet only holds actual settings. Hidden during active
+        // navigation, where the bottom area belongs to the navigation card.
+        if (activeNavigation == null) {
+            val speedDialActions = listOf(
+                SpeedDialAction(
+                    label = stringResource(R.string.route_plan_menu),
+                    icon = Icons.Default.Route,
+                    onClick = viewModel::startRoutePlanning
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.round_trip_menu),
+                    icon = Icons.Default.Loop,
+                    onClick = screenUiState::openRoundTrip
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.route_my_routes_menu),
+                    icon = Icons.AutoMirrored.Filled.AltRoute,
+                    onClick = screenUiState::openPlannedRoutes
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.menu_my_rides),
+                    icon = Icons.Default.Timeline,
+                    onClick = screenUiState::openRides
+                ),
+                SpeedDialAction(
+                    label = stringResource(
+                        if (parkedBike != null) R.string.menu_show_parked_bike
+                        else R.string.menu_park_bike_here
+                    ),
+                    icon = Icons.AutoMirrored.Filled.DirectionsBike,
+                    onClick = {
+                        if (parkedBike != null) viewModel.showParkedBike()
+                        else viewModel.parkBikeAtCurrentLocation()
+                    }
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.favorites_title),
+                    icon = Icons.Default.Favorite,
+                    onClick = screenUiState::openFavorites
+                )
+            )
+            MapActionsSpeedDial(actions = speedDialActions)
         }
 
         // ── Ride-inspection overlay toggles (right edge, below the menu) ──────
