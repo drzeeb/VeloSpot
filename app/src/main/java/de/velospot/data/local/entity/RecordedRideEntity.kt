@@ -1,6 +1,7 @@
 package de.velospot.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -12,7 +13,16 @@ import androidx.room.PrimaryKey
  * aggregate statistics are denormalised into columns so the history list can be
  * rendered without parsing every track.
  */
-@Entity(tableName = "recorded_rides")
+@Entity(
+    tableName = "recorded_rides",
+    indices = [
+        // The timeline always reads newest-first; an index makes that ordering a
+        // cheap index scan instead of sorting the whole table on every emission.
+        Index(name = "idx_recorded_rides_started_at", value = ["startedAt"]),
+        // Archived rides are filtered out of the active timeline.
+        Index(name = "idx_recorded_rides_archived_at", value = ["archivedAt"])
+    ]
+)
 data class RecordedRideEntity(
     @PrimaryKey
     val id: String,

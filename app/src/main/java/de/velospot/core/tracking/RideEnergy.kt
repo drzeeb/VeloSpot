@@ -1,6 +1,7 @@
 package de.velospot.core.tracking
 
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import kotlin.math.roundToInt
 
 /**
@@ -31,6 +32,13 @@ fun estimateRideCalories(ride: RecordedRide): Int = estimateRideCalories(
     distanceMeters = ride.distanceMeters,
     movingSeconds = ride.movingSeconds,
     elevationGainMeters = ride.elevationGainMeters
+)
+
+/** Track-free overload: estimates calories from a ride's aggregate [summary]. */
+fun estimateRideCalories(summary: RecordedRideSummary): Int = estimateRideCalories(
+    distanceMeters = summary.distanceMeters,
+    movingSeconds = summary.movingSeconds,
+    elevationGainMeters = summary.elevationGainMeters
 )
 
 /**

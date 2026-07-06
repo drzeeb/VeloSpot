@@ -51,7 +51,7 @@ class RideAnalysisViewModel @Inject constructor(
         "RideAnalysisViewModel requires a '$ARG_RIDE_ID' argument"
     }
 
-    val uiState: StateFlow<RideAnalysisUiState> = repository.getRidesFlow()
+    val uiState: StateFlow<RideAnalysisUiState> = repository.getRidesWithTracksFlow()
         .map { rides ->
             val ride = rides.firstOrNull { it.id == rideId }
             if (ride == null) {

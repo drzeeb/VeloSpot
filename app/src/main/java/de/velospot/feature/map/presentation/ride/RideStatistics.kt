@@ -1,16 +1,16 @@
 package de.velospot.feature.map.presentation.ride
 
 import de.velospot.core.tracking.estimateRideCalories
-import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import java.util.Calendar
 import kotlin.math.roundToLong
 
 /**
  * Aggregate, "stats-nerd" analytics computed over the user's whole ride history.
  *
- * Everything here is derived purely from the persisted [RecordedRide]s — no extra
- * storage is required. The numbers feed the statistics dashboard shown at the top
- * of the "My rides" sheet.
+ * Everything here is derived purely from the persisted rides' aggregate columns
+ * ([RecordedRideSummary]) — no GPS track and no extra storage is required. The
+ * numbers feed the statistics dashboard shown at the top of the "My rides" sheet.
  */
 internal data class RideStatistics(
     // ── Totals ────────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ private const val EARTH_CIRCUMFERENCE_KM = 40_075.0
  * test rides never skew the rider's real totals, records or streaks.
  */
 internal fun computeRideStatistics(
-    allRides: List<RecordedRide>,
+    allRides: List<RecordedRideSummary>,
     now: Long = System.currentTimeMillis()
 ): RideStatistics {
     val rides = allRides.filterNot { it.isMock }
