@@ -160,6 +160,8 @@
     <string name="settings_title">Paramètres</string>
     <string name="settings_section_quick_actions">Actions rapides</string>
     <string name="settings_section_appearance">Apparence &amp; carte</string>
+    <string name="map_actions">Actions</string>
+    <string name="settings_group_navigation">Navigation &amp; itinéraires</string>
     <string name="settings_section_routing">Itinéraire</string>
     <string name="settings_section_debug">Développeur</string>
     <string name="elevation_profile_ascent">↑ %1$d m</string>
@@ -373,4 +375,26 @@
     <string name="ride_notification_channel_description">Continue d\'enregistrer votre trajet lorsque l\'application est en arrière-plan.</string>
     <string name="ride_record_start">Démarrer le trajet</string>
     <string name="widget_ride_recording_description">Démarrer ou arrêter l\'enregistrement d\'un trajet.</string>
+    <!-- Planned routes + leaderboards -->
+    <string name="route_plan_menu">Planifier un itinéraire</string>
+    <string name="route_my_routes_menu">Mes itinéraires</string>
+    <string name="route_plan_title">Planifier l\'itinéraire</string>
+    <string name="route_plan_hint">Touchez la carte pour ajouter des étapes dans l\'ordre.</string>
+    <string name="route_plan_stops">%1$d étapes</string>
+    <string name="route_plan_need_more">Ajoutez au moins 2 étapes</string>
+    <string name="route_plan_cancel">Annuler</string>
+    <string name="route_plan_undo">Annuler</string>
+    <string name="route_plan_save">Enregistrer</string>
+    <string name="route_my_routes_title">Mes itinéraires</string>
+    <string name="route_my_routes_empty">Aucun itinéraire enregistré. Planifiez-en un depuis le menu.</string>
+    <string name="route_leaderboard_open">Classement</string>
+    <string name="route_delete">Supprimer</string>
+    <string name="route_stats_line">%1$s · %2$d étapes · ↑ %3$s</string>
+    <string name="route_ride">Rouler</string>
+    <string name="route_ride_reverse">Sens inverse</string>
+    <string name="route_ride_reverse_name">%1$s (sens inverse)</string>
+    <string name="route_leaderboard_title">%1$s – classement</string>
+    <string name="route_leaderboard_forward">Aller (%1$d)</string>
+    <string name="route_leaderboard_reverse">Retour (%1$d)</string>
+    <string name="route_leaderboard_empty">Aucune tentative. Roulez cet itinéraire pour établir un temps.</string>
 </resources>

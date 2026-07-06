@@ -1,6 +1,7 @@
 package de.velospot.domain.repository
 
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -8,8 +9,27 @@ import kotlinx.coroutines.flow.Flow
  */
 interface RecordedRidesRepository {
 
-    /** All recorded rides as a reactive flow, newest first. */
-    fun getRidesFlow(): Flow<List<RecordedRide>>
+    /**
+     * All recorded rides as lightweight, **track-free** [RecordedRideSummary]s,
+     * newest first. This is the reactive source for the timeline and its history
+     * statistics: it never deserialises a GPS track, so it stays cheap even with a
+     * large ride history and re-emits without jank on every change.
+     */
+    fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>>
+
+    /**
+     * All recorded rides **with** their full GPS tracks, newest first. Heavier
+     * (every track is deserialised, off the main thread) — only for consumers that
+     * genuinely need the geometry of *every* ride, e.g. the map heatmap / ridden-
+     * tracks overlays and the cross-ride analysis context.
+     */
+    fun getRidesWithTracksFlow(): Flow<List<RecordedRide>>
+
+    /** Loads a single ride **with** its full GPS track, or `null` if it's gone. */
+    suspend fun getRide(id: String): RecordedRide?
+
+    /** Loads the full rides (tracks included) for the given [ids] (e.g. for export). */
+    suspend fun getRides(ids: List<String>): List<RecordedRide>
 
     /** Inserts or updates a recorded ride. */
     suspend fun saveRide(ride: RecordedRide)

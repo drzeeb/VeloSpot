@@ -17,6 +17,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Loop
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +67,8 @@ import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
 import de.velospot.feature.map.presentation.markers.updateTracksHistoryLayer
+import de.velospot.feature.map.presentation.markers.updateWaypointsLayer
+import de.velospot.feature.map.presentation.markers.createWaypointPinIcon
 import de.velospot.core.map.RideHeatmap
 import de.velospot.core.map.RideMaxSpeedPoint
 import de.velospot.core.map.RideTrackLines
@@ -127,11 +136,15 @@ fun MainMapScreen(
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
-    val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
+    val recordedRideTracks   by viewModel.recordedRideTracks.collectAsStateWithLifecycle()
     val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
     val rideViewOptions      by viewModel.rideViewOptions.collectAsStateWithLifecycle()
     val rideNamePrompt       by viewModel.rideNamePrompt.collectAsStateWithLifecycle()
     val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
+    val isPlanningRoute       by viewModel.isPlanningRoute.collectAsStateWithLifecycle()
+    val planningWaypoints     by viewModel.planningWaypoints.collectAsStateWithLifecycle()
+    val planningPreviewRoute  by viewModel.planningPreviewRoute.collectAsStateWithLifecycle()
+    val isComputingRoutePreview by viewModel.isComputingRoutePreview.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -347,7 +360,7 @@ fun MainMapScreen(
         activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
         selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike,
-        showSplash
+        showSplash, planningPreviewRoute
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         // While the animated launch splash covers the map, defer this heavy pass
@@ -383,7 +396,10 @@ fun MainMapScreen(
                 ),
                     route     = RouteRenderData(
                         color  = markerStyleConfig.routeColor,
-                        points = activeNavigation?.route?.points.orEmpty()
+                        // Show the active navigation route, or — when planning /
+                        // previewing a saved route on the idle map — its preview line.
+                        points = activeNavigation?.route?.points
+                            ?: planningPreviewRoute?.points.orEmpty()
                     ),
                     clusterStyle = ClusterRenderStyle(
                         circleColor = markerStyleConfig.normalPinColor,
@@ -415,14 +431,14 @@ fun MainMapScreen(
     // Aggregate all recorded tracks into weighted cells (off the main thread) and
     // (re)draw the heatmap layer whenever the rides change, the layer is toggled,
     // or the style reloads. Hidden (and skipped) while the layer is off.
-    LaunchedEffect(maplibreMap, styleVersion, recordedRides, layerVisibility.showHeatmap) {
+    LaunchedEffect(maplibreMap, styleVersion, recordedRideTracks, layerVisibility.showHeatmap) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         if (!layerVisibility.showHeatmap) {
             updateHeatmapLayer(style, emptyList(), visible = false)
             return@LaunchedEffect
         }
         val cells = withContext(Dispatchers.Default) {
-            RideHeatmap.build(recordedRides.filterNot { it.isMock })
+            RideHeatmap.build(recordedRideTracks.filterNot { it.isMock })
                 .map { Triple(it.latitude, it.longitude, it.intensity) }
         }
         updateHeatmapLayer(style, cells, visible = true)
@@ -433,16 +449,34 @@ fun MainMapScreen(
     // the main thread). Overlapping passes accumulate, so often-ridden streets
     // read stronger. (Re)built whenever the rides change, the layer is toggled or
     // the style reloads; hidden (and skipped) while the layer is off.
-    LaunchedEffect(maplibreMap, styleVersion, recordedRides, layerVisibility.showTracks) {
+    LaunchedEffect(maplibreMap, styleVersion, recordedRideTracks, layerVisibility.showTracks) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         if (!layerVisibility.showTracks) {
             updateTracksHistoryLayer(style, emptyList(), markerStyleConfig.routeColor, visible = false)
             return@LaunchedEffect
         }
         val polylines = withContext(Dispatchers.Default) {
-            RideTrackLines.build(recordedRides.filterNot { it.isMock })
+            RideTrackLines.build(recordedRideTracks.filterNot { it.isMock })
         }
         updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
+    }
+
+    // ── Route-planning waypoint pins ──────────────────────────────────────────
+    // Draw a numbered pin for each chosen stop while planning (the last one amber
+    // so the current end is obvious). Cleared when planning ends or between style
+    // reloads. Runs off the marker pass so dropping a stop updates instantly.
+    LaunchedEffect(maplibreMap, styleVersion, isPlanningRoute, planningWaypoints) {
+        val style = maplibreMap?.style ?: return@LaunchedEffect
+        if (!isPlanningRoute || planningWaypoints.isEmpty()) {
+            updateWaypointsLayer(style, emptyList(), emptyList())
+            return@LaunchedEffect
+        }
+        val lastIndex = planningWaypoints.lastIndex
+        val icons = planningWaypoints.mapIndexed { i, _ ->
+            createWaypointPinIcon(number = i + 1, isLast = i == lastIndex)
+        }
+        val points = planningWaypoints.map { it.latitude to it.longitude }
+        updateWaypointsLayer(style, points, icons)
     }
 
     // ── 3D navigation: bind manager + start/stop with the active route ────────
@@ -707,7 +741,11 @@ fun MainMapScreen(
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,
-            onOpenRoundTrip       = screenUiState::openRoundTrip
+            onOpenRoundTrip       = screenUiState::openRoundTrip,
+            onStartRoutePlanning  = viewModel::startRoutePlanning,
+            onOpenPlannedRoutes   = screenUiState::openPlannedRoutes,
+            onOpenDisplaySettings = screenUiState::openDisplaySettings,
+            onOpenNavRouting      = screenUiState::openNavRouting
         )
         Row(
             modifier = Modifier
@@ -736,6 +774,68 @@ fun MainMapScreen(
                 state = menuState,
                 actions = menuActions
             )
+        }
+        // Settings sub-sheets (grouped so the main Settings list stays short).
+        if (screenUiState.isDisplaySettingsSheetVisible) {
+            de.velospot.feature.map.presentation.sheets.DisplaySettingsSheet(
+                state = menuState,
+                actions = menuActions,
+                onDismiss = screenUiState::closeDisplaySettings
+            )
+        }
+        if (screenUiState.isNavRoutingSheetVisible) {
+            de.velospot.feature.map.presentation.sheets.NavigationRoutingSheet(
+                state = menuState,
+                actions = menuActions,
+                onDismiss = screenUiState::closeNavRouting
+            )
+        }
+
+        // ── Map actions speed-dial (bottom-left FAB) ─────────────────────────
+        // The frequent things a rider *does* — plan a route, round trip, park the
+        // bike, rides, saved routes, favourites — fan out from a single FAB, so the
+        // Settings sheet only holds actual settings. Hidden during active
+        // navigation, where the bottom area belongs to the navigation card.
+        if (activeNavigation == null) {
+            val speedDialActions = listOf(
+                SpeedDialAction(
+                    label = stringResource(R.string.route_plan_menu),
+                    icon = Icons.Default.Route,
+                    onClick = viewModel::startRoutePlanning
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.round_trip_menu),
+                    icon = Icons.Default.Loop,
+                    onClick = screenUiState::openRoundTrip
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.route_my_routes_menu),
+                    icon = Icons.AutoMirrored.Filled.AltRoute,
+                    onClick = screenUiState::openPlannedRoutes
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.menu_my_rides),
+                    icon = Icons.Default.Timeline,
+                    onClick = screenUiState::openRides
+                ),
+                SpeedDialAction(
+                    label = stringResource(
+                        if (parkedBike != null) R.string.menu_show_parked_bike
+                        else R.string.menu_park_bike_here
+                    ),
+                    icon = Icons.AutoMirrored.Filled.DirectionsBike,
+                    onClick = {
+                        if (parkedBike != null) viewModel.showParkedBike()
+                        else viewModel.parkBikeAtCurrentLocation()
+                    }
+                ),
+                SpeedDialAction(
+                    label = stringResource(R.string.favorites_title),
+                    icon = Icons.Default.Favorite,
+                    onClick = screenUiState::openFavorites
+                )
+            )
+            MapActionsSpeedDial(actions = speedDialActions)
         }
 
         // ── Ride-inspection overlay toggles (right edge, below the menu) ──────
@@ -824,6 +924,29 @@ fun MainMapScreen(
                 onConfirm  = { name -> viewModel.confirmRideNameAndStop(name) },
                 onDismiss  = viewModel::cancelRideNamePrompt
             )
+        }
+
+        // ── Route planning panel (non-modal, keeps the map tappable) ─────────
+        if (isPlanningRoute) {
+            var showSaveRouteDialog by remember { mutableStateOf(false) }
+            de.velospot.feature.map.presentation.sheets.RoutePlanningPanel(
+                waypoints    = planningWaypoints,
+                previewRoute = planningPreviewRoute,
+                isComputing  = isComputingRoutePreview,
+                onUndo       = viewModel::undoLastWaypoint,
+                onCancel     = viewModel::cancelRoutePlanning,
+                onSave       = { showSaveRouteDialog = true }
+            )
+            if (showSaveRouteDialog) {
+                de.velospot.feature.map.presentation.sheets.SavePlaceDialog(
+                    suggestedName = planningWaypoints.lastOrNull()?.label.orEmpty(),
+                    onConfirm = { name ->
+                        viewModel.savePlannedRoute(name)
+                        showSaveRouteDialog = false
+                    },
+                    onDismiss = { showSaveRouteDialog = false }
+                )
+            }
         }
 
         // ── Animated branded launch overlay (top of the stack) ───────────────

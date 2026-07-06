@@ -25,6 +25,9 @@ import de.velospot.data.local.database.BikeParkingDatabase
 import de.velospot.data.local.database.FavoritesDatabase
 import de.velospot.data.local.database.RidesDatabase
 import de.velospot.data.local.database.SavedPlacesDatabase
+import de.velospot.data.local.dao.PlannedRouteDao
+import de.velospot.data.local.dao.RouteAttemptDao
+import de.velospot.data.local.database.PlannedRoutesDatabase
 import de.velospot.data.remote.NominatimRateLimitInterceptor
 import de.velospot.data.remote.api.NominatimApi
 import de.velospot.data.remote.api.OsrmApi
@@ -34,12 +37,16 @@ import de.velospot.data.repository.ParkedBikeRepositoryImpl
 import de.velospot.data.repository.RecordedRidesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.data.repository.SavedPlacesRepositoryImpl
+import de.velospot.data.settings.MapSettingsDataStore
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
+import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.data.repository.PlannedRoutesRepositoryImpl
+import de.velospot.domain.repository.PlannedRoutesRepository
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -264,6 +271,14 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideMapSettingsRepository(
+        @ApplicationContext context: Context
+    ): MapSettingsRepository {
+        return MapSettingsDataStore(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideRidesDatabase(
         @ApplicationContext context: Context
     ): RidesDatabase {
@@ -283,6 +298,38 @@ object NetworkModule {
         moshi: Moshi
     ): RecordedRidesRepository {
         return RecordedRidesRepositoryImpl(recordedRideDao, moshi)
+    }
+
+    // ── Planned routes + leaderboards ─────────────────────────────────────────
+
+    @Provides
+    @Singleton
+    fun providePlannedRoutesDatabase(
+        @ApplicationContext context: Context
+    ): PlannedRoutesDatabase {
+        return PlannedRoutesDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlannedRouteDao(database: PlannedRoutesDatabase): PlannedRouteDao {
+        return database.plannedRouteDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRouteAttemptDao(database: PlannedRoutesDatabase): RouteAttemptDao {
+        return database.routeAttemptDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePlannedRoutesRepository(
+        plannedRouteDao: PlannedRouteDao,
+        routeAttemptDao: RouteAttemptDao,
+        moshi: Moshi
+    ): PlannedRoutesRepository {
+        return PlannedRoutesRepositoryImpl(plannedRouteDao, routeAttemptDao, moshi)
     }
 }
 

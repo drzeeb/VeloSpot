@@ -171,6 +171,10 @@ dependencies {
     implementation(libs.roomKtx)
     ksp(libs.roomCompiler)
 
+    // Jetpack DataStore – reactive, non-blocking key-value settings (replaces
+    // the main-thread SharedPreferences reads for the map's UI toggles).
+    implementation(libs.androidxDatastorePreferences)
+
     // Location Services – only for the Google Play flavor (proprietary, not F-Droid-compatible)
     "googlePlayImplementation"(libs.playServicesLocation)
 

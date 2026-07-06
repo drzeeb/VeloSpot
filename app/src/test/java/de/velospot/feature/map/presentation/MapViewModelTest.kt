@@ -1,6 +1,9 @@
 package de.velospot.feature.map.presentation
 
 import android.content.Context
+import de.velospot.core.map.LayerVisibility
+import de.velospot.core.map.MapLayerCategory
+import de.velospot.core.map.RideViewOptions
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
 import de.velospot.domain.model.BikeParkingSpace
@@ -13,12 +16,14 @@ import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.LocationRepository
+import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
@@ -28,6 +33,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -143,6 +149,8 @@ class MapViewModelTest {
             savedPlacesRepository = FakeSavedPlacesRepository(),
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
+            plannedRoutesRepository = FakePlannedRoutesRepository(),
+            mapSettings           = FakeMapSettingsRepository(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }
@@ -588,6 +596,11 @@ private class FakeFavoritesRepository : FavoritesRepository {
     override suspend fun removeFavorite(parkingSpaceId: String) {
         favorites.value = favorites.value - parkingSpaceId
     }
+
+    override suspend fun toggleFavorite(parkingSpaceId: String) {
+        if (favorites.value.contains(parkingSpaceId)) removeFavorite(parkingSpaceId)
+        else addFavorite(parkingSpaceId)
+    }
 }
 
 private class FakeSavedPlacesRepository : SavedPlacesRepository {
@@ -614,10 +627,49 @@ private class FakeParkedBikeRepository : ParkedBikeRepository {
     override suspend fun clear() { parkedBike.value = null }
 }
 
+private class FakePlannedRoutesRepository : de.velospot.domain.repository.PlannedRoutesRepository {
+    private val routes = MutableStateFlow<List<de.velospot.domain.model.PlannedRoute>>(emptyList())
+    private val attempts = MutableStateFlow<List<de.velospot.domain.model.RouteAttempt>>(emptyList())
+
+    override fun getRoutesFlow(): Flow<List<de.velospot.domain.model.PlannedRoute>> = routes
+
+    override fun getAttemptsFlow(routeId: String): Flow<List<de.velospot.domain.model.RouteAttempt>> = attempts
+
+    override suspend fun saveRoute(route: de.velospot.domain.model.PlannedRoute) {
+        routes.value = routes.value.filterNot { it.id == route.id } + route
+    }
+
+    override suspend fun renameRoute(id: String, name: String) {
+        routes.value = routes.value.map { if (it.id == id) it.copy(name = name) else it }
+    }
+
+    override suspend fun deleteRoute(id: String) {
+        routes.value = routes.value.filterNot { it.id == id }
+        attempts.value = attempts.value.filterNot { it.routeId == id }
+    }
+
+    override suspend fun addAttempt(attempt: de.velospot.domain.model.RouteAttempt) {
+        attempts.value = attempts.value + attempt
+    }
+
+    override suspend fun deleteAttempt(id: String) {
+        attempts.value = attempts.value.filterNot { it.id == id }
+    }
+}
+
 private class FakeRecordedRidesRepository : RecordedRidesRepository {
     private val rides = MutableStateFlow<List<RecordedRide>>(emptyList())
 
-    override fun getRidesFlow(): Flow<List<RecordedRide>> = rides
+    override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> =
+        rides.map { list -> list.map { it.toSummary() } }
+
+    override fun getRidesWithTracksFlow(): Flow<List<RecordedRide>> = rides
+
+    override suspend fun getRide(id: String): RecordedRide? =
+        rides.value.firstOrNull { it.id == id }
+
+    override suspend fun getRides(ids: List<String>): List<RecordedRide> =
+        ids.mapNotNull { id -> rides.value.firstOrNull { it.id == id } }
 
     override suspend fun saveRide(ride: RecordedRide) {
         rides.value = rides.value.filterNot { it.id == ride.id } + ride
@@ -638,12 +690,54 @@ private class FakeRecordedRidesRepository : RecordedRidesRepository {
     }
 
     override suspend fun clearAll() { rides.value = emptyList() }
+
+    private fun RecordedRide.toSummary() = RecordedRideSummary(
+        id = id,
+        startedAt = startedAt,
+        endedAt = endedAt,
+        distanceMeters = distanceMeters,
+        elapsedSeconds = elapsedSeconds,
+        movingSeconds = movingSeconds,
+        avgSpeedMps = avgSpeedMps,
+        maxSpeedMps = maxSpeedMps,
+        elevationGainMeters = elevationGainMeters,
+        elevationLossMeters = elevationLossMeters,
+        name = name,
+        isMock = isMock,
+        archivedAt = archivedAt
+    )
+}
+
+private class FakeMapSettingsRepository : MapSettingsRepository {
+    private val _layerVisibility = MutableStateFlow(LayerVisibility())
+    override val layerVisibility: Flow<LayerVisibility> = _layerVisibility
+    private val _is3DNavigation = MutableStateFlow(true)
+    override val is3DNavigation: Flow<Boolean> = _is3DNavigation
+    private val _voiceGuidance = MutableStateFlow(false)
+    override val voiceGuidanceEnabled: Flow<Boolean> = _voiceGuidance
+    private val _keepScreenOn = MutableStateFlow(true)
+    override val keepScreenOnEnabled: Flow<Boolean> = _keepScreenOn
+    private val _rideViewOptions = MutableStateFlow(RideViewOptions())
+    override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
+
+    override suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean) {
+        _layerVisibility.value = _layerVisibility.value.withVisibility(category, visible)
+    }
+
+    override suspend fun set3DNavigation(enabled: Boolean) { _is3DNavigation.value = enabled }
+    override suspend fun setVoiceGuidance(enabled: Boolean) { _voiceGuidance.value = enabled }
+    override suspend fun setKeepScreenOn(enabled: Boolean) { _keepScreenOn.value = enabled }
+    override suspend fun setShowMaxSpeedBubble(enabled: Boolean) {
+        _rideViewOptions.value = _rideViewOptions.value.copy(showMaxSpeedBubble = enabled)
+    }
+    override suspend fun setColorTrackBySpeed(enabled: Boolean) {
+        _rideViewOptions.value = _rideViewOptions.value.copy(colorTrackBySpeed = enabled)
+    }
 }
 
 private class FakeLocationRepository(
     initialLocation: GeoCoordinate? = null
-) : LocationRepository {
-    private val locationFlow = MutableStateFlow(initialLocation)
+) : LocationRepository {    private val locationFlow = MutableStateFlow(initialLocation)
     var startUpdatesCallCount: Int = 0
         private set
 
@@ -676,6 +770,13 @@ private class FakeRoutingRepository(
     override suspend fun getBikeRoute(from: GeoCoordinate, to: GeoCoordinate): BikeRoute {
         lastFrom = from
         lastTo = to
+        error?.let { throw it }
+        return route
+    }
+
+    override suspend fun getBikeRouteVia(waypoints: List<GeoCoordinate>): BikeRoute {
+        lastFrom = waypoints.first()
+        lastTo = waypoints.last()
         error?.let { throw it }
         return route
     }

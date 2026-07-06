@@ -132,6 +132,8 @@
     <string name="settings_title">Einstellungen</string>
     <string name="settings_section_quick_actions">Schnellaktionen</string>
     <string name="settings_section_appearance">Darstellung &amp; Karte</string>
+    <string name="map_actions">Aktionen</string>
+    <string name="settings_group_navigation">Navigation &amp; Routing</string>
     <string name="settings_section_routing">Routing</string>
     <string name="settings_section_debug">Entwickler</string>
     <string name="elevation_profile_ascent">↑ %1$d m</string>
@@ -378,4 +380,26 @@
     <string name="ride_notification_channel_description">Zeichnet deine Fahrt weiter auf, während die App im Hintergrund läuft.</string>
     <string name="ride_record_start">Fahrt starten</string>
     <string name="widget_ride_recording_description">Aufzeichnung einer Fahrt starten oder stoppen.</string>
+    <!-- Planned routes + leaderboards -->
+    <string name="route_plan_menu">Route planen</string>
+    <string name="route_my_routes_menu">Meine Routen</string>
+    <string name="route_plan_title">Route planen</string>
+    <string name="route_plan_hint">Tippe auf die Karte, um nacheinander Wegpunkte zu setzen.</string>
+    <string name="route_plan_stops">%1$d Wegpunkte</string>
+    <string name="route_plan_need_more">Mindestens 2 Wegpunkte hinzufügen</string>
+    <string name="route_plan_cancel">Abbrechen</string>
+    <string name="route_plan_undo">Rückgängig</string>
+    <string name="route_plan_save">Speichern</string>
+    <string name="route_my_routes_title">Meine Routen</string>
+    <string name="route_my_routes_empty">Noch keine gespeicherten Routen. Plane eine über das Menü.</string>
+    <string name="route_leaderboard_open">Bestenliste</string>
+    <string name="route_delete">Löschen</string>
+    <string name="route_stats_line">%1$s · %2$d Wegpunkte · ↑ %3$s</string>
+    <string name="route_ride">Fahren</string>
+    <string name="route_ride_reverse">Rückwärts</string>
+    <string name="route_ride_reverse_name">%1$s (rückwärts)</string>
+    <string name="route_leaderboard_title">%1$s – Bestenliste</string>
+    <string name="route_leaderboard_forward">Vorwärts (%1$d)</string>
+    <string name="route_leaderboard_reverse">Rückwärts (%1$d)</string>
+    <string name="route_leaderboard_empty">Noch keine Versuche. Fahre diese Route, um eine Zeit zu setzen.</string>
 </resources>

@@ -4,6 +4,7 @@ import de.velospot.feature.map.presentation.*
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,7 +43,7 @@ internal fun MapBottomSheets(
     val selectedSavedPlace   by viewModel.selectedSavedPlace.collectAsStateWithLifecycle()
     val parkedBike           by viewModel.parkedBike.collectAsStateWithLifecycle()
     val isParkedBikeSheetVisible by viewModel.isParkedBikeSheetVisible.collectAsStateWithLifecycle()
-    val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
+    val recordedRideSummaries by viewModel.recordedRideSummaries.collectAsStateWithLifecycle()
     val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
     val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
@@ -51,6 +52,9 @@ internal fun MapBottomSheets(
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
+    val plannedRoutes        by viewModel.plannedRoutes.collectAsStateWithLifecycle()
+    val leaderboardRoute     by viewModel.leaderboardRoute.collectAsStateWithLifecycle()
+    val routeAttempts        by viewModel.routeAttempts.collectAsStateWithLifecycle()
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
     // Controls the "name this favourite" dialog opened from the custom pin sheet.
@@ -134,33 +138,42 @@ internal fun MapBottomSheets(
 
     // "My rides" timeline (list of recorded rides).
     if (screenUiState.isRidesSheetVisible) {
+        // GPX documents staged for "save to file" (built asynchronously in the
+        // ViewModel once the selected rides' tracks are loaded).
+        val pendingGpxExport by viewModel.pendingGpxExport.collectAsStateWithLifecycle()
         val gpxImportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments()
         ) { uris ->
             if (uris.isNotEmpty()) viewModel.importGpxFiles(uris)
         }
-        // GPX documents staged for "save to file" while the SAF picker is open.
-        var pendingGpxSave by remember {
-            mutableStateOf<List<de.velospot.core.share.GpxDocument>>(emptyList())
-        }
         // Single file → "Create document"; several separate files → pick a folder.
         val gpxCreateLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/gpx+xml")
         ) { uri ->
-            val doc = pendingGpxSave.firstOrNull()
+            val doc = viewModel.pendingGpxExport.value?.firstOrNull()
             if (uri != null && doc != null) viewModel.saveGpxToUri(uri, doc.content)
-            pendingGpxSave = emptyList()
+            viewModel.consumePendingGpxExport()
         }
         val gpxTreeLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
         ) { treeUri ->
-            if (treeUri != null && pendingGpxSave.isNotEmpty()) {
-                viewModel.saveGpxToTree(treeUri, pendingGpxSave)
+            val documents = viewModel.pendingGpxExport.value.orEmpty()
+            if (treeUri != null && documents.isNotEmpty()) {
+                viewModel.saveGpxToTree(treeUri, documents)
             }
-            pendingGpxSave = emptyList()
+            viewModel.consumePendingGpxExport()
+        }
+        // Once documents are staged, launch the matching SAF picker (a single file
+        // creates a document; several separate files pick a target folder).
+        LaunchedEffect(pendingGpxExport) {
+            val documents = pendingGpxExport ?: return@LaunchedEffect
+            when {
+                documents.size == 1 -> gpxCreateLauncher.launch(documents.first().fileName)
+                documents.isNotEmpty() -> gpxTreeLauncher.launch(null)
+            }
         }
         RidesSheet(
-            rides        = recordedRides,
+            rides        = recordedRideSummaries,
             onDismiss    = screenUiState::closeRides,
             onSelectRide = { ride ->
                 screenUiState.closeRides()
@@ -168,13 +181,7 @@ internal fun MapBottomSheets(
             },
             onExportRides = { selected, combine, save ->
                 if (save) {
-                    val documents = viewModel.buildGpxDocuments(selected, combine)
-                    pendingGpxSave = documents
-                    if (documents.size == 1) {
-                        gpxCreateLauncher.launch(documents.first().fileName)
-                    } else if (documents.isNotEmpty()) {
-                        gpxTreeLauncher.launch(null)
-                    }
+                    viewModel.prepareGpxSave(selected, combine)
                 } else {
                     viewModel.exportRidesAsGpx(selected, combine)
                 }
@@ -197,6 +204,29 @@ internal fun MapBottomSheets(
                 viewModel.startRoundTrip(distanceMeters)
             },
             onDismiss = screenUiState::closeRoundTrip
+        )
+    }
+
+    // Saved multi-waypoint routes list.
+    if (screenUiState.isPlannedRoutesSheetVisible) {
+        PlannedRoutesSheet(
+            routes = plannedRoutes,
+            onDismiss = screenUiState::closePlannedRoutes,
+            onRide = { route, reversed ->
+                screenUiState.closePlannedRoutes()
+                viewModel.ridePlannedRoute(route, reversed)
+            },
+            onOpenLeaderboard = { route -> viewModel.openRouteLeaderboard(route) },
+            onDelete = viewModel::deletePlannedRoute
+        )
+    }
+
+    // A route's forward / reverse leaderboard.
+    leaderboardRoute?.let { route ->
+        RouteLeaderboardSheet(
+            route = route,
+            attempts = routeAttempts,
+            onDismiss = viewModel::closeRouteLeaderboard
         )
     }
 

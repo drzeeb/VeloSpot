@@ -36,5 +36,9 @@ class FavoritesRepositoryImpl @Inject constructor(
     override suspend fun removeFavorite(parkingSpaceId: String) {
         favoritesDao.removeFavorite(parkingSpaceId)
     }
+
+    override suspend fun toggleFavorite(parkingSpaceId: String) {
+        favoritesDao.toggleFavorite(parkingSpaceId)
+    }
 }
 

@@ -75,6 +75,43 @@ class RoutingRepositoryImpl @Inject constructor(
     }
 
     /**
+     * Routes through [waypoints] in order by chaining the pairwise [getBikeRoute]
+     * legs and concatenating them into one continuous route. Each leg honours the
+     * current routing preferences (offline/online, profile, hilliness) exactly like
+     * a normal point-to-point route. The joined geometry drops the duplicated first
+     * point of every subsequent leg; distance, duration and energy are summed.
+     */
+    override suspend fun getBikeRouteVia(waypoints: List<GeoCoordinate>): BikeRoute {
+        require(waypoints.size >= 2) { "A route needs at least two waypoints" }
+        val points = mutableListOf<RoutePoint>()
+        var distance = 0.0
+        var duration = 0.0
+        var energy: Double? = null
+        var source = RoutingSource.OSRM_ONLINE
+        for (i in 0 until waypoints.size - 1) {
+            val leg = getBikeRoute(waypoints[i], waypoints[i + 1])
+            if (points.isEmpty()) {
+                points += leg.points
+            } else {
+                // Skip the first point of this leg — it duplicates the previous
+                // leg's last point (the shared waypoint).
+                points += leg.points.drop(1)
+            }
+            distance += leg.distanceMeters
+            duration += leg.durationSeconds
+            leg.energyJoules?.let { energy = (energy ?: 0.0) + it }
+            source = leg.source
+        }
+        return BikeRoute(
+            points = points,
+            distanceMeters = distance,
+            durationSeconds = duration,
+            source = source,
+            energyJoules = energy
+        )
+    }
+
+    /**
      * Round-trip routing is offline-only (BRouter has native support; OSRM has
      * none). Ensures the segment tile(s) around the start are present — using the
      * on-demand downloader when enabled — then asks BRouter for a loop. Throws

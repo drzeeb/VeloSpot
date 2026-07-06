@@ -36,5 +36,14 @@ interface FavoritesRepository {
      * @param parkingSpaceId The ID of the parking space to unfavorite
      */
     suspend fun removeFavorite(parkingSpaceId: String)
+
+    /**
+     * Atomically toggle a parking space's favourite state: unfavourite it when it
+     * is already a favourite, otherwise favourite it. Runs in a single database
+     * transaction so rapid double-taps can't race.
+     *
+     * @param parkingSpaceId The ID of the parking space to toggle
+     */
+    suspend fun toggleFavorite(parkingSpaceId: String)
 }
 
