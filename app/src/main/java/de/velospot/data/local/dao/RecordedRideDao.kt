@@ -8,14 +8,58 @@ import de.velospot.data.local.entity.RecordedRideEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
+ * Track-free projection of a recorded ride: every aggregate column **except** the
+ * heavy `pointsJson`. Returned by [RecordedRideDao.getSummariesFlow] so the
+ * timeline can be rendered (and re-rendered on every DB change) without ever
+ * reading — let alone deserialising — a single GPS track. Room maps the selected
+ * columns onto these fields by name.
+ */
+data class RecordedRideSummaryRow(
+    val id: String,
+    val startedAt: Long,
+    val endedAt: Long,
+    val distanceMeters: Double,
+    val elapsedSeconds: Long,
+    val movingSeconds: Long,
+    val avgSpeedMps: Double,
+    val maxSpeedMps: Double,
+    val elevationGainMeters: Double,
+    val elevationLossMeters: Double,
+    val name: String?,
+    val isMock: Boolean,
+    val archivedAt: Long?
+)
+
+/**
  * Data Access Object for completed, recorded rides.
  */
 @Dao
 interface RecordedRideDao {
 
-    /** All recorded rides, newest first. Updates reactively. */
+    /**
+     * All recorded rides as lightweight, **track-free** summaries, newest first.
+     * Updates reactively. Explicitly lists the columns so the multi-kilobyte
+     * `pointsJson` is never loaded for the timeline.
+     */
+    @Query(
+        "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
+        "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
+        "name, isMock, archivedAt " +
+        "FROM recorded_rides ORDER BY startedAt DESC"
+    )
+    fun getSummariesFlow(): Flow<List<RecordedRideSummaryRow>>
+
+    /** All recorded rides **with** their full GPS track, newest first. */
     @Query("SELECT * FROM recorded_rides ORDER BY startedAt DESC")
     fun getAllFlow(): Flow<List<RecordedRideEntity>>
+
+    /** A single ride **with** its full GPS track, or `null` when it no longer exists. */
+    @Query("SELECT * FROM recorded_rides WHERE id = :id")
+    suspend fun getById(id: String): RecordedRideEntity?
+
+    /** The full rides (tracks included) for the given [ids]. */
+    @Query("SELECT * FROM recorded_rides WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<String>): List<RecordedRideEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(ride: RecordedRideEntity)

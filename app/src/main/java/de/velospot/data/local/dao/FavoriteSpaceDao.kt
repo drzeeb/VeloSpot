@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import de.velospot.data.local.entity.FavoriteSpaceEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -26,5 +27,20 @@ interface FavoriteSpaceDao {
 
     @Query("DELETE FROM favorite_parking_spaces WHERE parkingSpaceId = :parkingSpaceId")
     suspend fun removeFavorite(parkingSpaceId: String)
+
+    /**
+     * Atomically flips a space's favourite state in a single transaction: removes
+     * it when present, otherwise adds it. Replaces the previous read-then-write in
+     * the ViewModel, which raced when the button was tapped twice in quick
+     * succession (both reads could observe the same state and both add/remove).
+     */
+    @Transaction
+    suspend fun toggleFavorite(parkingSpaceId: String) {
+        if (isFavorite(parkingSpaceId)) {
+            removeFavorite(parkingSpaceId)
+        } else {
+            addFavorite(FavoriteSpaceEntity(parkingSpaceId = parkingSpaceId))
+        }
+    }
 }
 

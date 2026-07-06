@@ -45,7 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
-import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.feature.map.presentation.ride.RideStatisticsSection
 import de.velospot.feature.map.presentation.ride.computeRideStatistics
 import java.text.DateFormat
@@ -54,6 +54,10 @@ import java.util.Date
 /**
  * The "My rides" timeline: a scrollable list of past recorded rides with their
  * date, distance and duration. Tapping a ride opens its [RideDetailSheet].
+ *
+ * The list is driven by track-free [RecordedRideSummary]s — no GPS track is loaded
+ * to render the timeline; the full track is fetched only when a ride is opened or
+ * exported.
  *
  * The header carries **Import** and **Export** actions. Tapping *Export* turns the
  * list into a **multi-select**: each ride gets a checkbox and a Cancel/Export bar
@@ -64,10 +68,10 @@ import java.util.Date
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RidesSheet(
-    rides: List<RecordedRide>,
+    rides: List<RecordedRideSummary>,
     onDismiss: () -> Unit,
-    onSelectRide: (RecordedRide) -> Unit,
-    onExportRides: (rides: List<RecordedRide>, combine: Boolean, save: Boolean) -> Unit,
+    onSelectRide: (RecordedRideSummary) -> Unit,
+    onExportRides: (rides: List<RecordedRideSummary>, combine: Boolean, save: Boolean) -> Unit,
     onImport: () -> Unit
 ) {
     // Always open fully expanded (no half-height peek) so the whole list shows.
@@ -337,7 +341,7 @@ private fun ExportDestinationDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RideListItem(
-    ride: RecordedRide,
+    ride: RecordedRideSummary,
     dateLabel: String,
     selectable: Boolean,
     selected: Boolean,

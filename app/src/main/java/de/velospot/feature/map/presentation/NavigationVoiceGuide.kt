@@ -20,8 +20,8 @@ import kotlin.math.roundToInt
  * the on-screen turn banner already shows ("Turn left in 100 m") read aloud.
  *
  * Voice guidance is opt-in: nothing is spoken unless [setEnabled] has been called
- * with `true` (mirroring the persisted
- * [de.velospot.core.navigation.VoiceGuidancePreferences]). The engine is lazily
+ * with `true` (mirroring the persisted voice-guidance setting in
+ * [de.velospot.domain.repository.MapSettingsRepository]). The engine is lazily
  * initialised on first enable and released via [shutdown].
  */
 class NavigationVoiceGuide(private val context: Context) {

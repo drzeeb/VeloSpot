@@ -37,8 +37,10 @@ import de.velospot.data.repository.ParkedBikeRepositoryImpl
 import de.velospot.data.repository.RecordedRidesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.data.repository.SavedPlacesRepositoryImpl
+import de.velospot.data.settings.MapSettingsDataStore
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
+import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
@@ -265,6 +267,14 @@ object NetworkModule {
         @ApplicationContext context: Context
     ): ParkedBikeRepository {
         return ParkedBikeRepositoryImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMapSettingsRepository(
+        @ApplicationContext context: Context
+    ): MapSettingsRepository {
+        return MapSettingsDataStore(context)
     }
 
     @Provides

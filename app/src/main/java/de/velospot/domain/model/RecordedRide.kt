@@ -1,5 +1,7 @@
 package de.velospot.domain.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * A single GPS sample captured along a tracked ride.
  *
@@ -53,6 +55,38 @@ data class RecordedRide(
     val elevationGainMeters: Double,
     val elevationLossMeters: Double,
     val points: List<TrackPoint>,
+    val name: String? = null,
+    val isMock: Boolean = false,
+    val archivedAt: Long? = null
+) {
+    /** Whether this ride is currently archived (hidden from the active timeline). */
+    val isArchived: Boolean get() = archivedAt != null
+}
+
+/**
+ * The lightweight, track-free view of a [RecordedRide]: only the denormalised
+ * aggregate statistics needed to render the "My rides" timeline and its history
+ * statistics dashboard.
+ *
+ * The full GPS track ([RecordedRide.points]) is deliberately excluded: it is by
+ * far the heaviest part of a ride and is only needed when a single ride is opened
+ * (detail sheet, analysis, export) or when a map overlay draws every track. The
+ * timeline reads thousands of these without ever deserialising a track, and —
+ * because every field is a stable primitive — Compose can skip recomposition of
+ * unchanged list rows.
+ */
+@Immutable
+data class RecordedRideSummary(
+    val id: String,
+    val startedAt: Long,
+    val endedAt: Long,
+    val distanceMeters: Double,
+    val elapsedSeconds: Long,
+    val movingSeconds: Long,
+    val avgSpeedMps: Double,
+    val maxSpeedMps: Double,
+    val elevationGainMeters: Double,
+    val elevationLossMeters: Double,
     val name: String? = null,
     val isMock: Boolean = false,
     val archivedAt: Long? = null
