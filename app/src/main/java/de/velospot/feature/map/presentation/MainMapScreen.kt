@@ -60,6 +60,8 @@ import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
 import de.velospot.feature.map.presentation.markers.updateTracksHistoryLayer
+import de.velospot.feature.map.presentation.markers.updateWaypointsLayer
+import de.velospot.feature.map.presentation.markers.createWaypointPinIcon
 import de.velospot.core.map.RideHeatmap
 import de.velospot.core.map.RideMaxSpeedPoint
 import de.velospot.core.map.RideTrackLines
@@ -132,6 +134,10 @@ fun MainMapScreen(
     val rideViewOptions      by viewModel.rideViewOptions.collectAsStateWithLifecycle()
     val rideNamePrompt       by viewModel.rideNamePrompt.collectAsStateWithLifecycle()
     val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
+    val isPlanningRoute       by viewModel.isPlanningRoute.collectAsStateWithLifecycle()
+    val planningWaypoints     by viewModel.planningWaypoints.collectAsStateWithLifecycle()
+    val planningPreviewRoute  by viewModel.planningPreviewRoute.collectAsStateWithLifecycle()
+    val isComputingRoutePreview by viewModel.isComputingRoutePreview.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -347,7 +353,7 @@ fun MainMapScreen(
         activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
         selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike,
-        showSplash
+        showSplash, planningPreviewRoute
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         // While the animated launch splash covers the map, defer this heavy pass
@@ -383,7 +389,10 @@ fun MainMapScreen(
                 ),
                     route     = RouteRenderData(
                         color  = markerStyleConfig.routeColor,
-                        points = activeNavigation?.route?.points.orEmpty()
+                        // Show the active navigation route, or — when planning /
+                        // previewing a saved route on the idle map — its preview line.
+                        points = activeNavigation?.route?.points
+                            ?: planningPreviewRoute?.points.orEmpty()
                     ),
                     clusterStyle = ClusterRenderStyle(
                         circleColor = markerStyleConfig.normalPinColor,
@@ -443,6 +452,24 @@ fun MainMapScreen(
             RideTrackLines.build(recordedRides.filterNot { it.isMock })
         }
         updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
+    }
+
+    // ── Route-planning waypoint pins ──────────────────────────────────────────
+    // Draw a numbered pin for each chosen stop while planning (the last one amber
+    // so the current end is obvious). Cleared when planning ends or between style
+    // reloads. Runs off the marker pass so dropping a stop updates instantly.
+    LaunchedEffect(maplibreMap, styleVersion, isPlanningRoute, planningWaypoints) {
+        val style = maplibreMap?.style ?: return@LaunchedEffect
+        if (!isPlanningRoute || planningWaypoints.isEmpty()) {
+            updateWaypointsLayer(style, emptyList(), emptyList())
+            return@LaunchedEffect
+        }
+        val lastIndex = planningWaypoints.lastIndex
+        val icons = planningWaypoints.mapIndexed { i, _ ->
+            createWaypointPinIcon(number = i + 1, isLast = i == lastIndex)
+        }
+        val points = planningWaypoints.map { it.latitude to it.longitude }
+        updateWaypointsLayer(style, points, icons)
     }
 
     // ── 3D navigation: bind manager + start/stop with the active route ────────
@@ -707,7 +734,9 @@ fun MainMapScreen(
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,
-            onOpenRoundTrip       = screenUiState::openRoundTrip
+            onOpenRoundTrip       = screenUiState::openRoundTrip,
+            onStartRoutePlanning  = viewModel::startRoutePlanning,
+            onOpenPlannedRoutes   = screenUiState::openPlannedRoutes
         )
         Row(
             modifier = Modifier
@@ -824,6 +853,29 @@ fun MainMapScreen(
                 onConfirm  = { name -> viewModel.confirmRideNameAndStop(name) },
                 onDismiss  = viewModel::cancelRideNamePrompt
             )
+        }
+
+        // ── Route planning panel (non-modal, keeps the map tappable) ─────────
+        if (isPlanningRoute) {
+            var showSaveRouteDialog by remember { mutableStateOf(false) }
+            de.velospot.feature.map.presentation.sheets.RoutePlanningPanel(
+                waypoints    = planningWaypoints,
+                previewRoute = planningPreviewRoute,
+                isComputing  = isComputingRoutePreview,
+                onUndo       = viewModel::undoLastWaypoint,
+                onCancel     = viewModel::cancelRoutePlanning,
+                onSave       = { showSaveRouteDialog = true }
+            )
+            if (showSaveRouteDialog) {
+                de.velospot.feature.map.presentation.sheets.SavePlaceDialog(
+                    suggestedName = planningWaypoints.lastOrNull()?.label.orEmpty(),
+                    onConfirm = { name ->
+                        viewModel.savePlannedRoute(name)
+                        showSaveRouteDialog = false
+                    },
+                    onDismiss = { showSaveRouteDialog = false }
+                )
+            }
         }
 
         // ── Animated branded launch overlay (top of the stack) ───────────────

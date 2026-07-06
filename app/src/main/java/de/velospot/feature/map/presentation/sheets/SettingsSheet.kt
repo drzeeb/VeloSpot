@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AltRoute
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Loop
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Timeline
@@ -122,6 +124,16 @@ internal fun SettingsSheet(
                 icon = Icons.Default.Loop,
                 title = stringResource(R.string.round_trip_menu),
                 onClick = { actions.onDismiss(); actions.onOpenRoundTrip() }
+            )
+            SettingsRow(
+                icon = Icons.Default.Route,
+                title = stringResource(R.string.route_plan_menu),
+                onClick = { actions.onDismiss(); actions.onStartRoutePlanning() }
+            )
+            SettingsRow(
+                icon = Icons.AutoMirrored.Filled.AltRoute,
+                title = stringResource(R.string.route_my_routes_menu),
+                onClick = { actions.onDismiss(); actions.onOpenPlannedRoutes() }
             )
 
             Spacer(Modifier.height(8.dp))

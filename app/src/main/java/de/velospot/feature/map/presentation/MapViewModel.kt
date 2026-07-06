@@ -30,12 +30,15 @@ import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
 import de.velospot.domain.model.ParkedBike
+import de.velospot.domain.model.PlannedRoute
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RouteAttempt
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.ParkedBikeRepository
+import de.velospot.domain.repository.PlannedRoutesRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
@@ -44,6 +47,8 @@ import de.velospot.feature.map.presentation.offline.OfflineRoutingController
 import de.velospot.feature.map.presentation.places.ParkedBikeController
 import de.velospot.feature.map.presentation.places.SavedPlacesController
 import de.velospot.feature.map.presentation.ride.RideTrackingController
+import de.velospot.feature.map.presentation.routes.RideDirection
+import de.velospot.feature.map.presentation.routes.RoutePlanningController
 import de.velospot.feature.map.presentation.search.AddressSearchController
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -96,6 +101,7 @@ class MapViewModel @Inject constructor(
     savedPlacesRepository: SavedPlacesRepository,
     parkedBikeRepository: ParkedBikeRepository,
     recordedRidesRepository: RecordedRidesRepository,
+    plannedRoutesRepository: PlannedRoutesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -111,12 +117,16 @@ class MapViewModel @Inject constructor(
         /** ID used for the synthetic BikeParkingSpace anchoring a generated round-trip loop. */
         const val ID_ROUND_TRIP = "round_trip"
 
+        /** ID used for the synthetic BikeParkingSpace at the end of a planned multi-waypoint route. */
+        const val ID_PLANNED_ROUTE = "planned_route"
+
         /**
          * Synthetic destination IDs that must NOT trigger auto-parking on arrival —
          * only navigation to a genuine bike parking spot from the map data should.
          */
         private val SYNTHETIC_DESTINATION_IDS = setOf(
-            ID_CUSTOM_MAP_PIN, ID_ADDRESS_SEARCH_PIN, ID_SAVED_PLACE, ID_PARKED_BIKE, ID_ROUND_TRIP
+            ID_CUSTOM_MAP_PIN, ID_ADDRESS_SEARCH_PIN, ID_SAVED_PLACE, ID_PARKED_BIKE,
+            ID_ROUND_TRIP, ID_PLANNED_ROUTE
         )
     }
 
@@ -392,6 +402,20 @@ class MapViewModel @Inject constructor(
     val parkedBike: StateFlow<ParkedBike?> = parkedBikeController.parkedBike
     val isParkedBikeSheetVisible: StateFlow<Boolean> = parkedBikeController.isSheetVisible
 
+    /** Owns the route-planning + leaderboard concern (waypoints, preview, saved routes, attempts). */
+    private val routePlanningController = RoutePlanningController(
+        scope = viewModelScope,
+        repository = plannedRoutesRepository,
+        routingRepository = routingRepository
+    )
+    val isPlanningRoute: StateFlow<Boolean> = routePlanningController.isPlanning
+    val planningWaypoints: StateFlow<List<de.velospot.domain.model.RouteWaypoint>> = routePlanningController.waypoints
+    val planningPreviewRoute: StateFlow<BikeRoute?> = routePlanningController.previewRoute
+    val isComputingRoutePreview: StateFlow<Boolean> = routePlanningController.isComputingPreview
+    val plannedRoutes: StateFlow<List<PlannedRoute>> = routePlanningController.plannedRoutes
+    val leaderboardRoute: StateFlow<PlannedRoute?> = routePlanningController.leaderboardRoute
+    val routeAttempts: StateFlow<List<RouteAttempt>> = routePlanningController.attempts
+
     /**
      * One-shot, string-resource user message (e.g. "bike location saved").
      * The UI shows it as a Toast and then calls [consumeUserMessage] to clear it.
@@ -470,6 +494,16 @@ class MapViewModel @Inject constructor(
      */
     fun onMapTapped(lat: Double, lon: Double) {
         if (isFollowSessionActive) return
+        // In route-planning mode an empty-map tap drops a waypoint instead of a pin.
+        if (routePlanningController.isPlanning.value) {
+            routePlanningController.addWaypoint(lat, lon)
+            viewModelScope.launch {
+                val address = nominatimGeocoder.reverseGeocode(lat, lon)
+                // Re-label the just-added waypoint once its address resolves.
+                routePlanningController.labelLastWaypoint(address?.substringBefore(",")?.trim())
+            }
+            return
+        }
         _selectedSpace.value     = null
         _selectedSearchPin.value = null
         _customMapPin.value      = GeoCoordinate(lat, lon)
@@ -676,7 +710,9 @@ class MapViewModel @Inject constructor(
         currentLocation = { _userLocation.value },
         onUserMessage = { res -> _userMessageRes.value = res },
         clearOtherSelections = { clearPlaceSelections() },
-        moveCamera = { target -> _mapCameraTarget.value = target }
+        moveCamera = { target -> _mapCameraTarget.value = target },
+        // Turn a finished ride of a planned route into a leaderboard attempt.
+        onRideSaved = { ride -> routePlanningController.onRideFinished(ride) }
     )
     val rideTrackingState: StateFlow<RideTrackingUiState> = rideTracking.trackingState
     val recordedRides: StateFlow<List<RecordedRide>> = rideTracking.recordedRides
@@ -1019,7 +1055,12 @@ class MapViewModel @Inject constructor(
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
-    fun startInAppNavigation(space: BikeParkingSpace) = navigationController.start(space)
+    fun startInAppNavigation(space: BikeParkingSpace) {
+        // Navigating to a normal destination is not a planned-route ride: clear any
+        // armed leaderboard-attempt context so this ride isn't wrongly recorded.
+        routePlanningController.cancelPendingRide()
+        navigationController.start(space)
+    }
 
     /**
      * Generates and starts a round-trip loop of roughly [distanceMeters] from the
@@ -1036,18 +1077,65 @@ class MapViewModel @Inject constructor(
             address     = null,
             sourceLayer = "round_trip"
         )
+        routePlanningController.cancelPendingRide()
         navigationController.startRoundTrip(destination, distanceMeters)
     }
 
     fun stopInAppNavigation() = navigationController.stop()
-
-    /** Cancels an in-progress route calculation (loading card "Cancel" button). */
     fun cancelRouteCalculation() = navigationController.cancelRouteCalculation()
 
     /** Called by the `NavigationManager` when the rider has strayed off-route. */
     fun onUserWentOffRoute() = navigationController.onUserWentOffRoute()
 
     fun clearNavigationError() = navigationController.clearError()
+
+    // ── Route planning + leaderboards ─────────────────────────────────────────
+
+    /** Enters route-planning mode: empty-map taps now drop ordered waypoints. */
+    fun startRoutePlanning() {
+        clearPlaceSelections()
+        routePlanningController.startPlanning()
+    }
+
+    fun cancelRoutePlanning() = routePlanningController.cancelPlanning()
+    fun undoLastWaypoint()    = routePlanningController.undoLastWaypoint()
+    fun removeWaypointAt(index: Int) = routePlanningController.removeWaypointAt(index)
+
+    /** Saves the current planning session as a named route (false if not routable yet). */
+    fun savePlannedRoute(name: String): Boolean = routePlanningController.saveRoute(name)
+
+    fun renamePlannedRoute(id: String, name: String) = routePlanningController.renameRoute(id, name)
+    fun deletePlannedRoute(id: String) = routePlanningController.deleteRoute(id)
+
+    fun openRouteLeaderboard(route: PlannedRoute) = routePlanningController.openLeaderboard(route)
+    fun closeRouteLeaderboard() = routePlanningController.closeLeaderboard()
+    fun deleteRouteAttempt(id: String) = routePlanningController.deleteAttempt(id)
+
+    /**
+     * Rides a saved [route] forward or backwards: arms the leaderboard-attempt
+     * context, then starts turn-by-turn navigation through the route's stops (from
+     * the rider's current position). Reverse rides land on their own leaderboard.
+     */
+    fun ridePlannedRoute(route: PlannedRoute, reversed: Boolean) {
+        val direction = if (reversed) RideDirection.REVERSE else RideDirection.FORWARD
+        val waypoints = routePlanningController.beginRide(route, direction) ?: return
+        val last = waypoints.last()
+        val label = if (reversed) {
+            context.getString(de.velospot.R.string.route_ride_reverse_name, route.name)
+        } else {
+            route.name
+        }
+        val destination = syntheticSpace(
+            id          = ID_PLANNED_ROUTE,
+            latitude    = last.latitude,
+            longitude   = last.longitude,
+            name        = label,
+            address     = null,
+            sourceLayer = "planned_route"
+        )
+        closeRouteLeaderboard()
+        navigationController.startVia(destination, waypoints)
+    }
 
     // ── Offline routing ───────────────────────────────────────────────────────
 

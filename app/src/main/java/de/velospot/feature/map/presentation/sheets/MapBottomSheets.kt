@@ -51,6 +51,9 @@ internal fun MapBottomSheets(
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
+    val plannedRoutes        by viewModel.plannedRoutes.collectAsStateWithLifecycle()
+    val leaderboardRoute     by viewModel.leaderboardRoute.collectAsStateWithLifecycle()
+    val routeAttempts        by viewModel.routeAttempts.collectAsStateWithLifecycle()
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
     // Controls the "name this favourite" dialog opened from the custom pin sheet.
@@ -197,6 +200,29 @@ internal fun MapBottomSheets(
                 viewModel.startRoundTrip(distanceMeters)
             },
             onDismiss = screenUiState::closeRoundTrip
+        )
+    }
+
+    // Saved multi-waypoint routes list.
+    if (screenUiState.isPlannedRoutesSheetVisible) {
+        PlannedRoutesSheet(
+            routes = plannedRoutes,
+            onDismiss = screenUiState::closePlannedRoutes,
+            onRide = { route, reversed ->
+                screenUiState.closePlannedRoutes()
+                viewModel.ridePlannedRoute(route, reversed)
+            },
+            onOpenLeaderboard = { route -> viewModel.openRouteLeaderboard(route) },
+            onDelete = viewModel::deletePlannedRoute
+        )
+    }
+
+    // A route's forward / reverse leaderboard.
+    leaderboardRoute?.let { route ->
+        RouteLeaderboardSheet(
+            route = route,
+            attempts = routeAttempts,
+            onDismiss = viewModel::closeRouteLeaderboard
         )
     }
 

@@ -188,6 +188,23 @@ class NavigationController(
     }
 
     /**
+     * Starts navigation along a **planned multi-waypoint route**. Routes from the
+     * rider's current position through every coordinate in [waypoints] in order
+     * (reverse the list before calling to ride the route backwards). [destination]
+     * is a synthetic space placed at the final waypoint; its id must be in
+     * [syntheticDestinationIds] so arrival just confirms (no auto-park).
+     */
+    fun startVia(destination: BikeParkingSpace, waypoints: List<GeoCoordinate>) {
+        val location = currentLocation() ?: run {
+            _uiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
+            return
+        }
+        beginRouting(destination) {
+            routingRepository.getBikeRouteVia(listOf(location) + waypoints)
+        }
+    }
+
+    /**
      * Starts a generated **round-trip** loop of roughly [targetDistanceMeters],
      * beginning and ending at the rider's current position. [destination] is a
      * synthetic space placed at the start (its id must be in

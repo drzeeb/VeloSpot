@@ -409,4 +409,27 @@
 
     <!-- Transient error shown when a viewport reload fails (map already displaying data) -->
     <string name="error_loading_parking">Could not refresh parking data</string>
+
+    <!-- Planned routes + leaderboards -->
+    <string name="route_plan_menu">Plan a route</string>
+    <string name="route_my_routes_menu">My routes</string>
+    <string name="route_plan_title">Plan route</string>
+    <string name="route_plan_hint">Tap the map to add stops in order.</string>
+    <string name="route_plan_stops">%1$d stops</string>
+    <string name="route_plan_need_more">Add at least 2 stops</string>
+    <string name="route_plan_cancel">Cancel</string>
+    <string name="route_plan_undo">Undo</string>
+    <string name="route_plan_save">Save</string>
+    <string name="route_my_routes_title">My routes</string>
+    <string name="route_my_routes_empty">No saved routes yet. Plan one from the menu.</string>
+    <string name="route_leaderboard_open">Leaderboard</string>
+    <string name="route_delete">Delete</string>
+    <string name="route_stats_line">%1$s · %2$d stops · ↑ %3$s</string>
+    <string name="route_ride">Ride</string>
+    <string name="route_ride_reverse">Reverse</string>
+    <string name="route_ride_reverse_name">%1$s (reverse)</string>
+    <string name="route_leaderboard_title">%1$s – leaderboard</string>
+    <string name="route_leaderboard_forward">Forward (%1$d)</string>
+    <string name="route_leaderboard_reverse">Reverse (%1$d)</string>
+    <string name="route_leaderboard_empty">No attempts yet. Ride this route to set a time.</string>
 </resources>
