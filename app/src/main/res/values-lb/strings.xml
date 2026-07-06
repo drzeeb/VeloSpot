@@ -159,6 +159,8 @@
     <string name="settings_title">Astellungen</string>
     <string name="settings_section_quick_actions">Séier Aktiounen</string>
     <string name="settings_section_appearance">Duerstellung &amp; Kaart</string>
+    <string name="map_actions">Aktiounen</string>
+    <string name="settings_group_navigation">Navigatioun &amp; Routing</string>
     <string name="settings_section_routing">Routing</string>
     <string name="settings_section_debug">Entwéckler</string>
     <string name="elevation_profile_ascent">↑ %1$d m</string>

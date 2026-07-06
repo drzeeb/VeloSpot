@@ -160,6 +160,8 @@
     <string name="settings_title">Paramètres</string>
     <string name="settings_section_quick_actions">Actions rapides</string>
     <string name="settings_section_appearance">Apparence &amp; carte</string>
+    <string name="map_actions">Actions</string>
+    <string name="settings_group_navigation">Navigation &amp; itinéraires</string>
     <string name="settings_section_routing">Itinéraire</string>
     <string name="settings_section_debug">Développeur</string>
     <string name="elevation_profile_ascent">↑ %1$d m</string>

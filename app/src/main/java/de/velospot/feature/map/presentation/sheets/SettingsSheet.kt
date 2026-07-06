@@ -15,22 +15,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.AltRoute
-import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Loop
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,10 +55,14 @@ import de.velospot.feature.map.presentation.OfflineRoutingUiState
 import de.velospot.feature.map.presentation.headingSemantics
 
 /**
- * The single, tidy entry point for everything that used to clutter the top-bar
- * dropdown menu. Groups quick actions (favourites, parked bike, rides) and
- * settings (appearance, map view, layers, offline routing) into a clean modal
- * sheet, so the map stays uncluttered with just a search field + one menu icon.
+ * The **main Settings sheet** — deliberately short. It holds only *settings*
+ * (frequent **actions** live on the map's speed-dial FAB), grouped into a few
+ * top-level entries that each open a focused sub-sheet, so the list is scannable
+ * at a glance instead of being one long scroll:
+ *  - **Appearance & map** → dark mode, language, 2D/3D, layers,
+ *  - **Navigation & routing** → voice guidance, keep screen on, offline routing,
+ *  - **About**.
+ * The debug GPS simulator (debug builds only) stays inline at the bottom.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,16 +71,9 @@ internal fun SettingsSheet(
     actions: MapMenuCardActions
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    // Cap the sheet a little below the status bar and make it scrollable, so a tall
-    // settings list never expands all the way to the top — which otherwise makes
-    // Material3 paint (animate) the status-bar inset and looks like the top edge
-    // "slowly filling in".
     val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp
 
-    ModalBottomSheet(
-        onDismissRequest = actions.onDismiss,
-        sheetState = sheetState
-    ) {
+    ModalBottomSheet(onDismissRequest = actions.onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -96,50 +90,79 @@ internal fun SettingsSheet(
                     .headingSemantics()
             )
 
-            // ── Quick actions ─────────────────────────────────────────────────
-            SettingsSectionHeader(stringResource(R.string.settings_section_quick_actions))
             SettingsRow(
-                icon = Icons.Default.Favorite,
-                title = stringResource(R.string.menu_favorites_count, state.favoritesCount),
-                onClick = actions.onOpenFavorites
+                icon = Icons.Default.Map,
+                title = stringResource(R.string.settings_section_appearance),
+                onClick = actions.onOpenDisplaySettings,
+                trailing = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
             )
             SettingsRow(
-                icon = Icons.AutoMirrored.Filled.DirectionsBike,
-                iconTint = if (state.isBikeParked) Color(0xFFF57C00) else null,
-                title = stringResource(
-                    if (state.isBikeParked) R.string.menu_show_parked_bike
-                    else R.string.menu_park_bike_here
-                ),
-                onClick = {
-                    actions.onDismiss()
-                    if (state.isBikeParked) actions.onShowParkedBike() else actions.onParkBikeHere()
-                }
+                icon = Icons.Default.Navigation,
+                iconTint = if (state.offlineRoutingUiState is OfflineRoutingUiState.Enabled)
+                    MaterialTheme.colorScheme.primary else null,
+                title = stringResource(R.string.settings_group_navigation),
+                onClick = actions.onOpenNavRouting,
+                trailing = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
             )
             SettingsRow(
-                icon = Icons.Default.Timeline,
-                title = stringResource(R.string.menu_my_rides),
-                onClick = { actions.onDismiss(); actions.onOpenRides() }
+                icon = Icons.Default.Info,
+                title = stringResource(R.string.menu_about),
+                onClick = { actions.onDismiss(); actions.onOpenAbout() }
             )
-            SettingsRow(
-                icon = Icons.Default.Loop,
-                title = stringResource(R.string.round_trip_menu),
-                onClick = { actions.onDismiss(); actions.onOpenRoundTrip() }
-            )
-            SettingsRow(
-                icon = Icons.Default.Route,
-                title = stringResource(R.string.route_plan_menu),
-                onClick = { actions.onDismiss(); actions.onStartRoutePlanning() }
-            )
-            SettingsRow(
-                icon = Icons.AutoMirrored.Filled.AltRoute,
-                title = stringResource(R.string.route_my_routes_menu),
-                onClick = { actions.onDismiss(); actions.onOpenPlannedRoutes() }
-            )
+
+            // Debug: GPS route simulator (debug builds only).
+            if (state.showSimulator) {
+                Spacer(Modifier.height(8.dp))
+                SettingsSectionHeader(stringResource(R.string.settings_section_debug))
+                SettingsRow(
+                    icon = if (state.isSimulating) Icons.Default.Stop else Icons.Default.PlayArrow,
+                    iconTint = if (state.isSimulating) MaterialTheme.colorScheme.error
+                               else MaterialTheme.colorScheme.primary,
+                    title = stringResource(
+                        when {
+                            state.isSimulating     -> R.string.menu_simulate_route_stop
+                            state.simulatorEnabled -> R.string.menu_simulate_route_start
+                            else                   -> R.string.menu_simulate_route_hint
+                        }
+                    ),
+                    enabled = state.simulatorEnabled,
+                    onClick = { actions.onDismiss(); actions.onToggleSimulation() }
+                )
+            }
 
             Spacer(Modifier.height(8.dp))
+        }
+    }
+}
 
-            // ── Appearance & map ──────────────────────────────────────────────
-            SettingsSectionHeader(stringResource(R.string.settings_section_appearance))
+/**
+ * Sub-sheet: **Appearance & map** — dark mode, language, 2D/3D map view and the
+ * pin layers. Opened from the main Settings sheet.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun DisplaySettingsSheet(
+    state: MapMenuCardState,
+    actions: MapMenuCardActions,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxSheetHeight)
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.settings_section_appearance),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).headingSemantics()
+            )
             SettingsRow(
                 icon = Icons.Default.DarkMode,
                 title = stringResource(
@@ -157,6 +180,44 @@ internal fun SettingsSheet(
                 icon = Icons.Default.ViewInAr,
                 title = stringResource(R.string.menu_navigation_view),
                 onClick = actions.onOpenNavigationView
+            )
+            SettingsRow(
+                icon = Icons.Default.Layers,
+                title = stringResource(R.string.menu_layers),
+                onClick = actions.onOpenLayers
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+/**
+ * Sub-sheet: **Navigation & routing** — spoken voice guidance, keep-screen-on and
+ * the offline routing setup/profile. Opened from the main Settings sheet.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun NavigationRoutingSheet(
+    state: MapMenuCardState,
+    actions: MapMenuCardActions,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxSheetHeight)
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.settings_group_navigation),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp).headingSemantics()
             )
             SettingsRow(
                 icon = Icons.AutoMirrored.Filled.VolumeUp,
@@ -180,21 +241,14 @@ internal fun SettingsSheet(
                     )
                 }
             )
-            SettingsRow(
-                icon = Icons.Default.Layers,
-                title = stringResource(R.string.menu_layers),
-                onClick = actions.onOpenLayers
-            )
 
-            Spacer(Modifier.height(8.dp))
-
-            // ── Offline routing ───────────────────────────────────────────────
+            Spacer(Modifier.height(4.dp))
             SettingsSectionHeader(stringResource(R.string.settings_section_routing))
             when (val offState = state.offlineRoutingUiState) {
                 is OfflineRoutingUiState.Disabled -> SettingsRow(
                     icon = Icons.Default.SignalWifiOff,
                     title = stringResource(R.string.menu_offline_routing_activate),
-                    onClick = { actions.onDismiss(); actions.onActivateOfflineRouting() }
+                    onClick = { onDismiss(); actions.onActivateOfflineRouting() }
                 )
                 is OfflineRoutingUiState.Downloading -> SettingsRow(
                     icon = null,
@@ -210,7 +264,7 @@ internal fun SettingsSheet(
                         R.string.menu_offline_routing_active,
                         stringResource(offState.profile.displayNameRes)
                     ),
-                    onClick = { actions.onDismiss(); actions.onOpenProfileSheet() }
+                    onClick = { onDismiss(); actions.onOpenProfileSheet() }
                 )
                 is OfflineRoutingUiState.DownloadComplete -> SettingsRow(
                     icon = Icons.Default.CheckCircle,
@@ -220,32 +274,6 @@ internal fun SettingsSheet(
                     onClick = {}
                 )
             }
-            SettingsRow(
-                icon = Icons.Default.Info,
-                title = stringResource(R.string.menu_about),
-                onClick = { actions.onDismiss(); actions.onOpenAbout() }
-            )
-
-            // ── Debug: GPS route simulator ────────────────────────────────────
-            if (state.showSimulator) {
-                Spacer(Modifier.height(8.dp))
-                SettingsSectionHeader(stringResource(R.string.settings_section_debug))
-                SettingsRow(
-                    icon = if (state.isSimulating) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    iconTint = if (state.isSimulating) MaterialTheme.colorScheme.error
-                               else MaterialTheme.colorScheme.primary,
-                    title = stringResource(
-                        when {
-                            state.isSimulating     -> R.string.menu_simulate_route_stop
-                            state.simulatorEnabled -> R.string.menu_simulate_route_start
-                            else                   -> R.string.menu_simulate_route_hint
-                        }
-                    ),
-                    enabled = state.simulatorEnabled,
-                    onClick = { actions.onDismiss(); actions.onToggleSimulation() }
-                )
-            }
-
             Spacer(Modifier.height(8.dp))
         }
     }

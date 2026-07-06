@@ -159,6 +159,8 @@
     <string name="settings_title">Instellingen</string>
     <string name="settings_section_quick_actions">Snelle acties</string>
     <string name="settings_section_appearance">Weergave &amp; kaart</string>
+    <string name="map_actions">Acties</string>
+    <string name="settings_group_navigation">Navigatie &amp; routes</string>
     <string name="settings_section_routing">Route</string>
     <string name="settings_section_debug">Ontwikkelaar</string>
     <string name="elevation_profile_ascent">↑ %1$d m</string>

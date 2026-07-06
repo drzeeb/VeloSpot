@@ -42,6 +42,14 @@ internal class MapScreenUiState {
     var isPlannedRoutesSheetVisible by mutableStateOf(false)
         private set
 
+    /** Sub-sheet: appearance & map settings (dark mode, language, 2D/3D, layers). */
+    var isDisplaySettingsSheetVisible by mutableStateOf(false)
+        private set
+
+    /** Sub-sheet: navigation & routing settings (voice, keep screen on, offline profile). */
+    var isNavRoutingSheetVisible by mutableStateOf(false)
+        private set
+
     /** Opens the unified Settings sheet (top-bar menu button). */
     fun expandMenu() {
         isSettingsSheetVisible = true
@@ -123,6 +131,24 @@ internal class MapScreenUiState {
 
     fun closePlannedRoutes() {
         isPlannedRoutesSheetVisible = false
+    }
+
+    /** Opens the "Appearance & map" sub-sheet from the main Settings sheet. */
+    fun openDisplaySettings() {
+        isDisplaySettingsSheetVisible = true
+    }
+
+    fun closeDisplaySettings() {
+        isDisplaySettingsSheetVisible = false
+    }
+
+    /** Opens the "Navigation & routing" sub-sheet from the main Settings sheet. */
+    fun openNavRouting() {
+        isNavRoutingSheetVisible = true
+    }
+
+    fun closeNavRouting() {
+        isNavRoutingSheetVisible = false
     }
 }
 

@@ -1,6 +1,7 @@
 ﻿<resources>
     <string name="app_name">VeloSpot</string>
     <string name="menu_open">Open menu</string>
+    <string name="map_actions">Actions</string>
     <string name="menu_favorites_count">Favorites (%1$d)</string>
     <string name="menu_language_with_flag">Language: %1$s</string>
     <string name="menu_enable_dark_mode">Enable dark mode</string>
@@ -20,6 +21,7 @@
     <string name="settings_title">Settings</string>
     <string name="settings_section_quick_actions">Quick actions</string>
     <string name="settings_section_appearance">Appearance &amp; map</string>
+    <string name="settings_group_navigation">Navigation &amp; routing</string>
     <string name="settings_section_routing">Routing</string>
     <string name="settings_section_debug">Developer</string>
 

@@ -159,6 +159,8 @@
     <string name="settings_title">Definições</string>
     <string name="settings_section_quick_actions">Ações rápidas</string>
     <string name="settings_section_appearance">Aparência e mapa</string>
+    <string name="map_actions">Ações</string>
+    <string name="settings_group_navigation">Navegação e rotas</string>
     <string name="settings_section_routing">Rota</string>
     <string name="settings_section_debug">Programador</string>
     <string name="elevation_profile_ascent">↑ %1$d m</string>
