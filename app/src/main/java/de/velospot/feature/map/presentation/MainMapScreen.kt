@@ -60,6 +60,8 @@ import de.velospot.feature.map.presentation.markers.updateMaxSpeedMarker
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.markers.createSpeedBubbleIcon
 import de.velospot.feature.map.presentation.markers.updateTracksHistoryLayer
+import de.velospot.feature.map.presentation.markers.updateWaypointsLayer
+import de.velospot.feature.map.presentation.markers.createWaypointPinIcon
 import de.velospot.core.map.RideHeatmap
 import de.velospot.core.map.RideMaxSpeedPoint
 import de.velospot.core.map.RideTrackLines
@@ -450,6 +452,24 @@ fun MainMapScreen(
             RideTrackLines.build(recordedRides.filterNot { it.isMock })
         }
         updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
+    }
+
+    // ── Route-planning waypoint pins ──────────────────────────────────────────
+    // Draw a numbered pin for each chosen stop while planning (the last one amber
+    // so the current end is obvious). Cleared when planning ends or between style
+    // reloads. Runs off the marker pass so dropping a stop updates instantly.
+    LaunchedEffect(maplibreMap, styleVersion, isPlanningRoute, planningWaypoints) {
+        val style = maplibreMap?.style ?: return@LaunchedEffect
+        if (!isPlanningRoute || planningWaypoints.isEmpty()) {
+            updateWaypointsLayer(style, emptyList(), emptyList())
+            return@LaunchedEffect
+        }
+        val lastIndex = planningWaypoints.lastIndex
+        val icons = planningWaypoints.mapIndexed { i, _ ->
+            createWaypointPinIcon(number = i + 1, isLast = i == lastIndex)
+        }
+        val points = planningWaypoints.map { it.latitude to it.longitude }
+        updateWaypointsLayer(style, points, icons)
     }
 
     // ── 3D navigation: bind manager + start/stop with the active route ────────

@@ -388,6 +388,63 @@ internal fun createSavedPlaceIcon(): Drawable {
 }
 
 /**
+ * A numbered dropped-pin used while planning a multi-waypoint route, so each
+ * chosen stop is clearly visible on the map with its order number. The last
+ * waypoint is drawn in a distinct amber colour so the rider can immediately tell
+ * where the route currently ends; the earlier stops are teal.
+ */
+internal fun createWaypointPinIcon(number: Int, isLast: Boolean): Bitmap {
+    val width = 72
+    val height = 96
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val cx = width / 2f
+    val cy = 32f
+
+    // Shadow
+    canvas.drawCircle(cx + 3f, 76f, 13f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x33000000; style = Paint.Style.FILL
+    })
+
+    val bodyColor = if (isLast) "#FB8C00".toColorInt() else "#00897B".toColorInt()
+    val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = bodyColor; style = Paint.Style.FILL
+    }
+    // White keyline so the pin pops on any basemap.
+    val keyline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.STROKE; strokeWidth = 4f
+    }
+
+    val body = Path().apply {
+        addCircle(cx, cy, 28f, Path.Direction.CW)
+        moveTo(cx, 90f)
+        lineTo(cx - 16f, 50f)
+        lineTo(cx + 16f, 50f)
+        close()
+    }
+    canvas.drawPath(body, keyline)
+    canvas.drawPath(body, pinPaint)
+
+    // White inner disc that holds the number.
+    canvas.drawCircle(cx, cy, 16f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.FILL
+    })
+
+    // Order number, centred in the white disc.
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = bodyColor
+        textSize = 22f
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
+    val fm = textPaint.fontMetrics
+    val baseline = cy - (fm.ascent + fm.descent) / 2f
+    canvas.drawText(number.toString(), cx, baseline, textPaint)
+
+    return bitmap
+}
+
+/**
  * A bold amber dropped-pin icon carrying a white bike glyph, used to mark where
  * the user parked their bike. Deliberately distinct from every other pin (green
  * saved-place star, blue custom pin, red search pin) so the parked bike is

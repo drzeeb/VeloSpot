@@ -36,6 +36,9 @@ internal const val SOURCE_CUSTOM_PIN = "velospot-custom-pin-source"
 internal const val SOURCE_SAVED_PIN  = "velospot-saved-pin-source"
 internal const val SOURCE_PARKED_BIKE = "velospot-parked-bike-source"
 
+/** Numbered pins for the stops of a route being planned. */
+internal const val SOURCE_WAYPOINTS = "velospot-waypoints-source"
+
 /** Geometry of the already-travelled part of the route (drawn greyed-out). */
 internal const val SOURCE_ROUTE_TRAVELED = "velospot-route-traveled-source"
 
@@ -64,6 +67,12 @@ internal const val LAYER_SEARCH_PIN = "velospot-search-pin-layer"
 internal const val LAYER_CUSTOM_PIN = "velospot-custom-pin-layer"
 internal const val LAYER_SAVED_PIN  = "velospot-saved-pin-layer"
 internal const val LAYER_PARKED_BIKE = "velospot-parked-bike-layer"
+
+/** Numbered waypoint pins drawn while planning a route. */
+internal const val LAYER_WAYPOINTS = "velospot-waypoints-layer"
+
+/** Image id of the numbered waypoint pin for stop [i] (0-based). */
+internal fun waypointImageId(i: Int): String = "vs-waypoint-$i"
 
 /** Greyed-out "already travelled" portion of the route, drawn beneath [LAYER_ROUTE]. */
 internal const val LAYER_ROUTE_TRAVELED = "velospot-route-traveled-layer"
@@ -685,6 +694,48 @@ internal fun updateHeatmapLayer(
     style.getLayer(LAYER_HEATMAP)?.setProperties(
         PropertyFactory.visibility(if (show) Property.VISIBLE else Property.NONE)
     )
+}
+
+// ── Waypoint pins (route planning) ──────────────────────────────────────────
+
+/**
+ * Idempotently registers and updates the **numbered waypoint pins** shown while
+ * planning a multi-waypoint route. Each stop in [points] (`latitude, longitude`)
+ * gets its order-numbered pin (see `createWaypointPinIcon`) supplied in [icons] at
+ * the same index; the pins reference their per-stop image via [PROP_ICON] exactly
+ * like the parking layer. Pass empty lists to clear the pins (planning ended).
+ *
+ * Drawn on top so a stop is never hidden behind the preview route line.
+ */
+internal fun updateWaypointsLayer(
+    style: Style,
+    points: List<Pair<Double, Double>>,
+    icons: List<Bitmap>
+) {
+    icons.forEachIndexed { i, bmp -> style.addImage(waypointImageId(i), bmp) }
+    val data = if (points.isNotEmpty()) {
+        FeatureCollection.fromFeatures(
+            points.mapIndexed { i, (lat, lon) ->
+                Feature.fromGeometry(Point.fromLngLat(lon, lat)).apply {
+                    addStringProperty(PROP_ICON, waypointImageId(i))
+                }
+            }
+        )
+    } else {
+        FeatureCollection.fromFeatures(emptyList())
+    }
+    upsertSource(style, SOURCE_WAYPOINTS, data)
+
+    if (style.getLayer(LAYER_WAYPOINTS) == null) {
+        style.addLayer(
+            SymbolLayer(LAYER_WAYPOINTS, SOURCE_WAYPOINTS).withProperties(
+                PropertyFactory.iconImage(Expression.get(PROP_ICON)),
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconIgnorePlacement(true),
+                PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM)
+            )
+        )
+    }
 }
 
 // ── Icon registration ──────────────────────────────────────────────────────
