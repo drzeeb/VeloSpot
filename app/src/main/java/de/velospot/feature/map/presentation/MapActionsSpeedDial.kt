@@ -93,9 +93,12 @@ internal fun BoxScope.MapActionsSpeedDial(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 actions.forEach { action ->
+                    // Both the mini-FAB and its label trigger the same action, so
+                    // the (larger) text is a tap target too, not just the icon.
+                    val trigger = { expanded = false; action.onClick() }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         SmallFloatingActionButton(
-                            onClick = { expanded = false; action.onClick() },
+                            onClick = trigger,
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ) {
@@ -103,6 +106,7 @@ internal fun BoxScope.MapActionsSpeedDial(
                         }
                         Spacer(Modifier.width(10.dp))
                         Surface(
+                            onClick = trigger,
                             shape = RoundedCornerShape(10.dp),
                             color = MaterialTheme.colorScheme.surface,
                             tonalElevation = 3.dp,
