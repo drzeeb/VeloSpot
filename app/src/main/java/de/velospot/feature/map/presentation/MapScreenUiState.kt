@@ -38,6 +38,10 @@ internal class MapScreenUiState {
     var isRoundTripSheetVisible by mutableStateOf(false)
         private set
 
+    /** The list of saved planned multi-waypoint routes. */
+    var isPlannedRoutesSheetVisible by mutableStateOf(false)
+        private set
+
     /** Opens the unified Settings sheet (top-bar menu button). */
     fun expandMenu() {
         isSettingsSheetVisible = true
@@ -110,6 +114,15 @@ internal class MapScreenUiState {
 
     fun closeRoundTrip() {
         isRoundTripSheetVisible = false
+    }
+
+    fun openPlannedRoutes() {
+        isPlannedRoutesSheetVisible = true
+        dismissMenu()
+    }
+
+    fun closePlannedRoutes() {
+        isPlannedRoutesSheetVisible = false
     }
 }
 

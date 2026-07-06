@@ -37,6 +37,8 @@ class RideTrackingController(
     private val onUserMessage: (Int) -> Unit,
     private val clearOtherSelections: () -> Unit,
     private val moveCamera: (MapCameraTarget) -> Unit,
+    /** Invoked with every freshly-saved ride (used e.g. to record a route attempt). */
+    private val onRideSaved: (RecordedRide) -> Unit = {},
 ) {
     val trackingState: StateFlow<RideTrackingUiState> = manager.trackingState
 
@@ -77,6 +79,7 @@ class RideTrackingController(
                 when (event) {
                     is RideRecordingEvent.Saved -> {
                         onUserMessage(de.velospot.R.string.ride_saved)
+                        onRideSaved(event.ride)
                         selectRide(event.ride)
                     }
                     RideRecordingEvent.TooShort ->

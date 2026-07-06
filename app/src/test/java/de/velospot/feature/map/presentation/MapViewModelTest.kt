@@ -143,6 +143,7 @@ class MapViewModelTest {
             savedPlacesRepository = FakeSavedPlacesRepository(),
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
+            plannedRoutesRepository = FakePlannedRoutesRepository(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }
@@ -614,6 +615,36 @@ private class FakeParkedBikeRepository : ParkedBikeRepository {
     override suspend fun clear() { parkedBike.value = null }
 }
 
+private class FakePlannedRoutesRepository : de.velospot.domain.repository.PlannedRoutesRepository {
+    private val routes = MutableStateFlow<List<de.velospot.domain.model.PlannedRoute>>(emptyList())
+    private val attempts = MutableStateFlow<List<de.velospot.domain.model.RouteAttempt>>(emptyList())
+
+    override fun getRoutesFlow(): Flow<List<de.velospot.domain.model.PlannedRoute>> = routes
+
+    override fun getAttemptsFlow(routeId: String): Flow<List<de.velospot.domain.model.RouteAttempt>> = attempts
+
+    override suspend fun saveRoute(route: de.velospot.domain.model.PlannedRoute) {
+        routes.value = routes.value.filterNot { it.id == route.id } + route
+    }
+
+    override suspend fun renameRoute(id: String, name: String) {
+        routes.value = routes.value.map { if (it.id == id) it.copy(name = name) else it }
+    }
+
+    override suspend fun deleteRoute(id: String) {
+        routes.value = routes.value.filterNot { it.id == id }
+        attempts.value = attempts.value.filterNot { it.routeId == id }
+    }
+
+    override suspend fun addAttempt(attempt: de.velospot.domain.model.RouteAttempt) {
+        attempts.value = attempts.value + attempt
+    }
+
+    override suspend fun deleteAttempt(id: String) {
+        attempts.value = attempts.value.filterNot { it.id == id }
+    }
+}
+
 private class FakeRecordedRidesRepository : RecordedRidesRepository {
     private val rides = MutableStateFlow<List<RecordedRide>>(emptyList())
 
@@ -676,6 +707,13 @@ private class FakeRoutingRepository(
     override suspend fun getBikeRoute(from: GeoCoordinate, to: GeoCoordinate): BikeRoute {
         lastFrom = from
         lastTo = to
+        error?.let { throw it }
+        return route
+    }
+
+    override suspend fun getBikeRouteVia(waypoints: List<GeoCoordinate>): BikeRoute {
+        lastFrom = waypoints.first()
+        lastTo = waypoints.last()
         error?.let { throw it }
         return route
     }

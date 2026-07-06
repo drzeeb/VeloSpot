@@ -372,4 +372,26 @@
     <string name="ride_notification_channel_description">Blijft je rit registreren terwijl de app op de achtergrond draait.</string>
     <string name="ride_record_start">Rit starten</string>
     <string name="widget_ride_recording_description">Start of stop een ritregistratie.</string>
+    <!-- Planned routes + leaderboards -->
+    <string name="route_plan_menu">Route plannen</string>
+    <string name="route_my_routes_menu">Mijn routes</string>
+    <string name="route_plan_title">Route plannen</string>
+    <string name="route_plan_hint">Tik op de kaart om achtereenvolgens stops toe te voegen.</string>
+    <string name="route_plan_stops">%1$d stops</string>
+    <string name="route_plan_need_more">Voeg minstens 2 stops toe</string>
+    <string name="route_plan_cancel">Annuleren</string>
+    <string name="route_plan_undo">Ongedaan maken</string>
+    <string name="route_plan_save">Opslaan</string>
+    <string name="route_my_routes_title">Mijn routes</string>
+    <string name="route_my_routes_empty">Nog geen opgeslagen routes. Plan er een via het menu.</string>
+    <string name="route_leaderboard_open">Ranglijst</string>
+    <string name="route_delete">Verwijderen</string>
+    <string name="route_stats_line">%1$s · %2$d stops · ↑ %3$s</string>
+    <string name="route_ride">Rijden</string>
+    <string name="route_ride_reverse">Omgekeerd</string>
+    <string name="route_ride_reverse_name">%1$s (omgekeerd)</string>
+    <string name="route_leaderboard_title">%1$s – ranglijst</string>
+    <string name="route_leaderboard_forward">Heen (%1$d)</string>
+    <string name="route_leaderboard_reverse">Terug (%1$d)</string>
+    <string name="route_leaderboard_empty">Nog geen pogingen. Rijd deze route om een tijd neer te zetten.</string>
 </resources>
