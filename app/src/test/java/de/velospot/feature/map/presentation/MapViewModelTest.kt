@@ -13,6 +13,7 @@ import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.SavedPlace
@@ -28,6 +29,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -589,6 +591,11 @@ private class FakeFavoritesRepository : FavoritesRepository {
     override suspend fun removeFavorite(parkingSpaceId: String) {
         favorites.value = favorites.value - parkingSpaceId
     }
+
+    override suspend fun toggleFavorite(parkingSpaceId: String) {
+        if (favorites.value.contains(parkingSpaceId)) removeFavorite(parkingSpaceId)
+        else addFavorite(parkingSpaceId)
+    }
 }
 
 private class FakeSavedPlacesRepository : SavedPlacesRepository {
@@ -648,7 +655,16 @@ private class FakePlannedRoutesRepository : de.velospot.domain.repository.Planne
 private class FakeRecordedRidesRepository : RecordedRidesRepository {
     private val rides = MutableStateFlow<List<RecordedRide>>(emptyList())
 
-    override fun getRidesFlow(): Flow<List<RecordedRide>> = rides
+    override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> =
+        rides.map { list -> list.map { it.toSummary() } }
+
+    override fun getRidesWithTracksFlow(): Flow<List<RecordedRide>> = rides
+
+    override suspend fun getRide(id: String): RecordedRide? =
+        rides.value.firstOrNull { it.id == id }
+
+    override suspend fun getRides(ids: List<String>): List<RecordedRide> =
+        ids.mapNotNull { id -> rides.value.firstOrNull { it.id == id } }
 
     override suspend fun saveRide(ride: RecordedRide) {
         rides.value = rides.value.filterNot { it.id == ride.id } + ride
@@ -669,6 +685,22 @@ private class FakeRecordedRidesRepository : RecordedRidesRepository {
     }
 
     override suspend fun clearAll() { rides.value = emptyList() }
+
+    private fun RecordedRide.toSummary() = RecordedRideSummary(
+        id = id,
+        startedAt = startedAt,
+        endedAt = endedAt,
+        distanceMeters = distanceMeters,
+        elapsedSeconds = elapsedSeconds,
+        movingSeconds = movingSeconds,
+        avgSpeedMps = avgSpeedMps,
+        maxSpeedMps = maxSpeedMps,
+        elevationGainMeters = elevationGainMeters,
+        elevationLossMeters = elevationLossMeters,
+        name = name,
+        isMock = isMock,
+        archivedAt = archivedAt
+    )
 }
 
 private class FakeLocationRepository(

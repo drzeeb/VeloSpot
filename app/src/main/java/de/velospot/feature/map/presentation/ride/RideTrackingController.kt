@@ -5,15 +5,21 @@ import de.velospot.core.tracking.RideRecordingManager
 import de.velospot.core.tracking.RideTrackingUiState
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.feature.map.presentation.MapCameraTarget
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,7 +34,12 @@ import kotlinx.coroutines.launch
  * controller delegates the recording controls to the manager and reflects its
  * state, while keeping the timeline/selection logic that is genuinely a UI concern
  * bound to the ViewModel scope.
+ *
+ * The timeline is track-free ([recordedRideSummaries]); a ride's full GPS track is
+ * only loaded when it is opened ([selectRide]) or when a map overlay needs every
+ * track ([recordedRideTracks], gated by [overlayTracksNeeded]).
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RideTrackingController(
     private val scope: CoroutineScope,
     private val repository: RecordedRidesRepository,
@@ -37,14 +48,33 @@ class RideTrackingController(
     private val onUserMessage: (Int) -> Unit,
     private val clearOtherSelections: () -> Unit,
     private val moveCamera: (MapCameraTarget) -> Unit,
+    /**
+     * Emits `true` while a map overlay (heatmap or ridden-tracks) is visible and
+     * therefore needs every ride's full geometry. While `false` no tracks are
+     * loaded or held in memory at all.
+     */
+    overlayTracksNeeded: Flow<Boolean>,
     /** Invoked with every freshly-saved ride (used e.g. to record a route attempt). */
     private val onRideSaved: (RecordedRide) -> Unit = {},
 ) {
     val trackingState: StateFlow<RideTrackingUiState> = manager.trackingState
 
-    /** All persisted rides, newest first (the "My rides" timeline). */
-    private val _recordedRides = MutableStateFlow<List<RecordedRide>>(emptyList())
-    val recordedRides: StateFlow<List<RecordedRide>> = _recordedRides.asStateFlow()
+    /** All persisted rides as track-free summaries, newest first (the timeline). */
+    private val _recordedRideSummaries = MutableStateFlow<List<RecordedRideSummary>>(emptyList())
+    val recordedRideSummaries: StateFlow<List<RecordedRideSummary>> = _recordedRideSummaries.asStateFlow()
+
+    /**
+     * Every recorded ride **with** its full track — but only while an overlay
+     * actually needs it. Empty (and nothing deserialised) whenever the heatmap and
+     * ridden-tracks layers are both off, which is the common case.
+     */
+    val recordedRideTracks: StateFlow<List<RecordedRide>> =
+        overlayTracksNeeded
+            .distinctUntilChanged()
+            .flatMapLatest { needed ->
+                if (needed) repository.getRidesWithTracksFlow() else flowOf(emptyList())
+            }
+            .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     /** The ride whose detail sheet is currently open (null when none). */
     private val _selectedRide = MutableStateFlow<RecordedRide?>(null)
@@ -70,7 +100,7 @@ class RideTrackingController(
 
     init {
         scope.launch {
-            repository.getRidesFlow().collect { _recordedRides.value = it }
+            repository.getRideSummariesFlow().collect { _recordedRideSummaries.value = it }
         }
         // Surface recording outcomes (saved / too short) and open the detail sheet
         // for a freshly-saved ride when the app is in the foreground.
@@ -80,7 +110,7 @@ class RideTrackingController(
                     is RideRecordingEvent.Saved -> {
                         onUserMessage(de.velospot.R.string.ride_saved)
                         onRideSaved(event.ride)
-                        selectRide(event.ride)
+                        showRide(event.ride)
                     }
                     RideRecordingEvent.TooShort ->
                         onUserMessage(de.velospot.R.string.ride_too_short)
@@ -134,7 +164,17 @@ class RideTrackingController(
     }
 
     /** Opens the detail sheet for a recorded ride and draws its track on the map. */
-    fun selectRide(ride: RecordedRide) {
+    fun selectRide(summary: RecordedRideSummary) {
+        // Optimistically clear other selections; load the full track (off-main in
+        // the repository) before drawing, since the timeline summary has none.
+        scope.launch {
+            val ride = repository.getRide(summary.id) ?: return@launch
+            showRide(ride)
+        }
+    }
+
+    /** Shows an already-loaded full ride (e.g. the one just saved). */
+    private fun showRide(ride: RecordedRide) {
         clearOtherSelections()
         _selectedRide.value = ride
         ride.points.firstOrNull()?.let { start ->

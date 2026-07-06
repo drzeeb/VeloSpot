@@ -136,7 +136,7 @@ fun MainMapScreen(
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
-    val recordedRides        by viewModel.recordedRides.collectAsStateWithLifecycle()
+    val recordedRideTracks   by viewModel.recordedRideTracks.collectAsStateWithLifecycle()
     val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
     val rideViewOptions      by viewModel.rideViewOptions.collectAsStateWithLifecycle()
     val rideNamePrompt       by viewModel.rideNamePrompt.collectAsStateWithLifecycle()
@@ -431,14 +431,14 @@ fun MainMapScreen(
     // Aggregate all recorded tracks into weighted cells (off the main thread) and
     // (re)draw the heatmap layer whenever the rides change, the layer is toggled,
     // or the style reloads. Hidden (and skipped) while the layer is off.
-    LaunchedEffect(maplibreMap, styleVersion, recordedRides, layerVisibility.showHeatmap) {
+    LaunchedEffect(maplibreMap, styleVersion, recordedRideTracks, layerVisibility.showHeatmap) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         if (!layerVisibility.showHeatmap) {
             updateHeatmapLayer(style, emptyList(), visible = false)
             return@LaunchedEffect
         }
         val cells = withContext(Dispatchers.Default) {
-            RideHeatmap.build(recordedRides.filterNot { it.isMock })
+            RideHeatmap.build(recordedRideTracks.filterNot { it.isMock })
                 .map { Triple(it.latitude, it.longitude, it.intensity) }
         }
         updateHeatmapLayer(style, cells, visible = true)
@@ -449,14 +449,14 @@ fun MainMapScreen(
     // the main thread). Overlapping passes accumulate, so often-ridden streets
     // read stronger. (Re)built whenever the rides change, the layer is toggled or
     // the style reloads; hidden (and skipped) while the layer is off.
-    LaunchedEffect(maplibreMap, styleVersion, recordedRides, layerVisibility.showTracks) {
+    LaunchedEffect(maplibreMap, styleVersion, recordedRideTracks, layerVisibility.showTracks) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         if (!layerVisibility.showTracks) {
             updateTracksHistoryLayer(style, emptyList(), markerStyleConfig.routeColor, visible = false)
             return@LaunchedEffect
         }
         val polylines = withContext(Dispatchers.Default) {
-            RideTrackLines.build(recordedRides.filterNot { it.isMock })
+            RideTrackLines.build(recordedRideTracks.filterNot { it.isMock })
         }
         updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
     }

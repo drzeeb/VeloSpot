@@ -18,7 +18,7 @@ import de.velospot.data.local.entity.RecordedRideEntity
  */
 @Database(
     entities = [RecordedRideEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class RidesDatabase : RoomDatabase() {
@@ -48,13 +48,25 @@ abstract class RidesDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v3 → v4: indexes `startedAt` (the timeline's newest-first ordering) and
+         * `archivedAt` (the active/archived split) so the history list scales to
+         * large ride counts without full-table sorts.
+         */
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_recorded_rides_started_at ON recorded_rides (startedAt)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_recorded_rides_archived_at ON recorded_rides (archivedAt)")
+            }
+        }
+
         fun getInstance(context: Context): RidesDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     RidesDatabase::class.java,
                     "velospot_rides.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
             }
         }
     }

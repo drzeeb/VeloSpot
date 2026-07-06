@@ -32,6 +32,7 @@ import de.velospot.domain.model.MapError
 import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.PlannedRoute
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.model.RouteAttempt
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
@@ -53,8 +54,13 @@ import de.velospot.feature.map.presentation.search.AddressSearchController
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -89,6 +95,7 @@ sealed class NavigationUiState {
 data class RideNamePromptUiState(val suggestion: String?)
 
 @HiltViewModel
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MapViewModel @Inject constructor(
     private val bikeParkingRepository: BikeParkingRepository,
     private val favoritesRepository: FavoritesRepository,
@@ -100,7 +107,7 @@ class MapViewModel @Inject constructor(
     private val gpxFileStore: GpxFileStore,
     savedPlacesRepository: SavedPlacesRepository,
     parkedBikeRepository: ParkedBikeRepository,
-    recordedRidesRepository: RecordedRidesRepository,
+    private val recordedRidesRepository: RecordedRidesRepository,
     plannedRoutesRepository: PlannedRoutesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -136,11 +143,28 @@ class MapViewModel @Inject constructor(
     private val _selectedSpace = MutableStateFlow<BikeParkingSpace?>(null)
     val selectedSpace: StateFlow<BikeParkingSpace?> = _selectedSpace.asStateFlow()
 
-    private val _favorites = MutableStateFlow<List<String>>(emptyList())
-    val favorites: StateFlow<List<String>> = _favorites.asStateFlow()
+    /**
+     * The user's favourite parking-space ids, straight from the database as a
+     * reactive stream. `stateIn` shares the single upstream collection and caches
+     * the latest value for the UI, replacing the previous hand-wired
+     * `MutableStateFlow` that had to be kept in sync imperatively.
+     */
+    val favorites: StateFlow<List<String>> =
+        favoritesRepository.getFavoritesFlow()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    private val _favoriteSpaces = MutableStateFlow<List<BikeParkingSpace>>(emptyList())
-    val favoriteSpaces: StateFlow<List<BikeParkingSpace>> = _favoriteSpaces.asStateFlow()
+    /**
+     * The full [BikeParkingSpace]s for the current favourites, derived reactively
+     * from [favorites]: whenever the favourite ids change, the spaces are re-loaded
+     * via `mapLatest` (cancelling any in-flight load). No manual re-query, no risk
+     * of the two lists drifting out of sync.
+     */
+    val favoriteSpaces: StateFlow<List<BikeParkingSpace>> =
+        favoritesRepository.getFavoritesFlow()
+            .mapLatest { ids ->
+                runCatching { bikeParkingRepository.getSpacesByIds(ids) }.getOrDefault(emptyList())
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _userLocation = MutableStateFlow<GeoCoordinate?>(null)
     val userLocation: StateFlow<GeoCoordinate?> = _userLocation.asStateFlow()
@@ -711,11 +735,24 @@ class MapViewModel @Inject constructor(
         onUserMessage = { res -> _userMessageRes.value = res },
         clearOtherSelections = { clearPlaceSelections() },
         moveCamera = { target -> _mapCameraTarget.value = target },
+        // Full ride tracks are only loaded while the heatmap or ridden-tracks
+        // overlay is actually visible; otherwise no track is ever deserialised.
+        overlayTracksNeeded = _layerVisibility
+            .map { it.showHeatmap || it.showTracks }
+            .distinctUntilChanged(),
         // Turn a finished ride of a planned route into a leaderboard attempt.
         onRideSaved = { ride -> routePlanningController.onRideFinished(ride) }
     )
     val rideTrackingState: StateFlow<RideTrackingUiState> = rideTracking.trackingState
-    val recordedRides: StateFlow<List<RecordedRide>> = rideTracking.recordedRides
+
+    /** Track-free ride summaries driving the "My rides" timeline + statistics. */
+    val recordedRideSummaries: StateFlow<List<RecordedRideSummary>> = rideTracking.recordedRideSummaries
+
+    /**
+     * Every recorded ride **with** its track, but only while a map overlay
+     * (heatmap / ridden tracks) is on — otherwise empty and nothing is parsed.
+     */
+    val recordedRideTracks: StateFlow<List<RecordedRide>> = rideTracking.recordedRideTracks
     val selectedRide: StateFlow<RecordedRide?> = rideTracking.selectedRide
     val rideTrackPoints: StateFlow<List<RoutePoint>> = rideTracking.trackPoints
 
@@ -798,7 +835,7 @@ class MapViewModel @Inject constructor(
         _rideNamePrompt.value = null
     }
 
-    fun selectRecordedRide(ride: RecordedRide) = rideTracking.selectRide(ride)
+    fun selectRecordedRide(ride: RecordedRideSummary) = rideTracking.selectRide(ride)
     fun dismissSelectedRide() = rideTracking.dismissSelectedRide()
     fun deleteRecordedRide(id: String) = rideTracking.deleteRide(id)
     fun renameRecordedRide(id: String, name: String?) = rideTracking.renameRide(id, name)
@@ -809,34 +846,69 @@ class MapViewModel @Inject constructor(
      * Exports [rides] as GPX and opens the system **share** sheet. When
      * [combineIntoSingleFile] is `true` (or only one ride is given) all tracks land
      * in one file; otherwise each ride is written to its own file named after it.
+     *
+     * The rides arrive as track-free summaries; their full GPS tracks are loaded
+     * on demand (off the main thread) before the GPX is built.
      */
-    fun exportRidesAsGpx(rides: List<RecordedRide>, combineIntoSingleFile: Boolean) {
-        val documents = buildGpxDocuments(rides, combineIntoSingleFile)
-        if (documents.isEmpty()) return // empty selection or validation failed (toast shown)
-        GpxExporter.share(
-            context = context,
-            documents = documents,
-            chooserTitle = context.getString(de.velospot.R.string.ride_export_chooser_title)
-        )
+    fun exportRidesAsGpx(rides: List<RecordedRideSummary>, combineIntoSingleFile: Boolean) {
+        if (rides.isEmpty()) return
+        viewModelScope.launch {
+            val documents = buildGpxDocuments(rides, combineIntoSingleFile)
+            if (documents.isEmpty()) return@launch // empty selection or validation failed (toast shown)
+            GpxExporter.share(
+                context = context,
+                documents = documents,
+                chooserTitle = context.getString(de.velospot.R.string.ride_export_chooser_title)
+            )
+        }
     }
 
     /**
-     * Builds the GPX documents (name + content) for [rides], used by the
-     * "save to file" path (the UI launches a Storage Access Framework picker and
-     * then calls [saveGpxToUri] / [saveGpxToTree]). Each document is **validated**
-     * (well-formed XML with at least one track point) before it is returned, so a
-     * broken file is never shared or saved; on failure a toast is shown and an empty
-     * list returned.
+     * GPX documents built and validated for the selected rides, awaiting a Storage
+     * Access Framework destination pick (the UI launches the picker, then calls
+     * [saveGpxToUri] / [saveGpxToTree] with the chosen target). `null` when nothing
+     * is staged. Replaces the old synchronous `buildGpxDocuments` call the UI used
+     * to make before launching the picker — tracks now load asynchronously.
      */
-    fun buildGpxDocuments(
-        rides: List<RecordedRide>,
+    private val _pendingGpxExport = MutableStateFlow<List<de.velospot.core.share.GpxDocument>?>(null)
+    val pendingGpxExport: StateFlow<List<de.velospot.core.share.GpxDocument>?> = _pendingGpxExport.asStateFlow()
+
+    /**
+     * Loads the selected rides' tracks, builds + validates their GPX and stages the
+     * result in [pendingGpxExport] so the UI can launch the SAF picker. Shows a
+     * toast (and stages nothing) when validation fails or the selection is empty.
+     */
+    fun prepareGpxSave(rides: List<RecordedRideSummary>, combineIntoSingleFile: Boolean) {
+        if (rides.isEmpty()) return
+        viewModelScope.launch {
+            val documents = buildGpxDocuments(rides, combineIntoSingleFile)
+            _pendingGpxExport.value = documents.ifEmpty { null }
+        }
+    }
+
+    /** Clears the staged GPX export once the SAF picker has been handled (or cancelled). */
+    fun consumePendingGpxExport() { _pendingGpxExport.value = null }
+
+    /**
+     * Loads the full tracks for [rides], builds their GPX documents and validates
+     * them. Each document is checked (well-formed XML with at least one track
+     * point) before it is returned, so a broken file is never shared or saved; on
+     * failure a toast is shown and an empty list returned.
+     */
+    private suspend fun buildGpxDocuments(
+        rides: List<RecordedRideSummary>,
         combineIntoSingleFile: Boolean
     ): List<de.velospot.core.share.GpxDocument> {
         if (rides.isEmpty()) return emptyList()
+        val fullRides = recordedRidesRepository.getRides(rides.map { it.id })
+        if (fullRides.isEmpty()) {
+            _userMessageRes.value = de.velospot.R.string.ride_export_invalid
+            return emptyList()
+        }
         val stamp = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
             .format(java.util.Date())
         val documents = GpxExporter.buildDocuments(
-            rides = rides,
+            rides = fullRides,
             combineIntoSingleFile = combineIntoSingleFile,
             combinedFileName = context.getString(de.velospot.R.string.ride_export_combined_filename, stamp)
         )
@@ -913,7 +985,6 @@ class MapViewModel @Inject constructor(
         // location need to the single GPS owner.
         locationController.setMapVisible(true)
         loadSpacesForViewport(BoundingBox.DEFAULT)
-        observeFavorites()
         observeUserLocation()
         observeRouteSimulation()
     }
@@ -983,19 +1054,10 @@ class MapViewModel @Inject constructor(
     // ── Favorites ─────────────────────────────────────────────────────────────
 
     fun toggleFavorite(parkingSpaceId: String) {
+        // A single atomic DB transaction (see FavoriteSpaceDao.toggleFavorite);
+        // no read-then-write race when the button is tapped in quick succession.
         viewModelScope.launch {
-            if (favoritesRepository.isFavorite(parkingSpaceId)) favoritesRepository.removeFavorite(parkingSpaceId)
-            else favoritesRepository.addFavorite(parkingSpaceId)
-        }
-    }
-
-    private fun observeFavorites() {
-        viewModelScope.launch {
-            favoritesRepository.getFavoritesFlow().collect { favoriteIds ->
-                _favorites.value = favoriteIds
-                val spaces = runCatching { bikeParkingRepository.getSpacesByIds(favoriteIds) }.getOrDefault(emptyList())
-                _favoriteSpaces.value = spaces
-            }
+            favoritesRepository.toggleFavorite(parkingSpaceId)
         }
     }
 

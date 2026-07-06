@@ -1,6 +1,6 @@
 package de.velospot.feature.map.presentation.ride
 
-import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.core.tracking.estimateRideCalories
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,7 +25,7 @@ class RideStatisticsTest {
         maxSpeedMps: Double = 8.0,
         gain: Double = 50.0,
         loss: Double = 40.0
-    ) = RecordedRide(
+    ) = RecordedRideSummary(
         id = id,
         startedAt = startedAt,
         endedAt = startedAt + elapsedSeconds * 1_000,
@@ -35,8 +35,7 @@ class RideStatisticsTest {
         avgSpeedMps = avgSpeedMps,
         maxSpeedMps = maxSpeedMps,
         elevationGainMeters = gain,
-        elevationLossMeters = loss,
-        points = emptyList()
+        elevationLossMeters = loss
     )
 
     @Test
