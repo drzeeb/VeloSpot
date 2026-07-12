@@ -77,6 +77,12 @@ class RecordedRidesRepositoryImpl @Inject constructor(
     override suspend fun setRideArchived(id: String, archived: Boolean) =
         recordedRideDao.updateArchivedAt(id, if (archived) System.currentTimeMillis() else null)
 
+    override suspend fun setRideBikeProfile(id: String, bikeProfileId: String?) =
+        recordedRideDao.updateBikeProfile(id, bikeProfileId)
+
+    override suspend fun clearBikeProfileFromRides(bikeProfileId: String) =
+        recordedRideDao.clearBikeProfile(bikeProfileId)
+
     private fun RecordedRideSummaryRow.toDomain() = RecordedRideSummary(
         id = id,
         startedAt = startedAt,
@@ -90,7 +96,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         elevationLossMeters = elevationLossMeters,
         name = name,
         isMock = isMock,
-        archivedAt = archivedAt
+        archivedAt = archivedAt,
+        bikeProfileId = bikeProfileId
     )
 
     private fun RecordedRideEntity.toDomain() = RecordedRide(
@@ -107,7 +114,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         points = runCatching { pointsAdapter.fromJson(pointsJson) }.getOrNull().orEmpty(),
         name = name,
         isMock = isMock,
-        archivedAt = archivedAt
+        archivedAt = archivedAt,
+        bikeProfileId = bikeProfileId
     )
 
     private fun RecordedRide.toEntity() = RecordedRideEntity(
@@ -124,7 +132,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         pointsJson = pointsAdapter.toJson(points),
         name = name?.trim()?.takeIf { it.isNotBlank() },
         isMock = isMock,
-        archivedAt = archivedAt
+        archivedAt = archivedAt,
+        bikeProfileId = bikeProfileId
     )
 }
 

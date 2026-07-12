@@ -133,7 +133,8 @@ internal data class MapMenuCardActions(
     val onStartRoutePlanning: () -> Unit = {},
     val onOpenPlannedRoutes: () -> Unit = {},
     val onOpenDisplaySettings: () -> Unit = {},
-    val onOpenNavRouting: () -> Unit = {}
+    val onOpenNavRouting: () -> Unit = {},
+    val onOpenBikeGarage: () -> Unit = {}
 )
 
 @Composable

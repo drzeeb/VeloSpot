@@ -27,7 +27,8 @@ data class RecordedRideSummaryRow(
     val elevationLossMeters: Double,
     val name: String?,
     val isMock: Boolean,
-    val archivedAt: Long?
+    val archivedAt: Long?,
+    val bikeProfileId: String?
 )
 
 /**
@@ -44,7 +45,7 @@ interface RecordedRideDao {
     @Query(
         "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
         "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
-        "name, isMock, archivedAt " +
+        "name, isMock, archivedAt, bikeProfileId " +
         "FROM recorded_rides ORDER BY startedAt DESC"
     )
     fun getSummariesFlow(): Flow<List<RecordedRideSummaryRow>>
@@ -71,6 +72,14 @@ interface RecordedRideDao {
     /** Archives a ride (sets [archivedAt]) or restores it (pass `null`). */
     @Query("UPDATE recorded_rides SET archivedAt = :archivedAt WHERE id = :id")
     suspend fun updateArchivedAt(id: String, archivedAt: Long?)
+
+    /** (Re)assigns a ride to a bike ([bikeProfileId]), or clears it (pass `null`). */
+    @Query("UPDATE recorded_rides SET bikeProfileId = :bikeProfileId WHERE id = :id")
+    suspend fun updateBikeProfile(id: String, bikeProfileId: String?)
+
+    /** Detaches every ride from [bikeProfileId] (used when its bike is deleted). */
+    @Query("UPDATE recorded_rides SET bikeProfileId = NULL WHERE bikeProfileId = :bikeProfileId")
+    suspend fun clearBikeProfile(bikeProfileId: String)
 
     @Query("DELETE FROM recorded_rides WHERE id = :id")
     suspend fun delete(id: String)
