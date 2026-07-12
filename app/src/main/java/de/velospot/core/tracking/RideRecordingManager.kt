@@ -229,6 +229,15 @@ class RideRecordingManager(
                 val tagged = if (bikeId != null) ride.copy(bikeProfileId = bikeId) else ride
                 recordedRidesRepository.saveRide(tagged)
                 _events.tryEmit(RideRecordingEvent.Saved(tagged))
+                // Real rides only: check whether this ride pushed the bike past a new
+                // shop-service milestone and, if so, notify once (best-effort).
+                if (bikeId != null && !tagged.isMock) {
+                    runCatching {
+                        bikeProfilesRepository?.evaluateServiceDue(bikeId)
+                    }.getOrNull()?.let { reminder ->
+                        BikeServiceNotifier(context).notifyServiceDue(reminder)
+                    }
+                }
             }
         } else {
             _events.tryEmit(RideRecordingEvent.TooShort)

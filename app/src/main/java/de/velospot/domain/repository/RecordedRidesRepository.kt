@@ -52,6 +52,12 @@ interface RecordedRidesRepository {
      */
     suspend fun clearBikeProfileFromRides(bikeProfileId: String) {}
 
+    /**
+     * Total ridden distance (metres) tagged to [bikeProfileId] (real rides only).
+     * Default returns `0.0` so in-memory test fakes needn't override it.
+     */
+    suspend fun totalDistanceForBike(bikeProfileId: String): Double = 0.0
+
     /** Removes a recorded ride by its id. */
     suspend fun removeRide(id: String)
 

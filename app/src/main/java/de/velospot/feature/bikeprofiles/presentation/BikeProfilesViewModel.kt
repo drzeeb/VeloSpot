@@ -11,6 +11,7 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -31,7 +32,24 @@ data class BikeProfileRow(
     val stats: BikeProfileStats,
     /** `true` for the bike the next recording will be tagged with (active or default). */
     val isActive: Boolean
-)
+) {
+    /** The next service milestone (km), or `null` when reminders are off. */
+    val nextServiceAtKm: Int?
+        get() {
+            val interval = profile.serviceIntervalKm ?: return null
+            if (interval <= 0) return null
+            val totalKm = (stats.totalDistanceMeters / 1000.0).toInt()
+            return (totalKm / interval + 1) * interval
+        }
+
+    /** Kilometres still to ride before the next service, or `null` when off. */
+    val kmUntilService: Int?
+        get() {
+            val next = nextServiceAtKm ?: return null
+            val totalKm = (stats.totalDistanceMeters / 1000.0).toInt()
+            return (next - totalKm).coerceAtLeast(0)
+        }
+}
 
 data class BikeProfilesUiState(
     val bikes: List<BikeProfileRow> = emptyList(),
@@ -89,7 +107,6 @@ class BikeProfilesViewModel @Inject constructor(
     /** Creates a new bike. The first bike created is made the default automatically. */
     fun addBike(draft: BikeDraft) {
         viewModelScope.launch {
-            val existing = bikeProfilesRepository.bikeProfilesFlow()
             val makeDefault = draft.isDefault || uiState.value.isEmpty
             bikeProfilesRepository.upsert(
                 draft.toProfile(id = UUID.randomUUID().toString(), createdAt = System.currentTimeMillis())
@@ -101,7 +118,19 @@ class BikeProfilesViewModel @Inject constructor(
     /** Saves edits to an existing bike (keeping its id / creation time). */
     fun updateBike(id: String, createdAt: Long, draft: BikeDraft) {
         viewModelScope.launch {
-            bikeProfilesRepository.upsert(draft.toProfile(id = id, createdAt = createdAt))
+            // Preserve how far the service reminders have already fired — but reset
+            // that progress if the rider changed the service interval, so the new
+            // interval's milestones (interval, 2×interval, …) are re-evaluated.
+            val existing = bikeProfilesRepository.bikeProfilesFlow().first().firstOrNull { it.id == id }
+            val newInterval = draft.serviceIntervalKm.filter { it.isDigit() }.toIntOrNull()?.takeIf { it > 0 }
+            val lastNotified = if (existing != null && existing.serviceIntervalKm == newInterval) {
+                existing.lastServiceNotifiedKm
+            } else {
+                0
+            }
+            bikeProfilesRepository.upsert(
+                draft.toProfile(id = id, createdAt = createdAt, lastServiceNotifiedKm = lastNotified)
+            )
         }
     }
 
@@ -144,11 +173,13 @@ data class BikeDraft(
     val color: String = "",
     val modelYear: String = "",
     val notes: String = "",
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    /** Service interval in km as free text; blank / 0 disables reminders. */
+    val serviceIntervalKm: String = ""
 ) {
     val isValid: Boolean get() = name.isNotBlank()
 
-    fun toProfile(id: String, createdAt: Long) = BikeProfile(
+    fun toProfile(id: String, createdAt: Long, lastServiceNotifiedKm: Int = 0) = BikeProfile(
         id = id,
         name = name.trim(),
         brand = brand.ifBlank { null },
@@ -160,7 +191,9 @@ data class BikeDraft(
         modelYear = modelYear.filter { it.isDigit() }.toIntOrNull(),
         notes = notes.ifBlank { null },
         isDefault = isDefault,
-        createdAt = createdAt
+        createdAt = createdAt,
+        serviceIntervalKm = serviceIntervalKm.filter { it.isDigit() }.toIntOrNull()?.takeIf { it > 0 },
+        lastServiceNotifiedKm = lastServiceNotifiedKm
     )
 
     companion object {
@@ -174,7 +207,8 @@ data class BikeDraft(
             color = profile.color.orEmpty(),
             modelYear = profile.modelYear?.toString().orEmpty(),
             notes = profile.notes.orEmpty(),
-            isDefault = profile.isDefault
+            isDefault = profile.isDefault,
+            serviceIntervalKm = profile.serviceIntervalKm?.toString().orEmpty()
         )
     }
 }

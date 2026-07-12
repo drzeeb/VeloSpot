@@ -297,6 +297,15 @@
     <string name="bike_type_folding">Pliant</string>
     <string name="bike_type_bmx">BMX</string>
     <string name="bike_type_other">Autre</string>
+    <!-- Rappels d\'entretien du vélo -->
+    <string name="bike_editor_service_interval">Intervalle d\'entretien (km)</string>
+    <string name="bike_editor_service_interval_hint">p. ex. 500</string>
+    <string name="bike_editor_service_interval_help">Recevez un rappel unique chaque fois que ce vélo atteint le prochain multiple de cette distance. Laissez vide pour désactiver.</string>
+    <string name="bike_garage_service_status">Entretien dans %1$d km (à %2$d km)</string>
+    <string name="bike_service_notification_title">Entretien du vélo à prévoir</string>
+    <string name="bike_service_notification_text">%1$s a atteint %2$d km — il est temps de faire une révision.</string>
+    <string name="bike_service_channel_name">Rappels d\'entretien du vélo</string>
+    <string name="bike_service_channel_description">Vous prévient quand un vélo doit être entretenu, selon la distance parcourue.</string>
     <string name="ride_recording">Enregistrement du trajet</string>
     <string name="ride_stop">Arrêter</string>
     <string name="ride_start">Enregistrer le trajet</string>

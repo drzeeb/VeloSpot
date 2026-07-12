@@ -1,6 +1,7 @@
 package de.velospot.domain.repository
 
 import de.velospot.domain.model.BikeProfile
+import de.velospot.domain.model.BikeServiceReminder
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -39,5 +40,14 @@ interface BikeProfilesRepository {
      * set, otherwise the default bike, otherwise `null`. Evaluated once at save time.
      */
     suspend fun resolveActiveProfileId(): String?
+
+    /**
+     * Checks whether tagging a finished ride pushed [bikeId]'s **total** ridden
+     * distance past a new shop-service milestone (a multiple of its configured
+     * service interval). Returns a [BikeServiceReminder] the first time each
+     * milestone is crossed (and persists it so it never fires again), or `null`
+     * when service reminders are off / no new milestone was reached.
+     */
+    suspend fun evaluateServiceDue(bikeId: String): BikeServiceReminder?
 }
 

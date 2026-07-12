@@ -83,6 +83,9 @@ class RecordedRidesRepositoryImpl @Inject constructor(
     override suspend fun clearBikeProfileFromRides(bikeProfileId: String) =
         recordedRideDao.clearBikeProfile(bikeProfileId)
 
+    override suspend fun totalDistanceForBike(bikeProfileId: String): Double =
+        recordedRideDao.totalDistanceForBike(bikeProfileId)
+
     private fun RecordedRideSummaryRow.toDomain() = RecordedRideSummary(
         id = id,
         startedAt = startedAt,

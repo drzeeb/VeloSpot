@@ -296,6 +296,15 @@
     <string name="bike_type_folding">Dobrável</string>
     <string name="bike_type_bmx">BMX</string>
     <string name="bike_type_other">Outra</string>
+    <!-- Lembretes de manutenção da bicicleta -->
+    <string name="bike_editor_service_interval">Intervalo de manutenção (km)</string>
+    <string name="bike_editor_service_interval_hint">ex.: 500</string>
+    <string name="bike_editor_service_interval_help">Recebe um lembrete único sempre que esta bicicleta atingir o próximo múltiplo desta distância. Deixa vazio para desativar.</string>
+    <string name="bike_garage_service_status">Manutenção em %1$d km (aos %2$d km)</string>
+    <string name="bike_service_notification_title">Manutenção da bicicleta devida</string>
+    <string name="bike_service_notification_text">%1$s atingiu %2$d km — está na hora de uma revisão.</string>
+    <string name="bike_service_channel_name">Lembretes de manutenção da bicicleta</string>
+    <string name="bike_service_channel_description">Avisa-te quando uma bicicleta precisa de manutenção com base na distância percorrida.</string>
     <string name="ride_recording">A gravar percurso</string>
     <string name="ride_stop">Parar</string>
     <string name="ride_start">Gravar percurso</string>

@@ -298,6 +298,15 @@
     <string name="bike_type_folding">Pieghevole</string>
     <string name="bike_type_bmx">BMX</string>
     <string name="bike_type_other">Altro</string>
+    <!-- Promemoria di manutenzione della bici -->
+    <string name="bike_editor_service_interval">Intervallo di manutenzione (km)</string>
+    <string name="bike_editor_service_interval_hint">es. 500</string>
+    <string name="bike_editor_service_interval_help">Ricevi un promemoria una tantum ogni volta che questa bici raggiunge il multiplo successivo di questa distanza. Lascia vuoto per disattivare.</string>
+    <string name="bike_garage_service_status">Manutenzione tra %1$d km (a %2$d km)</string>
+    <string name="bike_service_notification_title">Manutenzione della bici dovuta</string>
+    <string name="bike_service_notification_text">%1$s ha raggiunto %2$d km — è ora di un controllo.</string>
+    <string name="bike_service_channel_name">Promemoria di manutenzione della bici</string>
+    <string name="bike_service_channel_description">Ti avvisa quando una bici necessita di manutenzione in base alla distanza percorsa.</string>
     <string name="ride_recording">Registrazione percorso</string>
     <string name="ride_stop">Ferma</string>
     <string name="ride_start">Registra percorso</string>

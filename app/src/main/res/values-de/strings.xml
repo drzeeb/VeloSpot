@@ -302,6 +302,15 @@
     <string name="bike_type_folding">Faltrad</string>
     <string name="bike_type_bmx">BMX</string>
     <string name="bike_type_other">Sonstiges</string>
+    <!-- Fahrrad-Service-Erinnerungen -->
+    <string name="bike_editor_service_interval">Serviceintervall (km)</string>
+    <string name="bike_editor_service_interval_hint">z. B. 500</string>
+    <string name="bike_editor_service_interval_help">Erhalte einmalig eine Erinnerung, sobald dieses Fahrrad das nächste Vielfache dieser Distanz erreicht. Leer lassen, um zu deaktivieren.</string>
+    <string name="bike_garage_service_status">Service in %1$d km (bei %2$d km)</string>
+    <string name="bike_service_notification_title">Fahrradservice fällig</string>
+    <string name="bike_service_notification_text">%1$s hat %2$d km erreicht – Zeit für einen Service-Check.</string>
+    <string name="bike_service_channel_name">Fahrrad-Service-Erinnerungen</string>
+    <string name="bike_service_channel_description">Erinnert dich anhand der gefahrenen Distanz, wann ein Fahrrad einen Service braucht.</string>
     <string name="ride_recording">Fahrt wird aufgezeichnet</string>
     <string name="ride_stop">Stopp</string>
     <string name="ride_start">Fahrt aufzeichnen</string>

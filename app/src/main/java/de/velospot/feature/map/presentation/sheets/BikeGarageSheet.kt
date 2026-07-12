@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -331,6 +332,27 @@ private fun BikeCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            // Service reminder status (only when the rider set an interval).
+            val nextService = row.nextServiceAtKm
+            val kmUntil = row.kmUntilService
+            if (nextService != null && kmUntil != null) {
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Build,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.bike_garage_service_status, kmUntil, nextService),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
@@ -464,6 +486,18 @@ private fun BikeEditorSheet(
                 value = draft.notes,
                 onValueChange = { draft = draft.copy(notes = it) },
                 label = { Text(stringResource(R.string.bike_editor_notes)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = draft.serviceIntervalKm,
+                onValueChange = { value -> draft = draft.copy(serviceIntervalKm = value.filter { it.isDigit() }) },
+                label = { Text(stringResource(R.string.bike_editor_service_interval)) },
+                placeholder = { Text(stringResource(R.string.bike_editor_service_interval_hint)) },
+                supportingText = { Text(stringResource(R.string.bike_editor_service_interval_help)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 

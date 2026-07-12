@@ -9,6 +9,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import de.velospot.data.local.dao.BikeProfileDao
 import de.velospot.data.local.entity.BikeProfileEntity
 import de.velospot.domain.model.BikeProfile
+import de.velospot.domain.model.BikeServiceReminder
 import de.velospot.domain.model.BikeType
 import de.velospot.domain.repository.BikeProfilesRepository
 import de.velospot.domain.repository.RecordedRidesRepository
@@ -68,6 +69,25 @@ class BikeProfilesRepositoryImpl @Inject constructor(
     override suspend fun resolveActiveProfileId(): String? =
         activeBikeProfileId.first() ?: bikeProfileDao.getDefaultId()
 
+    override suspend fun evaluateServiceDue(bikeId: String): BikeServiceReminder? {
+        val bike = bikeProfileDao.getById(bikeId)?.toDomain() ?: return null
+        val interval = bike.serviceIntervalKm ?: return null
+        if (interval <= 0) return null
+
+        val totalKm = (recordedRidesRepository.totalDistanceForBike(bikeId) / 1000.0).toInt()
+        // Highest milestone (interval, 2×interval, …) the total has reached.
+        val milestone = (totalKm / interval) * interval
+        if (milestone < interval || milestone <= bike.lastServiceNotifiedKm) return null
+
+        bikeProfileDao.updateServiceNotified(bikeId, milestone)
+        return BikeServiceReminder(
+            bikeId = bike.id,
+            bikeName = bike.name,
+            milestoneKm = milestone,
+            totalDistanceKm = totalKm
+        )
+    }
+
     private fun BikeProfileEntity.toDomain() = BikeProfile(
         id = id,
         name = name,
@@ -80,7 +100,9 @@ class BikeProfilesRepositoryImpl @Inject constructor(
         modelYear = modelYear,
         notes = notes,
         isDefault = isDefault,
-        createdAt = createdAt
+        createdAt = createdAt,
+        serviceIntervalKm = serviceIntervalKm,
+        lastServiceNotifiedKm = lastServiceNotifiedKm
     )
 
     private fun BikeProfile.toEntity() = BikeProfileEntity(
@@ -95,7 +117,9 @@ class BikeProfilesRepositoryImpl @Inject constructor(
         modelYear = modelYear,
         notes = notes?.trim()?.takeIf { it.isNotBlank() },
         isDefault = isDefault,
-        createdAt = createdAt
+        createdAt = createdAt,
+        serviceIntervalKm = serviceIntervalKm?.takeIf { it > 0 },
+        lastServiceNotifiedKm = lastServiceNotifiedKm
     )
 
     private companion object {

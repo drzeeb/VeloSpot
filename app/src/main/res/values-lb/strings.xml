@@ -296,6 +296,15 @@
     <string name="bike_type_folding">Faltvëlo</string>
     <string name="bike_type_bmx">BMX</string>
     <string name="bike_type_other">Aneres</string>
+    <!-- Vëlos-Service-Erënnerungen -->
+    <string name="bike_editor_service_interval">Serviceintervall (km)</string>
+    <string name="bike_editor_service_interval_hint">z. B. 500</string>
+    <string name="bike_editor_service_interval_help">Kritt eemol eng Erënnerung, soubal dëse Vëlo dat nächst Villfacht vun dëser Distanz erreecht. Eidel loossen fir auszeschalten.</string>
+    <string name="bike_garage_service_status">Service an %1$d km (bei %2$d km)</string>
+    <string name="bike_service_notification_title">Vëlosservice fälleg</string>
+    <string name="bike_service_notification_text">%1$s huet %2$d km erreecht – Zäit fir e Service-Check.</string>
+    <string name="bike_service_channel_name">Vëlos-Service-Erënnerungen</string>
+    <string name="bike_service_channel_description">Erënnert dech op Basis vun der gefuerener Distanz, wéini e Vëlo e Service brauch.</string>
     <string name="ride_recording">Tour gëtt opgeholl</string>
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Tour ophuelen</string>

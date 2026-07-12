@@ -296,6 +296,15 @@
     <string name="bike_type_folding">Vouwfiets</string>
     <string name="bike_type_bmx">BMX</string>
     <string name="bike_type_other">Overig</string>
+    <!-- Onderhoudsherinneringen fiets -->
+    <string name="bike_editor_service_interval">Onderhoudsinterval (km)</string>
+    <string name="bike_editor_service_interval_hint">bijv. 500</string>
+    <string name="bike_editor_service_interval_help">Krijg eenmalig een herinnering telkens als deze fiets het volgende veelvoud van deze afstand bereikt. Laat leeg om uit te schakelen.</string>
+    <string name="bike_garage_service_status">Onderhoud over %1$d km (bij %2$d km)</string>
+    <string name="bike_service_notification_title">Fietsonderhoud nodig</string>
+    <string name="bike_service_notification_text">%1$s heeft %2$d km bereikt — tijd voor een onderhoudsbeurt.</string>
+    <string name="bike_service_channel_name">Onderhoudsherinneringen fiets</string>
+    <string name="bike_service_channel_description">Herinnert je op basis van de gereden afstand wanneer een fiets onderhoud nodig heeft.</string>
     <string name="ride_recording">Rit wordt opgenomen</string>
     <string name="ride_stop">Stoppen</string>
     <string name="ride_start">Rit opnemen</string>

@@ -144,6 +144,15 @@
     <string name="bike_type_folding">Folding</string>
     <string name="bike_type_bmx">BMX</string>
     <string name="bike_type_other">Other</string>
+    <!-- Bike service reminders -->
+    <string name="bike_editor_service_interval">Service interval (km)</string>
+    <string name="bike_editor_service_interval_hint">e.g. 500</string>
+    <string name="bike_editor_service_interval_help">Get a one-time reminder every time this bike reaches the next multiple of this distance. Leave empty to turn off.</string>
+    <string name="bike_garage_service_status">Service in %1$d km (at %2$d km)</string>
+    <string name="bike_service_notification_title">Bike service due</string>
+    <string name="bike_service_notification_text">%1$s has reached %2$d km — time for a service check.</string>
+    <string name="bike_service_channel_name">Bike service reminders</string>
+    <string name="bike_service_channel_description">Reminds you when a bike is due for a service based on distance ridden.</string>
     <string name="ride_recording">Recording ride</string>
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Start ride recording</string>

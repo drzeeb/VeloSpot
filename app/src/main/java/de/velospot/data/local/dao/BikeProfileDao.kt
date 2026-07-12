@@ -37,6 +37,10 @@ interface BikeProfileDao {
     @Query("UPDATE bike_profiles SET isDefault = 1 WHERE id = :id")
     suspend fun markDefault(id: String)
 
+    /** Records the highest service milestone (km) the rider was notified about. */
+    @Query("UPDATE bike_profiles SET lastServiceNotifiedKm = :milestoneKm WHERE id = :id")
+    suspend fun updateServiceNotified(id: String, milestoneKm: Int)
+
     /**
      * Makes [id] the one and only default bike in a single transaction so there is
      * never a window with two defaults (or none) visible to a concurrent reader.

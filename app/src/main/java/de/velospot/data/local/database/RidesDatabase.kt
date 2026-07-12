@@ -20,7 +20,7 @@ import de.velospot.data.local.entity.BikeProfileEntity
  */
 @Database(
     entities = [RecordedRideEntity::class, BikeProfileEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class RidesDatabase : RoomDatabase() {
@@ -93,13 +93,25 @@ abstract class RidesDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v5 → v6: adds shop-service reminders to the bike garage. `serviceIntervalKm`
+         * is the km between services (NULL/0 = off) and `lastServiceNotifiedKm` tracks
+         * the highest milestone already notified so each one fires exactly once.
+         */
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE bike_profiles ADD COLUMN serviceIntervalKm INTEGER")
+                db.execSQL("ALTER TABLE bike_profiles ADD COLUMN lastServiceNotifiedKm INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getInstance(context: Context): RidesDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     RidesDatabase::class.java,
                     "velospot_rides.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build().also { instance = it }
             }
         }
     }

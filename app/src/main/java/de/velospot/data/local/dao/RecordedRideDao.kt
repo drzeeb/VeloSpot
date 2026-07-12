@@ -81,6 +81,13 @@ interface RecordedRideDao {
     @Query("UPDATE recorded_rides SET bikeProfileId = NULL WHERE bikeProfileId = :bikeProfileId")
     suspend fun clearBikeProfile(bikeProfileId: String)
 
+    /**
+     * Total ridden distance (metres) tagged to [bikeProfileId], real rides only
+     * (mock/simulator rides excluded) — drives the per-bike service milestones.
+     */
+    @Query("SELECT COALESCE(SUM(distanceMeters), 0) FROM recorded_rides WHERE bikeProfileId = :bikeProfileId AND isMock = 0")
+    suspend fun totalDistanceForBike(bikeProfileId: String): Double
+
     @Query("DELETE FROM recorded_rides WHERE id = :id")
     suspend fun delete(id: String)
 

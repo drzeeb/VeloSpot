@@ -37,6 +37,10 @@ data class BikeProfileEntity(
     val modelYear: Int? = null,
     val notes: String? = null,
     val isDefault: Boolean = false,
-    val createdAt: Long
+    val createdAt: Long,
+    /** Km between shop services, or `null`/`0` when reminders are off. */
+    val serviceIntervalKm: Int? = null,
+    /** Highest service milestone (km) the rider was already notified about. */
+    val lastServiceNotifiedKm: Int = 0
 )
 

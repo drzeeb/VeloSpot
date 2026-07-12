@@ -44,6 +44,13 @@ enum class BikeType {
  * @property notes Free-form notes (components, service history, …).
  * @property isDefault Whether this is the rider's default bike (at most one).
  * @property createdAt Wall-clock time the profile was created (stable ordering).
+ * @property serviceIntervalKm Distance in **kilometres** between shop services, or
+ *   `null`/`0` when service reminders are off. When the bike's *total* ridden
+ *   distance crosses each multiple (interval, 2×interval, …) the rider is notified
+ *   once.
+ * @property lastServiceNotifiedKm The highest service milestone (a multiple of
+ *   [serviceIntervalKm]) the rider has already been notified about, so each
+ *   milestone fires exactly once. `0` means none yet.
  */
 @Immutable
 data class BikeProfile(
@@ -58,12 +65,34 @@ data class BikeProfile(
     val modelYear: Int? = null,
     val notes: String? = null,
     val isDefault: Boolean = false,
-    val createdAt: Long
+    val createdAt: Long,
+    val serviceIntervalKm: Int? = null,
+    val lastServiceNotifiedKm: Int = 0
 ) {
     /** "Brand Model" when both are present, otherwise whichever is set (or `null`). */
     val brandModelLabel: String?
         get() = listOfNotNull(brand?.takeIf { it.isNotBlank() }, model?.takeIf { it.isNotBlank() })
             .joinToString(" ")
             .takeIf { it.isNotBlank() }
+
+    /** Whether periodic shop-service reminders are enabled for this bike. */
+    val hasServiceReminder: Boolean get() = (serviceIntervalKm ?: 0) > 0
 }
+
+/**
+ * A due shop-service reminder for a bike: emitted once when the bike's total
+ * ridden distance crosses a new [milestoneKm] multiple of its service interval.
+ *
+ * @property bikeId The bike this reminder is for.
+ * @property bikeName The bike's display name (for the notification text).
+ * @property milestoneKm The service milestone reached (e.g. 500, 1000, …), in km.
+ * @property totalDistanceKm The bike's current total ridden distance, in km.
+ */
+@Immutable
+data class BikeServiceReminder(
+    val bikeId: String,
+    val bikeName: String,
+    val milestoneKm: Int,
+    val totalDistanceKm: Int
+)
 
