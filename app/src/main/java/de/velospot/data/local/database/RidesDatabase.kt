@@ -7,7 +7,9 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import de.velospot.data.local.dao.RecordedRideDao
+import de.velospot.data.local.dao.BikeProfileDao
 import de.velospot.data.local.entity.RecordedRideEntity
+import de.velospot.data.local.entity.BikeProfileEntity
 
 /**
  * Dedicated Room database for user-recorded rides (the "My rides" timeline).
@@ -17,13 +19,15 @@ import de.velospot.data.local.entity.RecordedRideEntity
  * wipe the user's ride history.
  */
 @Database(
-    entities = [RecordedRideEntity::class],
-    version = 4,
+    entities = [RecordedRideEntity::class, BikeProfileEntity::class],
+    version = 6,
     exportSchema = false
 )
 abstract class RidesDatabase : RoomDatabase() {
 
     abstract fun recordedRideDao(): RecordedRideDao
+
+    abstract fun bikeProfileDao(): BikeProfileDao
 
     companion object {
         @Volatile
@@ -60,13 +64,54 @@ abstract class RidesDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v4 → v5: adds the bike garage. Creates the `bike_profiles` table and tags
+         * rides with the bike they were recorded with (`bikeProfileId`) so statistics
+         * can be split per bike. Existing rides start untagged (`NULL`).
+         */
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS bike_profiles (" +
+                        "id TEXT NOT NULL PRIMARY KEY, " +
+                        "name TEXT NOT NULL, " +
+                        "brand TEXT, " +
+                        "model TEXT, " +
+                        "type TEXT NOT NULL, " +
+                        "tireSize TEXT, " +
+                        "weightKg REAL, " +
+                        "color TEXT, " +
+                        "modelYear INTEGER, " +
+                        "notes TEXT, " +
+                        "isDefault INTEGER NOT NULL DEFAULT 0, " +
+                        "createdAt INTEGER NOT NULL)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_bike_profiles_created_at ON bike_profiles (createdAt)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_bike_profiles_is_default ON bike_profiles (isDefault)")
+                db.execSQL("ALTER TABLE recorded_rides ADD COLUMN bikeProfileId TEXT")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_recorded_rides_bike_profile_id ON recorded_rides (bikeProfileId)")
+            }
+        }
+
+        /**
+         * v5 → v6: adds shop-service reminders to the bike garage. `serviceIntervalKm`
+         * is the km between services (NULL/0 = off) and `lastServiceNotifiedKm` tracks
+         * the highest milestone already notified so each one fires exactly once.
+         */
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE bike_profiles ADD COLUMN serviceIntervalKm INTEGER")
+                db.execSQL("ALTER TABLE bike_profiles ADD COLUMN lastServiceNotifiedKm INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getInstance(context: Context): RidesDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     RidesDatabase::class.java,
                     "velospot_rides.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build().also { instance = it }
             }
         }
     }

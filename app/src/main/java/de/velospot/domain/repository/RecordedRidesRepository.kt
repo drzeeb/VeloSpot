@@ -40,6 +40,24 @@ interface RecordedRidesRepository {
     /** Archives a ride (hides it from the active timeline) or restores it. */
     suspend fun setRideArchived(id: String, archived: Boolean)
 
+    /**
+     * (Re)assigns a ride to a bike ([bikeProfileId]), or clears the assignment when
+     * `null`. Default is a no-op so in-memory test fakes needn't override it.
+     */
+    suspend fun setRideBikeProfile(id: String, bikeProfileId: String?) {}
+
+    /**
+     * Detaches every ride from [bikeProfileId] (called when its bike is deleted so
+     * no ride keeps a dangling reference). Default is a no-op for test fakes.
+     */
+    suspend fun clearBikeProfileFromRides(bikeProfileId: String) {}
+
+    /**
+     * Total ridden distance (metres) tagged to [bikeProfileId] (real rides only).
+     * Default returns `0.0` so in-memory test fakes needn't override it.
+     */
+    suspend fun totalDistanceForBike(bikeProfileId: String): Double = 0.0
+
     /** Removes a recorded ride by its id. */
     suspend fun removeRide(id: String)
 

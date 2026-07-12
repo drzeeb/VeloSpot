@@ -745,7 +745,8 @@ fun MainMapScreen(
             onStartRoutePlanning  = viewModel::startRoutePlanning,
             onOpenPlannedRoutes   = screenUiState::openPlannedRoutes,
             onOpenDisplaySettings = screenUiState::openDisplaySettings,
-            onOpenNavRouting      = screenUiState::openNavRouting
+            onOpenNavRouting      = screenUiState::openNavRouting,
+            onOpenBikeGarage      = screenUiState::openBikeGarage
         )
         Row(
             modifier = Modifier
@@ -788,6 +789,13 @@ fun MainMapScreen(
                 state = menuState,
                 actions = menuActions,
                 onDismiss = screenUiState::closeNavRouting
+            )
+        }
+        // Bike garage: per-bike profiles with their own statistics + the quick
+        // pre-ride bike switch. Its own Hilt ViewModel is scoped inside the sheet.
+        if (screenUiState.isBikeGarageSheetVisible) {
+            de.velospot.feature.map.presentation.sheets.BikeGarageSheet(
+                onDismiss = screenUiState::closeBikeGarage
             )
         }
 

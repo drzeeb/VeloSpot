@@ -246,7 +246,7 @@ class BRouterEngine(
          *      installs — otherwise [ensureProfiles] keeps the old (possibly broken) files
          *      and routing fails ("route data incomplete") for every profile.
          */
-        private const val PROFILES_VERSION = "9"
+        private const val PROFILES_VERSION = "11"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
 
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
