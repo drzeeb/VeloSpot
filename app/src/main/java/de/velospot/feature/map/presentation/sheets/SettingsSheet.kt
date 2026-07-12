@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
@@ -103,6 +104,11 @@ internal fun SettingsSheet(
                 title = stringResource(R.string.settings_group_navigation),
                 onClick = actions.onOpenNavRouting,
                 trailing = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
+            )
+            SettingsRow(
+                icon = Icons.AutoMirrored.Filled.DirectionsBike,
+                title = stringResource(R.string.bike_garage_settings_entry),
+                onClick = actions.onOpenBikeGarage
             )
             SettingsRow(
                 icon = Icons.Default.Info,

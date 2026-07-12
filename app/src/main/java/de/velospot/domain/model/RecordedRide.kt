@@ -57,7 +57,9 @@ data class RecordedRide(
     val points: List<TrackPoint>,
     val name: String? = null,
     val isMock: Boolean = false,
-    val archivedAt: Long? = null
+    val archivedAt: Long? = null,
+    /** Id of the [BikeProfile] this ride was recorded with, or `null` if untagged. */
+    val bikeProfileId: String? = null
 ) {
     /** Whether this ride is currently archived (hidden from the active timeline). */
     val isArchived: Boolean get() = archivedAt != null
@@ -89,7 +91,9 @@ data class RecordedRideSummary(
     val elevationLossMeters: Double,
     val name: String? = null,
     val isMock: Boolean = false,
-    val archivedAt: Long? = null
+    val archivedAt: Long? = null,
+    /** Id of the [BikeProfile] this ride was recorded with, or `null` if untagged. */
+    val bikeProfileId: String? = null
 ) {
     /** Whether this ride is currently archived (hidden from the active timeline). */
     val isArchived: Boolean get() = archivedAt != null

@@ -12,6 +12,7 @@ import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.repository.RecordedRidesRepository
+import de.velospot.domain.repository.BikeProfilesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +55,9 @@ class RideRecordingManager(
      *  continue while the app is backgrounded or closed. Injectable so unit tests
      *  can supply a controlled, cancellable scope instead of the real-thread default. */
     private val scope: CoroutineScope,
+    /** Resolves the bike a finished ride is tagged with. Optional so unit tests can
+     *  construct the manager without the garage (then rides stay untagged). */
+    private val bikeProfilesRepository: BikeProfilesRepository? = null,
 ) {
     /**
      * Production constructor (Hilt-provided): owns a long-lived [SupervisorJob] on
@@ -64,11 +68,13 @@ class RideRecordingManager(
         @ApplicationContext context: Context,
         locationController: LocationController,
         recordedRidesRepository: RecordedRidesRepository,
+        bikeProfilesRepository: BikeProfilesRepository,
     ) : this(
         context,
         locationController,
         recordedRidesRepository,
         CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        bikeProfilesRepository,
     )
 
     private val tracker = RideTracker()
@@ -216,8 +222,23 @@ class RideRecordingManager(
         _trackingState.value = RideTrackingUiState.Idle
         _liveTrackPoints.value = emptyList()
         if (ride != null) {
-            scope.launch { recordedRidesRepository.saveRide(ride) }
-            _events.tryEmit(RideRecordingEvent.Saved(ride))
+            scope.launch {
+                // Tag the ride with the rider's active bike (or the default), resolved
+                // once at save time. Untagged when no garage / no bikes exist yet.
+                val bikeId = runCatching { bikeProfilesRepository?.resolveActiveProfileId() }.getOrNull()
+                val tagged = if (bikeId != null) ride.copy(bikeProfileId = bikeId) else ride
+                recordedRidesRepository.saveRide(tagged)
+                _events.tryEmit(RideRecordingEvent.Saved(tagged))
+                // Real rides only: check whether this ride pushed the bike past a new
+                // shop-service milestone and, if so, notify once (best-effort).
+                if (bikeId != null && !tagged.isMock) {
+                    runCatching {
+                        bikeProfilesRepository?.evaluateServiceDue(bikeId)
+                    }.getOrNull()?.let { reminder ->
+                        BikeServiceNotifier(context).notifyServiceDue(reminder)
+                    }
+                }
+            }
         } else {
             _events.tryEmit(RideRecordingEvent.TooShort)
         }

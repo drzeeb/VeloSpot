@@ -42,6 +42,10 @@ internal class MapScreenUiState {
     var isPlannedRoutesSheetVisible by mutableStateOf(false)
         private set
 
+    /** The rider's bike garage (per-bike profiles + statistics). */
+    var isBikeGarageSheetVisible by mutableStateOf(false)
+        private set
+
     /** Sub-sheet: appearance & map settings (dark mode, language, 2D/3D, layers). */
     var isDisplaySettingsSheetVisible by mutableStateOf(false)
         private set
@@ -131,6 +135,15 @@ internal class MapScreenUiState {
 
     fun closePlannedRoutes() {
         isPlannedRoutesSheetVisible = false
+    }
+
+    fun openBikeGarage() {
+        isBikeGarageSheetVisible = true
+        dismissMenu()
+    }
+
+    fun closeBikeGarage() {
+        isBikeGarageSheetVisible = false
     }
 
     /** Opens the "Appearance & map" sub-sheet from the main Settings sheet. */

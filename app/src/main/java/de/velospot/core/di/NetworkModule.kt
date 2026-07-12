@@ -20,6 +20,7 @@ import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.local.dao.BikeParkingSpaceDao
 import de.velospot.data.local.dao.FavoriteSpaceDao
 import de.velospot.data.local.dao.RecordedRideDao
+import de.velospot.data.local.dao.BikeProfileDao
 import de.velospot.data.local.dao.SavedPlaceDao
 import de.velospot.data.local.database.BikeParkingDatabase
 import de.velospot.data.local.database.FavoritesDatabase
@@ -35,6 +36,7 @@ import de.velospot.data.repository.BikeParkingRepositoryImpl
 import de.velospot.data.repository.FavoritesRepositoryImpl
 import de.velospot.data.repository.ParkedBikeRepositoryImpl
 import de.velospot.data.repository.RecordedRidesRepositoryImpl
+import de.velospot.data.repository.BikeProfilesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.data.repository.SavedPlacesRepositoryImpl
 import de.velospot.data.settings.MapSettingsDataStore
@@ -43,6 +45,7 @@ import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
+import de.velospot.domain.repository.BikeProfilesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import de.velospot.data.repository.PlannedRoutesRepositoryImpl
@@ -300,7 +303,26 @@ object NetworkModule {
         return RecordedRidesRepositoryImpl(recordedRideDao, moshi)
     }
 
+    // ── Bike garage (per-bike profiles + statistics) ──────────────────────────
+
+    @Provides
+    @Singleton
+    fun provideBikeProfileDao(database: RidesDatabase): BikeProfileDao {
+        return database.bikeProfileDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideBikeProfilesRepository(
+        @ApplicationContext context: Context,
+        bikeProfileDao: BikeProfileDao,
+        recordedRidesRepository: RecordedRidesRepository
+    ): BikeProfilesRepository {
+        return BikeProfilesRepositoryImpl(context, bikeProfileDao, recordedRidesRepository)
+    }
+
     // ── Planned routes + leaderboards ─────────────────────────────────────────
+
 
     @Provides
     @Singleton
