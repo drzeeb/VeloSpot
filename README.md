@@ -326,7 +326,7 @@ VeloSpot follows software supply-chain best practices so users and packagers can
   ```
 - **SBOM (CycloneDX)** — a full Software Bill of Materials (`*-sbom.cdx.json` / `.xml`) listing every dependency and license is attached to each release. Regenerate locally with:
   ```bash
-  ./gradlew cyclonedxBom   # → build/reports/bom.json + bom.xml
+  ./gradlew :app:cyclonedxDirectBom   # → app/build/reports/cyclonedx/bom.json + bom.xml
   ```
 - **Reproducible F-Droid builds** — the F-Droid flavor is byte-for-byte reproducible (VCS info and AGP dependency-metadata blocks are stripped from the APK).
 - **CodeQL & Dependency Review** — static analysis and dependency vulnerability checks run on every pull request.

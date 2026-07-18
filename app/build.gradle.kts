@@ -11,6 +11,11 @@ plugins {
     //   ./gradlew :app:koverXmlReportFdroidDebug
     //   ./gradlew :app:koverHtmlReportFdroidDebug
     alias(libs.plugins.kover)
+    // CycloneDX generates a Software Bill of Materials (SBOM) for supply-chain
+    // transparency. Applied here (not at the root) so the per-project "direct"
+    // task can scan the app's runtime classpath, which transitively includes
+    // the :brouter module's dependencies. Task: `cyclonedxDirectBom`.
+    alias(libs.plugins.cyclonedx)
 }
 
 // ---------------------------------------------------------------------------
@@ -196,6 +201,26 @@ kover {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// SBOM (Software Bill of Materials) — CycloneDX
+// ---------------------------------------------------------------------------
+// A JSON + XML SBOM is produced for supply-chain transparency and attached to
+// each GitHub Release (see .github/workflows/release.yml). The per-project
+// "direct" task scans the F-Droid release runtime classpath — the canonical,
+// reproducible build that actually ships. It transitively includes the
+// :brouter module's runtime dependencies, so this one classpath covers
+// everything in the APK. (includeConfigs entries are matched as regexes.)
+tasks.named<org.cyclonedx.gradle.CyclonedxDirectTask>("cyclonedxDirectBom") {
+    projectType.set(org.cyclonedx.model.Component.Type.APPLICATION)
+    schemaVersion.set(org.cyclonedx.Version.VERSION_16)
+    componentName.set("de.velospot")
+    componentVersion.set("1.0.24")
+    includeConfigs.set(listOf("fdroidReleaseRuntimeClasspath"))
+    // Stable, explicit output locations (attached to releases by CI).
+    jsonOutput.set(layout.buildDirectory.file("reports/cyclonedx/bom.json"))
+    xmlOutput.set(layout.buildDirectory.file("reports/cyclonedx/bom.xml"))
 }
 
 dependencies {
