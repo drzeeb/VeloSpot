@@ -960,7 +960,12 @@ fun MainMapScreen(
                 onRideForward = { viewModel.ridePlannedRoute(route, reversed = false) },
                 onRideReverse = { viewModel.ridePlannedRoute(route, reversed = true) },
                 onOpenLeaderboard = { viewModel.openRouteLeaderboard(route) },
-                onClose = { viewModel.closeRoutePreview() }
+                onClose = {
+                    // Closing the preview returns to the "My routes" list it was
+                    // opened from, instead of leaving the bare map.
+                    viewModel.closeRoutePreview()
+                    screenUiState.openPlannedRoutes()
+                }
             )
         }
 
