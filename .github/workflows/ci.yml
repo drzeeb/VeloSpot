@@ -11,6 +11,8 @@ permissions:
   actions: write
   # Allow the coverage step to post/update a summary comment on pull requests.
   pull-requests: write
+  # Required for Codecov's tokenless (OIDC) upload.
+  id-token: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
