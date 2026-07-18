@@ -76,6 +76,14 @@
     <string name="elevation_level_low">Poca salita</string>
     <string name="elevation_level_flattest">Il più piatto</string>
     <string name="common_cancel">Annulla</string>
+    <string name="common_delete">Elimina</string>
+    <string name="common_remove">Rimuovi</string>
+    <string name="confirm_delete_ride_title">Eliminare la corsa?</string>
+    <string name="confirm_delete_ride_message">Questa corsa verrà eliminata definitivamente.</string>
+    <string name="confirm_delete_route_title">Eliminare il percorso?</string>
+    <string name="confirm_delete_route_message">Questo percorso e tutti i suoi tempi in classifica verranno eliminati definitivamente.</string>
+    <string name="confirm_remove_favorite_title">Rimuovere dai preferiti?</string>
+    <string name="confirm_remove_favorite_message">Questo elemento verrà rimosso dai tuoi preferiti.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>

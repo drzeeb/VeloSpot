@@ -400,6 +400,14 @@
     <string name="elevation_level_flattest">Flattest</string>
 
     <string name="common_cancel">Cancel</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_remove">Remove</string>
+    <string name="confirm_delete_ride_title">Delete ride?</string>
+    <string name="confirm_delete_ride_message">This ride will be permanently deleted.</string>
+    <string name="confirm_delete_route_title">Delete route?</string>
+    <string name="confirm_delete_route_message">This route and all of its leaderboard times will be permanently deleted.</string>
+    <string name="confirm_remove_favorite_title">Remove favourite?</string>
+    <string name="confirm_remove_favorite_message">This entry will be removed from your favourites.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <!-- Rough calorie estimate for the planned route (BRouter energy). -->
     <string name="navigation_route_calories">≈ %1$d kcal</string>

@@ -76,6 +76,14 @@
     <string name="elevation_level_low">Weinig klim</string>
     <string name="elevation_level_flattest">Zo vlak mogelijk</string>
     <string name="common_cancel">Annuleren</string>
+    <string name="common_delete">Verwijderen</string>
+    <string name="common_remove">Verwijderen</string>
+    <string name="confirm_delete_ride_title">Rit verwijderen?</string>
+    <string name="confirm_delete_ride_message">Deze rit wordt permanent verwijderd.</string>
+    <string name="confirm_delete_route_title">Route verwijderen?</string>
+    <string name="confirm_delete_route_message">Deze route en al haar klassementstijden worden permanent verwijderd.</string>
+    <string name="confirm_remove_favorite_title">Favoriet verwijderen?</string>
+    <string name="confirm_remove_favorite_message">Dit item wordt uit je favorieten verwijderd.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>

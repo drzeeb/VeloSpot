@@ -76,6 +76,14 @@
     <string name="elevation_level_low">Wenig Steigung</string>
     <string name="elevation_level_flattest">Möglichst flach</string>
     <string name="common_cancel">Abbrechen</string>
+    <string name="common_delete">Löschen</string>
+    <string name="common_remove">Entfernen</string>
+    <string name="confirm_delete_ride_title">Fahrt löschen?</string>
+    <string name="confirm_delete_ride_message">Diese Fahrt wird endgültig gelöscht.</string>
+    <string name="confirm_delete_route_title">Route löschen?</string>
+    <string name="confirm_delete_route_message">Diese Route und alle ihre Bestenlisten-Zeiten werden endgültig gelöscht.</string>
+    <string name="confirm_remove_favorite_title">Favorit entfernen?</string>
+    <string name="confirm_remove_favorite_message">Dieser Eintrag wird aus deinen Favoriten entfernt.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d Min.</string>

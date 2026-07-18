@@ -24,6 +24,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -100,6 +104,18 @@ private fun PlannedRouteRow(
     onOpenLeaderboard: () -> Unit,
     onDelete: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirm) {
+        ConfirmDeleteDialog(
+            title = stringResource(R.string.confirm_delete_route_title),
+            message = stringResource(R.string.confirm_delete_route_message),
+            confirmLabel = stringResource(R.string.common_delete),
+            onConfirm = onDelete,
+            onDismiss = { showDeleteConfirm = false }
+        )
+    }
+
     SpotInfoCard {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -112,8 +128,12 @@ private fun PlannedRouteRow(
                 IconButton(onClick = onOpenLeaderboard) {
                     Icon(Icons.Default.EmojiEvents, contentDescription = stringResource(R.string.route_leaderboard_open))
                 }
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.route_delete))
+                IconButton(onClick = { showDeleteConfirm = true }) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.route_delete),
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
             Text(

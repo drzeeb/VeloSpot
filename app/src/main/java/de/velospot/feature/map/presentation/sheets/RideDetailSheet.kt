@@ -92,11 +92,22 @@ internal fun RideDetailSheet(
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     if (showShareDialog) {
         RideShareDialog(
             ride = ride,
             onDismiss = { showShareDialog = false }
+        )
+    }
+
+    if (showDeleteConfirm) {
+        ConfirmDeleteDialog(
+            title = stringResource(R.string.confirm_delete_ride_title),
+            message = stringResource(R.string.confirm_delete_ride_message),
+            confirmLabel = stringResource(R.string.common_delete),
+            onConfirm = { onDelete(ride.id) },
+            onDismiss = { showDeleteConfirm = false }
         )
     }
 
@@ -365,7 +376,7 @@ internal fun RideDetailSheet(
 
                     // ── Delete ───────────────────────────────────────────────
                     TextButton(
-                        onClick = { onDelete(ride.id) },
+                        onClick = { showDeleteConfirm = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(

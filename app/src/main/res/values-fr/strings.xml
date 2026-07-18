@@ -76,6 +76,14 @@
     <string name="elevation_level_low">Peu de montée</string>
     <string name="elevation_level_flattest">Le plus plat</string>
     <string name="common_cancel">Annuler</string>
+    <string name="common_delete">Supprimer</string>
+    <string name="common_remove">Retirer</string>
+    <string name="confirm_delete_ride_title">Supprimer le trajet ?</string>
+    <string name="confirm_delete_ride_message">Ce trajet sera définitivement supprimé.</string>
+    <string name="confirm_delete_route_title">Supprimer l\'itinéraire ?</string>
+    <string name="confirm_delete_route_message">Cet itinéraire et tous ses temps de classement seront définitivement supprimés.</string>
+    <string name="confirm_remove_favorite_title">Retirer des favoris ?</string>
+    <string name="confirm_remove_favorite_message">Cet élément sera retiré de vos favoris.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>
