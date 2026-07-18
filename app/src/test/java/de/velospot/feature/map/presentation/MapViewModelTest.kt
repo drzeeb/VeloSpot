@@ -540,6 +540,43 @@ class MapViewModelTest {
         assertTrue(viewModel.parkedBike.value == null)
     }
 
+    @Test
+    fun `saving a ride as a route seeds the leaderboard with the ride time`() = runTest {
+        val viewModel = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val ride = RecordedRide(
+            id = "ride-1",
+            startedAt = 0L,
+            endedAt = 600_000L,
+            distanceMeters = 2000.0,
+            elapsedSeconds = 600L,
+            movingSeconds = 560L,
+            avgSpeedMps = 3.5,
+            maxSpeedMps = 8.0,
+            elevationGainMeters = 40.0,
+            elevationLossMeters = 35.0,
+            points = listOf(
+                de.velospot.domain.model.TrackPoint(49.75, 6.64, 0L),
+                de.velospot.domain.model.TrackPoint(49.752, 6.64, 60_000L),
+                de.velospot.domain.model.TrackPoint(49.75, 6.64, 120_000L)
+            ),
+            name = "Evening loop"
+        )
+
+        viewModel.saveRideAsRoute(ride)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // A route was created and its leaderboard opened, seeded with the ride's time.
+        assertEquals(1, viewModel.plannedRoutes.value.size)
+        assertEquals("Evening loop", viewModel.plannedRoutes.value.first().name)
+        assertTrue(viewModel.leaderboardRoute.value != null)
+        val attempts = viewModel.routeAttempts.value
+        assertEquals(1, attempts.size)
+        assertEquals(600L, attempts.first().elapsedSeconds)
+        assertEquals(false, attempts.first().reversed)
+    }
+
     private fun progress(remainingMeters: Double) = de.velospot.core.navigation.NavigationProgress(
         remainingMeters = remainingMeters,
         remainingSeconds = remainingMeters / 4.5,

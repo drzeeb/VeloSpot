@@ -404,6 +404,9 @@
     <string name="ride_export_saved">Tourën gespäichert</string>
     <string name="ride_export_save_failed">Datei konnt net gespäichert ginn</string>
     <string name="ride_export_invalid">Konnt keng gülteg GPX-Datei erstellen</string>
+    <string name="ride_save_as_route">Als Streck späicheren</string>
+    <string name="ride_saved_as_route">Fahrt als Streck gespäichert</string>
+    <string name="ride_route_default_name">Opgezeechent Streck</string>
     <!-- Tour als "VeloSpot Wrapped"-Kaart deelen -->
     <string name="ride_share_action">Tour deelen</string>
     <string name="ride_share_dismiss">Zoumaachen</string>

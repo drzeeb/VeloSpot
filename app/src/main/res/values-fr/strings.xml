@@ -405,6 +405,9 @@
     <string name="ride_export_saved">Trajets enregistrés</string>
     <string name="ride_export_save_failed">Impossible d\'enregistrer le fichier</string>
     <string name="ride_export_invalid">Impossible de créer un fichier GPX valide</string>
+    <string name="ride_save_as_route">Enregistrer comme itinéraire</string>
+    <string name="ride_saved_as_route">Trajet enregistré comme itinéraire</string>
+    <string name="ride_route_default_name">Itinéraire enregistré</string>
     <!-- Partager le trajet comme carte "VeloSpot Wrapped" -->
     <string name="ride_share_action">Partager le trajet</string>
     <string name="ride_share_dismiss">Fermer</string>

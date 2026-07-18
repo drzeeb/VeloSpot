@@ -406,6 +406,9 @@
     <string name="ride_export_saved">Percorsi salvati</string>
     <string name="ride_export_save_failed">Impossibile salvare il file</string>
     <string name="ride_export_invalid">Impossibile creare un file GPX valido</string>
+    <string name="ride_save_as_route">Salva come percorso</string>
+    <string name="ride_saved_as_route">Corsa salvata come percorso</string>
+    <string name="ride_route_default_name">Percorso registrato</string>
     <!-- Condividi il percorso come scheda "VeloSpot Wrapped" -->
     <string name="ride_share_action">Condividi percorso</string>
     <string name="ride_share_dismiss">Chiudi</string>

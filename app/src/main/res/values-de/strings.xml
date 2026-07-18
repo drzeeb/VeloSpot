@@ -410,6 +410,9 @@
     <string name="ride_export_saved">Fahrten gespeichert</string>
     <string name="ride_export_save_failed">Datei konnte nicht gespeichert werden</string>
     <string name="ride_export_invalid">Konnte keine gültige GPX-Datei erstellen</string>
+    <string name="ride_save_as_route">Als Route speichern</string>
+    <string name="ride_saved_as_route">Fahrt als Route gespeichert</string>
+    <string name="ride_route_default_name">Aufgezeichnete Route</string>
     <!-- Fahrt als "VeloSpot Wrapped"-Kachel teilen -->
     <string name="ride_share_action">Fahrt teilen</string>
     <string name="ride_share_dismiss">Schließen</string>

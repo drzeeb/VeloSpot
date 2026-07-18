@@ -833,6 +833,24 @@ class MapViewModel @Inject constructor(
         rideTracking.setRideArchived(id, archived)
 
     /**
+     * Saves a recorded [ride] — a recording, a navigated ride or a round trip — as
+     * a re-rideable route in *My routes*, seeding its leaderboard with the ride's
+     * own time. Reuses the ride's name (falling back to a default), closes the ride
+     * detail sheet and opens the new route's leaderboard so the seeded time shows.
+     */
+    fun saveRideAsRoute(ride: RecordedRide) {
+        val name = ride.name?.takeIf { it.isNotBlank() }
+            ?: context.getString(de.velospot.R.string.ride_route_default_name)
+        val saved = routePlanningController.saveRideAsRoute(ride, name)
+        if (saved) {
+            rideTracking.dismissSelectedRide()
+            _userMessageRes.value = de.velospot.R.string.ride_saved_as_route
+        } else {
+            _userMessageRes.value = de.velospot.R.string.ride_export_invalid
+        }
+    }
+
+    /**
      * Exports [rides] as GPX and opens the system **share** sheet. When
      * [combineIntoSingleFile] is `true` (or only one ride is given) all tracks land
      * in one file; otherwise each ride is written to its own file named after it.

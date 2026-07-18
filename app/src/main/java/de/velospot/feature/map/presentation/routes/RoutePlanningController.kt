@@ -2,6 +2,7 @@ package de.velospot.feature.map.presentation.routes
 
 import de.velospot.core.analysis.RouteGeometryStats
 import de.velospot.core.analysis.RouteLeaderboard
+import de.velospot.core.analysis.RideRouteFactory
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.PlannedRoute
@@ -196,6 +197,29 @@ class RoutePlanningController(
     fun deleteRoute(id: String) {
         if (_leaderboardRoute.value?.id == id) closeLeaderboard()
         scope.launch { repository.deleteRoute(id) }
+    }
+
+    /**
+     * Saves a finished [ride] (a recording, a navigated ride or a round trip) as a
+     * re-rideable [PlannedRoute] named [name], and seeds its leaderboard with the
+     * ride's own time as the first (forward) attempt. Opens the new route's
+     * leaderboard so the rider immediately sees their entry.
+     *
+     * Returns `false` when the ride can't become a route (a mock ride or a track
+     * with too few points).
+     */
+    fun saveRideAsRoute(ride: RecordedRide, name: String): Boolean {
+        val route = RideRouteFactory.build(ride, name, System.currentTimeMillis()) ?: return false
+        scope.launch {
+            repository.saveRoute(route)
+            // Seed the leaderboard with this ride's time (forward direction).
+            RouteLeaderboard.attemptFromRide(route.id, reversed = false, ride = ride)
+                ?.let { repository.addAttempt(it) }
+        }
+        // The attempts flow is reactive, so opening the board now shows the seeded
+        // time as soon as it lands.
+        openLeaderboard(route)
+        return true
     }
 
     // ── Leaderboard ─────────────────────────────────────────────────────────────

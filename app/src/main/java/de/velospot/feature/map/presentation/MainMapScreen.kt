@@ -921,7 +921,8 @@ fun MainMapScreen(
                 onDelete  = { id -> viewModel.deleteRecordedRide(id) },
                 onRename  = { id, name -> viewModel.renameRecordedRide(id, name) },
                 onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) },
-                onOpenAnalysis = onOpenRideAnalysis
+                onOpenAnalysis = onOpenRideAnalysis,
+                onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) }
             )
         }
 

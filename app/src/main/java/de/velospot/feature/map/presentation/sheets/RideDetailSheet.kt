@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Unarchive
@@ -86,7 +87,8 @@ internal fun RideDetailSheet(
     onDelete: (String) -> Unit,
     onRename: (String, String?) -> Unit,
     onSetArchived: (String, Boolean) -> Unit,
-    onOpenAnalysis: (String) -> Unit = {}
+    onOpenAnalysis: (String) -> Unit = {},
+    onSaveAsRoute: (RecordedRide) -> Unit = {}
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -321,6 +323,23 @@ internal fun RideDetailSheet(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(text = stringResource(R.string.ride_share_action))
+                    }
+
+                    // ── Save this ride as a re-rideable route (with a leaderboard) ─
+                    // Real rides only — a simulator (mock) ride can't seed a board.
+                    if (!ride.isMock) {
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = { onSaveAsRoute(ride) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Route,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(text = stringResource(R.string.ride_save_as_route))
+                        }
                     }
 
                     Spacer(Modifier.height(8.dp))
