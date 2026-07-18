@@ -11,6 +11,8 @@
 [![CI](https://github.com/drzeeb/VeloSpot/actions/workflows/ci.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/ci.yml)
 [![Release workflow](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml)
 [![Android Lint](https://github.com/drzeeb/VeloSpot/actions/workflows/android-lint.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/android-lint.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/drzeeb/VeloSpot/badge)](https://scorecard.dev/viewer/?uri=github.com/drzeeb/VeloSpot)
+[![codecov](https://codecov.io/gh/drzeeb/VeloSpot/branch/main/graph/badge.svg)](https://codecov.io/gh/drzeeb/VeloSpot)
 
 VeloSpot is an Android application that helps cyclists discover and navigate to bike parking facilities **across Germany, France and Luxembourg**. Powered by a pre-bundled OpenStreetMap dataset with over **100 000 locations**, the app works fully offline from the very first launch — no network required to find parking.
 
@@ -279,6 +281,19 @@ Run unit tests:
 ./gradlew test
 ```
 
+### Coverage (Kover)
+
+Generate a JaCoCo-compatible coverage report from the JVM unit tests:
+
+```bash
+# XML (used by CI / Codecov)
+./gradlew :app:koverXmlReportFdroid
+# Human-readable HTML → app/build/reports/kover/htmlFdroid/index.html
+./gradlew :app:koverHtmlReportFdroid
+```
+
+CI runs the coverage report on every pull request, posts a summary comment and uploads the result to Codecov (see the badge above). Generated code (Hilt, Room) and pure Compose UI are excluded so the figure reflects testable logic.
+
 Run instrumented tests:
 ```bash
 ./gradlew connectedAndroidTest
@@ -299,6 +314,22 @@ The repository uses GitHub Actions and GitHub Rulesets to enforce safe merges on
 Renovate is configured so that only security-related dependency updates can be automerged.
 
 Recent Renovate dependency and tooling updates are documented in [`CHANGELOG.md`](./CHANGELOG.md) under `Unreleased`.
+
+## 🔒 Supply-Chain Security
+
+VeloSpot follows software supply-chain best practices so users and packagers can trust every release:
+
+- **OpenSSF Scorecard** — an automated weekly analysis of the repository's security posture (branch protection, pinned actions, token permissions, …), published as a public badge and to the Security → Code scanning tab (`.github/workflows/scorecard.yml`).
+- **Build provenance (SLSA / Sigstore)** — every released APK and SBOM ships with a signed [build-provenance attestation](https://docs.github.com/actions/security-guides/using-artifact-attestations). Verify any artifact with:
+  ```bash
+  gh attestation verify VeloSpot-vX.Y.Z.apk --repo drzeeb/VeloSpot
+  ```
+- **SBOM (CycloneDX)** — a full Software Bill of Materials (`*-sbom.cdx.json` / `.xml`) listing every dependency and license is attached to each release. Regenerate locally with:
+  ```bash
+  ./gradlew cyclonedxBom   # → build/reports/bom.json + bom.xml
+  ```
+- **Reproducible F-Droid builds** — the F-Droid flavor is byte-for-byte reproducible (VCS info and AGP dependency-metadata blocks are stripped from the APK).
+- **CodeQL & Dependency Review** — static analysis and dependency vulnerability checks run on every pull request.
 
 ## 🔧 Configuration
 
