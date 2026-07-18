@@ -500,6 +500,7 @@ class MapViewModelTest {
         assertEquals(NavigationUiState.Idle, viewModel.navigationUiState.value)
     }
 
+
     @Test
     fun `a single arrival fix does not yet end navigation`() = runTest {
         val destination = sampleSpace(id = "rack-1")

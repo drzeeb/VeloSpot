@@ -95,6 +95,20 @@ class NavigationController(
      */
     private var consecutiveArrivalFixes = 0
 
+
+    /**
+     * `true` once the rider has, at any point during this navigation, been at least
+     * [DEPARTURE_ARMING_METERS] away from the destination (crow-flies). This *arms*
+     * the crow-flies arrival fallback so it cannot fire before the rider has
+     * genuinely travelled — critical for a **round trip** / loop, whose destination
+     * sits on the start (its direct distance is ~0 the instant navigation begins).
+     *
+     * The precise along-route signal is **not** gated by this: a real loop's
+     * along-route remaining distance is the full loop length at the start, so it is
+     * inherently safe.
+     */
+    private var hasBeenFarFromDestination = false
+
     val isActive: Boolean get() = _uiState.value is NavigationUiState.Active
     val activeRoute: BikeRoute? get() = (_uiState.value as? NavigationUiState.Active)?.route
     val activeDestination: BikeParkingSpace? get() = (_uiState.value as? NavigationUiState.Active)?.destination
@@ -116,15 +130,26 @@ class NavigationController(
      *  2. a straight-line (crow-flies) distance from the raw GPS fix to the actual
      *     destination coordinate below [ARRIVAL_THRESHOLD_METERS] — this works even
      *     when the rider is slightly **off-route** at the destination (e.g. pulled
-     *     onto the pavement), which previously suppressed arrival entirely.
+     *     onto the pavement) or when the route ends a few metres short of the door.
      *
      * A short debounce ([ARRIVAL_CONSECUTIVE_FIXES]) rejects a single stray fix.
+     * For a **round trip** (or any loop whose destination coincides with the start)
+     * the crow-flies fallback is additionally armed only after the rider has been
+     * at least [DEPARTURE_ARMING_METERS] from the destination ([hasBeenFarFromDestination]),
+     * so the trip cannot "arrive" the instant it begins. This makes the
+     * end-of-navigation reliable for standard navigation, planned routes and round
+     * trips alike.
+     *
      * When the destination is a genuine bike parking spot the bike is auto-parked
      * at it; otherwise a generic "you've arrived" confirmation is surfaced.
      */
     private fun maybeHandleArrival(progress: NavigationProgress) {
         if (hasArrivedForCurrentRoute) return
         val destination = activeDestination ?: return
+
+        // Arm the crow-flies fallback once the rider has genuinely travelled away
+        // from the destination (see [hasBeenFarFromDestination]).
+        updateDepartureArming(destination)
 
         if (!isWithinArrivalRadius(progress, destination)) {
             consecutiveArrivalFixes = 0
@@ -147,23 +172,43 @@ class NavigationController(
     }
 
     /**
+     * Latches [hasBeenFarFromDestination] the moment the rider's crow-flies
+     * distance to [destination] first exceeds [DEPARTURE_ARMING_METERS] — the gate
+     * that arms the crow-flies arrival fallback for round trips / loops.
+     */
+    private fun updateDepartureArming(destination: BikeParkingSpace) {
+        if (hasBeenFarFromDestination) return
+        val location = currentLocation() ?: return
+        val distance = GeoMath.distanceMeters(
+            location.latitude, location.longitude,
+            destination.latitude, destination.longitude
+        )
+        if (distance >= DEPARTURE_ARMING_METERS) hasBeenFarFromDestination = true
+    }
+
+    /**
      * `true` once the rider is close enough to the [destination] to count as
-     * arrived, combining the along-route remaining distance with a crow-flies
-     * fallback so a few metres of off-route GPS noise at the destination still
-     * registers (see [maybeHandleArrival]).
+     * arrived. Combines the precise along-route remaining distance (while on the
+     * line) with a crow-flies fallback to the real destination coordinate. The
+     * along-route signal always applies (it is large at the start of any real
+     * route, loops included); the crow-flies fallback only applies once arming has
+     * latched ([hasBeenFarFromDestination]), so a round trip whose destination sits
+     * on the start cannot arrive the instant it begins.
      */
     private fun isWithinArrivalRadius(
         progress: NavigationProgress,
         destination: BikeParkingSpace
     ): Boolean {
-        // On-route: trust the precise along-route remaining distance.
-        if (!progress.isOffRoute) {
-            return progress.remainingMeters <= ARRIVAL_THRESHOLD_METERS
+        // On-route: the precise along-route remaining distance is the primary signal
+        // and is inherently safe even for loops (full length at the start).
+        if (!progress.isOffRoute && progress.remainingMeters <= ARRIVAL_THRESHOLD_METERS) {
+            return true
         }
-        // Off-route (e.g. pulled onto the pavement at the door, or the route ends a
-        // few metres short): fall back to the direct distance to the real
-        // destination coordinate, independent of the route line — this used to
-        // suppress arrival entirely.
+        // Crow-flies fallback to the actual destination coordinate — independent of
+        // the route line. Catches off-route arrivals (pulled onto the pavement) and
+        // routes that stop a few metres short. Gated by arming so it cannot fire at
+        // the very start of a round trip / loop.
+        if (!hasBeenFarFromDestination) return false
         val location = currentLocation() ?: return false
         val crowFliesMeters = GeoMath.distanceMeters(
             location.latitude, location.longitude,
@@ -239,6 +284,10 @@ class NavigationController(
         _progress.value = null
         hasArrivedForCurrentRoute = false
         consecutiveArrivalFixes = 0
+        // Reset arrival arming: the crow-flies fallback stays disabled until the
+        // rider has genuinely travelled away from the destination (see
+        // [hasBeenFarFromDestination]), so a round trip / loop can't arrive at t=0.
+        hasBeenFarFromDestination = false
         navigationJob = scope.launch {
             try {
                 val route = compute()
@@ -426,6 +475,14 @@ class NavigationController(
          * navigation ends, debouncing a single noisy GPS sample.
          */
         private const val ARRIVAL_CONSECUTIVE_FIXES = 2
+
+        /**
+         * Distance (m) the rider must move away from the start before arrival is
+         * armed for a **round trip** / loop (whose destination coincides with the
+         * start). Comfortably above [ARRIVAL_THRESHOLD_METERS] so leaving and then
+         * re-approaching the start reliably counts as a completed loop.
+         */
+        private const val DEPARTURE_ARMING_METERS = 60.0
 
         /** Minimum gap between automatic off-route reroutes. */
         private const val REROUTE_COOLDOWN_MS = 8_000L

@@ -6,14 +6,15 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import android.util.TypedValue
+import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.MainActivity
 import de.velospot.R
 import de.velospot.core.format.formatRideDistance
-import de.velospot.core.format.formatRideDuration
 import de.velospot.core.location.hasLocationPermission
 import javax.inject.Inject
 
@@ -70,25 +71,64 @@ class RideRecordingWidget : AppWidgetProvider() {
         val recording = manager.isRecording
         val views = RemoteViews(context.packageName, R.layout.widget_ride_recording)
 
-        val title = context.getString(
-            if (recording) R.string.ride_recording else R.string.ride_record_start
-        )
-        views.setTextViewText(R.id.widget_title, title)
+        val stats = (manager.trackingState.value as? RideTrackingUiState.Recording)?.stats
 
+        // Title reflects the current state.
+        views.setTextViewText(
+            R.id.widget_title,
+            context.getString(if (recording) R.string.ride_recording else R.string.ride_record_start)
+        )
+
+        // Live elapsed time: a Chronometer ticks on its own in the launcher process,
+        // so the running duration stays live without a per-second broadcast. Its base
+        // is anchored to when the recording started (derived from the elapsed seconds
+        // already accumulated), then it counts up by itself.
+        if (recording) {
+            val elapsedMillis = (stats?.elapsedSeconds ?: 0L) * 1_000L
+            views.setChronometer(
+                R.id.widget_chronometer,
+                SystemClock.elapsedRealtime() - elapsedMillis,
+                null,
+                true
+            )
+            views.setViewVisibility(R.id.widget_chronometer, View.VISIBLE)
+        } else {
+            views.setChronometer(R.id.widget_chronometer, SystemClock.elapsedRealtime(), null, false)
+            views.setViewVisibility(R.id.widget_chronometer, View.GONE)
+        }
+
+        // Subtitle: live distance while recording, otherwise the idle hint.
         val subtitle = if (recording) {
-            (manager.trackingState.value as? RideTrackingUiState.Recording)?.stats?.let { s ->
-                "${formatRideDuration(s.elapsedSeconds)} • ${formatRideDistance(s.distanceMeters)}"
-            } ?: context.getString(R.string.ride_stop)
+            stats?.let { formatRideDistance(it.distanceMeters) }
+                ?: context.getString(R.string.ride_recording)
         } else {
             context.getString(R.string.widget_ride_recording_description)
         }
         views.setTextViewText(R.id.widget_subtitle, subtitle)
 
-        // Tint the icon programmatically: app widgets use plain RemoteViews/ImageView,
-        // which ignore android:tint/app:tint, so we apply a colour filter here instead.
+        // Tint the header icon programmatically: app widgets use plain
+        // RemoteViews/ImageView, which ignore android:tint/app:tint.
         views.setInt(R.id.widget_icon, "setColorFilter", resolveTextColorPrimary(context))
 
-        views.setOnClickPendingIntent(R.id.widget_root, togglePendingIntent(context))
+        // Start/Stop button: swap its icon, label and background colour.
+        views.setImageViewResource(
+            R.id.widget_button_icon,
+            if (recording) R.drawable.ic_widget_stop else R.drawable.ic_widget_play
+        )
+        views.setTextViewText(
+            R.id.widget_button_label,
+            context.getString(if (recording) R.string.ride_stop else R.string.ride_record_start)
+        )
+        views.setInt(
+            R.id.widget_button,
+            "setBackgroundResource",
+            if (recording) R.drawable.widget_button_stop_background
+            else R.drawable.widget_button_start_background
+        )
+
+        // The button carries the toggle; tapping the whole widget opens the app.
+        views.setOnClickPendingIntent(R.id.widget_button, togglePendingIntent(context))
+        views.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent(context))
         appWidgetManager.updateAppWidget(widgetId, views)
     }
 
@@ -108,6 +148,18 @@ class RideRecordingWidget : AppWidgetProvider() {
         return PendingIntent.getBroadcast(
             context,
             0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    /** Tapping the widget body (outside the button) opens the app. */
+    private fun openAppPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return PendingIntent.getActivity(
+            context,
+            1,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
