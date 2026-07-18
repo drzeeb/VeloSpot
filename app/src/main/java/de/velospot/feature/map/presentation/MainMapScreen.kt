@@ -133,6 +133,7 @@ fun MainMapScreen(
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val voiceGuidanceEnabled by viewModel.voiceGuidanceEnabled.collectAsStateWithLifecycle()
     val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
+    val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
@@ -166,6 +167,23 @@ fun MainMapScreen(
     DisposableEffect(currentView, keepScreenAwake) {
         currentView.keepScreenOn = keepScreenAwake
         onDispose { currentView.keepScreenOn = false }
+    }
+
+    // Lock the screen orientation to portrait when the user enabled the setting,
+    // so the display does not rotate while cycling. Disabled by default → the
+    // activity follows the device's auto-rotate. The original orientation is
+    // restored when the effect leaves composition.
+    val activity = context as? android.app.Activity
+    DisposableEffect(activity, portraitLockEnabled) {
+        val previousOrientation = activity?.requestedOrientation
+        activity?.requestedOrientation = if (portraitLockEnabled) {
+            android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+        onDispose {
+            previousOrientation?.let { activity?.requestedOrientation = it }
+        }
     }
 
     val viewportLoadError by viewModel.viewportLoadError.collectAsStateWithLifecycle()
@@ -741,6 +759,7 @@ fun MainMapScreen(
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
             keepScreenOnEnabled = keepScreenOnEnabled,
+            portraitLockEnabled = portraitLockEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -761,6 +780,7 @@ fun MainMapScreen(
             onShowParkedBike      = viewModel::showParkedBike,
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
             onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
+            onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!portraitLockEnabled) },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,

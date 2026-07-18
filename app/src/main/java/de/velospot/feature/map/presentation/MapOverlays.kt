@@ -104,6 +104,8 @@ internal data class MapMenuCardState(
     val voiceGuidanceEnabled: Boolean = false,
     /** Whether the display is kept awake during navigation / ride recording. */
     val keepScreenOnEnabled: Boolean = true,
+    /** Whether the screen orientation is locked to portrait. */
+    val portraitLockEnabled: Boolean = false,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -126,6 +128,7 @@ internal data class MapMenuCardActions(
     val onShowParkedBike: () -> Unit = {},
     val onToggleVoiceGuidance: () -> Unit = {},
     val onToggleKeepScreenOn: () -> Unit = {},
+    val onTogglePortraitLock: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
     val onOpenRides: () -> Unit = {},

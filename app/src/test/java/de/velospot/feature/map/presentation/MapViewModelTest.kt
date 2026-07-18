@@ -755,6 +755,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val voiceGuidanceEnabled: Flow<Boolean> = _voiceGuidance
     private val _keepScreenOn = MutableStateFlow(true)
     override val keepScreenOnEnabled: Flow<Boolean> = _keepScreenOn
+    private val _portraitLock = MutableStateFlow(false)
+    override val portraitLockEnabled: Flow<Boolean> = _portraitLock
     private val _rideViewOptions = MutableStateFlow(RideViewOptions())
     override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
 
@@ -765,6 +767,7 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override suspend fun set3DNavigation(enabled: Boolean) { _is3DNavigation.value = enabled }
     override suspend fun setVoiceGuidance(enabled: Boolean) { _voiceGuidance.value = enabled }
     override suspend fun setKeepScreenOn(enabled: Boolean) { _keepScreenOn.value = enabled }
+    override suspend fun setPortraitLock(enabled: Boolean) { _portraitLock.value = enabled }
     override suspend fun setShowMaxSpeedBubble(enabled: Boolean) {
         _rideViewOptions.value = _rideViewOptions.value.copy(showMaxSpeedBubble = enabled)
     }

@@ -201,6 +201,7 @@
     <!-- Layers (toggle pin categories) -->
     <string name="menu_layers">Capas</string>
     <string name="menu_navigation_view">Vista del mapa (2D/3D)</string>
+    <string name="menu_portrait_lock">Bloquear en orientación vertical</string>
     <string name="menu_voice_guidance">Guía por voz</string>
     <string name="menu_keep_screen_on">Mantener la pantalla encendida al circular</string>
     <string name="menu_simulate_route_start">▶ Simular ruta (GPS simulado)</string>

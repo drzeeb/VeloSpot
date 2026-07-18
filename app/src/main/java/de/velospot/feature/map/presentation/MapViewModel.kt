@@ -496,7 +496,20 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { mapSettings.setKeepScreenOn(enabled) }
     }
 
+    /**
+     * Whether the screen orientation is locked to portrait. Persisted across
+     * sessions; defaults to disabled (device auto-rotate is followed).
+     */
+    val portraitLockEnabled: StateFlow<Boolean> =
+        mapSettings.portraitLockEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the portrait-orientation lock on/off and persists the choice. */
+    fun setPortraitLockEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setPortraitLock(enabled) }
+    }
+
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
+
 
     fun onSearchCleared() {
         addressSearch.clear()
