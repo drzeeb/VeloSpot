@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hiltAndroid)
+    // Kotlin code coverage (Kover). Generates JaCoCo-compatible XML/HTML reports
+    // from the JVM unit tests. Report tasks per Android variant, e.g.
+    //   ./gradlew :app:koverXmlReportFdroidDebug
+    //   ./gradlew :app:koverHtmlReportFdroidDebug
+    alias(libs.plugins.kover)
 }
 
 // ---------------------------------------------------------------------------
@@ -123,6 +128,51 @@ ksp {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Test coverage (Kover)
+// ---------------------------------------------------------------------------
+// Coverage is measured on the F-Droid debug variant (the canonical CI build).
+// Android projects don't auto-register a variant with Kover, so we explicitly
+// bind `fdroidDebug`; this also feeds Kover's aggregated "total" report, so
+// `./gradlew :app:koverXmlReport` / `:app:koverHtmlReport` produce the result.
+// Generated code (Hilt/Dagger, Room, Compose synthetics) and pure-UI/DI classes
+// carry no meaningful unit-test coverage, so they are excluded to keep the
+// percentage representative of the actually testable logic.
+kover {
+    currentProject {
+        createVariant("fdroid") {
+            add("fdroidDebug")
+        }
+    }
+    reports {
+        filters {
+            excludes {
+                classes(
+                    // Generated component & binding code
+                    "*_HiltModules*",
+                    "*_Factory",
+                    "*_Impl",
+                    "*Hilt_*",
+                    "dagger.hilt.*",
+                    "hilt_aggregated_deps.*",
+                    "*.databinding.*",
+                    "*.BuildConfig",
+                    // Room-generated DAOs / database implementations
+                    "*_Impl*",
+                    // Compose UI + previews (exercised by instrumented/UI tests, not JVM units)
+                    "*ComposableSingletons*",
+                    "*.*Screen*Kt",
+                    "*.ui.theme.*",
+                )
+                annotatedBy(
+                    "androidx.compose.runtime.Composable",
+                    "androidx.compose.ui.tooling.preview.Preview",
+                )
+            }
+        }
     }
 }
 

@@ -9,6 +9,8 @@ on:
 permissions:
   contents: read
   actions: write
+  # Allow the coverage step to post/update a summary comment on pull requests.
+  pull-requests: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -68,3 +70,37 @@ jobs:
 
       - name: Run unit tests
         run: ./gradlew :app:testFdroidDebugUnitTest --no-daemon
+
+      # ── Coverage (Kover) ──────────────────────────────────────────────────────
+      # Generate a JaCoCo-compatible XML report from the F-Droid debug unit tests.
+      - name: Generate coverage report
+        run: ./gradlew :app:koverXmlReportFdroid --no-daemon
+
+      # Post/update a coverage summary comment on the pull request.
+      - name: Add coverage comment to PR
+        if: github.event_name == 'pull_request'
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: ${{ github.workspace }}/app/build/reports/kover/reportFdroid.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "🧪 Test coverage"
+          update-comment: true
+
+      # Upload to Codecov for the trend graph + README badge (tokenless OIDC
+      # upload works for public repositories).
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: app/build/reports/kover/reportFdroid.xml
+          flags: unittests
+          fail_ci_if_error: false
+          use_oidc: true
+
+      # Keep the raw report as a downloadable artifact.
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: app/build/reports/kover/reportFdroid.xml
+          if-no-files-found: warn
+

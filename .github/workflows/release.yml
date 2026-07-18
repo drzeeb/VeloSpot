@@ -15,6 +15,10 @@ on:
 
 permissions:
   contents: write
+  # Required to generate signed build-provenance attestations (SLSA) via the
+  # Sigstore public-good infrastructure.
+  id-token: write
+  attestations: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -128,6 +132,35 @@ jobs:
           mv app/build/outputs/apk/googlePlay/release/app-googlePlay-release.apk \
              "app/build/outputs/apk/googlePlay/release/VeloSpot-${TAG}-googlePlay.apk"
 
+      # ── SBOM (CycloneDX) ──────────────────────────────────────────────────────
+      # Produce a Software Bill of Materials aggregating every module's runtime
+      # dependencies (with versions + licenses) for supply-chain transparency.
+      - name: Generate SBOM (CycloneDX)
+        run: ./gradlew cyclonedxBom --no-daemon
+
+      - name: Rename SBOM
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          cp build/reports/bom.json "VeloSpot-${TAG}-sbom.cdx.json"
+          cp build/reports/bom.xml  "VeloSpot-${TAG}-sbom.cdx.xml"
+
+      # ── Build provenance (SLSA / Sigstore attestations) ───────────────────────
+      # Generate cryptographically verifiable provenance for the release APKs and
+      # the SBOM. Consumers can verify with:  gh attestation verify <file> --repo <repo>
+      - name: Attest APK build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            app/build/outputs/apk/fdroid/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
+            app/build/outputs/apk/googlePlay/release/VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk
+
+      - name: Attest SBOM provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.json
+            VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.xml
+
       # ── Extract changelog section for this release ────────────────────────────
       # Reads the "## [vX.Y.Z]" section that the release PR already promoted.
       - name: Extract changelog for this version
@@ -163,6 +196,16 @@ jobs:
             |---|---|
             | `VeloSpot-${{ steps.version.outputs.tag }}.apk` | **F-Droid flavor** – no Google services, ready to sideload; this is the APK F-Droid reproducibly verifies |
             | `VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk` | **Google Play flavor** – includes Google Play Services Location |
+            | `VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.json` / `.xml` | **CycloneDX SBOM** – full dependency + license inventory |
+
+            ### 🔐 Supply-chain verification
+
+            All release artifacts ship with signed [build provenance attestations](https://docs.github.com/actions/security-guides/using-artifact-attestations).
+            Verify any downloaded file with the GitHub CLI:
+
+            ```bash
+            gh attestation verify VeloSpot-${{ steps.version.outputs.tag }}.apk --repo ${{ github.repository }}
+            ```
 
             ### Installation (sideload)
             1. Download the APK below.
@@ -173,6 +216,8 @@ jobs:
           files: |
             app/build/outputs/apk/fdroid/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
             app/build/outputs/apk/googlePlay/release/VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk
+            VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.json
+            VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.xml
           draft: false
           prerelease: false
         env:
