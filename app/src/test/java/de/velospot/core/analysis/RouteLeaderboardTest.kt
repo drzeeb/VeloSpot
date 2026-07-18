@@ -104,5 +104,31 @@ class RouteLeaderboardTest {
         assertNull(RouteLeaderboard.attemptFromRide("route", false, ride("m", 300, isMock = true)))
         assertNull(RouteLeaderboard.attemptFromRide("route", false, ride("z", 0)))
     }
+
+    @Test
+    fun `summarize reports best per direction, count and last ridden`() {
+        val summary = RouteLeaderboard.summarize(
+            listOf(
+                attempt("f-slow", elapsed = 600, reversed = false, recordedAt = 100),
+                attempt("f-fast", elapsed = 400, reversed = false, recordedAt = 300),
+                attempt("r-only", elapsed = 500, reversed = true, recordedAt = 500)
+            )
+        )
+        assertEquals("f-fast", summary.forwardBest?.id)
+        assertEquals("r-only", summary.reverseBest?.id)
+        assertEquals(3, summary.totalAttempts)
+        assertEquals(500L, summary.lastRiddenAt)
+        assertTrue(summary.hasAttempts)
+    }
+
+    @Test
+    fun `summarize of an unridden route is empty`() {
+        val summary = RouteLeaderboard.summarize(emptyList())
+        assertNull(summary.forwardBest)
+        assertNull(summary.reverseBest)
+        assertEquals(0, summary.totalAttempts)
+        assertNull(summary.lastRiddenAt)
+        assertFalse(summary.hasAttempts)
+    }
 }
 

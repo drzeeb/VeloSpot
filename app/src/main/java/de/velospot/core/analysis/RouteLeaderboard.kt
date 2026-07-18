@@ -15,6 +15,29 @@ data class LeaderboardEntry(
 )
 
 /**
+ * A compact, at-a-glance digest of a route's leaderboard, shown on the route
+ * **preview** (before riding) so the rider can see how they've done so far:
+ *
+ * @property forwardBest the fastest **forward** attempt, or `null` if never ridden
+ *  forward.
+ * @property reverseBest the fastest **reverse** attempt, or `null` if never ridden
+ *  reversed.
+ * @property totalAttempts how many times the route has been ridden (both
+ *  directions).
+ * @property lastRiddenAt wall-clock time of the most recent attempt, or `null`
+ *  when the route has never been ridden.
+ */
+data class RouteLeaderboardSummary(
+    val forwardBest: RouteAttempt?,
+    val reverseBest: RouteAttempt?,
+    val totalAttempts: Int,
+    val lastRiddenAt: Long?
+) {
+    /** `true` when the route has at least one recorded attempt. */
+    val hasAttempts: Boolean get() = totalAttempts > 0
+}
+
+/**
  * Pure, side-effect-free helpers powering a planned route's leaderboard.
  *
  * VeloSpot has no accounts or cloud, so a route's leaderboard is the **rider's
@@ -56,6 +79,19 @@ object RouteLeaderboard {
         val reverse = rank(attempts.filter { it.reversed })
         return forward to reverse
     }
+
+    /**
+     * Condenses a route's [attempts] into a [RouteLeaderboardSummary] for the
+     * pre-ride preview: the fastest forward and reverse times, how often the route
+     * has been ridden, and when it was last ridden.
+     */
+    fun summarize(attempts: List<RouteAttempt>): RouteLeaderboardSummary =
+        RouteLeaderboardSummary(
+            forwardBest = rank(attempts.filterNot { it.reversed }).firstOrNull()?.attempt,
+            reverseBest = rank(attempts.filter { it.reversed }).firstOrNull()?.attempt,
+            totalAttempts = attempts.size,
+            lastRiddenAt = attempts.maxOfOrNull { it.recordedAt }
+        )
 
     /**
      * Derives a [RouteAttempt] from a finished [RecordedRide] of [routeId] ridden

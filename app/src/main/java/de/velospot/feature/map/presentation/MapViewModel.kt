@@ -436,6 +436,9 @@ class MapViewModel @Inject constructor(
     val plannedRoutes: StateFlow<List<PlannedRoute>> = routePlanningController.plannedRoutes
     val leaderboardRoute: StateFlow<PlannedRoute?> = routePlanningController.leaderboardRoute
     val routeAttempts: StateFlow<List<RouteAttempt>> = routePlanningController.attempts
+    val previewedRoute: StateFlow<PlannedRoute?> = routePlanningController.previewedRoute
+    val previewedRouteSummary: StateFlow<de.velospot.core.analysis.RouteLeaderboardSummary> =
+        routePlanningController.previewSummary
 
     /**
      * One-shot, string-resource user message (e.g. "bike location saved").
@@ -1182,6 +1185,19 @@ class MapViewModel @Inject constructor(
     fun deleteRouteAttempt(id: String) = routePlanningController.deleteAttempt(id)
 
     /**
+     * Shows a saved [route] on the idle map so it can be inspected (or planned
+     * around) before riding. The saved geometry is drawn and the camera is fitted
+     * to it by the UI; the map stays interactive (a non-modal preview card).
+     */
+    fun showRouteOnMap(route: PlannedRoute) {
+        clearPlaceSelections()
+        rideTracking.dismissSelectedRide()
+        routePlanningController.previewRouteOnMap(route)
+    }
+
+    fun closeRoutePreview() = routePlanningController.closeRoutePreview()
+
+    /**
      * Rides a saved [route] forward or backwards: arms the leaderboard-attempt
      * context, then starts turn-by-turn navigation through the route's stops (from
      * the rider's current position). Reverse rides land on their own leaderboard.
@@ -1204,6 +1220,7 @@ class MapViewModel @Inject constructor(
             sourceLayer = "planned_route"
         )
         closeRouteLeaderboard()
+        closeRoutePreview()
         navigationController.startVia(destination, waypoints)
     }
 

@@ -78,6 +78,15 @@
     <string name="common_cancel">Annuleren</string>
     <string name="common_delete">Verwijderen</string>
     <string name="common_remove">Verwijderen</string>
+    <string name="common_close">Sluiten</string>
+    <string name="route_show_on_map">Op kaart tonen</string>
+    <string name="route_stat_stops">Stops</string>
+    <string name="route_leaderboard_view_all">Alles bekijken</string>
+    <string name="route_leaderboard_never_ridden">Nog niet gereden — zet de eerste tijd.</string>
+    <string name="route_best_forward">Beste (heen)</string>
+    <string name="route_best_reverse">Beste (terug)</string>
+    <string name="route_ridden_count">%1$d× gereden</string>
+    <string name="route_ridden_count_last">%1$d× gereden • laatst %2$s</string>
     <string name="confirm_delete_ride_title">Rit verwijderen?</string>
     <string name="confirm_delete_ride_message">Deze rit wordt permanent verwijderd.</string>
     <string name="confirm_delete_route_title">Route verwijderen?</string>

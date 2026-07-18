@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -52,6 +53,7 @@ internal fun PlannedRoutesSheet(
     onDismiss: () -> Unit,
     onRide: (PlannedRoute, Boolean) -> Unit,
     onOpenLeaderboard: (PlannedRoute) -> Unit,
+    onShowOnMap: (PlannedRoute) -> Unit,
     onDelete: (String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -86,6 +88,7 @@ internal fun PlannedRoutesSheet(
                             onRideForward = { onRide(route, false) },
                             onRideReverse = { onRide(route, true) },
                             onOpenLeaderboard = { onOpenLeaderboard(route) },
+                            onShowOnMap = { onShowOnMap(route) },
                             onDelete = { onDelete(route.id) }
                         )
                     }
@@ -102,6 +105,7 @@ private fun PlannedRouteRow(
     onRideForward: () -> Unit,
     onRideReverse: () -> Unit,
     onOpenLeaderboard: () -> Unit,
+    onShowOnMap: () -> Unit,
     onDelete: () -> Unit
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -125,6 +129,9 @@ private fun PlannedRouteRow(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f)
                 )
+                IconButton(onClick = onShowOnMap) {
+                    Icon(Icons.Default.Map, contentDescription = stringResource(R.string.route_show_on_map))
+                }
                 IconButton(onClick = onOpenLeaderboard) {
                     Icon(Icons.Default.EmojiEvents, contentDescription = stringResource(R.string.route_leaderboard_open))
                 }

@@ -402,6 +402,15 @@
     <string name="common_cancel">Cancel</string>
     <string name="common_delete">Delete</string>
     <string name="common_remove">Remove</string>
+    <string name="common_close">Close</string>
+    <string name="route_show_on_map">Show on map</string>
+    <string name="route_stat_stops">Stops</string>
+    <string name="route_leaderboard_view_all">View all</string>
+    <string name="route_leaderboard_never_ridden">Not ridden yet — set the first time.</string>
+    <string name="route_best_forward">Best (forward)</string>
+    <string name="route_best_reverse">Best (reverse)</string>
+    <string name="route_ridden_count">Ridden %1$d×</string>
+    <string name="route_ridden_count_last">Ridden %1$d× • last %2$s</string>
     <string name="confirm_delete_ride_title">Delete ride?</string>
     <string name="confirm_delete_ride_message">This ride will be permanently deleted.</string>
     <string name="confirm_delete_route_title">Delete route?</string>

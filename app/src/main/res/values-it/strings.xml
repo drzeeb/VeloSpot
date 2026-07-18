@@ -78,6 +78,15 @@
     <string name="common_cancel">Annulla</string>
     <string name="common_delete">Elimina</string>
     <string name="common_remove">Rimuovi</string>
+    <string name="common_close">Chiudi</string>
+    <string name="route_show_on_map">Mostra sulla mappa</string>
+    <string name="route_stat_stops">Tappe</string>
+    <string name="route_leaderboard_view_all">Vedi tutto</string>
+    <string name="route_leaderboard_never_ridden">Mai percorso — segna il primo tempo.</string>
+    <string name="route_best_forward">Migliore (andata)</string>
+    <string name="route_best_reverse">Migliore (ritorno)</string>
+    <string name="route_ridden_count">Percorso %1$d volte</string>
+    <string name="route_ridden_count_last">Percorso %1$d volte • ultimo %2$s</string>
     <string name="confirm_delete_ride_title">Eliminare la corsa?</string>
     <string name="confirm_delete_ride_message">Questa corsa verrà eliminata definitivamente.</string>
     <string name="confirm_delete_route_title">Eliminare il percorso?</string>

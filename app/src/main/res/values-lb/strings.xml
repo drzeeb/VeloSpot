@@ -78,6 +78,15 @@
     <string name="common_cancel">Ofbriechen</string>
     <string name="common_delete">Läschen</string>
     <string name="common_remove">Ewechhuelen</string>
+    <string name="common_close">Zoumaachen</string>
+    <string name="route_show_on_map">Op der Kaart weisen</string>
+    <string name="route_stat_stops">Stopps</string>
+    <string name="route_leaderboard_view_all">Alleg weisen</string>
+    <string name="route_leaderboard_never_ridden">Nach net gefuer — set déi éischt Zäit.</string>
+    <string name="route_best_forward">Bescht (vir)</string>
+    <string name="route_best_reverse">Bescht (zréck)</string>
+    <string name="route_ridden_count">%1$d× gefuer</string>
+    <string name="route_ridden_count_last">%1$d× gefuer • lescht %2$s</string>
     <string name="confirm_delete_ride_title">Fahrt läschen?</string>
     <string name="confirm_delete_ride_message">Dës Fahrt gëtt endgülteg geläscht.</string>
     <string name="confirm_delete_route_title">Streck läschen?</string>

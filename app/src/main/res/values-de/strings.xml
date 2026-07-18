@@ -78,6 +78,15 @@
     <string name="common_cancel">Abbrechen</string>
     <string name="common_delete">Löschen</string>
     <string name="common_remove">Entfernen</string>
+    <string name="common_close">Schließen</string>
+    <string name="route_show_on_map">Auf Karte anzeigen</string>
+    <string name="route_stat_stops">Stopps</string>
+    <string name="route_leaderboard_view_all">Alle ansehen</string>
+    <string name="route_leaderboard_never_ridden">Noch nicht gefahren – setze die erste Zeit.</string>
+    <string name="route_best_forward">Beste (vorwärts)</string>
+    <string name="route_best_reverse">Beste (rückwärts)</string>
+    <string name="route_ridden_count">%1$d× gefahren</string>
+    <string name="route_ridden_count_last">%1$d× gefahren • zuletzt %2$s</string>
     <string name="confirm_delete_ride_title">Fahrt löschen?</string>
     <string name="confirm_delete_ride_message">Diese Fahrt wird endgültig gelöscht.</string>
     <string name="confirm_delete_route_title">Route löschen?</string>
