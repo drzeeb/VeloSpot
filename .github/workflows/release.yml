@@ -133,16 +133,17 @@ jobs:
              "app/build/outputs/apk/googlePlay/release/VeloSpot-${TAG}-googlePlay.apk"
 
       # ── SBOM (CycloneDX) ──────────────────────────────────────────────────────
-      # Produce a Software Bill of Materials aggregating every module's runtime
-      # dependencies (with versions + licenses) for supply-chain transparency.
+      # Produce a Software Bill of Materials from the app's F-Droid release runtime
+      # classpath (transitively includes the :brouter module) for supply-chain
+      # transparency.
       - name: Generate SBOM (CycloneDX)
-        run: ./gradlew cyclonedxBom --no-daemon
+        run: ./gradlew :app:cyclonedxDirectBom --no-daemon
 
       - name: Rename SBOM
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          cp build/reports/bom.json "VeloSpot-${TAG}-sbom.cdx.json"
-          cp build/reports/bom.xml  "VeloSpot-${TAG}-sbom.cdx.xml"
+          cp app/build/reports/cyclonedx/bom.json "VeloSpot-${TAG}-sbom.cdx.json"
+          cp app/build/reports/cyclonedx/bom.xml  "VeloSpot-${TAG}-sbom.cdx.xml"
 
       # ── Build provenance (SLSA / Sigstore attestations) ───────────────────────
       # Generate cryptographically verifiable provenance for the release APKs and

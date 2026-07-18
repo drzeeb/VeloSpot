@@ -26,7 +26,7 @@ mockitoKotlin = "6.3.0"
 androidxTestUiautomator = "2.3.0"
 errorProneAnnotations = "2.50.0"
 kover = "0.9.9"
-cyclonedx = "2.4.1"
+cyclonedx = "3.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
