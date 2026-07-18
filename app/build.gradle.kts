@@ -162,10 +162,32 @@ kover {
                     "*.BuildConfig",
                     // Room-generated DAOs / database implementations
                     "*_Impl*",
+                    // Moshi-generated JSON adapters
+                    "*JsonAdapter",
                     // Compose UI + previews (exercised by instrumented/UI tests, not JVM units)
                     "*ComposableSingletons*",
                     "*.*Screen*Kt",
-                    "*.ui.theme.*",
+                    "de.velospot.ui.*",
+                    // Dependency injection wiring (no logic to unit-test)
+                    "de.velospot.di.*",
+                    // Room persistence declarations (interfaces / abstract classes / data holders)
+                    "de.velospot.data.local.dao.*",
+                    "de.velospot.data.local.database.*",
+                    "de.velospot.data.local.entity.*",
+                    // Android framework entry points (require an instrumented environment)
+                    "de.velospot.MainActivity",
+                    "de.velospot.BaseApplication",
+                    "de.velospot.core.tracking.RideRecordingService",
+                    "de.velospot.core.tracking.RideRecordingTileService",
+                    "de.velospot.core.tracking.RideRecordingWidget*",
+                    "de.velospot.core.tracking.BikeServiceNotifier",
+                    // MapLibre / Canvas rendering & camera glue (needs a real GL surface)
+                    "de.velospot.feature.map.presentation.markers.*",
+                    "*NavigationManager",
+                    "*NavigationVoiceGuide",
+                    "*RideShareCardRenderer",
+                    "*RideRouteMapSnapshotter",
+                    "*MapInitializer",
                 )
                 annotatedBy(
                     "androidx.compose.runtime.Composable",
