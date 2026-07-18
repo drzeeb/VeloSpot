@@ -4,60 +4,75 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="12dp"
+    android:gravity="center_horizontal"
+    android:padding="10dp"
     android:background="@drawable/widget_ride_recording_background">
 
-    <ImageView
-        android:id="@+id/widget_icon"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:src="@drawable/ic_ride_recording"
-        android:contentDescription="@string/ride_record_start" />
+    <!-- Header block (icon + title + timer + subtitle). Weighted with a 0dp base
+         height so that when the widget is short it is the part that shrinks/clips,
+         leaving the fixed-height Start/Stop button below always fully visible. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:minHeight="0dp"
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <TextView
-        android:id="@+id/widget_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textStyle="bold"
-        android:textSize="13sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="@string/ride_record_start" />
+        <ImageView
+            android:id="@+id/widget_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_ride_recording"
+            android:contentDescription="@string/ride_record_start" />
 
-    <!-- Live elapsed recording time. A Chronometer ticks on its own in the host
-         process, so the widget shows the running duration without a per-second
-         broadcast. Hidden while idle. -->
-    <Chronometer
-        android:id="@+id/widget_chronometer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        android:visibility="gone" />
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/ride_record_start" />
 
-    <TextView
-        android:id="@+id/widget_subtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="11sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="@string/widget_ride_recording_description" />
+        <!-- Live elapsed recording time. A Chronometer ticks on its own in the host
+             process, so the widget shows the running duration without a per-second
+             broadcast. Hidden while idle. -->
+        <Chronometer
+            android:id="@+id/widget_chronometer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/widget_ride_recording_description" />
+
+    </LinearLayout>
 
     <!-- Start/Stop button: a styled row (icon + label) with a rounded, filled
          background. Plain RemoteViews can't host a Material button, so this is a
-         LinearLayout carrying the click intent. -->
+         LinearLayout carrying the click intent. Non-weighted + a minimum height, so
+         it is laid out at full size first and stays visible even on a short widget. -->
     <LinearLayout
         android:id="@+id/widget_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
+        android:minHeight="40dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:paddingHorizontal="16dp"
@@ -82,6 +97,7 @@
             android:textStyle="bold"
             android:textSize="13sp"
             android:maxLines="1"
+            android:ellipsize="end"
             android:text="@string/ride_record_start" />
 
     </LinearLayout>
