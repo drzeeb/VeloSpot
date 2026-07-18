@@ -10,6 +10,6 @@ plugins {
 // so Hilt's bundled copy does not reject Kotlin 2.4+ class metadata.
 allprojects {
     configurations.all {
-        resolutionStrategy.force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.0")
+        resolutionStrategy.force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.10")
     }
 }
