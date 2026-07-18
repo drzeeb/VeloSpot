@@ -175,8 +175,10 @@ class BRouterEngine(
         val profilePath = profilePathFor(profile)
 
         // BRouter's roundTripDistance is the *search radius* of the waypoint ring,
-        // not the total length. Empirically the looped result is ~3× the radius, so
-        // derive the radius from the requested trip length.
+        // not the total length. With ROUND_TRIP_POINTS = 5, BRouter routes
+        // start → 4 points on a circle of this radius → back, whose straight-line
+        // length is ≈ 3.85 × radius; real roads add a detour on top (~1.3×), so the
+        // ridden loop is ≈ 5 × radius. Derive the radius from the requested length.
         val searchRadius = (targetDistanceMeters / ROUND_TRIP_LENGTH_TO_RADIUS)
             .toInt().coerceIn(MIN_ROUND_TRIP_RADIUS_M, MAX_ROUND_TRIP_RADIUS_M)
 
@@ -272,8 +274,17 @@ class BRouterEngine(
         private const val ENGINE_TERMINATE_GRACE_MS = 2_000L
 
         // ── Round-trip generation (see calculateRoundTrip) ────────────────────
-        /** Approximate ratio of looped trip length to BRouter's search radius. */
-        private const val ROUND_TRIP_LENGTH_TO_RADIUS = 3.0
+        /**
+         * Approximate ratio of the ridden loop length to BRouter's search radius.
+         *
+         * With [ROUND_TRIP_POINTS] = 5, BRouter routes start → 4 waypoints on a
+         * circle of `searchRadius` → back to start. The straight-line length of that
+         * polygon is `2·r + 3·(2·r·sin18°) ≈ 3.85·r`; real roads add a routing detour
+         * (~1.3×) on top, giving a ridden length of ≈ 5·r. The previous value (3.0)
+         * was even below the pure geometric factor, so every generated loop came out
+         * roughly **twice** the requested distance — this corrects that.
+         */
+        private const val ROUND_TRIP_LENGTH_TO_RADIUS = 5.0
         /** Number of waypoints BRouter spreads around the ring. */
         private const val ROUND_TRIP_POINTS = 5
         private const val MIN_ROUND_TRIP_RADIUS_M = 500
