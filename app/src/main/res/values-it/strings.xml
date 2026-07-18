@@ -87,6 +87,8 @@
     <string name="route_best_reverse">Migliore (ritorno)</string>
     <string name="route_ridden_count">Percorso %1$d volte</string>
     <string name="route_ridden_count_last">Percorso %1$d volte • ultimo %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Mediana %2$s</string>
+    <string name="route_faster_than_average">%1$s più veloce della tua media</string>
     <string name="confirm_delete_ride_title">Eliminare la corsa?</string>
     <string name="confirm_delete_ride_message">Questa corsa verrà eliminata definitivamente.</string>
     <string name="confirm_delete_route_title">Eliminare il percorso?</string>

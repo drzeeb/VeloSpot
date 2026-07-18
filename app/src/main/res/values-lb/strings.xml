@@ -87,6 +87,8 @@
     <string name="route_best_reverse">Bescht (zréck)</string>
     <string name="route_ridden_count">%1$d× gefuer</string>
     <string name="route_ridden_count_last">%1$d× gefuer • lescht %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Median %2$s</string>
+    <string name="route_faster_than_average">%1$s méi séier wéi däin Duerchschnëtt</string>
     <string name="confirm_delete_ride_title">Fahrt läschen?</string>
     <string name="confirm_delete_ride_message">Dës Fahrt gëtt endgülteg geläscht.</string>
     <string name="confirm_delete_route_title">Streck läschen?</string>

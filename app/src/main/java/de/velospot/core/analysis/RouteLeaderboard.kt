@@ -15,24 +15,56 @@ data class LeaderboardEntry(
 )
 
 /**
- * A compact, at-a-glance digest of a route's leaderboard, shown on the route
- * **preview** (before riding) so the rider can see how they've done so far:
+ * Per-direction leaderboard statistics for a route (forward *or* reverse), shown
+ * on the pre-ride preview.
  *
- * @property forwardBest the fastest **forward** attempt, or `null` if never ridden
- *  forward.
- * @property reverseBest the fastest **reverse** attempt, or `null` if never ridden
- *  reversed.
- * @property totalAttempts how many times the route has been ridden (both
- *  directions).
- * @property lastRiddenAt wall-clock time of the most recent attempt, or `null`
- *  when the route has never been ridden.
+ * @property best the fastest attempt in this direction, or `null` when never
+ *  ridden this way.
+ * @property averageSeconds mean elapsed time over all attempts, or `null`.
+ * @property medianSeconds median elapsed time (robust to one outlier run), or `null`.
+ * @property attemptCount how many times the route was ridden in this direction.
+ * @property trend elapsed times **oldest → newest**, for an improvement sparkline
+ *  (empty when there are fewer than two attempts).
+ */
+data class RouteDirectionStats(
+    val reversed: Boolean,
+    val best: RouteAttempt?,
+    val averageSeconds: Long?,
+    val medianSeconds: Long?,
+    val attemptCount: Int,
+    val trend: List<Long>
+) {
+    /** `true` when the route has at least one attempt in this direction. */
+    val hasAttempts: Boolean get() = attemptCount > 0
+
+    /**
+     * How much faster the personal best is than the average (seconds), or `null`
+     * when there are too few attempts / no gap. Positive means the best beats the
+     * average — the "2:15 faster than your average" figure.
+     */
+    val bestVsAverageSeconds: Long?
+        get() = if (best != null && averageSeconds != null) {
+            (averageSeconds - best.elapsedSeconds).takeIf { it > 0 }
+        } else null
+
+    /** `true` when the most recent time is faster than the oldest (trending better). */
+    val isImproving: Boolean get() = trend.size >= 2 && trend.last() < trend.first()
+}
+
+/**
+ * A compact, at-a-glance digest of a route's leaderboard, shown on the route
+ * **preview** (before riding) so the rider can see how they've done so far —
+ * split into the [forward] and [reverse] directions (reversing a route swaps its
+ * climbs, so the two aren't comparable).
  */
 data class RouteLeaderboardSummary(
-    val forwardBest: RouteAttempt?,
-    val reverseBest: RouteAttempt?,
-    val totalAttempts: Int,
+    val forward: RouteDirectionStats,
+    val reverse: RouteDirectionStats,
     val lastRiddenAt: Long?
 ) {
+    /** Total recorded attempts across both directions. */
+    val totalAttempts: Int get() = forward.attemptCount + reverse.attemptCount
+
     /** `true` when the route has at least one recorded attempt. */
     val hasAttempts: Boolean get() = totalAttempts > 0
 }
@@ -82,16 +114,39 @@ object RouteLeaderboard {
 
     /**
      * Condenses a route's [attempts] into a [RouteLeaderboardSummary] for the
-     * pre-ride preview: the fastest forward and reverse times, how often the route
-     * has been ridden, and when it was last ridden.
+     * pre-ride preview: per-direction best / average / median times, an
+     * improvement trend, how often the route has been ridden and when it was last
+     * ridden.
      */
     fun summarize(attempts: List<RouteAttempt>): RouteLeaderboardSummary =
         RouteLeaderboardSummary(
-            forwardBest = rank(attempts.filterNot { it.reversed }).firstOrNull()?.attempt,
-            reverseBest = rank(attempts.filter { it.reversed }).firstOrNull()?.attempt,
-            totalAttempts = attempts.size,
+            forward = directionStats(attempts.filterNot { it.reversed }, reversed = false),
+            reverse = directionStats(attempts.filter { it.reversed }, reversed = true),
             lastRiddenAt = attempts.maxOfOrNull { it.recordedAt }
         )
+
+    private fun directionStats(attempts: List<RouteAttempt>, reversed: Boolean): RouteDirectionStats {
+        if (attempts.isEmpty()) {
+            return RouteDirectionStats(reversed, null, null, null, 0, emptyList())
+        }
+        val times = attempts.map { it.elapsedSeconds }
+        return RouteDirectionStats(
+            reversed = reversed,
+            best = attempts.minByOrNull { it.elapsedSeconds },
+            averageSeconds = times.sum() / times.size,
+            medianSeconds = medianOf(times),
+            attemptCount = attempts.size,
+            // Chronological order so a sparkline reads left (old) → right (new).
+            trend = attempts.sortedBy { it.recordedAt }.map { it.elapsedSeconds }
+        )
+    }
+
+    /** Median of [values] (mean of the two middle values for an even count). */
+    private fun medianOf(values: List<Long>): Long {
+        val sorted = values.sorted()
+        val n = sorted.size
+        return if (n % 2 == 1) sorted[n / 2] else (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+    }
 
     /**
      * Derives a [RouteAttempt] from a finished [RecordedRide] of [routeId] ridden

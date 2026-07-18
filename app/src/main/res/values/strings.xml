@@ -411,6 +411,8 @@
     <string name="route_best_reverse">Best (reverse)</string>
     <string name="route_ridden_count">Ridden %1$d×</string>
     <string name="route_ridden_count_last">Ridden %1$d× • last %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Median %2$s</string>
+    <string name="route_faster_than_average">%1$s faster than your average</string>
     <string name="confirm_delete_ride_title">Delete ride?</string>
     <string name="confirm_delete_ride_message">This ride will be permanently deleted.</string>
     <string name="confirm_delete_route_title">Delete route?</string>

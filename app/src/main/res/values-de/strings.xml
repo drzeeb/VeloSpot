@@ -87,6 +87,8 @@
     <string name="route_best_reverse">Beste (rückwärts)</string>
     <string name="route_ridden_count">%1$d× gefahren</string>
     <string name="route_ridden_count_last">%1$d× gefahren • zuletzt %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Median %2$s</string>
+    <string name="route_faster_than_average">%1$s schneller als dein Schnitt</string>
     <string name="confirm_delete_ride_title">Fahrt löschen?</string>
     <string name="confirm_delete_ride_message">Diese Fahrt wird endgültig gelöscht.</string>
     <string name="confirm_delete_route_title">Route löschen?</string>

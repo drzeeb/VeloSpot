@@ -114,21 +114,42 @@ class RouteLeaderboardTest {
                 attempt("r-only", elapsed = 500, reversed = true, recordedAt = 500)
             )
         )
-        assertEquals("f-fast", summary.forwardBest?.id)
-        assertEquals("r-only", summary.reverseBest?.id)
+        assertEquals("f-fast", summary.forward.best?.id)
+        assertEquals("r-only", summary.reverse.best?.id)
+        assertEquals(2, summary.forward.attemptCount)
+        assertEquals(1, summary.reverse.attemptCount)
         assertEquals(3, summary.totalAttempts)
         assertEquals(500L, summary.lastRiddenAt)
         assertTrue(summary.hasAttempts)
     }
 
     @Test
+    fun `summarize computes average, median, trend and best-vs-average`() {
+        val summary = RouteLeaderboard.summarize(
+            listOf(
+                attempt("a", elapsed = 600, reversed = false, recordedAt = 100),
+                attempt("b", elapsed = 500, reversed = false, recordedAt = 200),
+                attempt("c", elapsed = 400, reversed = false, recordedAt = 300)
+            )
+        )
+        val f = summary.forward
+        assertEquals(500L, f.averageSeconds)          // (600+500+400)/3
+        assertEquals(500L, f.medianSeconds)           // middle of {400,500,600}
+        assertEquals(100L, f.bestVsAverageSeconds)    // 500 avg − 400 best
+        // Trend is chronological (oldest → newest) and decreasing here → improving.
+        assertEquals(listOf(600L, 500L, 400L), f.trend)
+        assertTrue(f.isImproving)
+    }
+
+    @Test
     fun `summarize of an unridden route is empty`() {
         val summary = RouteLeaderboard.summarize(emptyList())
-        assertNull(summary.forwardBest)
-        assertNull(summary.reverseBest)
+        assertNull(summary.forward.best)
+        assertNull(summary.reverse.best)
         assertEquals(0, summary.totalAttempts)
         assertNull(summary.lastRiddenAt)
         assertFalse(summary.hasAttempts)
+        assertFalse(summary.forward.hasAttempts)
     }
 }
 
