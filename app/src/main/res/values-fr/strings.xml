@@ -76,6 +76,25 @@
     <string name="elevation_level_low">Peu de montée</string>
     <string name="elevation_level_flattest">Le plus plat</string>
     <string name="common_cancel">Annuler</string>
+    <string name="common_delete">Supprimer</string>
+    <string name="common_remove">Retirer</string>
+    <string name="common_close">Fermer</string>
+    <string name="route_show_on_map">Afficher sur la carte</string>
+    <string name="route_stat_stops">Arrêts</string>
+    <string name="route_leaderboard_view_all">Tout voir</string>
+    <string name="route_leaderboard_never_ridden">Jamais parcouru — établissez le premier temps.</string>
+    <string name="route_best_forward">Meilleur (aller)</string>
+    <string name="route_best_reverse">Meilleur (retour)</string>
+    <string name="route_ridden_count">Parcouru %1$d fois</string>
+    <string name="route_ridden_count_last">Parcouru %1$d fois • dernier %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Médiane %2$s</string>
+    <string name="route_faster_than_average">%1$s plus rapide que votre moyenne</string>
+    <string name="confirm_delete_ride_title">Supprimer le trajet ?</string>
+    <string name="confirm_delete_ride_message">Ce trajet sera définitivement supprimé.</string>
+    <string name="confirm_delete_route_title">Supprimer l\'itinéraire ?</string>
+    <string name="confirm_delete_route_message">Cet itinéraire et tous ses temps de classement seront définitivement supprimés.</string>
+    <string name="confirm_remove_favorite_title">Retirer des favoris ?</string>
+    <string name="confirm_remove_favorite_message">Cet élément sera retiré de vos favoris.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>
@@ -124,6 +143,7 @@
     <string name="menu_navigation_view">Vue de la carte (2D/3D)</string>
     <string name="menu_voice_guidance">Guidage vocal</string>
     <string name="menu_keep_screen_on">Garder l’écran allumé pendant le trajet</string>
+    <string name="menu_portrait_lock">Verrouiller en mode portrait</string>
     <string name="menu_simulate_route_start">▶ Simuler l\'itinéraire (GPS fictif)</string>
     <string name="menu_simulate_route_stop">⏹ Arrêter la simulation</string>
     <string name="menu_simulate_route_hint">▶ Simuler l\'itinéraire (démarrer la navigation d\'abord)</string>
@@ -405,6 +425,9 @@
     <string name="ride_export_saved">Trajets enregistrés</string>
     <string name="ride_export_save_failed">Impossible d\'enregistrer le fichier</string>
     <string name="ride_export_invalid">Impossible de créer un fichier GPX valide</string>
+    <string name="ride_save_as_route">Enregistrer comme itinéraire</string>
+    <string name="ride_saved_as_route">Trajet enregistré comme itinéraire</string>
+    <string name="ride_route_default_name">Itinéraire enregistré</string>
     <!-- Partager le trajet comme carte "VeloSpot Wrapped" -->
     <string name="ride_share_action">Partager le trajet</string>
     <string name="ride_share_dismiss">Fermer</string>

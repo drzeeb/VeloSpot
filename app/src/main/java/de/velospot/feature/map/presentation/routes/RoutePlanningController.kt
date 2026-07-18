@@ -2,6 +2,8 @@ package de.velospot.feature.map.presentation.routes
 
 import de.velospot.core.analysis.RouteGeometryStats
 import de.velospot.core.analysis.RouteLeaderboard
+import de.velospot.core.analysis.RouteLeaderboardSummary
+import de.velospot.core.analysis.RideRouteFactory
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.PlannedRoute
@@ -78,6 +80,20 @@ class RoutePlanningController(
     val attempts: StateFlow<List<RouteAttempt>> = _attempts.asStateFlow()
 
     private var attemptsJob: Job? = null
+
+    // ── Route preview (inspect on the map before riding) ────────────────────────
+
+    /** The saved route currently previewed on the map (null when none). */
+    private val _previewedRoute = MutableStateFlow<PlannedRoute?>(null)
+    val previewedRoute: StateFlow<PlannedRoute?> = _previewedRoute.asStateFlow()
+
+    /** Leaderboard digest of the previewed route (best times, ride count, last ridden). */
+    private val _previewSummary = MutableStateFlow(
+        RouteLeaderboard.summarize(emptyList())
+    )
+    val previewSummary: StateFlow<RouteLeaderboardSummary> = _previewSummary.asStateFlow()
+
+    private var previewAttemptsJob: Job? = null
 
     private var pending: PendingAttempt? = null
 
@@ -195,7 +211,31 @@ class RoutePlanningController(
 
     fun deleteRoute(id: String) {
         if (_leaderboardRoute.value?.id == id) closeLeaderboard()
+        if (_previewedRoute.value?.id == id) closeRoutePreview()
         scope.launch { repository.deleteRoute(id) }
+    }
+
+    /**
+     * Saves a finished [ride] (a recording, a navigated ride or a round trip) as a
+     * re-rideable [PlannedRoute] named [name], and seeds its leaderboard with the
+     * ride's own time as the first (forward) attempt. Opens the new route's
+     * leaderboard so the rider immediately sees their entry.
+     *
+     * Returns `false` when the ride can't become a route (a mock ride or a track
+     * with too few points).
+     */
+    fun saveRideAsRoute(ride: RecordedRide, name: String): Boolean {
+        val route = RideRouteFactory.build(ride, name, System.currentTimeMillis()) ?: return false
+        scope.launch {
+            repository.saveRoute(route)
+            // Seed the leaderboard with this ride's time (forward direction).
+            RouteLeaderboard.attemptFromRide(route.id, reversed = false, ride = ride)
+                ?.let { repository.addAttempt(it) }
+        }
+        // The attempts flow is reactive, so opening the board now shows the seeded
+        // time as soon as it lands.
+        openLeaderboard(route)
+        return true
     }
 
     // ── Leaderboard ─────────────────────────────────────────────────────────────
@@ -219,6 +259,33 @@ class RoutePlanningController(
 
     fun deleteAttempt(id: String) {
         scope.launch { repository.deleteAttempt(id) }
+    }
+
+    // ── Route preview ───────────────────────────────────────────────────────────
+
+    /**
+     * Shows [route] on the idle map (its saved geometry is drawn by the host) and
+     * starts observing its attempts so the preview can surface a leaderboard digest
+     * (best forward/reverse time, ride count, last ridden). The host fits the
+     * camera to the route.
+     */
+    fun previewRouteOnMap(route: PlannedRoute) {
+        _previewedRoute.value = route
+        _previewSummary.value = RouteLeaderboard.summarize(emptyList())
+        previewAttemptsJob?.cancel()
+        previewAttemptsJob = scope.launch {
+            repository.getAttemptsFlow(route.id).collect {
+                _previewSummary.value = RouteLeaderboard.summarize(it)
+            }
+        }
+    }
+
+    /** Closes the route preview (called when riding starts or the card is dismissed). */
+    fun closeRoutePreview() {
+        previewAttemptsJob?.cancel()
+        previewAttemptsJob = null
+        _previewedRoute.value = null
+        _previewSummary.value = RouteLeaderboard.summarize(emptyList())
     }
 
     // ── Riding a planned route ──────────────────────────────────────────────────

@@ -25,7 +25,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -135,6 +138,18 @@ private fun SavedPlaceCard(
     onShowDetails: (SavedPlace) -> Unit,
     onRemove: (String) -> Unit
 ) {
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+
+    if (showRemoveConfirm) {
+        ConfirmDeleteDialog(
+            title = stringResource(id = R.string.confirm_remove_favorite_title),
+            message = stringResource(id = R.string.confirm_remove_favorite_message),
+            confirmLabel = stringResource(id = R.string.common_remove),
+            onConfirm = { onRemove(place.id) },
+            onDismiss = { showRemoveConfirm = false }
+        )
+    }
+
     SpotInfoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -157,7 +172,7 @@ private fun SavedPlaceCard(
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
-                IconButton(onClick = { onRemove(place.id) }) {
+                IconButton(onClick = { showRemoveConfirm = true }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(id = R.string.favorites_remove),
@@ -202,6 +217,18 @@ private fun FavoriteSpaceCard(
     onToggleFavorite: (String) -> Unit
 ) {
     val context = LocalContext.current
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+
+    if (showRemoveConfirm) {
+        ConfirmDeleteDialog(
+            title = stringResource(id = R.string.confirm_remove_favorite_title),
+            message = stringResource(id = R.string.confirm_remove_favorite_message),
+            confirmLabel = stringResource(id = R.string.common_remove),
+            onConfirm = { onToggleFavorite(space.id) },
+            onDismiss = { showRemoveConfirm = false }
+        )
+    }
+
     SpotInfoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -224,7 +251,7 @@ private fun FavoriteSpaceCard(
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
-                IconButton(onClick = { onToggleFavorite(space.id) }) {
+                IconButton(onClick = { showRemoveConfirm = true }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(id = R.string.favorites_remove),

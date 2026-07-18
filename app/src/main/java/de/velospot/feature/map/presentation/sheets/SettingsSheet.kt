@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.ViewInAr
@@ -191,6 +192,17 @@ internal fun DisplaySettingsSheet(
                 icon = Icons.Default.Layers,
                 title = stringResource(R.string.menu_layers),
                 onClick = actions.onOpenLayers
+            )
+            SettingsRow(
+                icon = Icons.Default.ScreenLockPortrait,
+                title = stringResource(R.string.menu_portrait_lock),
+                onClick = actions.onTogglePortraitLock,
+                trailing = {
+                    Switch(
+                        checked = state.portraitLockEnabled,
+                        onCheckedChange = { actions.onTogglePortraitLock() }
+                    )
+                }
             )
             Spacer(Modifier.height(8.dp))
         }

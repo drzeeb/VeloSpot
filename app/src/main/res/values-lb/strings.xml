@@ -76,6 +76,25 @@
     <string name="elevation_level_low">Wéineg Steigung</string>
     <string name="elevation_level_flattest">Esou flaach wéi méiglech</string>
     <string name="common_cancel">Ofbriechen</string>
+    <string name="common_delete">Läschen</string>
+    <string name="common_remove">Ewechhuelen</string>
+    <string name="common_close">Zoumaachen</string>
+    <string name="route_show_on_map">Op der Kaart weisen</string>
+    <string name="route_stat_stops">Stopps</string>
+    <string name="route_leaderboard_view_all">Alleg weisen</string>
+    <string name="route_leaderboard_never_ridden">Nach net gefuer — set déi éischt Zäit.</string>
+    <string name="route_best_forward">Bescht (vir)</string>
+    <string name="route_best_reverse">Bescht (zréck)</string>
+    <string name="route_ridden_count">%1$d× gefuer</string>
+    <string name="route_ridden_count_last">%1$d× gefuer • lescht %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Median %2$s</string>
+    <string name="route_faster_than_average">%1$s méi séier wéi däin Duerchschnëtt</string>
+    <string name="confirm_delete_ride_title">Fahrt läschen?</string>
+    <string name="confirm_delete_ride_message">Dës Fahrt gëtt endgülteg geläscht.</string>
+    <string name="confirm_delete_route_title">Streck läschen?</string>
+    <string name="confirm_delete_route_message">Dës Streck an all seng Bestelëscht-Zäite ginn endgülteg geläscht.</string>
+    <string name="confirm_remove_favorite_title">Favorit ewechhuelen?</string>
+    <string name="confirm_remove_favorite_message">Dësen Andrag gëtt aus dénge Favoritten ewechgeholl.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d Min.</string>
@@ -124,6 +143,7 @@
     <string name="menu_navigation_view">Kaartenusiicht (2D/3D)</string>
     <string name="menu_voice_guidance">Sproochansoen</string>
     <string name="menu_keep_screen_on">Écran un loossen wärend der Fahrt</string>
+    <string name="menu_portrait_lock">Am Héichformat spären</string>
     <string name="menu_simulate_route_start">▶ Route simuléieren (GPS-Mock)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatioun stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simuléieren (fir d\'éischt Navigatioun starten)</string>
@@ -404,6 +424,9 @@
     <string name="ride_export_saved">Tourën gespäichert</string>
     <string name="ride_export_save_failed">Datei konnt net gespäichert ginn</string>
     <string name="ride_export_invalid">Konnt keng gülteg GPX-Datei erstellen</string>
+    <string name="ride_save_as_route">Als Streck späicheren</string>
+    <string name="ride_saved_as_route">Fahrt als Streck gespäichert</string>
+    <string name="ride_route_default_name">Opgezeechent Streck</string>
     <!-- Tour als "VeloSpot Wrapped"-Kaart deelen -->
     <string name="ride_share_action">Tour deelen</string>
     <string name="ride_share_dismiss">Zoumaachen</string>

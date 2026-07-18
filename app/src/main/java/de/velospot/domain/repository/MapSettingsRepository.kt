@@ -29,6 +29,13 @@ interface MapSettingsRepository {
     /** Whether the display is kept awake during a follow session. */
     val keepScreenOnEnabled: Flow<Boolean>
 
+    /**
+     * Whether the screen orientation is locked to portrait. Defaults to `false`
+     * (the app follows the device's auto-rotate). When enabled the map screen
+     * stays in portrait so the display does not rotate while cycling.
+     */
+    val portraitLockEnabled: Flow<Boolean>
+
     /** The rider's persisted "inspect a past ride" overlay choices. */
     val rideViewOptions: Flow<RideViewOptions>
 
@@ -36,6 +43,7 @@ interface MapSettingsRepository {
     suspend fun set3DNavigation(enabled: Boolean)
     suspend fun setVoiceGuidance(enabled: Boolean)
     suspend fun setKeepScreenOn(enabled: Boolean)
+    suspend fun setPortraitLock(enabled: Boolean)
     suspend fun setShowMaxSpeedBubble(enabled: Boolean)
     suspend fun setColorTrackBySpeed(enabled: Boolean)
 }

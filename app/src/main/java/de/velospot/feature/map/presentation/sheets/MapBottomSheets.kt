@@ -217,6 +217,10 @@ internal fun MapBottomSheets(
                 viewModel.ridePlannedRoute(route, reversed)
             },
             onOpenLeaderboard = { route -> viewModel.openRouteLeaderboard(route) },
+            onShowOnMap = { route ->
+                screenUiState.closePlannedRoutes()
+                viewModel.showRouteOnMap(route)
+            },
             onDelete = viewModel::deletePlannedRoute
         )
     }

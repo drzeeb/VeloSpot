@@ -76,6 +76,25 @@
     <string name="elevation_level_low">Poca salita</string>
     <string name="elevation_level_flattest">Il più piatto</string>
     <string name="common_cancel">Annulla</string>
+    <string name="common_delete">Elimina</string>
+    <string name="common_remove">Rimuovi</string>
+    <string name="common_close">Chiudi</string>
+    <string name="route_show_on_map">Mostra sulla mappa</string>
+    <string name="route_stat_stops">Tappe</string>
+    <string name="route_leaderboard_view_all">Vedi tutto</string>
+    <string name="route_leaderboard_never_ridden">Mai percorso — segna il primo tempo.</string>
+    <string name="route_best_forward">Migliore (andata)</string>
+    <string name="route_best_reverse">Migliore (ritorno)</string>
+    <string name="route_ridden_count">Percorso %1$d volte</string>
+    <string name="route_ridden_count_last">Percorso %1$d volte • ultimo %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Mediana %2$s</string>
+    <string name="route_faster_than_average">%1$s più veloce della tua media</string>
+    <string name="confirm_delete_ride_title">Eliminare la corsa?</string>
+    <string name="confirm_delete_ride_message">Questa corsa verrà eliminata definitivamente.</string>
+    <string name="confirm_delete_route_title">Eliminare il percorso?</string>
+    <string name="confirm_delete_route_message">Questo percorso e tutti i suoi tempi in classifica verranno eliminati definitivamente.</string>
+    <string name="confirm_remove_favorite_title">Rimuovere dai preferiti?</string>
+    <string name="confirm_remove_favorite_message">Questo elemento verrà rimosso dai tuoi preferiti.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>
@@ -117,6 +136,7 @@
     <string name="menu_navigation_view">Vista mappa (2D/3D)</string>
     <string name="menu_voice_guidance">Guida vocale</string>
     <string name="menu_keep_screen_on">Mantieni lo schermo acceso durante il percorso</string>
+    <string name="menu_portrait_lock">Blocca in orientamento verticale</string>
     <string name="menu_simulate_route_start">▶ Simula percorso (GPS finto)</string>
     <string name="menu_simulate_route_stop">⏹ Ferma simulazione</string>
     <string name="menu_simulate_route_hint">▶ Simula percorso (avvia prima la navigazione)</string>
@@ -406,6 +426,9 @@
     <string name="ride_export_saved">Percorsi salvati</string>
     <string name="ride_export_save_failed">Impossibile salvare il file</string>
     <string name="ride_export_invalid">Impossibile creare un file GPX valido</string>
+    <string name="ride_save_as_route">Salva come percorso</string>
+    <string name="ride_saved_as_route">Corsa salvata come percorso</string>
+    <string name="ride_route_default_name">Percorso registrato</string>
     <!-- Condividi il percorso come scheda "VeloSpot Wrapped" -->
     <string name="ride_share_action">Condividi percorso</string>
     <string name="ride_share_dismiss">Chiudi</string>
