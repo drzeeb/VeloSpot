@@ -278,6 +278,7 @@ internal fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
         Card(
             modifier = Modifier
                 .align(Alignment.TopCenter)
+                .statusBarsPadding()
                 .padding(16.dp)
                 .fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -677,6 +678,7 @@ internal fun BoxScope.MyLocationFab(onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .align(Alignment.BottomEnd)
+            .navigationBarsPadding()
             .padding(16.dp),
         containerColor = MaterialTheme.colorScheme.primary
     ) {
@@ -707,6 +709,7 @@ internal fun BoxScope.RecenterFollowFab(
         onClick = onClick,
         modifier = Modifier
             .align(Alignment.BottomEnd)
+            .navigationBarsPadding()
             .padding(end = 16.dp, bottom = bottomPadding),
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -751,6 +754,7 @@ internal fun BoxScope.RecordRideFab(
         onClick = onClick,
         modifier = Modifier
             .align(Alignment.BottomEnd)
+            .navigationBarsPadding()
             // Same right inset as MyLocationFab, lifted one FAB height (56 dp) +
             // 16 dp gap + 16 dp base inset so the two buttons stack neatly.
             .padding(end = 16.dp, bottom = 88.dp)
