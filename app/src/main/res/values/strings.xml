@@ -10,6 +10,7 @@
     <string name="menu_navigation_view">Map view (2D/3D)</string>
     <string name="menu_voice_guidance">Voice guidance</string>
     <string name="menu_keep_screen_on">Keep screen on while riding</string>
+    <string name="menu_portrait_lock">Lock to portrait orientation</string>
     <string name="menu_park_bike_here">Park bike here</string>
     <string name="menu_show_parked_bike">My parked bike</string>
     <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
@@ -255,6 +256,9 @@
     <string name="ride_export_saved">Rides saved</string>
     <string name="ride_export_save_failed">Couldn\'t save the file</string>
     <string name="ride_export_invalid">Couldn\'t create a valid GPX file</string>
+    <string name="ride_save_as_route">Save as route</string>
+    <string name="ride_saved_as_route">Ride saved as a route</string>
+    <string name="ride_route_default_name">Recorded route</string>
     <!-- Share ride as a "VeloSpot Wrapped" card -->
     <string name="ride_share_action">Share ride</string>
     <string name="ride_share_dismiss">Close</string>
@@ -397,6 +401,25 @@
     <string name="elevation_level_flattest">Flattest</string>
 
     <string name="common_cancel">Cancel</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_remove">Remove</string>
+    <string name="common_close">Close</string>
+    <string name="route_show_on_map">Show on map</string>
+    <string name="route_stat_stops">Stops</string>
+    <string name="route_leaderboard_view_all">View all</string>
+    <string name="route_leaderboard_never_ridden">Not ridden yet — set the first time.</string>
+    <string name="route_best_forward">Best (forward)</string>
+    <string name="route_best_reverse">Best (reverse)</string>
+    <string name="route_ridden_count">Ridden %1$d×</string>
+    <string name="route_ridden_count_last">Ridden %1$d× • last %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Median %2$s</string>
+    <string name="route_faster_than_average">%1$s faster than your average</string>
+    <string name="confirm_delete_ride_title">Delete ride?</string>
+    <string name="confirm_delete_ride_message">This ride will be permanently deleted.</string>
+    <string name="confirm_delete_route_title">Delete route?</string>
+    <string name="confirm_delete_route_message">This route and all of its leaderboard times will be permanently deleted.</string>
+    <string name="confirm_remove_favorite_title">Remove favourite?</string>
+    <string name="confirm_remove_favorite_message">This entry will be removed from your favourites.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <!-- Rough calorie estimate for the planned route (BRouter energy). -->
     <string name="navigation_route_calories">≈ %1$d kcal</string>

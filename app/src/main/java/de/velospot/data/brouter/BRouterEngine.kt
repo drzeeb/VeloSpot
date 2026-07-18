@@ -175,11 +175,64 @@ class BRouterEngine(
         val profilePath = profilePathFor(profile)
 
         // BRouter's roundTripDistance is the *search radius* of the waypoint ring,
-        // not the total length. Empirically the looped result is ~3× the radius, so
-        // derive the radius from the requested trip length.
+        // not the total length. With ROUND_TRIP_POINTS = 5, BRouter routes
+        // start → 4 points on a circle of this radius → back, whose straight-line
+        // length is ≈ 3.85 × radius; real roads add a detour on top, so the ridden
+        // loop is empirically ≈ 6.5 × radius. Derive the radius from the request.
         val searchRadius = (targetDistanceMeters / ROUND_TRIP_LENGTH_TO_RADIUS)
             .toInt().coerceIn(MIN_ROUND_TRIP_RADIUS_M, MAX_ROUND_TRIP_RADIUS_M)
 
+        // The waypoint ring is placed *geometrically* in a single direction, so a
+        // random heading can aim the loop straight at a hill no matter how high the
+        // uphill cost is — which is why "flatter routes" barely helped round trips.
+        // When the rider asked for flatter routes (and didn't pin a direction), try
+        // several evenly-spread ring directions and keep the loop that climbs the
+        // least. Otherwise a single (given or random) direction is enough.
+        val preferFlat = elevation.uphillExtraCost > 0 && directionDeg == null
+        val directions: List<Int> = when {
+            directionDeg != null -> listOf(normalizeDegrees(directionDeg))
+            preferFlat -> {
+                val base = (0 until 360).random()
+                (0 until ROUND_TRIP_FLAT_DIRECTION_SAMPLES).map {
+                    normalizeDegrees(base + it * (360 / ROUND_TRIP_FLAT_DIRECTION_SAMPLES))
+                }
+            }
+            else -> listOf((0 until 360).random())
+        }
+
+        var best: DecodedTrack? = null
+        var bestAscent = Double.MAX_VALUE
+        for (direction in directions) {
+            val candidate = runCatching {
+                roundTripOnce(start, searchRadius, profilePath, direction, elevation)
+            }.getOrNull() ?: continue
+            if (!preferFlat) {
+                best = candidate
+                break
+            }
+            val ascent = totalAscentMeters(candidate.points)
+            if (best == null || ascent < bestAscent) {
+                best = candidate
+                bestAscent = ascent
+            }
+        }
+
+        bikeRouteFrom(best ?: throw NoRouteFoundException(), profile)
+    }
+
+    /**
+     * Runs one BRouter round-trip pass: builds the waypoint ring in [direction]
+     * (compass degrees) around [start] at [searchRadius] and routes through it back
+     * to the origin. Returns the decoded track so the caller can compare candidates
+     * (e.g. by climb) before wrapping the winner into a [BikeRoute].
+     */
+    private suspend fun roundTripOnce(
+        start: GeoCoordinate,
+        searchRadius: Int,
+        profilePath: String,
+        direction: Int,
+        elevation: ElevationPreference
+    ): DecodedTrack {
         val rc = RoutingContext().apply {
             localFunction = profilePath
             memoryclass = nodesCacheMemoryMb
@@ -194,7 +247,7 @@ class BRouterEngine(
             // data and parses a `dummy.brf` we don't bundle, so the loop silently
             // produces no route ("route data incomplete"). Passing a direction skips that
             // path entirely, so round trips work for every profile.
-            startDirection = (((directionDeg ?: (0 until 360).random()) % 360) + 360) % 360
+            startDirection = normalizeDegrees(direction)
         }
         val engine = RoutingEngine(
             /* baseUrl     = */ null,
@@ -204,9 +257,23 @@ class BRouterEngine(
             /* rc          = */ rc
         )
         runEngine(engine, roundTrip = true)
-
-        bikeRouteFrom(decodeTrack(engine.foundTrack), profile)
+        return decodeTrack(engine.foundTrack)
     }
+
+    /** Total positive elevation gain (m) over the route's points (0 when no elevation data). */
+    private fun totalAscentMeters(points: List<RoutePoint>): Double {
+        var gain = 0.0
+        for (i in 1 until points.size) {
+            val prev = points[i - 1].elevationMeters ?: continue
+            val curr = points[i].elevationMeters ?: continue
+            val delta = curr - prev
+            if (delta > 0) gain += delta
+        }
+        return gain
+    }
+
+    /** Normalises a compass heading to the 0–359° range. */
+    private fun normalizeDegrees(degrees: Int): Int = ((degrees % 360) + 360) % 360
 
     companion object {
         private const val TAG = "BRouterEngine"
@@ -272,12 +339,31 @@ class BRouterEngine(
         private const val ENGINE_TERMINATE_GRACE_MS = 2_000L
 
         // ── Round-trip generation (see calculateRoundTrip) ────────────────────
-        /** Approximate ratio of looped trip length to BRouter's search radius. */
-        private const val ROUND_TRIP_LENGTH_TO_RADIUS = 3.0
+        /**
+         * Approximate ratio of the ridden loop length to BRouter's search radius.
+         *
+         * With [ROUND_TRIP_POINTS] = 5, BRouter routes start → 4 waypoints on a
+         * circle of `searchRadius` → back to start. The straight-line length of that
+         * polygon is `2·r + 3·(2·r·sin18°) ≈ 3.85·r`; real roads add a routing detour
+         * on top, so the ridden length works out empirically to ≈ 6.5·r. Tuned from
+         * real generated loops (the earlier 3.0 / 5.0 values still came out well over
+         * the requested distance).
+         */
+        private const val ROUND_TRIP_LENGTH_TO_RADIUS = 6.5
         /** Number of waypoints BRouter spreads around the ring. */
         private const val ROUND_TRIP_POINTS = 5
         private const val MIN_ROUND_TRIP_RADIUS_M = 500
         private const val MAX_ROUND_TRIP_RADIUS_M = 40_000
+
+        /**
+         * How many evenly-spread ring directions to try when the rider asked for a
+         * flatter round trip, keeping the loop that climbs the least. The waypoint
+         * ring is placed geometrically, so trying several headings is the only way to
+         * actually dodge a hill (BRouter's uphill cost can't move the fixed ring).
+         * A modest count keeps the extra routing cost bounded (only paid for flat
+         * preferences, and cancellable).
+         */
+        private const val ROUND_TRIP_FLAT_DIRECTION_SAMPLES = 4
     }
 
 

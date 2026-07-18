@@ -4,40 +4,103 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="12dp"
-    android:background="@drawable/widget_ride_recording_background"
-    android:clickable="true"
-    android:focusable="true">
+    android:gravity="center_horizontal"
+    android:padding="10dp"
+    android:background="@drawable/widget_ride_recording_background">
 
-    <ImageView
-        android:id="@+id/widget_icon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:src="@drawable/ic_ride_recording"
-        android:contentDescription="@string/ride_record_start" />
+    <!-- Header block (icon + title + timer + subtitle). Weighted with a 0dp base
+         height so that when the widget is short it is the part that shrinks/clips,
+         leaving the fixed-height Start/Stop button below always fully visible. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:minHeight="0dp"
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <TextView
-        android:id="@+id/widget_title"
+        <ImageView
+            android:id="@+id/widget_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_ride_recording"
+            android:contentDescription="@string/ride_record_start" />
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/ride_record_start" />
+
+        <!-- Live elapsed recording time. A Chronometer ticks on its own in the host
+             process, so the widget shows the running duration without a per-second
+             broadcast. Hidden while idle. -->
+        <Chronometer
+            android:id="@+id/widget_chronometer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/widget_ride_recording_description" />
+
+    </LinearLayout>
+
+    <!-- Start/Stop button: a styled row (icon + label) with a rounded, filled
+         background. Plain RemoteViews can't host a Material button, so this is a
+         LinearLayout carrying the click intent. Non-weighted + a minimum height, so
+         it is laid out at full size first and stays visible even on a short widget. -->
+    <LinearLayout
+        android:id="@+id/widget_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textStyle="bold"
-        android:textSize="14sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="@string/ride_record_start" />
+        android:minHeight="40dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:background="@drawable/widget_button_start_background"
+        android:clickable="true"
+        android:focusable="true">
 
-    <TextView
-        android:id="@+id/widget_subtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="@string/widget_ride_recording_description" />
+        <ImageView
+            android:id="@+id/widget_button_icon"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_widget_play"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/widget_button_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/ride_record_start" />
+
+    </LinearLayout>
 
 </LinearLayout>
 

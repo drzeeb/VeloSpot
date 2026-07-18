@@ -76,6 +76,25 @@
     <string name="elevation_level_low">Weinig klim</string>
     <string name="elevation_level_flattest">Zo vlak mogelijk</string>
     <string name="common_cancel">Annuleren</string>
+    <string name="common_delete">Verwijderen</string>
+    <string name="common_remove">Verwijderen</string>
+    <string name="common_close">Sluiten</string>
+    <string name="route_show_on_map">Op kaart tonen</string>
+    <string name="route_stat_stops">Stops</string>
+    <string name="route_leaderboard_view_all">Alles bekijken</string>
+    <string name="route_leaderboard_never_ridden">Nog niet gereden — zet de eerste tijd.</string>
+    <string name="route_best_forward">Beste (heen)</string>
+    <string name="route_best_reverse">Beste (terug)</string>
+    <string name="route_ridden_count">%1$d× gereden</string>
+    <string name="route_ridden_count_last">%1$d× gereden • laatst %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Mediaan %2$s</string>
+    <string name="route_faster_than_average">%1$s sneller dan je gemiddelde</string>
+    <string name="confirm_delete_ride_title">Rit verwijderen?</string>
+    <string name="confirm_delete_ride_message">Deze rit wordt permanent verwijderd.</string>
+    <string name="confirm_delete_route_title">Route verwijderen?</string>
+    <string name="confirm_delete_route_message">Deze route en al haar klassementstijden worden permanent verwijderd.</string>
+    <string name="confirm_remove_favorite_title">Favoriet verwijderen?</string>
+    <string name="confirm_remove_favorite_message">Dit item wordt uit je favorieten verwijderd.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>
@@ -124,6 +143,7 @@
     <string name="menu_navigation_view">Kaartweergave (2D/3D)</string>
     <string name="menu_voice_guidance">Spraakbegeleiding</string>
     <string name="menu_keep_screen_on">Scherm aan houden tijdens het rijden</string>
+    <string name="menu_portrait_lock">Vergrendel in portretstand</string>
     <string name="menu_simulate_route_start">▶ Route simuleren (nep-GPS)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatie stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simuleren (start eerst navigatie)</string>
@@ -404,6 +424,9 @@
     <string name="ride_export_saved">Ritten opgeslagen</string>
     <string name="ride_export_save_failed">Kon het bestand niet opslaan</string>
     <string name="ride_export_invalid">Kon geen geldig GPX-bestand maken</string>
+    <string name="ride_save_as_route">Opslaan als route</string>
+    <string name="ride_saved_as_route">Rit opgeslagen als route</string>
+    <string name="ride_route_default_name">Opgenomen route</string>
     <!-- Rit delen als "VeloSpot Wrapped"-kaart -->
     <string name="ride_share_action">Rit delen</string>
     <string name="ride_share_dismiss">Sluiten</string>

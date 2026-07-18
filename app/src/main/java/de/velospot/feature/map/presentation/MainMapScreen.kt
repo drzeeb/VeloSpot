@@ -133,6 +133,7 @@ fun MainMapScreen(
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val voiceGuidanceEnabled by viewModel.voiceGuidanceEnabled.collectAsStateWithLifecycle()
     val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
+    val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
@@ -145,6 +146,8 @@ fun MainMapScreen(
     val planningWaypoints     by viewModel.planningWaypoints.collectAsStateWithLifecycle()
     val planningPreviewRoute  by viewModel.planningPreviewRoute.collectAsStateWithLifecycle()
     val isComputingRoutePreview by viewModel.isComputingRoutePreview.collectAsStateWithLifecycle()
+    val previewedRoute        by viewModel.previewedRoute.collectAsStateWithLifecycle()
+    val previewedRouteSummary by viewModel.previewedRouteSummary.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -164,6 +167,23 @@ fun MainMapScreen(
     DisposableEffect(currentView, keepScreenAwake) {
         currentView.keepScreenOn = keepScreenAwake
         onDispose { currentView.keepScreenOn = false }
+    }
+
+    // Lock the screen orientation to portrait when the user enabled the setting,
+    // so the display does not rotate while cycling. Disabled by default → the
+    // activity follows the device's auto-rotate. The original orientation is
+    // restored when the effect leaves composition.
+    val activity = context as? android.app.Activity
+    DisposableEffect(activity, portraitLockEnabled) {
+        val previousOrientation = activity?.requestedOrientation
+        activity?.requestedOrientation = if (portraitLockEnabled) {
+            android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+        onDispose {
+            previousOrientation?.let { activity?.requestedOrientation = it }
+        }
     }
 
     val viewportLoadError by viewModel.viewportLoadError.collectAsStateWithLifecycle()
@@ -360,7 +380,7 @@ fun MainMapScreen(
         activeNavigation, zoomBucket,
         normalMarkerIcon, favoriteMarkerIcon, selectedMarkerIcon,
         selectedSearchPin, customMapPin, styleVersion, savedPlaces, layerVisibility, parkedBike,
-        showSplash, planningPreviewRoute
+        showSplash, planningPreviewRoute, previewedRoute
     ) {
         val map = maplibreMap ?: return@LaunchedEffect
         // While the animated launch splash covers the map, defer this heavy pass
@@ -399,7 +419,8 @@ fun MainMapScreen(
                         // Show the active navigation route, or — when planning /
                         // previewing a saved route on the idle map — its preview line.
                         points = activeNavigation?.route?.points
-                            ?: planningPreviewRoute?.points.orEmpty()
+                            ?: planningPreviewRoute?.points
+                            ?: previewedRoute?.geometry.orEmpty()
                     ),
                     clusterStyle = ClusterRenderStyle(
                         circleColor = markerStyleConfig.normalPinColor,
@@ -561,6 +582,26 @@ fun MainMapScreen(
         viewModel.onMapCameraTargetHandled()
     }
 
+    // ── Route preview: fit the camera to the whole saved route ────────────────
+    // When a saved route is opened for inspection, frame its entire geometry so the
+    // rider can see the whole loop/line before riding. Skipped while navigating
+    // (the NavigationManager owns the camera then).
+    LaunchedEffect(previewedRoute, maplibreMap, styleVersion) {
+        val map = maplibreMap ?: return@LaunchedEffect
+        val geometry = previewedRoute?.geometry ?: return@LaunchedEffect
+        if (geometry.size < 2 || activeNavigation != null) return@LaunchedEffect
+        val lats = geometry.map { it.latitude }
+        val lons = geometry.map { it.longitude }
+        // A small epsilon avoids a degenerate (zero-area) bounds that LatLngBounds rejects.
+        val eps = 1e-4
+        val bounds = org.maplibre.android.geometry.LatLngBounds.from(
+            lats.max() + eps, lons.max() + eps, lats.min() - eps, lons.min() - eps
+        )
+        runCatching {
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 96), 600)
+        }
+    }
+
     // ── Follow camera: navigation ────────────────────────────────────────────
     // Bridge the ViewModel's follow lock into the NavigationManager, which owns the
     // per-frame camera while navigating. When unlocked the rider can pan freely; the
@@ -718,6 +759,7 @@ fun MainMapScreen(
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
             keepScreenOnEnabled = keepScreenOnEnabled,
+            portraitLockEnabled = portraitLockEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -738,6 +780,7 @@ fun MainMapScreen(
             onShowParkedBike      = viewModel::showParkedBike,
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
             onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
+            onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!portraitLockEnabled) },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,
@@ -921,7 +964,28 @@ fun MainMapScreen(
                 onDelete  = { id -> viewModel.deleteRecordedRide(id) },
                 onRename  = { id, name -> viewModel.renameRecordedRide(id, name) },
                 onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) },
-                onOpenAnalysis = onOpenRideAnalysis
+                onOpenAnalysis = onOpenRideAnalysis,
+                onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) }
+            )
+        }
+
+        // ── Saved-route preview — non-modal card over the map ────────────────
+        // Draws the route's line (via the marker pass) and frames it, letting the
+        // rider inspect it and its leaderboard before riding, while the map stays
+        // pan/zoom-able above the card.
+        previewedRoute?.let { route ->
+            de.velospot.feature.map.presentation.sheets.RoutePreviewSheet(
+                route = route,
+                summary = previewedRouteSummary,
+                onRideForward = { viewModel.ridePlannedRoute(route, reversed = false) },
+                onRideReverse = { viewModel.ridePlannedRoute(route, reversed = true) },
+                onOpenLeaderboard = { viewModel.openRouteLeaderboard(route) },
+                onClose = {
+                    // Closing the preview returns to the "My routes" list it was
+                    // opened from, instead of leaving the bare map.
+                    viewModel.closeRoutePreview()
+                    screenUiState.openPlannedRoutes()
+                }
             )
         }
 

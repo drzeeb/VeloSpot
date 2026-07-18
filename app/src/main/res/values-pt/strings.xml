@@ -76,6 +76,25 @@
     <string name="elevation_level_low">Pouca subida</string>
     <string name="elevation_level_flattest">O mais plano</string>
     <string name="common_cancel">Cancelar</string>
+    <string name="common_delete">Eliminar</string>
+    <string name="common_remove">Remover</string>
+    <string name="common_close">Fechar</string>
+    <string name="route_show_on_map">Mostrar no mapa</string>
+    <string name="route_stat_stops">Paragens</string>
+    <string name="route_leaderboard_view_all">Ver tudo</string>
+    <string name="route_leaderboard_never_ridden">Ainda não percorrido — marque o primeiro tempo.</string>
+    <string name="route_best_forward">Melhor (ida)</string>
+    <string name="route_best_reverse">Melhor (volta)</string>
+    <string name="route_ridden_count">Percorrida %1$d vezes</string>
+    <string name="route_ridden_count_last">Percorrida %1$d vezes • última %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Mediana %2$s</string>
+    <string name="route_faster_than_average">%1$s mais rápido que a sua média</string>
+    <string name="confirm_delete_ride_title">Eliminar o percurso?</string>
+    <string name="confirm_delete_ride_message">Este percurso será eliminado permanentemente.</string>
+    <string name="confirm_delete_route_title">Eliminar a rota?</string>
+    <string name="confirm_delete_route_message">Esta rota e todos os seus tempos na tabela de classificação serão eliminados permanentemente.</string>
+    <string name="confirm_remove_favorite_title">Remover dos favoritos?</string>
+    <string name="confirm_remove_favorite_message">Este item será removido dos seus favoritos.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d min</string>
@@ -124,6 +143,7 @@
     <string name="menu_navigation_view">Vista do mapa (2D/3D)</string>
     <string name="menu_voice_guidance">Orientação por voz</string>
     <string name="menu_keep_screen_on">Manter o ecrã ligado durante o percurso</string>
+    <string name="menu_portrait_lock">Bloquear na orientação vertical</string>
     <string name="menu_simulate_route_start">▶ Simular rota (GPS falso)</string>
     <string name="menu_simulate_route_stop">⏹ Parar simulação de rota</string>
     <string name="menu_simulate_route_hint">▶ Simular rota (inicie a navegação primeiro)</string>
@@ -404,6 +424,9 @@
     <string name="ride_export_saved">Percursos guardados</string>
     <string name="ride_export_save_failed">Não foi possível guardar o ficheiro</string>
     <string name="ride_export_invalid">Não foi possível criar um ficheiro GPX válido</string>
+    <string name="ride_save_as_route">Guardar como rota</string>
+    <string name="ride_saved_as_route">Percurso guardado como rota</string>
+    <string name="ride_route_default_name">Rota gravada</string>
     <!-- Partilhar percurso como cartão "VeloSpot Wrapped" -->
     <string name="ride_share_action">Partilhar percurso</string>
     <string name="ride_share_dismiss">Fechar</string>

@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,6 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -48,6 +53,7 @@ internal fun PlannedRoutesSheet(
     onDismiss: () -> Unit,
     onRide: (PlannedRoute, Boolean) -> Unit,
     onOpenLeaderboard: (PlannedRoute) -> Unit,
+    onShowOnMap: (PlannedRoute) -> Unit,
     onDelete: (String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -82,6 +88,7 @@ internal fun PlannedRoutesSheet(
                             onRideForward = { onRide(route, false) },
                             onRideReverse = { onRide(route, true) },
                             onOpenLeaderboard = { onOpenLeaderboard(route) },
+                            onShowOnMap = { onShowOnMap(route) },
                             onDelete = { onDelete(route.id) }
                         )
                     }
@@ -98,8 +105,21 @@ private fun PlannedRouteRow(
     onRideForward: () -> Unit,
     onRideReverse: () -> Unit,
     onOpenLeaderboard: () -> Unit,
+    onShowOnMap: () -> Unit,
     onDelete: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirm) {
+        ConfirmDeleteDialog(
+            title = stringResource(R.string.confirm_delete_route_title),
+            message = stringResource(R.string.confirm_delete_route_message),
+            confirmLabel = stringResource(R.string.common_delete),
+            onConfirm = onDelete,
+            onDismiss = { showDeleteConfirm = false }
+        )
+    }
+
     SpotInfoCard {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -109,11 +129,18 @@ private fun PlannedRouteRow(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f)
                 )
+                IconButton(onClick = onShowOnMap) {
+                    Icon(Icons.Default.Map, contentDescription = stringResource(R.string.route_show_on_map))
+                }
                 IconButton(onClick = onOpenLeaderboard) {
                     Icon(Icons.Default.EmojiEvents, contentDescription = stringResource(R.string.route_leaderboard_open))
                 }
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.route_delete))
+                IconButton(onClick = { showDeleteConfirm = true }) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.route_delete),
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
             Text(

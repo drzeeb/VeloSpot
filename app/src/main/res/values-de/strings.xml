@@ -76,6 +76,25 @@
     <string name="elevation_level_low">Wenig Steigung</string>
     <string name="elevation_level_flattest">Möglichst flach</string>
     <string name="common_cancel">Abbrechen</string>
+    <string name="common_delete">Löschen</string>
+    <string name="common_remove">Entfernen</string>
+    <string name="common_close">Schließen</string>
+    <string name="route_show_on_map">Auf Karte anzeigen</string>
+    <string name="route_stat_stops">Stopps</string>
+    <string name="route_leaderboard_view_all">Alle ansehen</string>
+    <string name="route_leaderboard_never_ridden">Noch nicht gefahren – setze die erste Zeit.</string>
+    <string name="route_best_forward">Beste (vorwärts)</string>
+    <string name="route_best_reverse">Beste (rückwärts)</string>
+    <string name="route_ridden_count">%1$d× gefahren</string>
+    <string name="route_ridden_count_last">%1$d× gefahren • zuletzt %2$s</string>
+    <string name="route_avg_median">Ø %1$s · Median %2$s</string>
+    <string name="route_faster_than_average">%1$s schneller als dein Schnitt</string>
+    <string name="confirm_delete_ride_title">Fahrt löschen?</string>
+    <string name="confirm_delete_ride_message">Diese Fahrt wird endgültig gelöscht.</string>
+    <string name="confirm_delete_route_title">Route löschen?</string>
+    <string name="confirm_delete_route_message">Diese Route und alle ihre Bestenlisten-Zeiten werden endgültig gelöscht.</string>
+    <string name="confirm_remove_favorite_title">Favorit entfernen?</string>
+    <string name="confirm_remove_favorite_message">Dieser Eintrag wird aus deinen Favoriten entfernt.</string>
     <string name="navigation_route_summary">%1$.1f km • %2$s</string>
     <string name="navigation_route_calories">≈ %1$d kcal</string>
     <string name="duration_minutes">%1$d Min.</string>
@@ -190,6 +209,7 @@
     <string name="menu_navigation_view">Kartenansicht (2D/3D)</string>
     <string name="menu_voice_guidance">Sprachansagen</string>
     <string name="menu_keep_screen_on">Display anlassen während der Fahrt</string>
+    <string name="menu_portrait_lock">Hochformat sperren</string>
     <string name="menu_simulate_route_start">▶ Route simulieren (GPS-Mock)</string>
     <string name="menu_simulate_route_stop">⏹ Routensimulation stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simulieren (erst Navigation starten)</string>
@@ -410,6 +430,9 @@
     <string name="ride_export_saved">Fahrten gespeichert</string>
     <string name="ride_export_save_failed">Datei konnte nicht gespeichert werden</string>
     <string name="ride_export_invalid">Konnte keine gültige GPX-Datei erstellen</string>
+    <string name="ride_save_as_route">Als Route speichern</string>
+    <string name="ride_saved_as_route">Fahrt als Route gespeichert</string>
+    <string name="ride_route_default_name">Aufgezeichnete Route</string>
     <!-- Fahrt als "VeloSpot Wrapped"-Kachel teilen -->
     <string name="ride_share_action">Fahrt teilen</string>
     <string name="ride_share_dismiss">Schließen</string>

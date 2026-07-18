@@ -436,6 +436,9 @@ class MapViewModel @Inject constructor(
     val plannedRoutes: StateFlow<List<PlannedRoute>> = routePlanningController.plannedRoutes
     val leaderboardRoute: StateFlow<PlannedRoute?> = routePlanningController.leaderboardRoute
     val routeAttempts: StateFlow<List<RouteAttempt>> = routePlanningController.attempts
+    val previewedRoute: StateFlow<PlannedRoute?> = routePlanningController.previewedRoute
+    val previewedRouteSummary: StateFlow<de.velospot.core.analysis.RouteLeaderboardSummary> =
+        routePlanningController.previewSummary
 
     /**
      * One-shot, string-resource user message (e.g. "bike location saved").
@@ -493,7 +496,20 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { mapSettings.setKeepScreenOn(enabled) }
     }
 
+    /**
+     * Whether the screen orientation is locked to portrait. Persisted across
+     * sessions; defaults to disabled (device auto-rotate is followed).
+     */
+    val portraitLockEnabled: StateFlow<Boolean> =
+        mapSettings.portraitLockEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the portrait-orientation lock on/off and persists the choice. */
+    fun setPortraitLockEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setPortraitLock(enabled) }
+    }
+
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
+
 
     fun onSearchCleared() {
         addressSearch.clear()
@@ -833,6 +849,24 @@ class MapViewModel @Inject constructor(
         rideTracking.setRideArchived(id, archived)
 
     /**
+     * Saves a recorded [ride] — a recording, a navigated ride or a round trip — as
+     * a re-rideable route in *My routes*, seeding its leaderboard with the ride's
+     * own time. Reuses the ride's name (falling back to a default), closes the ride
+     * detail sheet and opens the new route's leaderboard so the seeded time shows.
+     */
+    fun saveRideAsRoute(ride: RecordedRide) {
+        val name = ride.name?.takeIf { it.isNotBlank() }
+            ?: context.getString(de.velospot.R.string.ride_route_default_name)
+        val saved = routePlanningController.saveRideAsRoute(ride, name)
+        if (saved) {
+            rideTracking.dismissSelectedRide()
+            _userMessageRes.value = de.velospot.R.string.ride_saved_as_route
+        } else {
+            _userMessageRes.value = de.velospot.R.string.ride_export_invalid
+        }
+    }
+
+    /**
      * Exports [rides] as GPX and opens the system **share** sheet. When
      * [combineIntoSingleFile] is `true` (or only one ride is given) all tracks land
      * in one file; otherwise each ride is written to its own file named after it.
@@ -1164,6 +1198,19 @@ class MapViewModel @Inject constructor(
     fun deleteRouteAttempt(id: String) = routePlanningController.deleteAttempt(id)
 
     /**
+     * Shows a saved [route] on the idle map so it can be inspected (or planned
+     * around) before riding. The saved geometry is drawn and the camera is fitted
+     * to it by the UI; the map stays interactive (a non-modal preview card).
+     */
+    fun showRouteOnMap(route: PlannedRoute) {
+        clearPlaceSelections()
+        rideTracking.dismissSelectedRide()
+        routePlanningController.previewRouteOnMap(route)
+    }
+
+    fun closeRoutePreview() = routePlanningController.closeRoutePreview()
+
+    /**
      * Rides a saved [route] forward or backwards: arms the leaderboard-attempt
      * context, then starts turn-by-turn navigation through the route's stops (from
      * the rider's current position). Reverse rides land on their own leaderboard.
@@ -1186,6 +1233,7 @@ class MapViewModel @Inject constructor(
             sourceLayer = "planned_route"
         )
         closeRouteLeaderboard()
+        closeRoutePreview()
         navigationController.startVia(destination, waypoints)
     }
 
