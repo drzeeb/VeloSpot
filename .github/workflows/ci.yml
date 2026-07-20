@@ -81,7 +81,7 @@ jobs:
       # Post/update a coverage summary comment on the pull request.
       - name: Add coverage comment to PR
         if: github.event_name == 'pull_request'
-        uses: madrapps/jacoco-report@v1.7.1
+        uses: madrapps/jacoco-report@v1.8.0
         with:
           paths: ${{ github.workspace }}/app/build/reports/kover/reportFdroid.xml
           token: ${{ secrets.GITHUB_TOKEN }}
