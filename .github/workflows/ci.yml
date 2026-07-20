@@ -91,7 +91,7 @@ jobs:
       # Upload to Codecov for the trend graph + README badge (tokenless OIDC
       # upload works for public repositories).
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: app/build/reports/kover/reportFdroid.xml
           flags: unittests

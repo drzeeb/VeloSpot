@@ -149,14 +149,14 @@ jobs:
       # Generate cryptographically verifiable provenance for the release APKs and
       # the SBOM. Consumers can verify with:  gh attestation verify <file> --repo <repo>
       - name: Attest APK build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             app/build/outputs/apk/fdroid/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
             app/build/outputs/apk/googlePlay/release/VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk
 
       - name: Attest SBOM provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.json
