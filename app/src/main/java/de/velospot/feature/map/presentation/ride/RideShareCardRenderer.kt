@@ -73,11 +73,9 @@ internal fun renderRideShareCard(
     val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
-    // Slightly rounded card: clip everything to a rounded rect so the tile's
-    // corners are transparent and read as a soft, modern card when shared.
-    val cardRect = RectF(0f, 0f, w.toFloat(), h.toFloat())
-    canvas.clipPath(Path().apply { addRoundRect(cardRect, CARD_RADIUS, CARD_RADIUS, Path.Direction.CW) })
-
+    // Plain rectangular tile — no rounded corners. Social apps crop/round the
+    // shared image themselves, so baking in rounded (transparent) corners only
+    // looked odd (visible transparent notches on some backgrounds).
     drawBackground(canvas, w, h, theme)
     drawBrandRow(canvas, w, dateLabel, theme)
     drawRouteCard(canvas, ride, theme, mapLayer)
@@ -382,7 +380,6 @@ private fun withAlpha(color: Int, alpha: Int): Int =
 
 private const val CARD_WIDTH = 1080
 private const val CARD_HEIGHT = 1350
-private const val CARD_RADIUS = 56f
 private const val MARGIN = 80f
 
 // Route/map panel rectangle on the card.
