@@ -206,6 +206,11 @@ internal fun DisplaySettingsSheet(
                     )
                 }
             )
+            // Rounded 3D buildings: temporarily hidden — the MapLibre
+            // fill-extrusion-rounded-corner-distance property has no visible effect
+            // yet, so the toggle is kept out of the menu until it works. The
+            // underlying state/wiring stays in place so it's a one-line re-enable.
+            /*
             SettingsRow(
                 icon = Icons.Default.RoundedCorner,
                 title = stringResource(R.string.menu_rounded_buildings),
@@ -217,6 +222,7 @@ internal fun DisplaySettingsSheet(
                     )
                 }
             )
+            */
             Spacer(Modifier.height(8.dp))
         }
     }
