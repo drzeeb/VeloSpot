@@ -137,6 +137,7 @@
     <string name="menu_voice_guidance">Guida vocale</string>
     <string name="menu_keep_screen_on">Mantieni lo schermo acceso durante il percorso</string>
     <string name="menu_portrait_lock">Blocca in orientamento verticale</string>
+    <string name="menu_rounded_buildings">Edifici 3D arrotondati</string>
     <string name="menu_simulate_route_start">▶ Simula percorso (GPS finto)</string>
     <string name="menu_simulate_route_stop">⏹ Ferma simulazione</string>
     <string name="menu_simulate_route_hint">▶ Simula percorso (avvia prima la navigazione)</string>

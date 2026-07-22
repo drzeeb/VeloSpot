@@ -210,6 +210,7 @@
     <string name="menu_voice_guidance">Sprachansagen</string>
     <string name="menu_keep_screen_on">Display anlassen während der Fahrt</string>
     <string name="menu_portrait_lock">Hochformat sperren</string>
+    <string name="menu_rounded_buildings">Abgerundete 3D-Gebäude</string>
     <string name="menu_simulate_route_start">▶ Route simulieren (GPS-Mock)</string>
     <string name="menu_simulate_route_stop">⏹ Routensimulation stoppen</string>
     <string name="menu_simulate_route_hint">▶ Route simulieren (erst Navigation starten)</string>

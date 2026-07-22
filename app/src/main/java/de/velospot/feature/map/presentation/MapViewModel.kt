@@ -508,6 +508,18 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { mapSettings.setPortraitLock(enabled) }
     }
 
+    /**
+     * Whether the 3D buildings are rendered with rounded corners. Persisted across
+     * sessions; defaults to disabled (sharp corners).
+     */
+    val roundedBuildingsEnabled: StateFlow<Boolean> =
+        mapSettings.roundedBuildingsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the rounded 3D-building corners on/off and persists the choice. */
+    fun setRoundedBuildingsEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setRoundedBuildings(enabled) }
+    }
+
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
 
 
@@ -748,8 +760,14 @@ class MapViewModel @Inject constructor(
         overlayTracksNeeded = layerVisibility
             .map { it.showHeatmap || it.showTracks }
             .distinctUntilChanged(),
-        // Turn a finished ride of a planned route into a leaderboard attempt.
-        onRideSaved = { ride -> routePlanningController.onRideFinished(ride) }
+        // Turn a finished ride of a planned route into a leaderboard attempt, and
+        // tag the ride with the route it was ridden along so the detail screen can
+        // hide "Save as route" (the route already exists).
+        onRideSaved = { ride ->
+            routePlanningController.onRideFinished(ride)?.let { routeId ->
+                viewModelScope.launch { recordedRidesRepository.setSourceRoute(ride.id, routeId) }
+            }
+        }
     )
     val rideTrackingState: StateFlow<RideTrackingUiState> = rideTracking.trackingState
 

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RoundedCorner
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Stop
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
@@ -204,6 +206,23 @@ internal fun DisplaySettingsSheet(
                     )
                 }
             )
+            // Rounded 3D buildings: temporarily hidden — the MapLibre
+            // fill-extrusion-rounded-corner-distance property has no visible effect
+            // yet, so the toggle is kept out of the menu until it works. The
+            // underlying state/wiring stays in place so it's a one-line re-enable.
+            /*
+            SettingsRow(
+                icon = Icons.Default.RoundedCorner,
+                title = stringResource(R.string.menu_rounded_buildings),
+                onClick = actions.onToggleRoundedBuildings,
+                trailing = {
+                    Switch(
+                        checked = state.roundedBuildingsEnabled,
+                        onCheckedChange = { actions.onToggleRoundedBuildings() }
+                    )
+                }
+            )
+            */
             Spacer(Modifier.height(8.dp))
         }
     }
@@ -266,15 +285,11 @@ internal fun NavigationRoutingSheet(
                 is OfflineRoutingUiState.Disabled -> SettingsRow(
                     icon = Icons.Default.SignalWifiOff,
                     title = stringResource(R.string.menu_offline_routing_activate),
-                    onClick = { onDismiss(); actions.onActivateOfflineRouting() }
+                    // Keep the sheet open: the setup sheet opens on top and the
+                    // rider stays in context (they can watch the download here).
+                    onClick = actions.onActivateOfflineRouting
                 )
-                is OfflineRoutingUiState.Downloading -> SettingsRow(
-                    icon = null,
-                    leading = { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) },
-                    title = stringResource(R.string.menu_offline_routing_downloading),
-                    enabled = false,
-                    onClick = {}
-                )
+                is OfflineRoutingUiState.Downloading -> OfflineDownloadProgressRow(offState)
                 is OfflineRoutingUiState.Enabled -> SettingsRow(
                     icon = Icons.Default.Wifi,
                     iconTint = MaterialTheme.colorScheme.primary,
@@ -282,7 +297,8 @@ internal fun NavigationRoutingSheet(
                         R.string.menu_offline_routing_active,
                         stringResource(offState.profile.displayNameRes)
                     ),
-                    onClick = { onDismiss(); actions.onOpenProfileSheet() }
+                    // Keep the sheet open: the profile sheet opens on top.
+                    onClick = actions.onOpenProfileSheet
                 )
                 is OfflineRoutingUiState.DownloadComplete -> SettingsRow(
                     icon = Icons.Default.CheckCircle,
@@ -297,9 +313,67 @@ internal fun NavigationRoutingSheet(
     }
 }
 
+/**
+ * Inline offline-routing download progress: a labelled row with a live MB counter
+ * and a determinate/indeterminate progress bar, shown right inside the
+ * Navigation & routing sheet so the sheet can stay open during the download.
+ */
 @Composable
-private fun SettingsSectionHeader(text: String) {
-    Text(
+private fun OfflineDownloadProgressRow(state: OfflineRoutingUiState.Downloading) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            Spacer(Modifier.size(16.dp))
+            Text(
+                text = stringResource(R.string.menu_offline_routing_downloading),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f)
+            )
+            if (state.downloadedBytes > 0L) {
+                Text(
+                    text = if (state.totalBytes > 0L)
+                        "${formatMb(state.downloadedBytes)} / ${formatMb(state.totalBytes)} MB"
+                    else
+                        "${formatMb(state.downloadedBytes)} MB",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (state.totalFiles > 1) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(
+                    R.string.offline_routing_file_of,
+                    state.currentFileIndex,
+                    state.totalFiles
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 40.dp)
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        if (state.fileProgress >= 0f) {
+            LinearProgressIndicator(
+                progress = { state.fileProgress },
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+/** Formats a byte count as a one-decimal megabyte string (without the unit). */
+private fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
+
+@Composable
+private fun SettingsSectionHeader(text: String) {    Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,

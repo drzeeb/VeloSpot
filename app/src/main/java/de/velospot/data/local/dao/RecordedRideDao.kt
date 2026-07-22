@@ -77,6 +77,10 @@ interface RecordedRideDao {
     @Query("UPDATE recorded_rides SET bikeProfileId = :bikeProfileId WHERE id = :id")
     suspend fun updateBikeProfile(id: String, bikeProfileId: String?)
 
+    /** Tags a ride with the planned route it was ridden along (or clears it). */
+    @Query("UPDATE recorded_rides SET sourceRouteId = :sourceRouteId WHERE id = :id")
+    suspend fun updateSourceRoute(id: String, sourceRouteId: String?)
+
     /** Detaches every ride from [bikeProfileId] (used when its bike is deleted). */
     @Query("UPDATE recorded_rides SET bikeProfileId = NULL WHERE bikeProfileId = :bikeProfileId")
     suspend fun clearBikeProfile(bikeProfileId: String)

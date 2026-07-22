@@ -66,6 +66,9 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     override val portraitLockEnabled: Flow<Boolean> =
         data.map { it[KEY_PORTRAIT_LOCK] ?: false }
 
+    override val roundedBuildingsEnabled: Flow<Boolean> =
+        data.map { it[KEY_ROUNDED_BUILDINGS] ?: false }
+
     override val rideViewOptions: Flow<RideViewOptions> = data.map { prefs ->
         RideViewOptions(
             showMaxSpeedBubble = prefs[KEY_MAX_SPEED_BUBBLE] ?: true,
@@ -96,6 +99,9 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     override suspend fun setPortraitLock(enabled: Boolean) =
         put(KEY_PORTRAIT_LOCK, enabled)
 
+    override suspend fun setRoundedBuildings(enabled: Boolean) =
+        put(KEY_ROUNDED_BUILDINGS, enabled)
+
     override suspend fun setShowMaxSpeedBubble(enabled: Boolean) =
         put(KEY_MAX_SPEED_BUBBLE, enabled)
 
@@ -117,6 +123,7 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
         val KEY_VOICE_GUIDANCE   = booleanPreferencesKey("navigation_tts_enabled")
         val KEY_KEEP_SCREEN_ON   = booleanPreferencesKey("keep_screen_on_enabled")
         val KEY_PORTRAIT_LOCK    = booleanPreferencesKey("portrait_lock_enabled")
+        val KEY_ROUNDED_BUILDINGS = booleanPreferencesKey("rounded_buildings_enabled")
         val KEY_MAX_SPEED_BUBBLE = booleanPreferencesKey("show_max_speed_bubble")
         val KEY_COLOR_BY_SPEED   = booleanPreferencesKey("color_track_by_speed")
     }

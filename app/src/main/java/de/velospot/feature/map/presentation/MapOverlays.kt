@@ -106,6 +106,8 @@ internal data class MapMenuCardState(
     val keepScreenOnEnabled: Boolean = true,
     /** Whether the screen orientation is locked to portrait. */
     val portraitLockEnabled: Boolean = false,
+    /** Whether the 3D buildings are drawn with rounded corners. */
+    val roundedBuildingsEnabled: Boolean = false,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -129,6 +131,7 @@ internal data class MapMenuCardActions(
     val onToggleVoiceGuidance: () -> Unit = {},
     val onToggleKeepScreenOn: () -> Unit = {},
     val onTogglePortraitLock: () -> Unit = {},
+    val onToggleRoundedBuildings: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
     val onOpenRides: () -> Unit = {},
