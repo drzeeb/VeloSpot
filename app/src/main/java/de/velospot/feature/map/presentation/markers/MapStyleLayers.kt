@@ -394,10 +394,11 @@ internal fun setBuildingExtrusionVisible(style: Style, visible: Boolean) {
 
 /**
  * The corner-rounding distance (in metres) applied to the extruded buildings when
- * the rider enables rounded corners. Kept subtle so buildings still read as
- * buildings; `0` restores hard, square corners.
+ * the rider enables rounded corners. Chosen large enough to be clearly visible on
+ * typical building footprints while still reading as a building; `0` restores
+ * hard, square corners.
  */
-private const val BUILDING_ROUNDED_CORNER_DISTANCE_M = 3f
+private const val BUILDING_ROUNDED_CORNER_DISTANCE_M = 8f
 
 /**
  * Toggles the **rounded corners** on the 3D building extrusion (MapLibre 13.4.0's

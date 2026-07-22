@@ -760,8 +760,14 @@ class MapViewModel @Inject constructor(
         overlayTracksNeeded = layerVisibility
             .map { it.showHeatmap || it.showTracks }
             .distinctUntilChanged(),
-        // Turn a finished ride of a planned route into a leaderboard attempt.
-        onRideSaved = { ride -> routePlanningController.onRideFinished(ride) }
+        // Turn a finished ride of a planned route into a leaderboard attempt, and
+        // tag the ride with the route it was ridden along so the detail screen can
+        // hide "Save as route" (the route already exists).
+        onRideSaved = { ride ->
+            routePlanningController.onRideFinished(ride)?.let { routeId ->
+                viewModelScope.launch { recordedRidesRepository.setSourceRoute(ride.id, routeId) }
+            }
+        }
     )
     val rideTrackingState: StateFlow<RideTrackingUiState> = rideTracking.trackingState
 

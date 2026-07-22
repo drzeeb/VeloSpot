@@ -47,6 +47,13 @@ interface RecordedRidesRepository {
     suspend fun setRideBikeProfile(id: String, bikeProfileId: String?) {}
 
     /**
+     * Tags a ride with the saved planned route it was recorded while riding, or
+     * clears it when `null`. Default is a no-op so in-memory test fakes needn't
+     * override it.
+     */
+    suspend fun setSourceRoute(id: String, routeId: String?) {}
+
+    /**
      * Detaches every ride from [bikeProfileId] (called when its bike is deleted so
      * no ride keeps a dangling reference). Default is a no-op for test fakes.
      */

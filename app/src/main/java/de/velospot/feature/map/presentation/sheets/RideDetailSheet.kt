@@ -337,8 +337,10 @@ internal fun RideDetailSheet(
                     }
 
                     // ── Save this ride as a re-rideable route (with a leaderboard) ─
-                    // Real rides only — a simulator (mock) ride can't seed a board.
-                    if (!ride.isMock) {
+                    // Real rides only — a simulator (mock) ride can't seed a board —
+                    // and only when the ride didn't already come from a route (then
+                    // the route already exists, so offering to re-save it is noise).
+                    if (!ride.isMock && ride.sourceRouteId == null) {
                         Spacer(Modifier.height(8.dp))
                         Button(
                             onClick = { onSaveAsRoute(ride) },

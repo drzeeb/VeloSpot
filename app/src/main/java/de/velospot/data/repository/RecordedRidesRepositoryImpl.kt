@@ -80,6 +80,9 @@ class RecordedRidesRepositoryImpl @Inject constructor(
     override suspend fun setRideBikeProfile(id: String, bikeProfileId: String?) =
         recordedRideDao.updateBikeProfile(id, bikeProfileId)
 
+    override suspend fun setSourceRoute(id: String, routeId: String?) =
+        recordedRideDao.updateSourceRoute(id, routeId)
+
     override suspend fun clearBikeProfileFromRides(bikeProfileId: String) =
         recordedRideDao.clearBikeProfile(bikeProfileId)
 
@@ -118,7 +121,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         name = name,
         isMock = isMock,
         archivedAt = archivedAt,
-        bikeProfileId = bikeProfileId
+        bikeProfileId = bikeProfileId,
+        sourceRouteId = sourceRouteId
     )
 
     private fun RecordedRide.toEntity() = RecordedRideEntity(
@@ -136,7 +140,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         name = name?.trim()?.takeIf { it.isNotBlank() },
         isMock = isMock,
         archivedAt = archivedAt,
-        bikeProfileId = bikeProfileId
+        bikeProfileId = bikeProfileId,
+        sourceRouteId = sourceRouteId
     )
 }
 

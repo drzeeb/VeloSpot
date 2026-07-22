@@ -59,7 +59,13 @@ data class RecordedRide(
     val isMock: Boolean = false,
     val archivedAt: Long? = null,
     /** Id of the [BikeProfile] this ride was recorded with, or `null` if untagged. */
-    val bikeProfileId: String? = null
+    val bikeProfileId: String? = null,
+    /**
+     * Id of the saved [PlannedRoute] this ride was recorded while riding, or `null`
+     * for a free ride. Set when a planned route is ridden so the detail screen can
+     * hide "Save as route" (the route already exists).
+     */
+    val sourceRouteId: String? = null
 ) {
     /** Whether this ride is currently archived (hidden from the active timeline). */
     val isArchived: Boolean get() = archivedAt != null

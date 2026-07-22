@@ -39,7 +39,9 @@ fun OfflineRoutingSetupSheet(
     onConfirmFull: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    // Open fully so both download options and the info cards are visible at once.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -178,7 +180,10 @@ fun RoutingProfileSheet(
     onDismiss: () -> Unit,
     onDisableOfflineRouting: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    // Open fully (skip the half-height state) so the whole profile list, the
+    // hilliness slider and the disable action are all visible at once.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -204,7 +209,7 @@ fun RoutingProfileSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onSelectProfile(profile); onDismiss() }
+                        .clickable { onSelectProfile(profile) }
                         .semantics(mergeDescendants = true) {
                             role = Role.RadioButton
                             selected = isSelected

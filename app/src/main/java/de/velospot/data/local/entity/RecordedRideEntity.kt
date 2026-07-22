@@ -46,6 +46,8 @@ data class RecordedRideEntity(
     /** Wall-clock time the ride was archived, or `null` while still in the timeline. */
     val archivedAt: Long? = null,
     /** Id of the bike ([BikeProfileEntity]) this ride was recorded with, or `null`. */
-    val bikeProfileId: String? = null
+    val bikeProfileId: String? = null,
+    /** Id of the saved planned route this ride was recorded while riding, or `null`. */
+    val sourceRouteId: String? = null
 )
 

@@ -311,17 +311,19 @@ class RoutePlanningController(
     /**
      * Called by the host when *any* ride finishes and is saved. When a planned-route
      * ride was armed via [beginRide], the ride is converted into a leaderboard
-     * attempt (forward or reverse) and persisted. Mock rides are ignored.
+     * attempt (forward or reverse) and persisted, and the route's id is returned so
+     * the host can tag the ride with its [RecordedRide.sourceRouteId]. Returns `null`
+     * when no planned-route ride was in progress.
      */
-    fun onRideFinished(ride: RecordedRide) {
-        val context = pending ?: return
+    fun onRideFinished(ride: RecordedRide): String? {
+        val context = pending ?: return null
         pending = null
-        val attempt = RouteLeaderboard.attemptFromRide(
+        RouteLeaderboard.attemptFromRide(
             routeId = context.routeId,
             reversed = context.reversed,
             ride = ride
-        ) ?: return
-        scope.launch { repository.addAttempt(attempt) }
+        )?.let { attempt -> scope.launch { repository.addAttempt(attempt) } }
+        return context.routeId
     }
 
     companion object {
