@@ -842,9 +842,10 @@ fun MainMapScreen(
             )
         }
 
-        // ── Map actions speed-dial (bottom-left FAB) ─────────────────────────
+        // ── Map actions speed-dial (right-centre FAB) ────────────────────────
         // The frequent things a rider *does* — plan a route, round trip, park the
-        // bike, rides, saved routes, favourites — fan out from a single FAB, so the
+        // bike, rides, saved routes, favourites — fan out over a half-circle from a
+        // single FAB anchored on the right edge (vertically centred), so the
         // Settings sheet only holds actual settings. Hidden during active
         // navigation, where the bottom area belongs to the navigation card.
         if (activeNavigation == null) {
