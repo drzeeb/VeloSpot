@@ -392,6 +392,27 @@ internal fun setBuildingExtrusionVisible(style: Style, visible: Boolean) {
     )
 }
 
+/**
+ * The corner-rounding distance (in metres) applied to the extruded buildings when
+ * the rider enables rounded corners. Kept subtle so buildings still read as
+ * buildings; `0` restores hard, square corners.
+ */
+private const val BUILDING_ROUNDED_CORNER_DISTANCE_M = 3f
+
+/**
+ * Toggles the **rounded corners** on the 3D building extrusion (MapLibre 13.4.0's
+ * `fill-extrusion-rounded-corner-distance` property). Purely cosmetic; no-op when
+ * the extrusion layer is absent (e.g. a style without an `openmaptiles` source).
+ */
+internal fun setBuildingRoundedCorners(style: Style, enabled: Boolean) {
+    val layer = style.getLayer(LAYER_BUILDINGS_3D) ?: return
+    layer.setProperties(
+        PropertyFactory.fillExtrusionRoundedCornerDistance(
+            if (enabled) BUILDING_ROUNDED_CORNER_DISTANCE_M else 0f
+        )
+    )
+}
+
 internal fun ensureSearchPinLayer(style: Style) {
     if (style.getLayer(LAYER_SEARCH_PIN) != null) return
     style.addLayer(

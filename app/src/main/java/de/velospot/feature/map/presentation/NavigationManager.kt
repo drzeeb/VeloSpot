@@ -23,6 +23,7 @@ import de.velospot.feature.map.presentation.markers.ensureTraveledRouteLayer
 import de.velospot.feature.map.presentation.markers.navIdleFrameImageId
 import de.velospot.feature.map.presentation.markers.navPedalFrameImageId
 import de.velospot.feature.map.presentation.markers.setBuildingExtrusionVisible
+import de.velospot.feature.map.presentation.markers.setBuildingRoundedCorners
 import de.velospot.feature.map.presentation.markers.upsertSource
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -198,6 +199,13 @@ class NavigationManager(private val context: Context) {
      */
     private var is3D = true
 
+    /**
+     * Whether the 3D buildings are drawn with rounded corners. Persisted by the
+     * caller; re-applied after every style (re)load in [attach] so the look
+     * survives a dark-mode toggle or other style reloads.
+     */
+    private var roundedBuildings = false
+
     /** Whether the eased ("current") state has been seeded from the first fix after [start]. */
     private var initialized = false
 
@@ -308,6 +316,9 @@ class NavigationManager(private val context: Context) {
         }
         ensureLocationLayer(style)
         ensureBuildingExtrusionLayer(style)
+        // Re-assert the rounded-corner preference: a style reload rebuilds the
+        // extrusion layer with default (sharp) corners, so apply the saved choice.
+        setBuildingRoundedCorners(style, roundedBuildings)
         // A user touch (pan/zoom) must take over the camera *instantly* — even mid
         // intro. Registering directly on the map lets us cancel the intro and break
         // follow synchronously, with none of the StateFlow → Compose round-trip lag.
@@ -342,6 +353,16 @@ class NavigationManager(private val context: Context) {
         this.is3D = is3D
         // Only the idle map reacts; during navigation we keep the 3D view intact.
         if (!active) applyIdleView()
+    }
+
+    /**
+     * Enables/disables **rounded corners** on the 3D buildings and persists the
+     * choice via the caller. Applies immediately to the current style (idle or
+     * navigating) and is re-asserted after style reloads in [attach].
+     */
+    fun setRoundedBuildings(enabled: Boolean) {
+        roundedBuildings = enabled
+        map?.style?.let { setBuildingRoundedCorners(it, enabled) }
     }
 
     /**

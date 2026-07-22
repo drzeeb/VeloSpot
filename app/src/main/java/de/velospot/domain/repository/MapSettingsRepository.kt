@@ -36,6 +36,13 @@ interface MapSettingsRepository {
      */
     val portraitLockEnabled: Flow<Boolean>
 
+    /**
+     * Whether the 3D buildings are drawn with **rounded corners** (a MapLibre
+     * `fill-extrusion` style property). Defaults to `false` (sharp corners). Purely
+     * cosmetic — only affects the extruded-building look on the tilted 3D map.
+     */
+    val roundedBuildingsEnabled: Flow<Boolean>
+
     /** The rider's persisted "inspect a past ride" overlay choices. */
     val rideViewOptions: Flow<RideViewOptions>
 
@@ -44,6 +51,7 @@ interface MapSettingsRepository {
     suspend fun setVoiceGuidance(enabled: Boolean)
     suspend fun setKeepScreenOn(enabled: Boolean)
     suspend fun setPortraitLock(enabled: Boolean)
+    suspend fun setRoundedBuildings(enabled: Boolean)
     suspend fun setShowMaxSpeedBubble(enabled: Boolean)
     suspend fun setColorTrackBySpeed(enabled: Boolean)
 }

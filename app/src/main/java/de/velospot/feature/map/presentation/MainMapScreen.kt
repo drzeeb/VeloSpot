@@ -134,6 +134,7 @@ fun MainMapScreen(
     val voiceGuidanceEnabled by viewModel.voiceGuidanceEnabled.collectAsStateWithLifecycle()
     val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
+    val roundedBuildingsEnabled by viewModel.roundedBuildingsEnabled.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
@@ -538,6 +539,12 @@ fun MainMapScreen(
         navigationManager.setMode(is3DNavigation)
     }
 
+    // Apply the user's rounded-3D-building preference live (also re-applied after
+    // style reloads, which rebuild the extrusion layer with sharp corners).
+    LaunchedEffect(roundedBuildingsEnabled, maplibreMap, styleVersion) {
+        navigationManager.setRoundedBuildings(roundedBuildingsEnabled)
+    }
+
     DisposableEffect(navigationManager) {
         // Live route progress (distance + ETA) and the off-route reroute trigger
         // are forwarded to the ViewModel.
@@ -760,6 +767,7 @@ fun MainMapScreen(
             voiceGuidanceEnabled = voiceGuidanceEnabled,
             keepScreenOnEnabled = keepScreenOnEnabled,
             portraitLockEnabled = portraitLockEnabled,
+            roundedBuildingsEnabled = roundedBuildingsEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -781,6 +789,7 @@ fun MainMapScreen(
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
             onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
             onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!portraitLockEnabled) },
+            onToggleRoundedBuildings = { viewModel.setRoundedBuildingsEnabled(!roundedBuildingsEnabled) },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,

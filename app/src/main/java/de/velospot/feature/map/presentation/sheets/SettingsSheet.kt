@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RoundedCorner
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Stop
@@ -201,6 +202,17 @@ internal fun DisplaySettingsSheet(
                     Switch(
                         checked = state.portraitLockEnabled,
                         onCheckedChange = { actions.onTogglePortraitLock() }
+                    )
+                }
+            )
+            SettingsRow(
+                icon = Icons.Default.RoundedCorner,
+                title = stringResource(R.string.menu_rounded_buildings),
+                onClick = actions.onToggleRoundedBuildings,
+                trailing = {
+                    Switch(
+                        checked = state.roundedBuildingsEnabled,
+                        onCheckedChange = { actions.onToggleRoundedBuildings() }
                     )
                 }
             )

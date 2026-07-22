@@ -508,6 +508,18 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { mapSettings.setPortraitLock(enabled) }
     }
 
+    /**
+     * Whether the 3D buildings are rendered with rounded corners. Persisted across
+     * sessions; defaults to disabled (sharp corners).
+     */
+    val roundedBuildingsEnabled: StateFlow<Boolean> =
+        mapSettings.roundedBuildingsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the rounded 3D-building corners on/off and persists the choice. */
+    fun setRoundedBuildingsEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setRoundedBuildings(enabled) }
+    }
+
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
 
 
