@@ -338,10 +338,15 @@ internal fun ensureLocationLayer(style: Style) {
  * Adds (idempotently) the [LAYER_BUILDINGS_3D] `fill-extrusion` layer that pulls
  * the flat OpenMapTiles building footprints up into 3D using their
  * `render_height` / `render_min_height` attributes. No-op when the active style
- * carries no `openmaptiles` vector source. Starts hidden â€” toggle with
+ * carries no `openmaptiles` vector source. Starts hidden — toggle with
  * [setBuildingExtrusionVisible] (e.g. only during navigation).
+ *
+ * [rounded] applies MapLibre 13.4.0's `fill-extrusion-rounded-corner-distance`.
+ * This is a **layout** (geometry) property baked in during tile tessellation, so
+ * it must be set **at layer creation** — changing it later doesn't re-tessellate
+ * already-built tiles. Use [rebuildBuildingExtrusionLayer] to flip it at runtime.
  */
-internal fun ensureBuildingExtrusionLayer(style: Style) {
+internal fun ensureBuildingExtrusionLayer(style: Style, rounded: Boolean = false) {
     if (style.getLayer(LAYER_BUILDINGS_3D) != null) return
     if (style.getSource(VECTOR_SOURCE_OPENMAPTILES) == null) return
 
@@ -353,6 +358,10 @@ internal fun ensureBuildingExtrusionLayer(style: Style) {
             // Height/base read straight from the tile attributes.
             PropertyFactory.fillExtrusionHeight(Expression.get("render_height")),
             PropertyFactory.fillExtrusionBase(Expression.get("render_min_height")),
+            // Round the vertical corners when enabled (baked in at tessellation).
+            PropertyFactory.fillExtrusionRoundedCornerDistance(
+                if (rounded) BUILDING_ROUNDED_CORNER_DISTANCE_M else 0f
+            ),
             // Fade the volumes in between z14 and z15.5 so they don't pop.
             PropertyFactory.fillExtrusionOpacity(
                 Expression.interpolate(
@@ -401,17 +410,17 @@ internal fun setBuildingExtrusionVisible(style: Style, visible: Boolean) {
 private const val BUILDING_ROUNDED_CORNER_DISTANCE_M = 8f
 
 /**
- * Toggles the **rounded corners** on the 3D building extrusion (MapLibre 13.4.0's
- * `fill-extrusion-rounded-corner-distance` property). Purely cosmetic; no-op when
- * the extrusion layer is absent (e.g. a style without an `openmaptiles` source).
+ * Flips the **rounded corners** of the 3D building extrusion at runtime. Because
+ * the corner rounding is a *layout* property baked in during tile tessellation,
+ * simply setting it on the live layer would not re-tessellate the tiles already on
+ * screen — so this **removes and re-adds** the layer, forcing MapLibre to rebuild
+ * the buckets from the cached tiles with the new setting. The caller must re-apply
+ * the desired visibility afterwards (see [setBuildingExtrusionVisible]). No-op when
+ * the style carries no `openmaptiles` source.
  */
-internal fun setBuildingRoundedCorners(style: Style, enabled: Boolean) {
-    val layer = style.getLayer(LAYER_BUILDINGS_3D) ?: return
-    layer.setProperties(
-        PropertyFactory.fillExtrusionRoundedCornerDistance(
-            if (enabled) BUILDING_ROUNDED_CORNER_DISTANCE_M else 0f
-        )
-    )
+internal fun rebuildBuildingExtrusionLayer(style: Style, rounded: Boolean) {
+    style.getLayer(LAYER_BUILDINGS_3D)?.let { style.removeLayer(it) }
+    ensureBuildingExtrusionLayer(style, rounded)
 }
 
 internal fun ensureSearchPinLayer(style: Style) {

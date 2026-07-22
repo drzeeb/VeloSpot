@@ -23,7 +23,7 @@ import de.velospot.feature.map.presentation.markers.ensureTraveledRouteLayer
 import de.velospot.feature.map.presentation.markers.navIdleFrameImageId
 import de.velospot.feature.map.presentation.markers.navPedalFrameImageId
 import de.velospot.feature.map.presentation.markers.setBuildingExtrusionVisible
-import de.velospot.feature.map.presentation.markers.setBuildingRoundedCorners
+import de.velospot.feature.map.presentation.markers.rebuildBuildingExtrusionLayer
 import de.velospot.feature.map.presentation.markers.upsertSource
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -315,10 +315,7 @@ class NavigationManager(private val context: Context) {
             )
         }
         ensureLocationLayer(style)
-        ensureBuildingExtrusionLayer(style)
-        // Re-assert the rounded-corner preference: a style reload rebuilds the
-        // extrusion layer with default (sharp) corners, so apply the saved choice.
-        setBuildingRoundedCorners(style, roundedBuildings)
+        ensureBuildingExtrusionLayer(style, roundedBuildings)
         // A user touch (pan/zoom) must take over the camera *instantly* — even mid
         // intro. Registering directly on the map lets us cancel the intro and break
         // follow synchronously, with none of the StateFlow → Compose round-trip lag.
@@ -357,12 +354,15 @@ class NavigationManager(private val context: Context) {
 
     /**
      * Enables/disables **rounded corners** on the 3D buildings and persists the
-     * choice via the caller. Applies immediately to the current style (idle or
-     * navigating) and is re-asserted after style reloads in [attach].
+     * choice via the caller. The rounding is baked in at tile tessellation, so the
+     * extrusion layer is rebuilt to force a re-tessellation, then its visibility is
+     * re-applied (buildings are shown while navigating or when the idle map is 3D).
      */
     fun setRoundedBuildings(enabled: Boolean) {
         roundedBuildings = enabled
-        map?.style?.let { setBuildingRoundedCorners(it, enabled) }
+        val style = map?.style ?: return
+        rebuildBuildingExtrusionLayer(style, enabled)
+        setBuildingExtrusionVisible(style, active || is3D)
     }
 
     /**
