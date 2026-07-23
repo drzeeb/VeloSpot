@@ -292,6 +292,22 @@ CHANGELOGS: dict[int, dict[str, str]] = {
             "\u2022 Sauberer Fahrrad-Avatar, robusterer GPX-Export und Offline-Routing-Korrekturen\n"
         ),
     },
+    10025: {
+        "en-US": (
+            "\u2022 Plan, save & re-ride multi-waypoint routes \u2013 with your own leaderboard (forward/reverse), a map preview & stats\n"
+            "\u2022 A bike garage \u2013 a profile per bike, per-bike stats and service reminders\n"
+            "\u2022 Detailed ride analysis with an animated map replay, best efforts, achievements & badges\n"
+            "\u2022 Realistic ETA + calorie estimates for planned routes and recorded rides\n"
+            "\u2022 Rounded 3D buildings, portrait lock, a Discord link and delete confirmations\n"
+        ),
+        "de-DE": (
+            "\u2022 Mehrpunkt-Routen planen, speichern & neu fahren \u2013 mit eigener Bestenliste (vorw\u00e4rts/r\u00fcckw\u00e4rts), Kartenvorschau & Statistik\n"
+            "\u2022 Eine Fahrrad-Garage \u2013 ein Profil je Rad, Statistik pro Rad und Wartungserinnerungen\n"
+            "\u2022 Detaillierte Fahrtanalyse mit animiertem Karten-Replay, Bestleistungen, Erfolgen & Abzeichen\n"
+            "\u2022 Realistische Ankunftszeit + Kaloriensch\u00e4tzung f\u00fcr geplante Routen und aufgezeichnete Fahrten\n"
+            "\u2022 Abgerundete 3D-Geb\u00e4ude, Hochformat-Sperre, ein Discord-Link und L\u00f6sch-Best\u00e4tigungen\n"
+        ),
+    },
 }
 
 

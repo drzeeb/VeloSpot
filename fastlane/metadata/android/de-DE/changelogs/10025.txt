@@ -1,0 +1,5 @@
+• Mehrpunkt-Routen planen, speichern & neu fahren – mit eigener Bestenliste (vorwärts/rückwärts), Kartenvorschau & Statistik
+• Eine Fahrrad-Garage – ein Profil je Rad, Statistik pro Rad und Wartungserinnerungen
+• Detaillierte Fahrtanalyse mit animiertem Karten-Replay, Bestleistungen, Erfolgen & Abzeichen
+• Realistische Ankunftszeit + Kalorienschätzung für geplante Routen und aufgezeichnete Fahrten
+• Abgerundete 3D-Gebäude, Hochformat-Sperre, ein Discord-Link und Lösch-Bestätigungen

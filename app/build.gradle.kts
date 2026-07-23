@@ -216,7 +216,7 @@ tasks.named<org.cyclonedx.gradle.CyclonedxDirectTask>("cyclonedxDirectBom") {
     projectType.set(org.cyclonedx.model.Component.Type.APPLICATION)
     schemaVersion.set(org.cyclonedx.Version.VERSION_16)
     componentName.set("de.velospot")
-    componentVersion.set("1.0.24")
+    componentVersion.set("1.0.25")
     includeConfigs.set(listOf("fdroidReleaseRuntimeClasspath"))
     // Stable, explicit output locations (attached to releases by CI).
     jsonOutput.set(layout.buildDirectory.file("reports/cyclonedx/bom.json"))

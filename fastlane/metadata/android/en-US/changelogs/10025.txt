@@ -1,0 +1,5 @@
+• Plan, save & re-ride multi-waypoint routes – with your own leaderboard (forward/reverse), a map preview & stats
+• A bike garage – a profile per bike, per-bike stats and service reminders
+• Detailed ride analysis with an animated map replay, best efforts, achievements & badges
+• Realistic ETA + calorie estimates for planned routes and recorded rides
+• Rounded 3D buildings, portrait lock, a Discord link and delete confirmations
