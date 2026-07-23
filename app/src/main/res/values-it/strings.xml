@@ -216,6 +216,7 @@
     <string name="nav_voice_arrived">Sei arrivato a destinazione</string>
     <string name="about_tagline">Trova parcheggi per bici e naviga lì.</string>
     <string name="about_website">Sito web</string>
+    <string name="about_discord">Discord</string>
     <string name="about_data_status">Stato dei dati</string>
     <string name="about_country_germany">Germania</string>
     <string name="about_country_france">Francia</string>

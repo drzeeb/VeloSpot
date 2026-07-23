@@ -2,19 +2,35 @@
 """
 extract_osm_parking.py
 ======================
-Extracts bicycle_parking data from an OpenStreetMap PBF file and writes it into
-a pre-populated SQLite database that exactly matches the VeloSpot Room schema v3.
+Extracts bicycle_parking data from OpenStreetMap PBF files and writes one
+pre-populated SQLite database per country that exactly matches the VeloSpot
+Room schema v3.
 
-The generated file can be placed at:
+By default the script processes **Germany, France and Luxembourg**: it
+downloads the latest Geofabrik extract for each country, filters the
+bicycle_parking nodes, writes the matching asset database into
+`app/src/main/assets/` and finally updates the "data status" dates shown on
+the in-app About sheet.
+
+The generated files are placed at:
     app/src/main/assets/bike_parking_germany.db
+    app/src/main/assets/bike_parking_france.db
+    app/src/main/assets/bike_parking_luxembourg.db
 
 Usage
 -----
-    pip install osmium requests tqdm
-    python extract_osm_parking.py [--pbf germany.osm.pbf] [--out ../app/src/main/assets/bike_parking_germany.db]
+    pip install osmium requests
+    # Refresh all bundled countries and update the About-sheet dates:
+    python extract_osm_parking.py
 
-If --pbf is omitted, the script downloads the latest germany.osm.pbf from Geofabrik
-(~4 GB, ensure sufficient disk space).
+    # Only refresh a subset:
+    python extract_osm_parking.py --countries germany luxembourg
+
+    # Use an already-downloaded PBF for a single country:
+    python extract_osm_parking.py --countries germany --pbf germany-latest.osm.pbf
+
+If a country's PBF is not present locally, it is downloaded automatically from
+Geofabrik. Downloaded PBFs are removed afterwards unless --keep-pbf is given.
 
 Room schema (v3)
 ----------------
@@ -26,14 +42,15 @@ Tables:
 """
 
 import argparse
-import hashlib
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
 import sys
 import tempfile
 import time
+from datetime import date
 from typing import Optional
 
 try:
@@ -43,6 +60,54 @@ except ImportError:
         "osmium not found. Install it with:  pip install osmium\n"
         "On some systems you may need:       pip install osmium-tool"
     )
+
+# On Windows the default console/redirect encoding is cp1252, which cannot
+# encode the Unicode characters (→, …, –, ×) used in the status messages below.
+# Reconfigure stdout/stderr to UTF-8 so the script also works when its output
+# is piped or redirected to a log file.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
+# ---------------------------------------------------------------------------
+# Country configuration
+# ---------------------------------------------------------------------------
+
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_ASSETS_DIR = os.path.normpath(
+    os.path.join(_SCRIPT_DIR, "..", "app", "src", "main", "assets")
+)
+_ABOUT_SHEET = os.path.normpath(
+    os.path.join(
+        _SCRIPT_DIR, "..", "app", "src", "main", "java", "de", "velospot",
+        "feature", "map", "presentation", "sheets", "AboutSheet.kt",
+    )
+)
+
+# name -> download URL, output asset db, sourceLayer tag and the Kotlin
+# constant on the About sheet that carries the human-readable data date.
+COUNTRIES: dict[str, dict[str, str]] = {
+    "germany": {
+        "url": "https://download.geofabrik.de/europe/germany-latest.osm.pbf",
+        "db": "bike_parking_germany.db",
+        "source_layer": "osm_germany",
+        "about_const": "DATA_DATE_GERMANY",
+    },
+    "france": {
+        "url": "https://download.geofabrik.de/europe/france-latest.osm.pbf",
+        "db": "bike_parking_france.db",
+        "source_layer": "osm_france",
+        "about_const": "DATA_DATE_FRANCE",
+    },
+    "luxembourg": {
+        "url": "https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf",
+        "db": "bike_parking_luxembourg.db",
+        "source_layer": "osm_luxembourg",
+        "about_const": "DATA_DATE_LUXEMBOURG",
+    },
+}
 
 # ---------------------------------------------------------------------------
 # OSM tag → domain model mapping
@@ -184,7 +249,7 @@ _PROGRESS_INTERVAL = 500_000  # status line every N nodes (only for slow fallbac
 # Fast path: FileProcessor + C++-level TagFilter
 # ---------------------------------------------------------------------------
 
-def parse_fast(pbf_path: str) -> list[tuple]:
+def parse_fast(pbf_path: str, source_layer: str) -> list[tuple]:
     """
     Parse using osmium.FileProcessor with a C++-level TagFilter.
 
@@ -216,7 +281,7 @@ def parse_fast(pbf_path: str) -> list[tuple]:
             None,
             obj.tags.get("operator") or None,
             _map_type(obj.tags),
-            "osm_germany",
+            source_layer,
             now_ms,
         ))
 
@@ -235,9 +300,10 @@ class BikeParkingHandler(osmium.SimpleHandler):
     (~30–50 min).  Each 500 000th node prints a progress line.
     """
 
-    def __init__(self):
+    def __init__(self, source_layer: str):
         super().__init__()
         self.rows: list[tuple] = []
+        self._source_layer = source_layer
         self._now_ms = int(time.time() * 1000)
         self._node_count = 0
         self._start_time = time.time()
@@ -267,13 +333,13 @@ class BikeParkingHandler(osmium.SimpleHandler):
                 None,
                 n.tags.get("operator") or None,
                 _map_type(n.tags),
-                "osm_germany",
+                self._source_layer,
                 self._now_ms,
             ))
 
 
-def parse_slow(pbf_path: str) -> list[tuple]:
-    handler = BikeParkingHandler()
+def parse_slow(pbf_path: str, source_layer: str) -> list[tuple]:
+    handler = BikeParkingHandler(source_layer)
     handler.apply_file(pbf_path)
     print(
         f"  Done: {handler._node_count / 1_000_000:.1f}M nodes scanned, "
@@ -384,22 +450,19 @@ def create_database(output_path: str, rows: list[tuple]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Optional download helper
+# Download helper
 # ---------------------------------------------------------------------------
 
-_GERMANY_PBF_URL = "https://download.geofabrik.de/europe/germany-latest.osm.pbf"
-
-
-def download_pbf(dest: str) -> None:
-    """Download the Germany PBF from Geofabrik with a progress bar."""
+def download_pbf(url: str, dest: str) -> None:
+    """Download a PBF from Geofabrik with a progress bar."""
     try:
         import requests
     except ImportError:
         sys.exit("requests not found. Install it with:  pip install requests")
 
-    print(f"Downloading {_GERMANY_PBF_URL} …")
-    print("(This is ~4 GB – may take a while on slow connections)")
-    with requests.get(_GERMANY_PBF_URL, stream=True, timeout=60) as r:
+    print(f"Downloading {url} …")
+    print("(Large countries like Germany/France are several GB – this may take a while)")
+    with requests.get(url, stream=True, timeout=60) as r:
         r.raise_for_status()
         total = int(r.headers.get("content-length", 0))
         downloaded = 0
@@ -415,82 +478,165 @@ def download_pbf(dest: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Entry point
+# About-sheet date update
 # ---------------------------------------------------------------------------
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Convert an OSM PBF file to a VeloSpot Room-compatible SQLite database."
-    )
-    parser.add_argument(
-        "--pbf",
-        default="germany-latest.osm.pbf",
-        help="Path to the input OSM PBF file (default: germany-latest.osm.pbf). "
-             "If the file does not exist, it will be downloaded from Geofabrik.",
-    )
-    parser.add_argument(
-        "--out",
-        default=os.path.join(
-            os.path.dirname(__file__),
-            "..", "app", "src", "main", "assets", "bike_parking_germany.db"
-        ),
-        help="Output SQLite database path "
-             "(default: ../app/src/main/assets/bike_parking_germany.db).",
-    )
-    args = parser.parse_args()
+def update_about_dates(processed: list[str], today: str) -> None:
+    """
+    Rewrite the `DATA_DATE_*` constants on the in-app About sheet so the
+    displayed "data status" matches the freshly generated datasets.
 
-    pbf_path = args.pbf
-    out_path = os.path.normpath(args.out)
+    Only the countries in *processed* are touched.
+    """
+    if not os.path.exists(_ABOUT_SHEET):
+        print(f"  ! About sheet not found at {_ABOUT_SHEET} – skipping date update.")
+        return
 
-    # Download if PBF not present
-    if not os.path.exists(pbf_path):
-        print(f"PBF file '{pbf_path}' not found.")
-        answer = input("Download germany-latest.osm.pbf from Geofabrik? [y/N] ").strip().lower()
-        if answer != "y":
-            sys.exit("Aborted.")
-        download_pbf(pbf_path)
+    with open(_ABOUT_SHEET, "r", encoding="utf-8") as f:
+        content = f.read()
 
-    # Ensure assets directory exists
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    updated = content
+    for country in processed:
+        const = COUNTRIES[country]["about_const"]
+        pattern = re.compile(rf'(private const val {const} = ")[^"]*(")')
+        updated, n = pattern.subn(rf'\g<1>{today}\g<2>', updated)
+        if n == 0:
+            print(f"  ! Could not find constant {const} in About sheet.")
+        else:
+            print(f"  Updated {const} → {today}")
 
-    # Try to use osmium-tool for a fast pre-filter pass
+    if updated != content:
+        with open(_ABOUT_SHEET, "w", encoding="utf-8") as f:
+            f.write(updated)
+        print(f"About sheet dates updated: {_ABOUT_SHEET}")
+
+
+# ---------------------------------------------------------------------------
+# Per-country processing
+# ---------------------------------------------------------------------------
+
+def process_country(country: str, pbf_override: Optional[str], keep_pbf: bool) -> bool:
+    """Download (if needed), parse and write the asset DB for one country.
+
+    Returns True on success.
+    """
+    cfg = COUNTRIES[country]
+    print("\n" + "=" * 72)
+    print(f"Country: {country.upper()}")
+    print("=" * 72)
+
+    downloaded_here = False
+    if pbf_override:
+        pbf_path = pbf_override
+        if not os.path.exists(pbf_path):
+            print(f"  ! Provided --pbf '{pbf_path}' does not exist – skipping {country}.")
+            return False
+    else:
+        pbf_path = os.path.join(_SCRIPT_DIR, f"{country}-latest.osm.pbf")
+        if not os.path.exists(pbf_path):
+            download_pbf(cfg["url"], pbf_path)
+            downloaded_here = True
+        else:
+            print(f"  Using existing PBF: {pbf_path}")
+
+    out_path = os.path.join(_ASSETS_DIR, cfg["db"])
+    os.makedirs(_ASSETS_DIR, exist_ok=True)
+
     parse_path, is_temp = prefilter_pbf(pbf_path)
-
     try:
-        # Parse
         pbf_size_mb = os.path.getsize(parse_path) / 1_048_576
         print(f"Parsing  {parse_path}  ({pbf_size_mb:.0f} MB)\n")
 
         start = time.time()
-
-        # Fast path: C++-level TagFilter (only Python-calls for matching nodes)
         use_fast = hasattr(osmium, "FileProcessor") and hasattr(osmium, "filter")
+        rows: list[tuple] = []
         if use_fast:
             print("Strategy: FileProcessor + C++ TagFilter  (fast – no per-node Python overhead)")
             try:
-                rows = parse_fast(parse_path)
+                rows = parse_fast(parse_path, cfg["source_layer"])
             except Exception as e:
                 print(f"  Fast path failed ({e}), falling back …")
                 use_fast = False
 
         if not use_fast:
             print("Strategy: SimpleHandler  (slow – Python called for every node)")
-            print("Progress is printed every 500 000 nodes – Germany has ~900 M nodes total.\n")
-            rows = parse_slow(parse_path)
+            print("Progress is printed every 500 000 nodes.\n")
+            rows = parse_slow(parse_path, cfg["source_layer"])
 
         elapsed = time.time() - start
         print(f"\nFinished in {elapsed:.1f}s  —  {len(rows):,} bicycle_parking features found.")
 
         if not rows:
-            sys.exit("No features found – check that the PBF file is a valid OSM extract.")
+            print(f"  ! No features found for {country} – asset not written.")
+            return False
 
-        # Write database
         create_database(out_path, rows)
-        print("Done. Place the file in app/src/main/assets/ and rebuild the app.")
-
+        return True
     finally:
         if is_temp and os.path.exists(parse_path):
             os.remove(parse_path)
+        if downloaded_here and not keep_pbf and os.path.exists(pbf_path):
+            os.remove(pbf_path)
+            print(f"  Removed downloaded PBF: {pbf_path}")
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Download the latest OSM extracts for Germany, France and "
+                    "Luxembourg, build the bundled VeloSpot Room databases and "
+                    "update the About-sheet data dates."
+    )
+    parser.add_argument(
+        "--countries",
+        nargs="+",
+        choices=list(COUNTRIES.keys()),
+        default=list(COUNTRIES.keys()),
+        help="Which countries to (re)build. Default: all bundled countries.",
+    )
+    parser.add_argument(
+        "--pbf",
+        default=None,
+        help="Path to a pre-downloaded PBF. Only valid together with a single "
+             "--countries value; otherwise each country is downloaded from Geofabrik.",
+    )
+    parser.add_argument(
+        "--keep-pbf",
+        action="store_true",
+        help="Keep downloaded PBF files instead of deleting them afterwards.",
+    )
+    parser.add_argument(
+        "--no-about-update",
+        action="store_true",
+        help="Do not modify the About-sheet data dates.",
+    )
+    args = parser.parse_args()
+
+    if args.pbf and len(args.countries) != 1:
+        sys.exit("--pbf can only be used with exactly one --countries value.")
+
+    today = date.today().strftime("%d.%m.%Y")
+    succeeded: list[str] = []
+
+    for country in args.countries:
+        ok = process_country(country, args.pbf, args.keep_pbf)
+        if ok:
+            succeeded.append(country)
+
+    print("\n" + "=" * 72)
+    if succeeded:
+        print(f"Successfully built: {', '.join(succeeded)}")
+        if not args.no_about_update:
+            print("\nUpdating About-sheet data dates …")
+            update_about_dates(succeeded, today)
+    else:
+        print("No datasets were built.")
+    print("=" * 72)
+    print("Done. Rebuild the app so the refreshed spots are bundled:")
+    print("  ./gradlew assembleDebug")
 
 
 if __name__ == "__main__":

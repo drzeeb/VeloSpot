@@ -215,6 +215,7 @@
     <string name="nav_voice_arrived">Vous êtes arrivé à destination</string>
     <string name="about_tagline">Trouvez des stationnements vélo &amp; naviguez-y.</string>
     <string name="about_website">Site web</string>
+    <string name="about_discord">Discord</string>
     <string name="about_data_status">État des données</string>
     <string name="about_country_germany">Allemagne</string>
     <string name="about_country_france">France</string>
