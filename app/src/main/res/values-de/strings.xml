@@ -185,6 +185,7 @@
     <string name="nav_voice_arrived">Sie haben Ihr Ziel erreicht</string>
     <string name="about_tagline">Fahrradparkplätze finden &amp; dorthin navigieren.</string>
     <string name="about_website">Webseite</string>
+    <string name="about_discord">Discord</string>
     <string name="about_data_status">Datenstand</string>
     <string name="about_country_germany">Deutschland</string>
     <string name="about_country_france">Frankreich</string>

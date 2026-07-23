@@ -288,6 +288,7 @@
     <!-- About sheet -->
     <string name="about_tagline">Find bike parking &amp; navigate there.</string>
     <string name="about_website">Website</string>
+    <string name="about_discord">Discord</string>
     <string name="about_data_status">Dataset status</string>
     <string name="about_country_germany">Germany</string>
     <string name="about_country_france">France</string>
