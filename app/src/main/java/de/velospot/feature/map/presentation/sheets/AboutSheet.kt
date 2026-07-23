@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,13 +40,14 @@ import de.velospot.feature.map.presentation.headingSemantics
 private const val APP_URL = "https://velospot.app"
 private const val PRIVACY_URL = "https://velospot.app/privacy"
 private const val SUPPORT_URL = "https://buymeacoffee.com/velospot"
+private const val DISCORD_URL = "https://discord.velospot.app"
 
 /** Release date of the bundled Germany OSM parking dataset. */
-private const val DATA_DATE_GERMANY = "08.08.2026"
+private const val DATA_DATE_GERMANY = "23.07.2026"
 
 /** Release date of the bundled France & Luxembourg OSM parking datasets. */
-private const val DATA_DATE_FRANCE = "18.06.2026"
-private const val DATA_DATE_LUXEMBOURG = "18.06.2026"
+private const val DATA_DATE_FRANCE = "23.07.2026"
+private const val DATA_DATE_LUXEMBOURG = "23.07.2026"
 
 /**
  * "About VeloSpot" bottom sheet, reachable from the menu.
@@ -96,6 +98,16 @@ internal fun AboutSheet(
                 title = stringResource(id = R.string.about_website),
                 subtitle = "velospot.app",
                 onClick = { openUrl(APP_URL) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            // Discord community link
+            AboutLinkRow(
+                icon = Icons.Default.Groups,
+                title = stringResource(id = R.string.about_discord),
+                subtitle = "discord.velospot.app",
+                onClick = { openUrl(DISCORD_URL) }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))

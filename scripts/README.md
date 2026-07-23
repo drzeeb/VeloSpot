@@ -29,13 +29,16 @@ python analyze_recorded_rides.py --db rides.db --limit 3
 
 # OSM Bicycle Parking Extractor
 
-Extracts all `amenity=bicycle_parking` nodes from an OpenStreetMap PBF file and writes
-them into a pre-populated SQLite database that matches the VeloSpot Room schema v3.
+Extracts all `amenity=bicycle_parking` nodes from OpenStreetMap PBF files and writes
+them into pre-populated SQLite databases that match the VeloSpot Room schema v3.
 
-Place the generated file at:
+By default the script rebuilds **all bundled countries — Germany, France and
+Luxembourg** — in one run and writes them to:
 
 ```
 app/src/main/assets/bike_parking_germany.db
+app/src/main/assets/bike_parking_france.db
+app/src/main/assets/bike_parking_luxembourg.db
 ```
 
 ## Requirements
@@ -49,52 +52,61 @@ pip install osmium requests
 
 ## Usage
 
-### 1. Obtain the Germany PBF (optional)
-
-The script can download the file automatically (~4 GB):
+### Refresh everything (recommended)
 
 ```bash
 python extract_osm_parking.py
-# Prompts: "Download germany-latest.osm.pbf from Geofabrik? [y/N]"
 ```
 
-Or download it manually from https://download.geofabrik.de/europe/germany-latest.osm.pbf
-and pass the path explicitly:
+For each configured country this:
+
+1. downloads the **latest** Geofabrik extract (if not already present locally),
+2. filters the `amenity=bicycle_parking` nodes via the fast C++ path,
+3. writes the country's asset DB into `app/src/main/assets/`,
+4. deletes the multi-GB PBF download afterwards, and finally
+5. rewrites the `DATA_DATE_*` constants on the in-app About sheet
+   (`AboutSheet.kt`) to today's date, so the displayed "data status" always
+   matches what was just built.
+
+### Useful options
 
 ```bash
-python extract_osm_parking.py --pbf /path/to/germany-latest.osm.pbf
+# Only rebuild a subset of countries:
+python extract_osm_parking.py --countries germany luxembourg
+
+# Reuse an already-downloaded PBF for a single country:
+python extract_osm_parking.py --countries germany --pbf germany-latest.osm.pbf
+
+# Keep the downloaded PBF files instead of deleting them:
+python extract_osm_parking.py --keep-pbf
+
+# Do not touch the About-sheet dates:
+python extract_osm_parking.py --no-about-update
 ```
 
-### 2. Generate the database
+PBF extracts are downloaded from `https://download.geofabrik.de/europe/<country>-latest.osm.pbf`.
 
-```bash
-python extract_osm_parking.py \
-  --pbf germany-latest.osm.pbf \
-  --out ../app/src/main/assets/bike_parking_germany.db
-```
-
-Default paths are set so that a plain invocation from the `scripts/` directory works without arguments.
-
-### 3. Rebuild the app
+### Rebuild the app
 
 ```bash
 # From the project root:
 ./gradlew assembleDebug
 ```
 
-Room copies the asset into the app's data directory on the very first launch.
+Room copies the assets into the app's data directory on the very first launch.
 
 ## Runtime & File Size
 
 | Step | Typical Duration |
 |------|-----------------|
-| Download Germany PBF | 10–30 min (≈ 4 GB) |
-| Parsing (fast path — C++ TagFilter) | **< 2 min** |
-| Parsing (fallback — Python SimpleHandler) | 30–50 min |
+| Download Germany / France PBF | 10–30 min each (several GB) |
+| Download Luxembourg PBF | seconds (~45 MB) |
+| Parsing (fast path — C++ TagFilter) | **< 2 min** per country |
+| Parsing (fallback — Python SimpleHandler) | 30–50 min for large countries |
 | SQLite write | < 1 min |
 
-The generated database is typically **15–25 MB** for all of Germany
-(≈ 80 000–130 000 bicycle parking nodes).
+The generated databases are typically **15–25 MB** for large countries
+(≈ 100 000–160 000 bicycle parking nodes) and well under 1 MB for Luxembourg.
 
 ### Why only nodes?
 
@@ -131,11 +143,11 @@ with a progress line printed every 500 000 nodes.
 
 ## Database Updates
 
-Geofabrik updates the Germany extract daily. To refresh the bundled data:
+Geofabrik updates the country extracts daily. To refresh the bundled data:
 
-1. Download a fresh PBF
-2. Re-run the script
-3. Rebuild and redistribute the app
+1. Run `python extract_osm_parking.py` (downloads the latest PBFs, rebuilds all
+   asset DBs and bumps the About-sheet dates automatically)
+2. Rebuild and redistribute the app
 
 > **Important — database versioning**: Room's `createFromAsset` copies the asset
 > **only when the target database file does not yet exist** on the device.
