@@ -34,6 +34,16 @@ keystore.properties
 # Kotlin compiler artifacts
 .kotlin/
 
+# ---------------------------------------------------------------------------
+# scripts/ developer tooling artifacts – large downloads & throwaway output.
+# The OSM PBF extracts (several GB each) and the extractor run log are
+# regenerated on demand by scripts/extract_osm_parking.py and must never be
+# committed; only the generated app/src/main/assets/*.db belong in the repo.
+# ---------------------------------------------------------------------------
+scripts/__pycache__/
+scripts/*.osm.pbf
+scripts/extract_run.log
+
 # Generated Play Store marketing assets (regenerated on demand via the scripts
 # inside the folder) — keep the large rasterised PNG/JPG out of version control.
 /playstore
