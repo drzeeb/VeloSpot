@@ -71,6 +71,9 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - **🆕 Share a ride** — export a recorded ride as a slick "VeloSpot Wrapped" card for WhatsApp, Telegram & Instagram
 - **🆕 Pedalling cyclist avatar** — your live-location marker visibly pedals while you ride and plants a foot on the ground when you stop
 - **🆕 Find my bike** — save where you parked (auto-saved on navigation arrival) and navigate back to it later
+- **🆕 Plan, save & re-ride multi-waypoint routes** — build custom routes tap by tap, save them, and race your own **personal leaderboard** (a separate board for the forward and reversed direction), with a map preview and a per-direction digest of your best/average times
+- **🆕 Bike garage** — keep a profile per bike (name, brand, type, tyre size, weight…), see your ride history broken down per bike, and get one-time km-based **service reminders**
+- **🆕 Detailed ride analysis** — a full-screen analysis with an **animated map replay**, per-kilometre splits, categorised climbs, **best efforts** (fastest 1–100 km / furthest 1–60 min) and earned **achievement badges**
 - **🆕 Share any spot** as a universal OpenStreetMap link from the detail sheets
 - **🆕 Keep screen on** while navigating and recording (toggle); **accessibility** (TalkBack) improvements; legal notice (Impressum) in-app and on the website
 

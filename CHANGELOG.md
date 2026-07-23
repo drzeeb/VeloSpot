@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v1.0.25] - 2026-07-23
+
 ### Added
 - **Discord community link on the About sheet** — the *About VeloSpot* sheet gains a **Discord** row (a community/groups icon) linking to https://discord.velospot.app, opened externally in the browser via `ACTION_VIEW` (no in-app integration). Placed right under the website link and localised across all eight supported languages (`about_discord`). Play-Store- and F-Droid-safe (a plain external link adds no proprietary dependency).
 - **Rounded 3D buildings** — a new toggle in *Settings → Appearance & map* draws the extruded 3D buildings with softly **rounded corners** instead of hard, square edges, for a gentler look on the tilted 3D map (idle and navigation). It's **off by default** (sharp corners) and the chosen state is persisted via the DataStore-backed `MapSettingsRepository` (`roundedBuildingsEnabled`, `MapViewModel.roundedBuildingsEnabled`). Built on MapLibre 13.4.0's new `fill-extrusion-rounded-corner-distance` style property (`setBuildingRoundedCorners` in `MapStyleLayers.kt`), applied through `NavigationManager.setRoundedBuildings` and re-asserted after every style (re)load — including dark-mode reloads that rebuild the extrusion layer. Localised across all eight supported languages (`menu_rounded_buildings`).
