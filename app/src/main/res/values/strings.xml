@@ -389,6 +389,17 @@
     <string name="offline_routing_success_title">Offline navigation ready!</string>
     <string name="offline_routing_success_subtitle">Routes are now calculated on-device – better cycling paths, no internet needed.</string>
 
+    <!-- Offline map tiles (the visible vector map, cached for a region) -->
+    <string name="menu_offline_map_activate">Download offline map</string>
+    <string name="menu_offline_map_active">Offline map downloaded</string>
+    <string name="menu_offline_map_downloading">Downloading map…</string>
+    <string name="offline_map_setup_title">Offline map</string>
+    <string name="offline_map_setup_description">Save the map itself for offline use, so streets and labels still show without a connection. This complements offline routing, which only stores the route data.</string>
+    <string name="offline_map_size_hint">Tip: use Wi-Fi. Your region is a few dozen MB; the whole area is much larger.</string>
+    <string name="offline_map_confirm_region">Download my region</string>
+    <string name="offline_map_confirm_full">Download whole area (Germany, France &amp; Luxembourg)</string>
+    <string name="offline_map_delete">Delete offline map</string>
+
     <!-- Profile sheet -->
     <string name="offline_routing_profile_title">Routing Profile</string>
     <string name="offline_routing_profile_subtitle">Tap a profile to change. Deactivate below to switch back to online routing.</string>

@@ -45,7 +45,16 @@
     <string name="profile_gravel_desc">Para bicicletas gravel en superficies mixtas</string>
     <string name="menu_offline_routing_activate">Activar navegación sin conexión</string>
     <string name="menu_offline_routing_downloading">Descargando datos…</string>
-    <string name="menu_offline_routing_active">Sin conexión: %1$s ▸</string>
+    <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_map_activate">Descargar mapa sin conexión</string>
+    <string name="menu_offline_map_active">Mapa sin conexión descargado</string>
+    <string name="menu_offline_map_downloading">Descargando el mapa…</string>
+    <string name="offline_map_setup_title">Mapa sin conexión</string>
+    <string name="offline_map_setup_description">Guarda el propio mapa para usarlo sin conexión, de modo que las calles y las etiquetas se sigan mostrando sin red. Esto complementa la navegación sin conexión, que solo almacena los datos de la ruta.</string>
+    <string name="offline_map_size_hint">Consejo: usa Wi-Fi. Tu región ocupa unas decenas de MB; toda el área es mucho mayor.</string>
+    <string name="offline_map_confirm_region">Descargar mi región</string>
+    <string name="offline_map_confirm_full">Descargar toda el área (Alemania, Francia y Luxemburgo)</string>
+    <string name="offline_map_delete">Eliminar mapa sin conexión</string>
     <string name="offline_routing_setup_title">Navegación sin conexión</string>
     <string name="offline_routing_setup_description">Las rutas se calculan en tu dispositivo sin internet. Los datos del mapa se descargan una sola vez.</string>
     <string name="offline_routing_benefit_1">Mejor calidad – prefiere carriles bici dedicados</string>

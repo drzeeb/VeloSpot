@@ -45,7 +45,16 @@
     <string name="profile_gravel_desc">Pour vélos gravel sur surfaces mixtes</string>
     <string name="menu_offline_routing_activate">Activer la navigation hors ligne</string>
     <string name="menu_offline_routing_downloading">Téléchargement des données…</string>
-    <string name="menu_offline_routing_active">Hors ligne\u00a0: %1$s ▸</string>
+    <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_map_activate">Télécharger la carte hors ligne</string>
+    <string name="menu_offline_map_active">Carte hors ligne téléchargée</string>
+    <string name="menu_offline_map_downloading">Téléchargement de la carte…</string>
+    <string name="offline_map_setup_title">Carte hors ligne</string>
+    <string name="offline_map_setup_description">Enregistrez la carte elle-même pour une utilisation hors ligne, afin que les rues et les libellés s\'affichent même sans connexion. Cela complète la navigation hors ligne, qui ne stocke que les données d\'itinéraire.</string>
+    <string name="offline_map_size_hint">Conseil : utilisez le Wi-Fi. Votre région fait quelques dizaines de Mo ; toute la zone est bien plus volumineuse.</string>
+    <string name="offline_map_confirm_region">Télécharger ma région</string>
+    <string name="offline_map_confirm_full">Télécharger toute la zone (Allemagne, France &amp; Luxembourg)</string>
+    <string name="offline_map_delete">Supprimer la carte hors ligne</string>
     <string name="offline_routing_setup_title">Navigation hors ligne</string>
     <string name="offline_routing_setup_description">Les itinéraires sont calculés sur votre appareil, sans connexion. Les données cartographiques sont téléchargées une seule fois.</string>
     <string name="offline_routing_benefit_1">Meilleure qualité – préfère les pistes cyclables dédiées</string>

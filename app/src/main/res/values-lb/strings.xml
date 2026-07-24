@@ -46,6 +46,15 @@
     <string name="menu_offline_routing_activate">Offline Navigatioun aktivéieren</string>
     <string name="menu_offline_routing_downloading">Kaartdaten ginn erofgelueden…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_map_activate">Offline-Kaart eroflueden</string>
+    <string name="menu_offline_map_active">Offline-Kaart erofgelueden</string>
+    <string name="menu_offline_map_downloading">Kaart gëtt erofgelueden…</string>
+    <string name="offline_map_setup_title">Offline-Kaart</string>
+    <string name="offline_map_setup_description">Späicher d\'Kaart selwer fir d\'Offline-Notzung, sou datt Stroossen a Beschrëftungen och ouni Verbindung ugewise ginn. Dat ergänzt d\'Offline-Navigatioun, déi nëmmen d\'Routendaten späichert.</string>
+    <string name="offline_map_size_hint">Tipp: WLAN notzen. Deng Regioun sinn e puer Dutzend MB; dat ganzt Gebitt ass vill méi grouss.</string>
+    <string name="offline_map_confirm_region">Meng Regioun eroflueden</string>
+    <string name="offline_map_confirm_full">Ganzt Gebitt eroflueden (Däitschland, Frankräich &amp; Lëtzebuerg)</string>
+    <string name="offline_map_delete">Offline-Kaart läschen</string>
     <string name="offline_routing_setup_title">Offline Navigatioun</string>
     <string name="offline_routing_setup_description">Strecken gi richteg op ärem Apparat berechent ouni Internet. Kaartdaten gi just eemol erofgelueden.</string>
     <string name="offline_routing_benefit_1">Besser Qualitéit – bevorzugt Vëlosweeër</string>

@@ -49,6 +49,8 @@ internal fun MapBottomSheets(
     val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
     val showProfileSheet     by viewModel.showProfileSheet.collectAsStateWithLifecycle()
     val showWifiWarning      by viewModel.showWifiWarning.collectAsStateWithLifecycle()
+    val showOfflineMapSetupSheet by viewModel.showOfflineMapSetupSheet.collectAsStateWithLifecycle()
+    val showOfflineMapWifiWarning by viewModel.showOfflineMapWifiWarning.collectAsStateWithLifecycle()
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
@@ -250,6 +252,21 @@ internal fun MapBottomSheets(
         WifiWarningDialog(
             onConfirm = viewModel::confirmDownloadOnMobileData,
             onDismiss = viewModel::dismissWifiWarning
+        )
+    }
+
+    if (showOfflineMapSetupSheet) {
+        OfflineMapSetupSheet(
+            onConfirmRegion = viewModel::confirmOfflineMapRegion,
+            onConfirmFull   = viewModel::confirmOfflineMapFull,
+            onDismiss       = viewModel::dismissOfflineMapSetupSheet
+        )
+    }
+
+    if (showOfflineMapWifiWarning) {
+        WifiWarningDialog(
+            onConfirm = viewModel::confirmOfflineMapOnMobileData,
+            onDismiss = viewModel::dismissOfflineMapWifiWarning
         )
     }
 
