@@ -122,6 +122,7 @@ fun MainMapScreen(
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val navigationProgress   by viewModel.navigationProgress.collectAsStateWithLifecycle()
     val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
+    val offlineMapUiState    by viewModel.offlineMapUiState.collectAsStateWithLifecycle()
     val searchQuery          by viewModel.searchQuery.collectAsStateWithLifecycle()
     val searchResults        by viewModel.searchResults.collectAsStateWithLifecycle()
     val isSearching          by viewModel.isSearching.collectAsStateWithLifecycle()
@@ -763,6 +764,7 @@ fun MainMapScreen(
             currentLanguageFlag = currentLanguageFlag,
             isExpanded         = screenUiState.isSettingsSheetVisible,
             offlineRoutingUiState = offlineRoutingUiState,
+            offlineMapUiState  = offlineMapUiState,
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
             keepScreenOnEnabled = keepScreenOnEnabled,
@@ -784,6 +786,8 @@ fun MainMapScreen(
             onOpenNavigationView  = screenUiState::openNavigationView,
             onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
             onOpenProfileSheet    = viewModel::openProfileSheet,
+            onActivateOfflineMap  = viewModel::requestOfflineMapSetup,
+            onDeleteOfflineMap    = viewModel::deleteOfflineMap,
             onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
             onShowParkedBike      = viewModel::showParkedBike,
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },

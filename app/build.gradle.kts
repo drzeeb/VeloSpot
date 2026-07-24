@@ -193,6 +193,9 @@ kover {
                     "*RideShareCardRenderer",
                     "*RideRouteMapSnapshotter",
                     "*MapInitializer",
+                    // Offline map tiles download is pure MapLibre OfflineManager glue
+                    // (its pure region maths is covered by OfflineMapRegionsTest).
+                    "*OfflineMapTilesManager",
                 )
                 annotatedBy(
                     "androidx.compose.runtime.Composable",

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.feature.map.presentation.MapMenuCardActions
 import de.velospot.feature.map.presentation.MapMenuCardState
+import de.velospot.feature.map.presentation.OfflineMapUiState
 import de.velospot.feature.map.presentation.OfflineRoutingUiState
 import de.velospot.feature.map.presentation.headingSemantics
 
@@ -308,6 +310,29 @@ internal fun NavigationRoutingSheet(
                     onClick = {}
                 )
             }
+
+            // ── Offline map tiles (the visible vector map, cached for a region) ──
+            when (val mapState = state.offlineMapUiState) {
+                is OfflineMapUiState.Disabled -> SettingsRow(
+                    icon = Icons.Default.Map,
+                    title = stringResource(R.string.menu_offline_map_activate),
+                    onClick = actions.onActivateOfflineMap
+                )
+                is OfflineMapUiState.Downloading -> OfflineMapDownloadProgressRow(mapState)
+                is OfflineMapUiState.Ready -> SettingsRow(
+                    icon = Icons.Default.Map,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    title = stringResource(R.string.menu_offline_map_active),
+                    onClick = actions.onDeleteOfflineMap,
+                    trailing = {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.offline_map_delete),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                )
+            }
             Spacer(Modifier.height(8.dp))
         }
     }
@@ -371,6 +396,59 @@ private fun OfflineDownloadProgressRow(state: OfflineRoutingUiState.Downloading)
 
 /** Formats a byte count as a one-decimal megabyte string (without the unit). */
 private fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
+
+/**
+ * Inline offline-**map** download progress, mirroring [OfflineDownloadProgressRow]:
+ * a labelled row with a live MB counter and a determinate/indeterminate bar, shown
+ * right inside the Navigation & routing sheet so it can stay open during the download.
+ */
+@Composable
+private fun OfflineMapDownloadProgressRow(state: OfflineMapUiState.Downloading) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            Spacer(Modifier.size(16.dp))
+            Text(
+                text = stringResource(R.string.menu_offline_map_downloading),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f)
+            )
+            if (state.downloadedBytes > 0L) {
+                Text(
+                    text = "${formatMb(state.downloadedBytes)} MB",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (state.totalRegions > 1) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(
+                    R.string.offline_routing_file_of,
+                    state.regionIndex,
+                    state.totalRegions
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 40.dp)
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        if (state.fraction >= 0f) {
+            LinearProgressIndicator(
+                progress = { state.fraction },
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
 
 @Composable
 private fun SettingsSectionHeader(text: String) {    Text(

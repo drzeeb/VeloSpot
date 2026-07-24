@@ -46,6 +46,15 @@
     <string name="menu_offline_routing_activate">Offline navigatie activeren</string>
     <string name="menu_offline_routing_downloading">Kaartdata downloaden…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_map_activate">Offline kaart downloaden</string>
+    <string name="menu_offline_map_active">Offline kaart gedownload</string>
+    <string name="menu_offline_map_downloading">Kaart wordt gedownload…</string>
+    <string name="offline_map_setup_title">Offline kaart</string>
+    <string name="offline_map_setup_description">Sla de kaart zelf op voor offline gebruik, zodat straten en labels ook zonder verbinding zichtbaar blijven. Dit vult offline navigatie aan, die alleen de routegegevens opslaat.</string>
+    <string name="offline_map_size_hint">Tip: gebruik wifi. Jouw regio is enkele tientallen MB; het hele gebied is veel groter.</string>
+    <string name="offline_map_confirm_region">Mijn regio downloaden</string>
+    <string name="offline_map_confirm_full">Hele gebied downloaden (Duitsland, Frankrijk &amp; Luxemburg)</string>
+    <string name="offline_map_delete">Offline kaart verwijderen</string>
     <string name="offline_routing_setup_title">Offline navigatie</string>
     <string name="offline_routing_setup_description">Routes worden op het apparaat berekend zonder internet. Kaartdata wordt eenmalig gedownload.</string>
     <string name="offline_routing_benefit_1">Betere kwaliteit – geeft voorkeur aan fietspaden</string>

@@ -46,6 +46,15 @@
     <string name="menu_offline_routing_activate">Ativar navegação offline</string>
     <string name="menu_offline_routing_downloading">A descarregar dados…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_map_activate">Baixar mapa offline</string>
+    <string name="menu_offline_map_active">Mapa offline baixado</string>
+    <string name="menu_offline_map_downloading">A baixar o mapa…</string>
+    <string name="offline_map_setup_title">Mapa offline</string>
+    <string name="offline_map_setup_description">Guarde o próprio mapa para uso offline, para que ruas e rótulos continuem a aparecer sem ligação. Isto complementa a navegação offline, que apenas guarda os dados da rota.</string>
+    <string name="offline_map_size_hint">Dica: use Wi-Fi. A sua região tem algumas dezenas de MB; a área toda é muito maior.</string>
+    <string name="offline_map_confirm_region">Baixar a minha região</string>
+    <string name="offline_map_confirm_full">Baixar toda a área (Alemanha, França e Luxemburgo)</string>
+    <string name="offline_map_delete">Eliminar mapa offline</string>
     <string name="offline_routing_setup_title">Navegação offline</string>
     <string name="offline_routing_setup_description">As rotas são calculadas no dispositivo sem internet. Os dados do mapa são descarregados uma única vez.</string>
     <string name="offline_routing_benefit_1">Melhor qualidade – prefere ciclovias dedicadas</string>

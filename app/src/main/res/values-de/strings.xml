@@ -46,6 +46,15 @@
     <string name="menu_offline_routing_activate">Offline Navigation aktivieren</string>
     <string name="menu_offline_routing_downloading">Kartendaten werden geladen…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_map_activate">Offline-Karte herunterladen</string>
+    <string name="menu_offline_map_active">Offline-Karte geladen</string>
+    <string name="menu_offline_map_downloading">Karte wird geladen…</string>
+    <string name="offline_map_setup_title">Offline-Karte</string>
+    <string name="offline_map_setup_description">Speichere die Karte selbst für die Offline-Nutzung, damit Straßen und Beschriftungen auch ohne Verbindung angezeigt werden. Das ergänzt das Offline-Routing, das nur die Routendaten speichert.</string>
+    <string name="offline_map_size_hint">Tipp: WLAN nutzen. Deine Region sind ein paar Dutzend MB; das ganze Gebiet ist deutlich größer.</string>
+    <string name="offline_map_confirm_region">Meine Region herunterladen</string>
+    <string name="offline_map_confirm_full">Ganzes Gebiet herunterladen (Deutschland, Frankreich &amp; Luxemburg)</string>
+    <string name="offline_map_delete">Offline-Karte löschen</string>
     <string name="offline_routing_setup_title">Offline Navigation</string>
     <string name="offline_routing_setup_description">Routen werden direkt auf deinem Gerät berechnet – kein Internet nötig. Kartendaten für deine Region werden einmalig heruntergeladen.</string>
     <string name="offline_routing_benefit_1">Bessere Routenqualität – bevorzugt dedizierte Radwege</string>

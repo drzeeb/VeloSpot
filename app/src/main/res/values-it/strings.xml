@@ -46,6 +46,15 @@
     <string name="menu_offline_routing_activate">Attiva navigazione offline</string>
     <string name="menu_offline_routing_downloading">Download dati in corso…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_map_activate">Scarica mappa offline</string>
+    <string name="menu_offline_map_active">Mappa offline scaricata</string>
+    <string name="menu_offline_map_downloading">Download della mappa…</string>
+    <string name="offline_map_setup_title">Mappa offline</string>
+    <string name="offline_map_setup_description">Salva la mappa stessa per l\'uso offline, così strade ed etichette restano visibili anche senza connessione. Completa la navigazione offline, che memorizza solo i dati del percorso.</string>
+    <string name="offline_map_size_hint">Consiglio: usa il Wi-Fi. La tua regione è di qualche decina di MB; l\'intera area è molto più grande.</string>
+    <string name="offline_map_confirm_region">Scarica la mia regione</string>
+    <string name="offline_map_confirm_full">Scarica tutta l\'area (Germania, Francia e Lussemburgo)</string>
+    <string name="offline_map_delete">Elimina mappa offline</string>
     <string name="offline_routing_setup_title">Navigazione offline</string>
     <string name="offline_routing_setup_description">I percorsi vengono calcolati sul dispositivo senza internet. I dati cartografici vengono scaricati una sola volta.</string>
     <string name="offline_routing_benefit_1">Qualità migliore – preferisce piste ciclabili dedicate</string>
