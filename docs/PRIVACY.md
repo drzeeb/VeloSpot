@@ -71,7 +71,7 @@ When you use certain features, the app establishes connections to external servi
 
 | Service | Purpose | Transmitted Data | Provider / Privacy |
 | --- | --- | --- | --- |
-| **OpenFreeMap** | Loading vector map tiles (map view & ride-share map snapshot) | Requested map area, IP address | [openfreemap.org](https://openfreemap.org/) |
+| **OpenFreeMap** | Loading vector map tiles (map view & ride-share map snapshot), and — if you enable the optional *Offline map* — pre-downloading the tiles for a chosen region | Requested map area, IP address | [openfreemap.org](https://openfreemap.org/) |
 | **Nominatim (OpenStreetMap)** | Address search & address resolution (geocoding) | Search term or coordinates, IP address | [OSM Privacy Policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) |
 | **OSRM** | Calculating routes (online fallback, if used) | Start/destination coordinates, IP address | [project-osrm.org](https://project-osrm.org/) |
 | **BRouter** | One-time download of offline routing data (map-segment tiles) | Requested 5°×5° tile (≈ your region), IP address | [brouter.de](https://brouter.de/) |

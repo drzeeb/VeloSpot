@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Offline map — download the *visible* map, not just the route** — VeloSpot already routed offline (the BRouter `.rd5` segments), but the **map image itself** still streamed live from OpenFreeMap, so a rider who lost signal in the countryside got a working route on top of a **blank grey map**. A new **Offline map** entry in *Settings → Navigation & routing* now pre-downloads the visible vector map (tiles + fonts + sprite) for a region, so streets and labels keep rendering with no connection. Like the routing segments, **nothing is bundled into the APK** — it's an on-demand download with two choices, **Download my region** (a ~40 km box around your position at street-level zoom, a few dozen MB) and **Download whole area** (Germany, France & Luxembourg in resumable chunks at a lower zoom), each shown with the same inline progress bar + live MB counter as the offline-routing download and gated by the shared Wi-Fi warning on metered data. Built entirely on MapLibre's own `OfflineManager`, so it adds **no new dependency** (F-Droid- and reproducibility-safe) and, once cached, MapLibre serves the tiles automatically when offline; because the light and dark styles share the same OpenFreeMap tiles/fonts, caching once makes **both** themes work offline. A **Delete offline map** action frees the storage. Mirrors the offline-routing feature end to end — a pure, JVM-unit-tested `OfflineMapRegions` (bbox maths, country coverage, progress fraction, covered by `OfflineMapRegionsTest`), an `OfflineMapTilesManager` MapLibre wrapper, an `OfflineMapController` and an `OfflineMapSetupSheet`, wired through `MapViewModel`. Localised across all eight supported languages.
+
 ## [v1.0.25] - 2026-07-23
 
 ### Added

@@ -53,6 +53,7 @@ class MapViewModelTest {
 
     private lateinit var mockContext: Context
     private lateinit var mockSegmentManager: BRouterSegmentManager
+    private lateinit var mockOfflineMapTilesManager: de.velospot.data.maptiles.OfflineMapTilesManager
     private lateinit var mockNominatimGeocoder: NominatimGeocoder
 
     /**
@@ -83,6 +84,7 @@ class MapViewModelTest {
         Dispatchers.setMain(testDispatcher)
         mockContext = mock()
         mockSegmentManager = mock()
+        mockOfflineMapTilesManager = mock()
         mockNominatimGeocoder = mock()
 
         // SharedPreferences stub so OfflineRoutingPreferences doesn't crash
@@ -138,6 +140,7 @@ class MapViewModelTest {
             locationController    = locationController,
             routingRepository     = routingRepository,
             segmentManager        = mockSegmentManager,
+            offlineMapTilesManager = mockOfflineMapTilesManager,
             nominatimGeocoder     = mockNominatimGeocoder,
             recordingManager      = de.velospot.core.tracking.RideRecordingManager(
                 context = mockContext,

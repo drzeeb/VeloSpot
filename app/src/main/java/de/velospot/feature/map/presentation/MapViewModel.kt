@@ -98,6 +98,7 @@ class MapViewModel @Inject constructor(
     private val locationController: LocationController,
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
+    private val offlineMapTilesManager: de.velospot.data.maptiles.OfflineMapTilesManager,
     private val nominatimGeocoder: NominatimGeocoder,
     private val recordingManager: RideRecordingManager,
     private val gpxFileStore: GpxFileStore,
@@ -1015,6 +1016,26 @@ class MapViewModel @Inject constructor(
     val showProfileSheet: StateFlow<Boolean> = offlineRouting.showProfileSheet
     val showWifiWarning: StateFlow<Boolean> = offlineRouting.showWifiWarning
 
+    // ── Offline map tiles ─────────────────────────────────────────────────────
+
+    /**
+     * Owns the offline **map tiles** concern — pre-downloading the visible vector map
+     * so it renders without a network, complementing the offline routing. Mirrors the
+     * offline-routing controller; the light style URL is cached (dark reuses the very
+     * same OpenFreeMap tiles).
+     */
+    private val offlineMap = de.velospot.feature.map.presentation.offline.OfflineMapController(
+        scope = viewModelScope,
+        context = context,
+        tilesManager = offlineMapTilesManager,
+        styleUrl = de.velospot.feature.map.presentation.MAP_STYLE_URL_LIGHT,
+        currentLocation = { _userLocation.value },
+        onDownloadError = { error -> navigationController.showError(error) }
+    )
+    val offlineMapUiState: StateFlow<OfflineMapUiState> = offlineMap.uiState
+    val showOfflineMapSetupSheet: StateFlow<Boolean> = offlineMap.showSetupSheet
+    val showOfflineMapWifiWarning: StateFlow<Boolean> = offlineMap.showWifiWarning
+
     // ── Init ──────────────────────────────────────────────────────────────────
 
     private var viewportJob: Job? = null
@@ -1267,6 +1288,16 @@ class MapViewModel @Inject constructor(
     fun confirmDownloadOnMobileData() = offlineRouting.confirmDownloadOnMobileData()
     fun confirmOfflineRoutingSetup()  = offlineRouting.confirmSetup(full = false)
     fun confirmOfflineRoutingFullSetup() = offlineRouting.confirmSetup(full = true)
+
+    // ── Offline map tiles ─────────────────────────────────────────────────────
+
+    fun requestOfflineMapSetup()          = offlineMap.requestSetup()
+    fun dismissOfflineMapSetupSheet()     = offlineMap.dismissSetupSheet()
+    fun confirmOfflineMapRegion()         = offlineMap.confirmSetup(full = false)
+    fun confirmOfflineMapFull()           = offlineMap.confirmSetup(full = true)
+    fun dismissOfflineMapWifiWarning()    = offlineMap.dismissWifiWarning()
+    fun confirmOfflineMapOnMobileData()   = offlineMap.confirmDownloadOnMobileData()
+    fun deleteOfflineMap()                = offlineMap.deleteOfflineMap()
 
     /**
      * Switches the active routing profile. Persisting + state live in the offline

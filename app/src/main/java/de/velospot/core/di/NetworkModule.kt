@@ -219,6 +219,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideOfflineMapTilesManager(
+        @ApplicationContext context: Context
+    ): de.velospot.data.maptiles.OfflineMapTilesManager =
+        de.velospot.data.maptiles.OfflineMapTilesManager(context)
+
+    @Provides
+    @Singleton
     fun provideBRouterEngine(
         @ApplicationContext context: Context,
         segmentManager: BRouterSegmentManager

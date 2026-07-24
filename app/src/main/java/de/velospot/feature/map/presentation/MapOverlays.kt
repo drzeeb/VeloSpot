@@ -98,6 +98,8 @@ internal data class MapMenuCardState(
     val currentLanguageFlag: String,
     val isExpanded: Boolean,
     val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled,
+    /** State of the offline **map tiles** download (visible vector map pre-cache). */
+    val offlineMapUiState: OfflineMapUiState = OfflineMapUiState.Disabled,
     /** Whether a bike is currently parked — switches the menu entry park ↔ show. */
     val isBikeParked: Boolean = false,
     /** Whether spoken turn-by-turn voice guidance (TTS) is enabled. */
@@ -126,6 +128,8 @@ internal data class MapMenuCardActions(
     val onOpenNavigationView: () -> Unit = {},
     val onActivateOfflineRouting: () -> Unit = {},
     val onOpenProfileSheet: () -> Unit = {},
+    val onActivateOfflineMap: () -> Unit = {},
+    val onDeleteOfflineMap: () -> Unit = {},
     val onParkBikeHere: () -> Unit = {},
     val onShowParkedBike: () -> Unit = {},
     val onToggleVoiceGuidance: () -> Unit = {},
