@@ -56,8 +56,7 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.feature.map.presentation.MapMenuCardActions
 import de.velospot.feature.map.presentation.MapMenuCardState
-import de.velospot.feature.map.presentation.OfflineMapUiState
-import de.velospot.feature.map.presentation.OfflineRoutingUiState
+import de.velospot.feature.map.presentation.OfflineRegionsUiState
 import de.velospot.feature.map.presentation.headingSemantics
 
 /**
@@ -104,7 +103,7 @@ internal fun SettingsSheet(
             )
             SettingsRow(
                 icon = Icons.Default.Navigation,
-                iconTint = if (state.offlineRoutingUiState is OfflineRoutingUiState.Enabled)
+                iconTint = if (state.offlineUiState.isEnabled)
                     MaterialTheme.colorScheme.primary else null,
                 title = stringResource(R.string.settings_group_navigation),
                 onClick = actions.onOpenNavRouting,
@@ -283,54 +282,23 @@ internal fun NavigationRoutingSheet(
 
             Spacer(Modifier.height(4.dp))
             SettingsSectionHeader(stringResource(R.string.settings_section_routing))
-            when (val offState = state.offlineRoutingUiState) {
-                is OfflineRoutingUiState.Disabled -> SettingsRow(
-                    icon = Icons.Default.SignalWifiOff,
-                    title = stringResource(R.string.menu_offline_routing_activate),
-                    // Keep the sheet open: the setup sheet opens on top and the
-                    // rider stays in context (they can watch the download here).
-                    onClick = actions.onActivateOfflineRouting
-                )
-                is OfflineRoutingUiState.Downloading -> OfflineDownloadProgressRow(offState)
-                is OfflineRoutingUiState.Enabled -> SettingsRow(
-                    icon = Icons.Default.Wifi,
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    title = stringResource(
-                        R.string.menu_offline_routing_active,
-                        stringResource(offState.profile.displayNameRes)
-                    ),
-                    // Keep the sheet open: the profile sheet opens on top.
-                    onClick = actions.onOpenProfileSheet
-                )
-                is OfflineRoutingUiState.DownloadComplete -> SettingsRow(
-                    icon = Icons.Default.CheckCircle,
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    title = stringResource(R.string.offline_routing_success_title),
-                    enabled = false,
-                    onClick = {}
-                )
-            }
 
-            // ── Offline map tiles (the visible vector map, cached for a region) ──
-            when (val mapState = state.offlineMapUiState) {
-                is OfflineMapUiState.Disabled -> SettingsRow(
-                    icon = Icons.Default.Map,
-                    title = stringResource(R.string.menu_offline_map_activate),
-                    onClick = actions.onActivateOfflineMap
-                )
-                is OfflineMapUiState.Downloading -> OfflineMapDownloadProgressRow(mapState)
-                is OfflineMapUiState.Ready -> SettingsRow(
-                    icon = Icons.Default.Map,
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    title = stringResource(R.string.menu_offline_map_active),
-                    onClick = actions.onDeleteOfflineMap,
-                    trailing = {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.offline_map_delete),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
+            // ── Offline usage (map tiles + routing, combined, per region) ──────
+            val offline = state.offlineUiState
+            val downloading = offline.downloading
+            if (downloading != null) {
+                OfflineRegionsDownloadRow(downloading)
+            } else {
+                SettingsRow(
+                    icon = if (offline.isEnabled) Icons.Default.Wifi else Icons.Default.SignalWifiOff,
+                    iconTint = if (offline.isEnabled) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                    title = if (offline.isEnabled)
+                        stringResource(R.string.menu_offline_regions_active, offline.regions.size)
+                    else
+                        stringResource(R.string.menu_offline_regions_activate),
+                    // Keep the sheet open: the manager sheet opens on top.
+                    onClick = actions.onOpenOfflineRegions
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -339,12 +307,12 @@ internal fun NavigationRoutingSheet(
 }
 
 /**
- * Inline offline-routing download progress: a labelled row with a live MB counter
- * and a determinate/indeterminate progress bar, shown right inside the
- * Navigation & routing sheet so the sheet can stay open during the download.
+ * Inline offline-region download progress: a labelled row (which phase — map or
+ * routing) with a live MB counter and a determinate/indeterminate bar, shown right
+ * inside the Settings sheet so it can stay open during the download.
  */
 @Composable
-private fun OfflineDownloadProgressRow(state: OfflineRoutingUiState.Downloading) {
+private fun OfflineRegionsDownloadRow(state: OfflineRegionsUiState.Downloading) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -353,67 +321,13 @@ private fun OfflineDownloadProgressRow(state: OfflineRoutingUiState.Downloading)
         Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
             Spacer(Modifier.size(16.dp))
-            Text(
-                text = stringResource(R.string.menu_offline_routing_downloading),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f)
-            )
-            if (state.downloadedBytes > 0L) {
-                Text(
-                    text = if (state.totalBytes > 0L)
-                        "${formatMb(state.downloadedBytes)} / ${formatMb(state.totalBytes)} MB"
-                    else
-                        "${formatMb(state.downloadedBytes)} MB",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        if (state.totalFiles > 1) {
-            Spacer(Modifier.height(2.dp))
             Text(
                 text = stringResource(
-                    R.string.offline_routing_file_of,
-                    state.currentFileIndex,
-                    state.totalFiles
+                    when (state.phase) {
+                        OfflineRegionsUiState.Phase.MAP -> R.string.offline_regions_downloading_map
+                        OfflineRegionsUiState.Phase.ROUTING -> R.string.offline_regions_downloading_routing
+                    }
                 ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 40.dp)
-            )
-        }
-        Spacer(Modifier.height(8.dp))
-        if (state.fileProgress >= 0f) {
-            LinearProgressIndicator(
-                progress = { state.fileProgress },
-                modifier = Modifier.fillMaxWidth()
-            )
-        } else {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        }
-    }
-}
-
-/** Formats a byte count as a one-decimal megabyte string (without the unit). */
-private fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
-
-/**
- * Inline offline-**map** download progress, mirroring [OfflineDownloadProgressRow]:
- * a labelled row with a live MB counter and a determinate/indeterminate bar, shown
- * right inside the Navigation & routing sheet so it can stay open during the download.
- */
-@Composable
-private fun OfflineMapDownloadProgressRow(state: OfflineMapUiState.Downloading) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 14.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-            Spacer(Modifier.size(16.dp))
-            Text(
-                text = stringResource(R.string.menu_offline_map_downloading),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
@@ -424,19 +338,6 @@ private fun OfflineMapDownloadProgressRow(state: OfflineMapUiState.Downloading) 
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-        if (state.totalRegions > 1) {
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = stringResource(
-                    R.string.offline_routing_file_of,
-                    state.regionIndex,
-                    state.totalRegions
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 40.dp)
-            )
         }
         Spacer(Modifier.height(8.dp))
         if (state.fraction >= 0f) {
@@ -449,6 +350,9 @@ private fun OfflineMapDownloadProgressRow(state: OfflineMapUiState.Downloading) 
         }
     }
 }
+
+/** Formats a byte count as a one-decimal megabyte string (without the unit). */
+private fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
 
 @Composable
 private fun SettingsSectionHeader(text: String) {    Text(

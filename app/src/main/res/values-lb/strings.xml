@@ -46,6 +46,24 @@
     <string name="menu_offline_routing_activate">Offline Navigatioun aktivéieren</string>
     <string name="menu_offline_routing_downloading">Kaartdaten ginn erofgelueden…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_regions_activate">Offline-Notzung ariichten</string>
+    <string name="menu_offline_regions_active">Offline-Regiounen (%1$d) ▸</string>
+    <string name="offline_regions_title">Offline-Regiounen</string>
+    <string name="offline_regions_description">Lued eng Regioun erof, fir Kaart a Routing ouni Verbindung ze notzen. All Regioun späichert souwuel déi siichtbar Kaart wéi och d\'Vëlo-Routing ronderëm däin aktuelle Standuert — ideal virun enger Rees.</string>
+    <string name="offline_regions_add">Aktuell Regioun eroflueden</string>
+    <string name="offline_regions_empty">Nach keng Regiounen erofgelueden.</string>
+    <string name="offline_regions_total_size">Total: %1$s</string>
+    <string name="offline_regions_profile">Routing-Profil</string>
+    <string name="offline_region_delete">Regioun läschen</string>
+    <string name="offline_region_exists">Dëst Gebitt ass scho offline verfügbar.</string>
+    <string name="offline_regions_downloading_title">Offline-Regioun gëtt gelueden…</string>
+    <string name="offline_regions_downloading_map">Kaart gëtt gelueden…</string>
+    <string name="offline_regions_downloading_routing">Routing gëtt gelueden…</string>
+    <string name="offline_regions_coverage_hint">Deckt ca. %1$d km Ëmkrees vun der Kaart ronderëm de Punkt of; d\'Vëlo-Routing ëmfaasst e vill méi grousst Gebitt.</string>
+    <string name="offline_regions_pick_on_map">Op der Kaart wielen</string>
+    <string name="offline_regions_pick_hint">Réck d\'Kaart, bis d\'Fuedemkräiz iwwer dem gewënschte Gebitt läit, a lued et dann erof.</string>
+    <string name="offline_regions_pick_confirm">Dëst Gebitt eroflueden</string>
+
     <string name="menu_offline_map_activate">Offline-Kaart eroflueden</string>
     <string name="menu_offline_map_active">Offline-Kaart erofgelueden</string>
     <string name="menu_offline_map_downloading">Kaart gëtt erofgelueden…</string>
@@ -232,6 +250,20 @@
     <string name="about_support">Spendéier mer e Kaffi</string>
     <string name="about_open_link">Link opmaachen</string>
     <string name="about_imprint">Impressum</string>
+    <string name="about_replay_onboarding">App-Tour</string>
+    <string name="about_replay_onboarding_subtitle">Aféierung nach eng Kéier weisen</string>
+
+    <!-- Wëllkomm beim éischte Start -->
+    <string name="onboarding_skip">Iwwersprangen</string>
+    <string name="onboarding_next">Weider</string>
+    <string name="onboarding_finish">Lass geet et</string>
+    <string name="onboarding_welcome_title">Wëllkomm bei VeloSpot</string>
+    <string name="onboarding_welcome_desc">Däi Vëlo-Navigatioun mat Vëlosparkplazen — fir entspaant duerch d\'Stad an doriwwer eraus ze fueren.</string>
+    <string name="onboarding_offline_title">Offline-Kaarten &amp; Routing</string>
+    <string name="onboarding_offline_desc">Navigéier och ouni Verbindung: Kaartendaten an d\'Vëlo-Routing funktionéieren komplett offline. Lued d\'Donnéeën eng Kéier erof — am beschten am WLAN.</string>
+    <string name="onboarding_offline_cta">Offline-Routing ariichten</string>
+    <string name="onboarding_ready_title">Prett fir ze fueren</string>
+    <string name="onboarding_ready_desc">Tipp op d\'Kaart fir en Zil ze setzen, sich uewen no Adressen, plang Rout iwwer d\'Aktiounsmenü — alles anescht fënns du am Astellungsmenü.</string>
     <string name="imprint_legal_note">Informatiounen no § 5 DDG</string>
     <string name="parked_bike_title">Mäi gepaarkte Velo</string>
     <string name="parked_bike_park_here">Velo hei parken</string>

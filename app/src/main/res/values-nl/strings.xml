@@ -46,6 +46,24 @@
     <string name="menu_offline_routing_activate">Offline navigatie activeren</string>
     <string name="menu_offline_routing_downloading">Kaartdata downloaden…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_regions_activate">Offline gebruik instellen</string>
+    <string name="menu_offline_regions_active">Offline regio\'s (%1$d) ▸</string>
+    <string name="offline_regions_title">Offline regio\'s</string>
+    <string name="offline_regions_description">Download een regio om de kaart en routering zonder verbinding te gebruiken. Elke regio bewaart zowel de zichtbare kaart als de fietsroutering rond je huidige locatie — ideaal voor een reis.</string>
+    <string name="offline_regions_add">Huidige regio downloaden</string>
+    <string name="offline_regions_empty">Nog geen regio\'s gedownload.</string>
+    <string name="offline_regions_total_size">Totaal: %1$s</string>
+    <string name="offline_regions_profile">Routeprofiel</string>
+    <string name="offline_region_delete">Regio verwijderen</string>
+    <string name="offline_region_exists">Dit gebied is al offline beschikbaar.</string>
+    <string name="offline_regions_downloading_title">Offline regio downloaden…</string>
+    <string name="offline_regions_downloading_map">Kaart downloaden…</string>
+    <string name="offline_regions_downloading_routing">Routering downloaden…</string>
+    <string name="offline_regions_coverage_hint">Dekt een kaartstraal van ca. %1$d km rond het punt; de fietsroutering dekt een veel groter gebied.</string>
+    <string name="offline_regions_pick_on_map">Op kaart kiezen</string>
+    <string name="offline_regions_pick_hint">Verschuif de kaart zodat het dradenkruis op het gewenste gebied staat en download dan.</string>
+    <string name="offline_regions_pick_confirm">Dit gebied downloaden</string>
+
     <string name="menu_offline_map_activate">Offline kaart downloaden</string>
     <string name="menu_offline_map_active">Offline kaart gedownload</string>
     <string name="menu_offline_map_downloading">Kaart wordt gedownload…</string>
@@ -232,6 +250,20 @@
     <string name="about_support">Trakteer me op een koffie</string>
     <string name="about_open_link">Link openen</string>
     <string name="about_imprint">Colofon</string>
+    <string name="about_replay_onboarding">App-rondleiding</string>
+    <string name="about_replay_onboarding_subtitle">Introductie opnieuw tonen</string>
+
+    <!-- Welkom bij eerste start -->
+    <string name="onboarding_skip">Overslaan</string>
+    <string name="onboarding_next">Volgende</string>
+    <string name="onboarding_finish">Aan de slag</string>
+    <string name="onboarding_welcome_title">Welkom bij VeloSpot</string>
+    <string name="onboarding_welcome_desc">Jouw fietsnavigatie met fietsenstallingen — voor ontspannen fietsen in de stad en daarbuiten.</string>
+    <string name="onboarding_offline_title">Offline kaarten &amp; routes</string>
+    <string name="onboarding_offline_desc">Navigeer ook zonder verbinding: kaartgegevens en fietsroutering werken volledig offline. Download de gegevens één keer — het liefst via wifi.</string>
+    <string name="onboarding_offline_cta">Offline routering instellen</string>
+    <string name="onboarding_ready_title">Klaar om te rijden</string>
+    <string name="onboarding_ready_desc">Tik op de kaart om een bestemming te plaatsen, zoek bovenaan naar adressen, plan routes via het actiemenu — de rest vind je in het instellingenmenu.</string>
     <string name="imprint_legal_note">Informatie conform § 5 DDG</string>
     <string name="parked_bike_title">Mijn geparkeerde fiets</string>
     <string name="parked_bike_park_here">Fiets hier parkeren</string>

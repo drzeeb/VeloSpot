@@ -62,6 +62,7 @@ class OfflineMapTilesManager(private val context: Context) {
         lat: Double,
         lon: Double,
         styleUrl: String,
+        regionName: String = "my-region",
         onProgress: ProgressListener = ProgressListener { _, _, _, _ -> },
     ) {
         val bounds = OfflineMapRegions.boundsAround(lat, lon)
@@ -69,7 +70,7 @@ class OfflineMapTilesManager(private val context: Context) {
             bounds = bounds,
             styleUrl = styleUrl,
             maxZoom = OfflineMapRegions.REGION_MAX_ZOOM,
-            regionName = "my-region",
+            regionName = regionName,
             regionIndex = 1,
             totalRegions = 1,
             onProgress = onProgress,
@@ -111,6 +112,22 @@ class OfflineMapTilesManager(private val context: Context) {
     suspend fun deleteAllRegions() {
         listRegions().forEach { deleteRegion(it) }
     }
+
+    /**
+     * Deletes only the region(s) whose metadata `name` matches [regionName]. Used to
+     * remove a single offline pack (each region is named `pack-<id>`) without touching
+     * the others, and to roll back a partially-downloaded region after a failure.
+     */
+    suspend fun deleteRegionByName(regionName: String) {
+        listRegions()
+            .filter { regionNameOf(it) == regionName }
+            .forEach { deleteRegion(it) }
+    }
+
+    /** Reads the `{"name":...}` metadata written at download time (null if absent). */
+    private fun regionNameOf(region: OfflineRegion): String? = runCatching {
+        org.json.JSONObject(String(region.metadata, Charsets.UTF_8)).optString("name", null)
+    }.getOrNull()
 
     // ── Private MapLibre bridges ──────────────────────────────────────────────
 

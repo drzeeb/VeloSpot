@@ -46,6 +46,24 @@
     <string name="menu_offline_routing_activate">Offline Navigation aktivieren</string>
     <string name="menu_offline_routing_downloading">Kartendaten werden geladen…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_regions_activate">Offline-Nutzung einrichten</string>
+    <string name="menu_offline_regions_active">Offline-Regionen (%1$d) ▸</string>
+    <string name="offline_regions_title">Offline-Regionen</string>
+    <string name="offline_regions_description">Lade eine Region herunter, um Karte und Routing ohne Verbindung zu nutzen. Jede Region speichert sowohl die sichtbare Karte als auch das Fahrrad-Routing rund um deinen aktuellen Standort – ideal vor einer Reise.</string>
+    <string name="offline_regions_add">Aktuelle Region herunterladen</string>
+    <string name="offline_regions_empty">Noch keine Regionen heruntergeladen.</string>
+    <string name="offline_regions_total_size">Gesamt: %1$s</string>
+    <string name="offline_regions_profile">Routing-Profil</string>
+    <string name="offline_region_delete">Region löschen</string>
+    <string name="offline_region_exists">Dieses Gebiet ist bereits offline verfügbar.</string>
+    <string name="offline_regions_downloading_title">Offline-Region wird geladen…</string>
+    <string name="offline_regions_downloading_map">Karte wird geladen…</string>
+    <string name="offline_regions_downloading_routing">Routing wird geladen…</string>
+    <string name="offline_regions_coverage_hint">Deckt ca. %1$d km Umkreis der Karte um den Punkt ab; das Fahrrad-Routing umfasst ein deutlich größeres Gebiet.</string>
+    <string name="offline_regions_pick_on_map">Auf Karte wählen</string>
+    <string name="offline_regions_pick_hint">Verschiebe die Karte, bis das Fadenkreuz über dem gewünschten Gebiet liegt, und lade es dann herunter.</string>
+    <string name="offline_regions_pick_confirm">Dieses Gebiet herunterladen</string>
+
     <string name="menu_offline_map_activate">Offline-Karte herunterladen</string>
     <string name="menu_offline_map_active">Offline-Karte geladen</string>
     <string name="menu_offline_map_downloading">Karte wird geladen…</string>
@@ -203,6 +221,20 @@
     <string name="about_support">Spendier mir einen Kaffee</string>
     <string name="about_open_link">Link öffnen</string>
     <string name="about_imprint">Impressum</string>
+    <string name="about_replay_onboarding">App-Tour</string>
+    <string name="about_replay_onboarding_subtitle">Einführung erneut anzeigen</string>
+
+    <!-- Einführung beim ersten Start -->
+    <string name="onboarding_skip">Überspringen</string>
+    <string name="onboarding_next">Weiter</string>
+    <string name="onboarding_finish">Los geht\'s</string>
+    <string name="onboarding_welcome_title">Willkommen bei VeloSpot</string>
+    <string name="onboarding_welcome_desc">Deine Fahrrad-Navigation mit Abstellplätzen – für entspanntes Radeln in der Stadt und darüber hinaus.</string>
+    <string name="onboarding_offline_title">Offline-Karten &amp; Routing</string>
+    <string name="onboarding_offline_desc">Navigiere auch ohne Verbindung: Kartendaten und Fahrrad-Routing funktionieren komplett offline. Lade die Daten einmalig herunter – am besten im WLAN.</string>
+    <string name="onboarding_offline_cta">Offline-Routing einrichten</string>
+    <string name="onboarding_ready_title">Bereit zur Fahrt</string>
+    <string name="onboarding_ready_desc">Tippe auf die Karte, um ein Ziel zu setzen, suche oben nach Adressen, plane Routen über das Aktionsmenü – alles Weitere findest du im Einstellungs-Menü.</string>
     <string name="imprint_legal_note">Angaben gemäß § 5 DDG</string>
     <string name="parked_bike_title">Mein geparktes Fahrrad</string>
     <string name="parked_bike_park_here">Fahrrad hier parken</string>

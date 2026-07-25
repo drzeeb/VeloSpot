@@ -121,8 +121,8 @@ fun MainMapScreen(
     val mapCameraTarget      by viewModel.mapCameraTarget.collectAsStateWithLifecycle()
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val navigationProgress   by viewModel.navigationProgress.collectAsStateWithLifecycle()
-    val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
-    val offlineMapUiState    by viewModel.offlineMapUiState.collectAsStateWithLifecycle()
+    val offlineUiState       by viewModel.offlineUiState.collectAsStateWithLifecycle()
+    val isPickingOfflineRegion by viewModel.isPickingOfflineRegion.collectAsStateWithLifecycle()
     val searchQuery          by viewModel.searchQuery.collectAsStateWithLifecycle()
     val searchResults        by viewModel.searchResults.collectAsStateWithLifecycle()
     val isSearching          by viewModel.isSearching.collectAsStateWithLifecycle()
@@ -136,6 +136,7 @@ fun MainMapScreen(
     val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
     val roundedBuildingsEnabled by viewModel.roundedBuildingsEnabled.collectAsStateWithLifecycle()
+    val onboardingCompleted  by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
     val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
@@ -763,8 +764,7 @@ fun MainMapScreen(
             isDarkTheme        = isDarkTheme,
             currentLanguageFlag = currentLanguageFlag,
             isExpanded         = screenUiState.isSettingsSheetVisible,
-            offlineRoutingUiState = offlineRoutingUiState,
-            offlineMapUiState  = offlineMapUiState,
+            offlineUiState     = offlineUiState,
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
             keepScreenOnEnabled = keepScreenOnEnabled,
@@ -784,10 +784,8 @@ fun MainMapScreen(
             onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
             onOpenLayers          = screenUiState::openLayers,
             onOpenNavigationView  = screenUiState::openNavigationView,
-            onActivateOfflineRouting = viewModel::requestOfflineRoutingSetup,
+            onOpenOfflineRegions  = viewModel::openOfflineRegions,
             onOpenProfileSheet    = viewModel::openProfileSheet,
-            onActivateOfflineMap  = viewModel::requestOfflineMapSetup,
-            onDeleteOfflineMap    = viewModel::deleteOfflineMap,
             onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
             onShowParkedBike      = viewModel::showParkedBike,
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
@@ -917,11 +915,7 @@ fun MainMapScreen(
             onToggleColorBySpeed   = viewModel::setColorTrackBySpeedEnabled
         )
 
-        when (val offState = offlineRoutingUiState) {
-            is OfflineRoutingUiState.Downloading      -> OfflineSetupProgressOverlay(state = offState)
-            is OfflineRoutingUiState.DownloadComplete -> OfflineSetupSuccessOverlay()
-            else -> Unit
-        }
+        offlineUiState.downloading?.let { OfflineSetupProgressOverlay(state = it) }
 
         // ── Ride tracking — live stats card + record/stop FAB ────────────────
         // Hidden during active navigation: the ride is auto-recorded there and the
@@ -1035,10 +1029,40 @@ fun MainMapScreen(
             }
         }
 
+        // ── Offline-region picker (pick a spot on the map to download) ───────
+        if (isPickingOfflineRegion) {
+            OfflineRegionPickerOverlay(
+                onConfirm = {
+                    val center = maplibreMap?.cameraPosition?.target
+                    if (center != null) {
+                        viewModel.addOfflineRegionAt(center.latitude, center.longitude)
+                    } else {
+                        viewModel.cancelPickingOfflineRegion()
+                    }
+                },
+                onCancel = viewModel::cancelPickingOfflineRegion
+            )
+        }
+
         // ── Animated branded launch overlay (top of the stack) ───────────────
         // Sits above the map and all controls while the style/tiles load, then
         // fades + scales away once the map is ready.
         VeloSpotSplash(visible = showSplash, mapReady = mapReady)
+    }
+
+    // ── First-launch welcome onboarding ───────────────────────────────────────
+    // A compact 3-card sheet shown once on the very first start (and re-openable
+    // from the About sheet). Gated on `!showSplash` so it never overlaps the launch
+    // splash, and only shown once the stored flag has definitely loaded as `false`
+    // (null = still loading → don't flash it for returning users).
+    if (!showSplash && onboardingCompleted == false) {
+        de.velospot.feature.map.presentation.sheets.WelcomeOnboardingSheet(
+            onFinish = viewModel::completeOnboarding,
+            onActivateOfflineRouting = {
+                viewModel.completeOnboarding()
+                viewModel.openOfflineRegions()
+            }
+        )
     }
 
     // ── Bottom sheets & dialogs ───────────────────────────────────────────────

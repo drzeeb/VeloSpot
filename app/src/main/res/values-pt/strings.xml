@@ -46,6 +46,24 @@
     <string name="menu_offline_routing_activate">Ativar navegação offline</string>
     <string name="menu_offline_routing_downloading">A descarregar dados…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_regions_activate">Configurar uso offline</string>
+    <string name="menu_offline_regions_active">Regiões offline (%1$d) ▸</string>
+    <string name="offline_regions_title">Regiões offline</string>
+    <string name="offline_regions_description">Descarrega uma região para usar o mapa e as rotas sem ligação. Cada região guarda o mapa visível e o cálculo de rotas de bicicleta à volta da tua posição atual — ideal antes de uma viagem.</string>
+    <string name="offline_regions_add">Descarregar região atual</string>
+    <string name="offline_regions_empty">Ainda não há regiões descarregadas.</string>
+    <string name="offline_regions_total_size">Total: %1$s</string>
+    <string name="offline_regions_profile">Perfil de rota</string>
+    <string name="offline_region_delete">Eliminar região</string>
+    <string name="offline_region_exists">Esta área já está disponível offline.</string>
+    <string name="offline_regions_downloading_title">A descarregar região offline…</string>
+    <string name="offline_regions_downloading_map">A descarregar mapa…</string>
+    <string name="offline_regions_downloading_routing">A descarregar rotas…</string>
+    <string name="offline_regions_coverage_hint">Cobre um raio de mapa de cerca de %1$d km à volta do ponto; o cálculo de rotas de bicicleta abrange uma área muito maior.</string>
+    <string name="offline_regions_pick_on_map">Escolher no mapa</string>
+    <string name="offline_regions_pick_hint">Move o mapa para que a mira fique sobre a área pretendida e depois descarrega.</string>
+    <string name="offline_regions_pick_confirm">Descarregar esta área</string>
+
     <string name="menu_offline_map_activate">Baixar mapa offline</string>
     <string name="menu_offline_map_active">Mapa offline baixado</string>
     <string name="menu_offline_map_downloading">A baixar o mapa…</string>
@@ -232,6 +250,20 @@
     <string name="about_support">Paga-me um café</string>
     <string name="about_open_link">Abrir ligação</string>
     <string name="about_imprint">Informação legal</string>
+    <string name="about_replay_onboarding">Tour da app</string>
+    <string name="about_replay_onboarding_subtitle">Mostrar a introdução novamente</string>
+
+    <!-- Boas-vindas no primeiro arranque -->
+    <string name="onboarding_skip">Ignorar</string>
+    <string name="onboarding_next">Seguinte</string>
+    <string name="onboarding_finish">Começar</string>
+    <string name="onboarding_welcome_title">Bem-vindo ao VeloSpot</string>
+    <string name="onboarding_welcome_desc">O teu navegador de bicicleta com estacionamentos para bicicletas — para pedalar descontraidamente na cidade e não só.</string>
+    <string name="onboarding_offline_title">Mapas e rotas offline</string>
+    <string name="onboarding_offline_desc">Navega mesmo sem ligação: os dados de mapas e o cálculo de rotas de bicicleta funcionam totalmente offline. Descarrega os dados uma vez — de preferência em Wi-Fi.</string>
+    <string name="onboarding_offline_cta">Configurar rotas offline</string>
+    <string name="onboarding_ready_title">Pronto para pedalar</string>
+    <string name="onboarding_ready_desc">Toca no mapa para definir um destino, procura moradas em cima, planeia rotas a partir do menu de ações — encontras tudo o resto no menu de definições.</string>
     <string name="imprint_legal_note">Informações nos termos do § 5 DDG</string>
     <string name="parked_bike_title">A minha bici estacionada</string>
     <string name="parked_bike_park_here">Estacionar a bici aqui</string>

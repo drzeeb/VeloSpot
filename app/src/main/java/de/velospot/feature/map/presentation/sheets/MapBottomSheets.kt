@@ -45,12 +45,10 @@ internal fun MapBottomSheets(
     val isParkedBikeSheetVisible by viewModel.isParkedBikeSheetVisible.collectAsStateWithLifecycle()
     val recordedRideSummaries by viewModel.recordedRideSummaries.collectAsStateWithLifecycle()
     val userLocation         by viewModel.userLocation.collectAsStateWithLifecycle()
-    val offlineRoutingUiState by viewModel.offlineRoutingUiState.collectAsStateWithLifecycle()
-    val showOfflineSetupSheet by viewModel.showOfflineSetupSheet.collectAsStateWithLifecycle()
+    val offlineUiState       by viewModel.offlineUiState.collectAsStateWithLifecycle()
+    val showOfflineManagerSheet by viewModel.showOfflineManagerSheet.collectAsStateWithLifecycle()
     val showProfileSheet     by viewModel.showProfileSheet.collectAsStateWithLifecycle()
     val showWifiWarning      by viewModel.showWifiWarning.collectAsStateWithLifecycle()
-    val showOfflineMapSetupSheet by viewModel.showOfflineMapSetupSheet.collectAsStateWithLifecycle()
-    val showOfflineMapWifiWarning by viewModel.showOfflineMapWifiWarning.collectAsStateWithLifecycle()
     val navigationUiState    by viewModel.navigationUiState.collectAsStateWithLifecycle()
     val layerVisibility      by viewModel.layerVisibility.collectAsStateWithLifecycle()
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
@@ -135,7 +133,13 @@ internal fun MapBottomSheets(
     }
 
     if (screenUiState.isAboutSheetVisible) {
-        AboutSheet(onDismiss = screenUiState::closeAbout)
+        AboutSheet(
+            onDismiss = screenUiState::closeAbout,
+            onReplayOnboarding = {
+                screenUiState.closeAbout()
+                viewModel.replayOnboarding()
+            }
+        )
     }
 
     // "My rides" timeline (list of recorded rides).
@@ -240,11 +244,21 @@ internal fun MapBottomSheets(
     // *non-modal* sheet so the map stays interactive while a ride is drawn — it
     // is rendered inside the map layout Box of MainMapScreen, not here.
 
-    if (showOfflineSetupSheet) {
-        OfflineRoutingSetupSheet(
-            onConfirm     = viewModel::confirmOfflineRoutingSetup,
-            onConfirmFull = viewModel::confirmOfflineRoutingFullSetup,
-            onDismiss     = viewModel::dismissOfflineSetupSheet
+    if (showOfflineManagerSheet) {
+        OfflineRegionsSheet(
+            state              = offlineUiState,
+            onAddCurrentRegion = viewModel::addOfflineRegion,
+            onPickOnMap        = {
+                // Picking needs the map, so close *every* covering sheet: the manager
+                // sheet, the "Navigation & routing" sub-sheet and the Settings sheet
+                // it opened on top of — otherwise they stay up and cover the map.
+                screenUiState.closeNavRouting()
+                screenUiState.dismissMenu()
+                viewModel.startPickingOfflineRegion()
+            },
+            onDeleteRegion     = viewModel::deleteOfflineRegion,
+            onOpenProfileSheet = viewModel::openProfileSheet,
+            onDismiss          = viewModel::dismissOfflineManagerSheet
         )
     }
 
@@ -255,32 +269,15 @@ internal fun MapBottomSheets(
         )
     }
 
-    if (showOfflineMapSetupSheet) {
-        OfflineMapSetupSheet(
-            onConfirmRegion = viewModel::confirmOfflineMapRegion,
-            onConfirmFull   = viewModel::confirmOfflineMapFull,
-            onDismiss       = viewModel::dismissOfflineMapSetupSheet
-        )
-    }
-
-    if (showOfflineMapWifiWarning) {
-        WifiWarningDialog(
-            onConfirm = viewModel::confirmOfflineMapOnMobileData,
-            onDismiss = viewModel::dismissOfflineMapWifiWarning
-        )
-    }
-
     if (showProfileSheet) {
-        val currentProfile = (offlineRoutingUiState as? OfflineRoutingUiState.Enabled)?.profile
-            ?: de.velospot.data.brouter.BRouterProfile.TREKKING
+        val currentProfile = offlineUiState.profile
         val elevationPreference by viewModel.elevationPreference.collectAsStateWithLifecycle()
         RoutingProfileSheet(
             currentProfile         = currentProfile,
             onSelectProfile        = viewModel::selectRoutingProfile,
             currentElevation       = elevationPreference,
             onSelectElevation      = viewModel::selectElevationPreference,
-            onDismiss              = viewModel::dismissProfileSheet,
-            onDisableOfflineRouting = viewModel::disableOfflineRouting
+            onDismiss              = viewModel::dismissProfileSheet
         )
     }
 

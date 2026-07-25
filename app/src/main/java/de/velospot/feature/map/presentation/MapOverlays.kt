@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Speed
@@ -48,6 +49,8 @@ import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -97,9 +100,8 @@ internal data class MapMenuCardState(
     val isDarkTheme: Boolean,
     val currentLanguageFlag: String,
     val isExpanded: Boolean,
-    val offlineRoutingUiState: OfflineRoutingUiState = OfflineRoutingUiState.Disabled,
-    /** State of the offline **map tiles** download (visible vector map pre-cache). */
-    val offlineMapUiState: OfflineMapUiState = OfflineMapUiState.Disabled,
+    /** State of the unified offline usage (downloaded regions, download, profile). */
+    val offlineUiState: OfflineRegionsUiState = OfflineRegionsUiState(),
     /** Whether a bike is currently parked — switches the menu entry park ↔ show. */
     val isBikeParked: Boolean = false,
     /** Whether spoken turn-by-turn voice guidance (TTS) is enabled. */
@@ -126,10 +128,8 @@ internal data class MapMenuCardActions(
     val onToggleDarkMode: () -> Unit,
     val onOpenLayers: () -> Unit = {},
     val onOpenNavigationView: () -> Unit = {},
-    val onActivateOfflineRouting: () -> Unit = {},
+    val onOpenOfflineRegions: () -> Unit = {},
     val onOpenProfileSheet: () -> Unit = {},
-    val onActivateOfflineMap: () -> Unit = {},
-    val onDeleteOfflineMap: () -> Unit = {},
     val onParkBikeHere: () -> Unit = {},
     val onShowParkedBike: () -> Unit = {},
     val onToggleVoiceGuidance: () -> Unit = {},
@@ -160,12 +160,12 @@ private fun MapError.toUserMessage(): String = when (this) {
 }
 
 /**
- * Shown on the map while offline routing segment files are being downloaded
- * during the activation flow (not during navigation).
+ * Shown on the map while an offline region (map tiles + routing) is being
+ * downloaded during the activation flow (not during navigation).
  */
 @Composable
 internal fun BoxScope.OfflineSetupProgressOverlay(
-    state: OfflineRoutingUiState.Downloading
+    state: OfflineRegionsUiState.Downloading
 ) {
     Card(
         modifier = Modifier
@@ -183,51 +183,38 @@ internal fun BoxScope.OfflineSetupProgressOverlay(
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    text = stringResource(R.string.offline_routing_downloading_title),
+                    text = stringResource(R.string.offline_regions_downloading_title),
                     style = MaterialTheme.typography.titleSmall
                 )
             }
 
             Spacer(Modifier.height(8.dp))
 
-            // "Datei X von Y" + MB-Zähler
-            if (state.totalFiles > 0) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = stringResource(
+                        when (state.phase) {
+                            OfflineRegionsUiState.Phase.MAP -> R.string.offline_regions_downloading_map
+                            OfflineRegionsUiState.Phase.ROUTING -> R.string.offline_regions_downloading_routing
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (state.downloadedBytes > 0L) {
                     Text(
-                        text = stringResource(
-                            R.string.offline_routing_file_of,
-                            state.currentFileIndex,
-                            state.totalFiles
-                        ),
+                        text = "${formatMb(state.downloadedBytes)} MB",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (state.downloadedBytes > 0L) {
-                        Text(
-                            text = if (state.totalBytes > 0L)
-                                "${formatMb(state.downloadedBytes)} MB / ${formatMb(state.totalBytes)} MB"
-                            else
-                                "${formatMb(state.downloadedBytes)} MB",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
-            if (state.currentFile.isNotEmpty()) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = state.currentFile,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
             Spacer(Modifier.height(8.dp))
-            if (state.fileProgress >= 0f) {
-                LinearProgressIndicator(progress = { state.fileProgress }, modifier = Modifier.fillMaxWidth())
+            if (state.fraction >= 0f) {
+                LinearProgressIndicator(progress = { state.fraction }, modifier = Modifier.fillMaxWidth())
             } else {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
@@ -277,6 +264,57 @@ internal fun BoxScope.OfflineSetupSuccessOverlay() {
 }
 
 private fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
+
+/**
+ * Full-screen overlay for **picking an offline region on the map**: a fixed centre
+ * crosshair the rider positions over the desired area by panning/zooming the map,
+ * plus a bottom panel to confirm (download around the map centre) or cancel. Used as
+ * an alternative to downloading around the current GPS position.
+ */
+@Composable
+internal fun BoxScope.OfflineRegionPickerOverlay(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    // Centre crosshair marking the spot that will be downloaded (the map centre).
+    Icon(
+        imageVector = Icons.Default.Place,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .align(Alignment.Center)
+            .size(48.dp)
+    )
+    Card(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f)
+        ),
+        elevation = CardDefaults.cardElevation(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Text(
+                text = stringResource(R.string.offline_regions_pick_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onConfirm, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Default.Place, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.offline_regions_pick_confirm))
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        }
+    }
+}
 
 @Composable
 internal fun BoxScope.MapStatusOverlay(uiState: MapUiState) {
@@ -585,7 +623,7 @@ internal fun MapMenuCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(52.dp)) {
-            val badged = state.offlineRoutingUiState is OfflineRoutingUiState.Enabled
+            val badged = state.offlineUiState.isEnabled
             IconButton(onClick = actions.onExpand) {
                 Icon(
                     imageVector = Icons.Default.Menu,

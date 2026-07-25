@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,7 +60,8 @@ private const val DATA_DATE_LUXEMBOURG = "23.07.2026"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AboutSheet(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onReplayOnboarding: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
@@ -139,6 +142,16 @@ internal fun AboutSheet(
                 title = stringResource(id = R.string.about_privacy),
                 subtitle = "velospot.app/privacy",
                 onClick = { openUrl(PRIVACY_URL) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            // Re-open the first-launch welcome tour.
+            AboutLinkRow(
+                icon = Icons.AutoMirrored.Filled.HelpOutline,
+                title = stringResource(id = R.string.about_replay_onboarding),
+                subtitle = stringResource(id = R.string.about_replay_onboarding_subtitle),
+                onClick = onReplayOnboarding
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))

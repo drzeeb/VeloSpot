@@ -119,6 +119,19 @@ class BRouterSegmentManager(
             ?.forEach { it.delete() }
     }
 
+    /** The single 5°×5° segment file name covering [lat]/[lon] (e.g. `E5_N50.rd5`). */
+    fun segmentTileNameForLocation(lat: Double, lon: Double): String =
+        segmentFileName(tileDegree(lon), tileDegree(lat))
+
+    /** True when the named segment tile is present on disk. */
+    fun hasSegmentTile(name: String): Boolean = File(segmentsDir, name).exists()
+
+    /** Deletes the named segment tile (and any leftover temp file). */
+    fun deleteSegmentTile(name: String) {
+        File(segmentsDir, name).delete()
+        File(segmentsDir, "$name.tmp").delete()
+    }
+
     fun requiredSegmentNames(
         fromLat: Double, fromLon: Double,
         toLat: Double, toLon: Double
