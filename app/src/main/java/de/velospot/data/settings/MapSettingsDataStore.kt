@@ -76,6 +76,9 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
         )
     }
 
+    override val onboardingCompleted: Flow<Boolean> =
+        data.map { it[KEY_ONBOARDING_DONE] ?: false }
+
     override suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean) {
         val key = when (category) {
             MapLayerCategory.PARKING      -> KEY_LAYER_PARKING
@@ -108,6 +111,9 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     override suspend fun setColorTrackBySpeed(enabled: Boolean) =
         put(KEY_COLOR_BY_SPEED, enabled)
 
+    override suspend fun setOnboardingCompleted(completed: Boolean) =
+        put(KEY_ONBOARDING_DONE, completed)
+
     private suspend fun put(key: Preferences.Key<Boolean>, value: Boolean) {
         context.settingsDataStore.edit { it[key] = value }
     }
@@ -126,6 +132,7 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
         val KEY_ROUNDED_BUILDINGS = booleanPreferencesKey("rounded_buildings_enabled")
         val KEY_MAX_SPEED_BUBBLE = booleanPreferencesKey("show_max_speed_bubble")
         val KEY_COLOR_BY_SPEED   = booleanPreferencesKey("color_track_by_speed")
+        val KEY_ONBOARDING_DONE  = booleanPreferencesKey("onboarding_completed")
     }
 }
 

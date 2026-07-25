@@ -5,12 +5,8 @@ import de.velospot.feature.map.presentation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -28,144 +24,6 @@ import de.velospot.data.brouter.BRouterProfile
 import de.velospot.data.brouter.ElevationPreference
 import kotlin.math.roundToInt
 
-/**
- * Bottom sheet shown when the user taps "Offline Navigation aktivieren".
- * Explains what will be downloaded and lets the user confirm.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun OfflineRoutingSetupSheet(
-    onConfirm: () -> Unit,
-    onConfirmFull: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    // Open fully so both download options and the info cards are visible at once.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.offline_routing_setup_title),
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.offline_routing_setup_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            // Benefit bullets
-            OfflineBenefitRow(stringResource(R.string.offline_routing_benefit_1))
-            OfflineBenefitRow(stringResource(R.string.offline_routing_benefit_2))
-            OfflineBenefitRow(stringResource(R.string.offline_routing_benefit_3))
-
-            Spacer(Modifier.height(20.dp))
-
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Download, contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.offline_routing_download_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            // WiFi recommendation card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.SignalWifiOff, contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.offline_routing_wifi_recommendation),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier.fillMaxWidth().height(52.dp)
-            ) {
-                Icon(Icons.Default.Download, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(text = stringResource(R.string.offline_routing_confirm_region))
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = onConfirmFull,
-                modifier = Modifier.fillMaxWidth().height(52.dp)
-            ) {
-                Icon(Icons.Default.Download, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(text = stringResource(R.string.offline_routing_confirm_full))
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = stringResource(R.string.common_cancel))
-            }
-        }
-    }
-}
-
-@Composable
-private fun OfflineBenefitRow(text: String) {    Row(
-        verticalAlignment = Alignment.Top,
-        modifier = Modifier.padding(vertical = 4.dp)
-    ) {
-        Icon(
-            Icons.Default.Check, contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(18.dp).padding(top = 2.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(text = text, style = MaterialTheme.typography.bodyMedium)
-    }
-}
 
 /**
  * Bottom sheet for selecting the active BRouter routing profile.
@@ -177,11 +35,10 @@ fun RoutingProfileSheet(
     onSelectProfile: (BRouterProfile) -> Unit,
     currentElevation: ElevationPreference,
     onSelectElevation: (ElevationPreference) -> Unit,
-    onDismiss: () -> Unit,
-    onDisableOfflineRouting: () -> Unit
+    onDismiss: () -> Unit
 ) {
-    // Open fully (skip the half-height state) so the whole profile list, the
-    // hilliness slider and the disable action are all visible at once.
+    // Open fully (skip the half-height state) so the whole profile list and the
+    // hilliness slider are visible at once.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -244,19 +101,6 @@ fun RoutingProfileSheet(
                 current = currentElevation,
                 onSelect = onSelectElevation
             )
-
-            Spacer(Modifier.height(12.dp))
-            OutlinedButton(
-                onClick = { onDisableOfflineRouting(); onDismiss() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Icon(Icons.Default.Delete, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(text = stringResource(R.string.offline_routing_disable))
-            }
         }
     }
 }

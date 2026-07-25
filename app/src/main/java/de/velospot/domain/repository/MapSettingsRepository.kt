@@ -46,6 +46,13 @@ interface MapSettingsRepository {
     /** The rider's persisted "inspect a past ride" overlay choices. */
     val rideViewOptions: Flow<RideViewOptions>
 
+    /**
+     * Whether the first-launch **welcome onboarding** has been completed (seen or
+     * dismissed). Defaults to `false` so the 3-card welcome sheet is shown once on
+     * the first start; it can be re-armed from the About sheet ("view the tour again").
+     */
+    val onboardingCompleted: Flow<Boolean>
+
     suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean)
     suspend fun set3DNavigation(enabled: Boolean)
     suspend fun setVoiceGuidance(enabled: Boolean)
@@ -54,5 +61,6 @@ interface MapSettingsRepository {
     suspend fun setRoundedBuildings(enabled: Boolean)
     suspend fun setShowMaxSpeedBubble(enabled: Boolean)
     suspend fun setColorTrackBySpeed(enabled: Boolean)
+    suspend fun setOnboardingCompleted(completed: Boolean)
 }
 

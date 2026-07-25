@@ -46,6 +46,24 @@
     <string name="menu_offline_routing_activate">Attiva navigazione offline</string>
     <string name="menu_offline_routing_downloading">Download dati in corso…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_regions_activate">Configura l\'uso offline</string>
+    <string name="menu_offline_regions_active">Regioni offline (%1$d) ▸</string>
+    <string name="offline_regions_title">Regioni offline</string>
+    <string name="offline_regions_description">Scarica una regione per usare mappa e percorsi senza connessione. Ogni regione salva sia la mappa visibile sia il calcolo del percorso in bici intorno alla tua posizione attuale — perfetto prima di un viaggio.</string>
+    <string name="offline_regions_add">Scarica la regione attuale</string>
+    <string name="offline_regions_empty">Nessuna regione ancora scaricata.</string>
+    <string name="offline_regions_total_size">Totale: %1$s</string>
+    <string name="offline_regions_profile">Profilo di percorso</string>
+    <string name="offline_region_delete">Elimina regione</string>
+    <string name="offline_region_exists">Quest\'area è già disponibile offline.</string>
+    <string name="offline_regions_downloading_title">Download della regione offline…</string>
+    <string name="offline_regions_downloading_map">Download della mappa…</string>
+    <string name="offline_regions_downloading_routing">Download del percorso…</string>
+    <string name="offline_regions_coverage_hint">Copre un raggio di mappa di circa %1$d km attorno al punto; il calcolo del percorso in bici copre un\'area molto più ampia.</string>
+    <string name="offline_regions_pick_on_map">Scegli sulla mappa</string>
+    <string name="offline_regions_pick_hint">Sposta la mappa in modo che il mirino sia sull\'area desiderata, poi scarica.</string>
+    <string name="offline_regions_pick_confirm">Scarica quest\'area</string>
+
     <string name="menu_offline_map_activate">Scarica mappa offline</string>
     <string name="menu_offline_map_active">Mappa offline scaricata</string>
     <string name="menu_offline_map_downloading">Download della mappa…</string>
@@ -234,6 +252,20 @@
     <string name="about_support">Offrimi un caffè</string>
     <string name="about_open_link">Apri link</string>
     <string name="about_imprint">Note legali</string>
+    <string name="about_replay_onboarding">Tour dell\'app</string>
+    <string name="about_replay_onboarding_subtitle">Mostra di nuovo l\'introduzione</string>
+
+    <!-- Introduzione al primo avvio -->
+    <string name="onboarding_skip">Salta</string>
+    <string name="onboarding_next">Avanti</string>
+    <string name="onboarding_finish">Iniziamo</string>
+    <string name="onboarding_welcome_title">Benvenuto su VeloSpot</string>
+    <string name="onboarding_welcome_desc">Il tuo navigatore per la bici con i parcheggi per biciclette — per pedalare con calma in città e oltre.</string>
+    <string name="onboarding_offline_title">Mappe e percorsi offline</string>
+    <string name="onboarding_offline_desc">Naviga anche senza connessione: i dati delle mappe e il calcolo del percorso in bici funzionano completamente offline. Scarica i dati una sola volta — preferibilmente in Wi-Fi.</string>
+    <string name="onboarding_offline_cta">Configura il routing offline</string>
+    <string name="onboarding_ready_title">Pronto a pedalare</string>
+    <string name="onboarding_ready_desc">Tocca la mappa per impostare una destinazione, cerca indirizzi in alto, pianifica percorsi dal menu delle azioni — trovi tutto il resto nel menu impostazioni.</string>
     <string name="imprint_legal_note">Informazioni ai sensi del § 5 DDG</string>
     <string name="parked_bike_title">La mia bici parcheggiata</string>
     <string name="parked_bike_park_here">Parcheggia la bici qui</string>

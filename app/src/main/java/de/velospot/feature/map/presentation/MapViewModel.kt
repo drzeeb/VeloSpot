@@ -40,7 +40,6 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import de.velospot.feature.map.presentation.navigation.NavigationController
-import de.velospot.feature.map.presentation.offline.OfflineRoutingController
 import de.velospot.feature.map.presentation.places.ParkedBikeController
 import de.velospot.feature.map.presentation.places.SavedPlacesController
 import de.velospot.feature.map.presentation.ride.RideTrackingController
@@ -519,6 +518,25 @@ class MapViewModel @Inject constructor(
     /** Toggles the rounded 3D-building corners on/off and persists the choice. */
     fun setRoundedBuildingsEnabled(enabled: Boolean) {
         viewModelScope.launch { mapSettings.setRoundedBuildings(enabled) }
+    }
+
+    /**
+     * Whether the first-launch **welcome onboarding** has been completed. `null`
+     * until the stored value has loaded, so the welcome sheet is only shown once we
+     * know for sure it hasn't been seen — this avoids a flash of the sheet for
+     * returning users while DataStore is still reading.
+     */
+    val onboardingCompleted: StateFlow<Boolean?> =
+        mapSettings.onboardingCompleted.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Marks the welcome onboarding as completed so it will not show again. */
+    fun completeOnboarding() {
+        viewModelScope.launch { mapSettings.setOnboardingCompleted(true) }
+    }
+
+    /** Re-arms the welcome onboarding so the rider can view the tour again. */
+    fun replayOnboarding() {
+        viewModelScope.launch { mapSettings.setOnboardingCompleted(false) }
     }
 
     fun onSearchQueryChanged(query: String) = addressSearch.onQueryChanged(query)
@@ -1001,40 +1019,48 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // ── Offline routing ───────────────────────────────────────────────────────
+    // ── Offline usage (map tiles + routing, combined, per region) ──────────────
 
-    /** Owns the offline-routing concern (download lifecycle, sheets, active profile). */
-    private val offlineRouting = OfflineRoutingController(
+    /**
+     * Owns the unified offline concern: downloading, listing and deleting offline
+     * **regions** (each a combined map-tiles + routing pack) and the active routing
+     * profile. Replaces the previous split offline-routing / offline-map controllers
+     * so a region always gets both halves. The light style URL is cached (dark reuses
+     * the very same OpenFreeMap tiles).
+     */
+    private val offlineRegions = de.velospot.feature.map.presentation.offline.OfflineRegionsController(
         scope = viewModelScope,
         context = context,
         segmentManager = segmentManager,
-        currentLocation = { _userLocation.value },
-        onDownloadError = { error -> navigationController.showError(error) }
-    )
-    val offlineRoutingUiState: StateFlow<OfflineRoutingUiState> = offlineRouting.uiState
-    val showOfflineSetupSheet: StateFlow<Boolean> = offlineRouting.showSetupSheet
-    val showProfileSheet: StateFlow<Boolean> = offlineRouting.showProfileSheet
-    val showWifiWarning: StateFlow<Boolean> = offlineRouting.showWifiWarning
-
-    // ── Offline map tiles ─────────────────────────────────────────────────────
-
-    /**
-     * Owns the offline **map tiles** concern — pre-downloading the visible vector map
-     * so it renders without a network, complementing the offline routing. Mirrors the
-     * offline-routing controller; the light style URL is cached (dark reuses the very
-     * same OpenFreeMap tiles).
-     */
-    private val offlineMap = de.velospot.feature.map.presentation.offline.OfflineMapController(
-        scope = viewModelScope,
-        context = context,
         tilesManager = offlineMapTilesManager,
         styleUrl = de.velospot.feature.map.presentation.MAP_STYLE_URL_LIGHT,
+        store = de.velospot.core.offline.OfflineRegionsStore(context),
         currentLocation = { _userLocation.value },
-        onDownloadError = { error -> navigationController.showError(error) }
+        reverseGeocode = { lat, lon -> nominatimGeocoder.reverseGeocodePlace(lat, lon) },
+        // Surface offline-download errors as a Toast, not the in-map error card:
+        // the card renders behind the (modal) offline sheets, so it would be hidden.
+        onDownloadError = { error -> _userMessageRes.value = offlineErrorMessageRes(error) },
+        onDuplicateRegion = { _userMessageRes.value = de.velospot.R.string.offline_region_exists }
     )
-    val offlineMapUiState: StateFlow<OfflineMapUiState> = offlineMap.uiState
-    val showOfflineMapSetupSheet: StateFlow<Boolean> = offlineMap.showSetupSheet
-    val showOfflineMapWifiWarning: StateFlow<Boolean> = offlineMap.showWifiWarning
+    val offlineUiState: StateFlow<OfflineRegionsUiState> = offlineRegions.uiState
+    val showOfflineManagerSheet: StateFlow<Boolean> = offlineRegions.showManagerSheet
+    val showProfileSheet: StateFlow<Boolean> = offlineRegions.showProfileSheet
+    val showWifiWarning: StateFlow<Boolean> = offlineRegions.showWifiWarning
+
+    /**
+     * Whether the map is in "pick a spot for an offline region" mode: the user
+     * centres the map on the desired area and confirms, instead of using their
+     * current GPS position. Drives a centre crosshair + confirm panel on the map.
+     */
+    private val _isPickingOfflineRegion = MutableStateFlow(false)
+    val isPickingOfflineRegion: StateFlow<Boolean> = _isPickingOfflineRegion.asStateFlow()
+
+    /** Maps an offline-download failure to a short, Toast-friendly string resource. */
+    private fun offlineErrorMessageRes(error: MapError): Int = when (error) {
+        is MapError.NoInternetConnection -> de.velospot.R.string.error_no_internet
+        is MapError.LocationUnavailable  -> de.velospot.R.string.error_location_unavailable
+        else                             -> de.velospot.R.string.error_unknown
+    }
 
     // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -1276,28 +1302,41 @@ class MapViewModel @Inject constructor(
         navigationController.startVia(destination, waypoints)
     }
 
-    // ── Offline routing ───────────────────────────────────────────────────────
+    // ── Offline usage (map tiles + routing, combined per region) ───────────────
 
-    fun requestOfflineRoutingSetup() = offlineRouting.requestSetup()
-    fun dismissOfflineSetupSheet()   = offlineRouting.dismissSetupSheet()
+    /** Opens the offline-regions manager sheet (list + add/delete). */
+    fun openOfflineRegions()          = offlineRegions.requestSetup()
+    fun dismissOfflineManagerSheet()  = offlineRegions.dismissManagerSheet()
 
-    fun openProfileSheet()    = offlineRouting.openProfileSheet()
-    fun dismissProfileSheet() = offlineRouting.dismissProfileSheet()
+    fun openProfileSheet()    = offlineRegions.openProfileSheet()
+    fun dismissProfileSheet() = offlineRegions.dismissProfileSheet()
 
-    fun dismissWifiWarning()          = offlineRouting.dismissWifiWarning()
-    fun confirmDownloadOnMobileData() = offlineRouting.confirmDownloadOnMobileData()
-    fun confirmOfflineRoutingSetup()  = offlineRouting.confirmSetup(full = false)
-    fun confirmOfflineRoutingFullSetup() = offlineRouting.confirmSetup(full = true)
+    fun dismissWifiWarning()          = offlineRegions.dismissWifiWarning()
+    fun confirmDownloadOnMobileData() = offlineRegions.confirmDownloadOnMobileData()
 
-    // ── Offline map tiles ─────────────────────────────────────────────────────
+    /** Adds an offline region (map + routing) around the rider's current position. */
+    fun addOfflineRegion()            = offlineRegions.addCurrentRegion()
 
-    fun requestOfflineMapSetup()          = offlineMap.requestSetup()
-    fun dismissOfflineMapSetupSheet()     = offlineMap.dismissSetupSheet()
-    fun confirmOfflineMapRegion()         = offlineMap.confirmSetup(full = false)
-    fun confirmOfflineMapFull()           = offlineMap.confirmSetup(full = true)
-    fun dismissOfflineMapWifiWarning()    = offlineMap.dismissWifiWarning()
-    fun confirmOfflineMapOnMobileData()   = offlineMap.confirmDownloadOnMobileData()
-    fun deleteOfflineMap()                = offlineMap.deleteOfflineMap()
+    /** Enters map-pick mode so the rider can choose a spot for an offline region. */
+    fun startPickingOfflineRegion() {
+        offlineRegions.dismissManagerSheet()
+        _isPickingOfflineRegion.value = true
+    }
+
+    /** Leaves map-pick mode without downloading. */
+    fun cancelPickingOfflineRegion() { _isPickingOfflineRegion.value = false }
+
+    /** Downloads an offline region around the picked [latitude]/[longitude]. */
+    fun addOfflineRegionAt(latitude: Double, longitude: Double) {
+        _isPickingOfflineRegion.value = false
+        offlineRegions.addRegionAt(latitude, longitude)
+    }
+
+    /** Deletes a single offline region by id. */
+    fun deleteOfflineRegion(id: String) = offlineRegions.deleteRegion(id)
+
+    /** Removes all offline regions and returns to fully-online operation. */
+    fun disableOfflineRouting()       = offlineRegions.deleteAllRegions()
 
     /**
      * Switches the active routing profile. Persisting + state live in the offline
@@ -1305,7 +1344,7 @@ class MapViewModel @Inject constructor(
      * with the new profile.
      */
     fun selectRoutingProfile(profile: de.velospot.data.brouter.BRouterProfile) {
-        offlineRouting.selectProfile(profile)
+        offlineRegions.selectProfile(profile)
         val currentDestination = navigationController.activeDestination
         if (currentDestination != null) {
             startInAppNavigation(currentDestination)
@@ -1330,7 +1369,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun disableOfflineRouting() = offlineRouting.disable()
 
     override fun onCleared() {
         super.onCleared()

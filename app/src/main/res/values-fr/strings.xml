@@ -46,6 +46,24 @@
     <string name="menu_offline_routing_activate">Activer la navigation hors ligne</string>
     <string name="menu_offline_routing_downloading">Téléchargement des données…</string>
     <string name="menu_offline_routing_active">Offline: %1$s ▸</string>
+    <string name="menu_offline_regions_activate">Configurer l\'usage hors ligne</string>
+    <string name="menu_offline_regions_active">Régions hors ligne (%1$d) ▸</string>
+    <string name="offline_regions_title">Régions hors ligne</string>
+    <string name="offline_regions_description">Téléchargez une région pour utiliser la carte et l\'itinéraire sans connexion. Chaque région enregistre à la fois la carte visible et l\'itinéraire vélo autour de votre position actuelle — parfait avant un voyage.</string>
+    <string name="offline_regions_add">Télécharger la région actuelle</string>
+    <string name="offline_regions_empty">Aucune région téléchargée pour l\'instant.</string>
+    <string name="offline_regions_total_size">Total : %1$s</string>
+    <string name="offline_regions_profile">Profil d\'itinéraire</string>
+    <string name="offline_region_delete">Supprimer la région</string>
+    <string name="offline_region_exists">Cette zone est déjà disponible hors ligne.</string>
+    <string name="offline_regions_downloading_title">Téléchargement de la région hors ligne…</string>
+    <string name="offline_regions_downloading_map">Téléchargement de la carte…</string>
+    <string name="offline_regions_downloading_routing">Téléchargement de l\'itinéraire…</string>
+    <string name="offline_regions_coverage_hint">Couvre un rayon de carte d\'environ %1$d km autour du point ; l\'itinéraire vélo couvre une zone bien plus large.</string>
+    <string name="offline_regions_pick_on_map">Choisir sur la carte</string>
+    <string name="offline_regions_pick_hint">Déplacez la carte pour placer le réticule sur la zone souhaitée, puis téléchargez.</string>
+    <string name="offline_regions_pick_confirm">Télécharger cette zone</string>
+
     <string name="menu_offline_map_activate">Télécharger la carte hors ligne</string>
     <string name="menu_offline_map_active">Carte hors ligne téléchargée</string>
     <string name="menu_offline_map_downloading">Téléchargement de la carte…</string>
@@ -233,6 +251,20 @@
     <string name="about_support">Offrez-moi un café</string>
     <string name="about_open_link">Ouvrir le lien</string>
     <string name="about_imprint">Mentions légales</string>
+    <string name="about_replay_onboarding">Visite de l\'appli</string>
+    <string name="about_replay_onboarding_subtitle">Revoir l\'introduction</string>
+
+    <!-- Accueil au premier lancement -->
+    <string name="onboarding_skip">Passer</string>
+    <string name="onboarding_next">Suivant</string>
+    <string name="onboarding_finish">C\'est parti</string>
+    <string name="onboarding_welcome_title">Bienvenue sur VeloSpot</string>
+    <string name="onboarding_welcome_desc">Votre navigateur vélo avec les stationnements pour vélos — pour rouler sereinement en ville et au-delà.</string>
+    <string name="onboarding_offline_title">Cartes &amp; itinéraires hors ligne</string>
+    <string name="onboarding_offline_desc">Naviguez même sans connexion : les données cartographiques et le calcul d\'itinéraire vélo fonctionnent entièrement hors ligne. Téléchargez les données une fois — de préférence en Wi-Fi.</string>
+    <string name="onboarding_offline_cta">Configurer l\'itinéraire hors ligne</string>
+    <string name="onboarding_ready_title">Prêt à rouler</string>
+    <string name="onboarding_ready_desc">Touchez la carte pour placer une destination, recherchez des adresses en haut, planifiez des itinéraires depuis le menu d\'actions — retrouvez le reste dans le menu des réglages.</string>
     <string name="imprint_legal_note">Informations conformément au § 5 DDG</string>
     <string name="parked_bike_title">Mon vélo garé</string>
     <string name="parked_bike_park_here">Garer le vélo ici</string>

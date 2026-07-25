@@ -764,6 +764,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val roundedBuildingsEnabled: Flow<Boolean> = _roundedBuildings
     private val _rideViewOptions = MutableStateFlow(RideViewOptions())
     override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
+    private val _onboardingCompleted = MutableStateFlow(true)
+    override val onboardingCompleted: Flow<Boolean> = _onboardingCompleted
 
     override suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean) {
         _layerVisibility.value = _layerVisibility.value.withVisibility(category, visible)
@@ -779,6 +781,9 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     }
     override suspend fun setColorTrackBySpeed(enabled: Boolean) {
         _rideViewOptions.value = _rideViewOptions.value.copy(colorTrackBySpeed = enabled)
+    }
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        _onboardingCompleted.value = completed
     }
 }
 
