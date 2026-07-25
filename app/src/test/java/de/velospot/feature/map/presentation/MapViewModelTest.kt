@@ -101,9 +101,23 @@ class MapViewModelTest {
     @After
     fun tearDown() {
         // 1) Cancel the recording managers' background scopes (ticker + GPS collector)
-        //    so nothing keeps running on background threads once the test's main
-        //    dispatcher is reset.
-        createdManagerScopes.forEach { runCatching { it.cancel() } }
+        //    AND block until they've fully finished, so nothing keeps running on
+        //    background threads once the test's main dispatcher is reset. Merely
+        //    cancelling is not enough: a 1 s stats ticker running on a real Default
+        //    thread could still push one last update to the manager's `trackingState`
+        //    StateFlow *after* `resetMain()`. That late emission wakes the eager
+        //    `viewModelScope` collector in RideTrackingController (which combines the
+        //    manager flows), forcing a dispatch onto the now-reset Main dispatcher and
+        //    crashing with "Module with the Main dispatcher had failed to initialize"
+        //    (Looper unavailable in JVM tests) — the flaky CI failure. Joining the
+        //    cancelled job first guarantees no such post-reset emission can occur.
+        createdManagerScopes.forEach { scope ->
+            runCatching {
+                val job = scope.coroutineContext[kotlinx.coroutines.Job]
+                scope.cancel()
+                kotlinx.coroutines.runBlocking { job?.join() }
+            }
+        }
         createdManagerScopes.clear()
         // 2) Cancel each view-model's viewModelScope so no collector coroutine leaks
         //    into the next test. ViewModel.clear() is not public, so reach it reflectively.
