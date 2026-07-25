@@ -15,6 +15,10 @@ package de.velospot.core.offline
  * @param latitude  anchor latitude of the region.
  * @param longitude anchor longitude of the region.
  * @param createdAt epoch millis the region was added (for stable ordering).
+ * @param routingTiles the BRouter 5°×5° tile file names this pack needs. A point
+ *  region needs one; a route-corridor pack may need several. Empty for legacy
+ *  entries stored before this field existed (delete then falls back to the tile at
+ *  [latitude]/[longitude]).
  */
 data class OfflineRegionPack(
     val id: String,
@@ -22,5 +26,6 @@ data class OfflineRegionPack(
     val latitude: Double,
     val longitude: Double,
     val createdAt: Long,
+    val routingTiles: List<String> = emptyList(),
 )
 

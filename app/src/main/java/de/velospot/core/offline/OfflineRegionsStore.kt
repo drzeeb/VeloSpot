@@ -33,6 +33,9 @@ class OfflineRegionsStore(private val context: Context) {
                     latitude  = obj.getDouble("lat"),
                     longitude = obj.getDouble("lon"),
                     createdAt = obj.getLong("createdAt"),
+                    routingTiles = obj.optJSONArray("routingTiles")?.let { tiles ->
+                        (0 until tiles.length()).map { tiles.getString(it) }
+                    } ?: emptyList(),
                 )
             }
         }.getOrDefault(emptyList())
@@ -59,6 +62,7 @@ class OfflineRegionsStore(private val context: Context) {
                     .put("lat", pack.latitude)
                     .put("lon", pack.longitude)
                     .put("createdAt", pack.createdAt)
+                    .put("routingTiles", JSONArray(pack.routingTiles))
             )
         }
         prefs().edit { putString(KEY_REGIONS, array.toString()) }

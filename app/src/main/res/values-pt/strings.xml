@@ -106,6 +106,10 @@
     <string name="common_delete">Eliminar</string>
     <string name="common_remove">Remover</string>
     <string name="common_close">Fechar</string>
+    <string name="common_more_options">Mais opções</string>
+    <string name="route_map_short">Mapa</string>
+    <string name="route_leaderboard_short">Ranking</string>
+    <string name="route_offline_short">Offline</string>
     <string name="route_show_on_map">Mostrar no mapa</string>
     <string name="route_stat_stops">Paragens</string>
     <string name="route_leaderboard_view_all">Ver tudo</string>
@@ -171,6 +175,10 @@
     <string name="menu_voice_guidance">Orientação por voz</string>
     <string name="menu_keep_screen_on">Manter o ecrã ligado durante o percurso</string>
     <string name="menu_portrait_lock">Bloquear na orientação vertical</string>
+    <string name="menu_amoled_mode">Mapa preto AMOLED</string>
+    <string name="recent_destination_fallback">Destino</string>
+    <string name="search_recent_title">Recentes</string>
+    <string name="offline_download_route">Baixar para uso offline</string>
     <string name="menu_rounded_buildings">Edifícios 3D arredondados</string>
     <string name="menu_simulate_route_start">▶ Simular rota (GPS falso)</string>
     <string name="menu_simulate_route_stop">⏹ Parar simulação de rota</string>

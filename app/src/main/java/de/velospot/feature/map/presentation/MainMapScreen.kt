@@ -8,6 +8,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -136,6 +137,7 @@ fun MainMapScreen(
     val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
     val roundedBuildingsEnabled by viewModel.roundedBuildingsEnabled.collectAsStateWithLifecycle()
+    val amoledEnabled        by viewModel.amoledEnabled.collectAsStateWithLifecycle()
     val onboardingCompleted  by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
@@ -151,6 +153,7 @@ fun MainMapScreen(
     val isComputingRoutePreview by viewModel.isComputingRoutePreview.collectAsStateWithLifecycle()
     val previewedRoute        by viewModel.previewedRoute.collectAsStateWithLifecycle()
     val previewedRouteSummary by viewModel.previewedRouteSummary.collectAsStateWithLifecycle()
+    val recentDestinations    by viewModel.recentDestinations.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -664,9 +667,9 @@ fun MainMapScreen(
     // first map creation and again whenever the user toggles dark mode. Re-loading
     // the style discards all custom sources/layers/images, so we bump styleVersion
     // to re-run the marker rendering effect above.
-    LaunchedEffect(maplibreMap, isDarkTheme) {
+    LaunchedEffect(maplibreMap, isDarkTheme, amoledEnabled) {
         val map = maplibreMap ?: return@LaunchedEffect
-        map.setStyle(mapStyleUrl(isDarkTheme)) { _ ->
+        map.setStyle(mapStyleUrl(isDarkTheme, amoledEnabled)) { _ ->
             styleVersion++
         }
     }
@@ -770,6 +773,7 @@ fun MainMapScreen(
             keepScreenOnEnabled = keepScreenOnEnabled,
             portraitLockEnabled = portraitLockEnabled,
             roundedBuildingsEnabled = roundedBuildingsEnabled,
+            amoledEnabled      = amoledEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -792,6 +796,11 @@ fun MainMapScreen(
             onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
             onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!portraitLockEnabled) },
             onToggleRoundedBuildings = { viewModel.setRoundedBuildingsEnabled(!roundedBuildingsEnabled) },
+            onToggleAmoled        = {
+                // Enabling AMOLED implies dark mode; turn it on if not already.
+                if (!amoledEnabled && !isDarkTheme) onDarkThemeToggle()
+                viewModel.setAmoledEnabled(!amoledEnabled)
+            },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,
@@ -815,13 +824,18 @@ fun MainMapScreen(
                 query            = searchQuery,
                 results          = searchResults,
                 isSearching      = isSearching,
+                recentDestinations = recentDestinations,
                 onQueryChange    = viewModel::onSearchQueryChanged,
                 onResultSelected = viewModel::onSearchResultSelected,
+                onRecentSelected = viewModel::navigateToRecentDestination,
                 onClear          = viewModel::onSearchCleared
             )
             Spacer(Modifier.width(8.dp))
             MapMenuCard(state = menuState, actions = menuActions)
         }
+
+        // Recent destinations now live inside the search bar's initially-expanded
+        // results dropdown (see AddressSearchBar), so there is no permanent on-map row.
 
         // Unified Settings sheet (replaces the old top-bar dropdown menu).
         if (screenUiState.isSettingsSheetVisible) {
@@ -988,6 +1002,7 @@ fun MainMapScreen(
                 onRideForward = { viewModel.ridePlannedRoute(route, reversed = false) },
                 onRideReverse = { viewModel.ridePlannedRoute(route, reversed = true) },
                 onOpenLeaderboard = { viewModel.openRouteLeaderboard(route) },
+                onDownloadOffline = { viewModel.downloadRouteForOffline(route) },
                 onClose = {
                     // Closing the preview returns to the "My routes" list it was
                     // opened from, instead of leaving the bare map.

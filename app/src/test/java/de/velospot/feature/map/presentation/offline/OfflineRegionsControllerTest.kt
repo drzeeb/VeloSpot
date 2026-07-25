@@ -22,6 +22,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
@@ -34,7 +35,13 @@ import org.mockito.kotlin.whenever
 class OfflineRegionsControllerTest {
 
     private val tiles = mock<OfflineMapTilesManager>()
-    private val segments = mock<BRouterSegmentManager>()
+    private val segments = mock<BRouterSegmentManager> {
+        // Production always returns a real 5°×5° segment tile name; without this stub
+        // Mockito returns null, which serialises as `"routingTiles":[null]` and makes
+        // OfflineRegionsStore.list() throw on read-back (JSON null → getString), so a
+        // just-added region silently disappears. Stub it to a valid tile name.
+        on { segmentTileNameForLocation(any(), any()) } doReturn "E5_N45.rd5"
+    }
 
     private fun context(internet: Boolean, wifi: Boolean): Context {
         val ctx = fakeContextWithPrefs()

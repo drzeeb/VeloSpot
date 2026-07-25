@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
@@ -68,6 +69,7 @@ internal fun RoutePreviewSheet(
     onRideForward: () -> Unit,
     onRideReverse: () -> Unit,
     onOpenLeaderboard: () -> Unit,
+    onDownloadOffline: () -> Unit,
     onClose: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -146,6 +148,12 @@ internal fun RoutePreviewSheet(
                     Icon(Icons.Default.SwapHoriz, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.route_ride_reverse))
+                }
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onDownloadOffline, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.CloudDownload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.offline_download_route))
                 }
             }
         }

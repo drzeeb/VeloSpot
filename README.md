@@ -7,6 +7,7 @@
 ![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4)
 ![Map](https://img.shields.io/badge/map-MapLibre-3887BE)
 ![License](https://img.shields.io/badge/license-MIT-green)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Download-01875f?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=de.velospot)
 [![Release](https://img.shields.io/github/v/release/drzeeb/VeloSpot?label=latest%20release)](https://github.com/drzeeb/VeloSpot/releases/latest)
 [![CI](https://github.com/drzeeb/VeloSpot/actions/workflows/ci.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/ci.yml)
 [![Release workflow](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml/badge.svg)](https://github.com/drzeeb/VeloSpot/actions/workflows/release.yml)
@@ -15,6 +16,15 @@
 [![codecov](https://codecov.io/gh/drzeeb/VeloSpot/branch/main/graph/badge.svg)](https://codecov.io/gh/drzeeb/VeloSpot)
 
 VeloSpot is an Android application that helps cyclists discover and navigate to bike parking facilities **across Germany, France and Luxembourg**. Powered by a pre-bundled OpenStreetMap dataset with over **100 000 locations**, the app works fully offline from the very first launch — no network required to find parking.
+
+## 📲 Get it on Google Play
+
+VeloSpot is now available on the Google Play Store — install it with one tap:
+
+<a href="https://play.google.com/store/apps/details?id=de.velospot"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="60"></a>
+
+👉 **[Download VeloSpot on Google Play](https://play.google.com/store/apps/details?id=de.velospot)**
+
 
 ## 🗺️ Multi-Country Bike Parking Data
 
@@ -30,6 +40,7 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 
 ## 🔗 Quick Links
 
+- **Google Play**: https://play.google.com/store/apps/details?id=de.velospot
 - **Website**: https://velospot.app
 - **GitHub Repository**: https://github.com/drzeeb/VeloSpot
 - **Privacy Policy**: https://velospot.app/privacy.html ([`PRIVACY.md`](./PRIVACY.md))
@@ -173,7 +184,11 @@ VeloSpot/
 
 ## 📥 Download
 
-Pre-built debug APKs are available on the [Releases page](https://github.com/drzeeb/VeloSpot/releases/latest).
+The easiest way to install VeloSpot is straight from the **Google Play Store**:
+
+👉 **[Download VeloSpot on Google Play](https://play.google.com/store/apps/details?id=de.velospot)**
+
+Prefer to sideload? Pre-built debug APKs are also available on the [Releases page](https://github.com/drzeeb/VeloSpot/releases/latest).
 
 1. Download the latest `VeloSpot-vX.X.X-debug.apk`
 2. On your Android device: **Settings → Install unknown apps** → allow your browser or file manager

@@ -106,6 +106,10 @@
     <string name="common_delete">Läschen</string>
     <string name="common_remove">Ewechhuelen</string>
     <string name="common_close">Zoumaachen</string>
+    <string name="common_more_options">Méi Optiounen</string>
+    <string name="route_map_short">Kaart</string>
+    <string name="route_leaderboard_short">Rangléscht</string>
+    <string name="route_offline_short">Offline</string>
     <string name="route_show_on_map">Op der Kaart weisen</string>
     <string name="route_stat_stops">Stopps</string>
     <string name="route_leaderboard_view_all">Alleg weisen</string>
@@ -171,6 +175,10 @@
     <string name="menu_voice_guidance">Sproochansoen</string>
     <string name="menu_keep_screen_on">Écran un loossen wärend der Fahrt</string>
     <string name="menu_portrait_lock">Am Héichformat spären</string>
+    <string name="menu_amoled_mode">AMOLED-Schwaarz-Kaart</string>
+    <string name="recent_destination_fallback">Zil</string>
+    <string name="search_recent_title">Lescht</string>
+    <string name="offline_download_route">Fir offline eroflueden</string>
     <string name="menu_rounded_buildings">Ofgeronnte 3D-Gebaier</string>
     <string name="menu_simulate_route_start">▶ Route simuléieren (GPS-Mock)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatioun stoppen</string>

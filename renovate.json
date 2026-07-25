@@ -4,7 +4,8 @@
     "config:recommended",
     ":dependencyDashboard",
     ":semanticCommits",
-    "security:openssf-scorecard"
+    "security:openssf-scorecard",
+    "helpers:pinGitHubActionDigests"
   ],
 
   "timezone": "Europe/Berlin",

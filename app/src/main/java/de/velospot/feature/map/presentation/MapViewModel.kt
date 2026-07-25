@@ -28,10 +28,12 @@ import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.PlannedRoute
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
+import de.velospot.domain.model.RecentDestination
 import de.velospot.domain.model.RouteAttempt
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
+import de.velospot.domain.repository.DestinationHistoryRepository
 import de.velospot.domain.repository.FavoritesRepository
 import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
@@ -105,6 +107,7 @@ class MapViewModel @Inject constructor(
     parkedBikeRepository: ParkedBikeRepository,
     private val recordedRidesRepository: RecordedRidesRepository,
     plannedRoutesRepository: PlannedRoutesRepository,
+    private val destinationHistoryRepository: DestinationHistoryRepository,
     private val mapSettings: MapSettingsRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -123,6 +126,9 @@ class MapViewModel @Inject constructor(
 
         /** ID used for the synthetic BikeParkingSpace at the end of a planned multi-waypoint route. */
         const val ID_PLANNED_ROUTE = "planned_route"
+
+        /** How many recent destinations are kept for the search bar's expanded dropdown. */
+        private const val MAX_RECENT_CHIPS = 6
 
         /**
          * Synthetic destination IDs that must NOT trigger auto-parking on arrival —
@@ -518,6 +524,18 @@ class MapViewModel @Inject constructor(
     /** Toggles the rounded 3D-building corners on/off and persists the choice. */
     fun setRoundedBuildingsEnabled(enabled: Boolean) {
         viewModelScope.launch { mapSettings.setRoundedBuildings(enabled) }
+    }
+
+    /**
+     * Whether the AMOLED (pure-black) map style is used while dark mode is on.
+     * Persisted across sessions; defaults to disabled (the regular dark style).
+     */
+    val amoledEnabled: StateFlow<Boolean> =
+        mapSettings.amoledEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the AMOLED pure-black map style on/off and persists the choice. */
+    fun setAmoledEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setAmoled(enabled) }
     }
 
     /**
@@ -1210,8 +1228,46 @@ class MapViewModel @Inject constructor(
         // Navigating to a normal destination is not a planned-route ride: clear any
         // armed leaderboard-attempt context so this ride isn't wrongly recorded.
         routePlanningController.cancelPendingRide()
+        recordRecentDestination(space)
         navigationController.start(space)
     }
+
+    // ── Recent destinations & Home / Work shortcuts ───────────────────────────
+
+    /** The most recent ordinary destinations (shown in the search bar's expanded dropdown). */
+    val recentDestinations: StateFlow<List<RecentDestination>> =
+        destinationHistoryRepository.recentDestinations(MAX_RECENT_CHIPS)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /**
+     * Records [space] in the destination history so it can be re-selected with one
+     * tap later. Skips synthetic anchors that aren't real "places" a rider would
+     * want to return to (the parked bike and generated round trips).
+     */
+    private fun recordRecentDestination(space: BikeParkingSpace) {
+        if (space.id == ID_PARKED_BIKE || space.id == ID_ROUND_TRIP) return
+        val name = space.name?.trim().orEmpty().ifBlank {
+            space.address?.substringBefore(",")?.trim().orEmpty()
+        }.ifBlank { context.getString(de.velospot.R.string.recent_destination_fallback) }
+        viewModelScope.launch {
+            destinationHistoryRepository.record(name, space.latitude, space.longitude, space.address)
+        }
+    }
+
+    /** Starts in-app navigation to a previously-used [destination]. */
+    fun navigateToRecentDestination(destination: RecentDestination) {
+        val syntheticSpace = syntheticSpace(
+            id          = ID_ADDRESS_SEARCH_PIN,
+            latitude    = destination.latitude,
+            longitude   = destination.longitude,
+            name        = destination.name,
+            address     = destination.address,
+            sourceLayer = "recent"
+        )
+        clearPlaceSelections()
+        startInAppNavigation(syntheticSpace)
+    }
+
 
     /**
      * Generates and starts a round-trip loop of roughly [distanceMeters] from the
@@ -1274,6 +1330,12 @@ class MapViewModel @Inject constructor(
     }
 
     fun closeRoutePreview() = routePlanningController.closeRoutePreview()
+
+    /**
+     * Downloads the whole [route] corridor (map tiles + routing tiles along the
+     * route) for offline use, so a long tour works end-to-end without a connection.
+     */
+    fun downloadRouteForOffline(route: PlannedRoute) = offlineRegions.downloadRouteCorridor(route)
 
     /**
      * Rides a saved [route] forward or backwards: arms the leaderboard-attempt

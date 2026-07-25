@@ -22,10 +22,12 @@ import de.velospot.data.local.dao.FavoriteSpaceDao
 import de.velospot.data.local.dao.RecordedRideDao
 import de.velospot.data.local.dao.BikeProfileDao
 import de.velospot.data.local.dao.SavedPlaceDao
+import de.velospot.data.local.dao.RecentDestinationDao
 import de.velospot.data.local.database.BikeParkingDatabase
 import de.velospot.data.local.database.FavoritesDatabase
 import de.velospot.data.local.database.RidesDatabase
 import de.velospot.data.local.database.SavedPlacesDatabase
+import de.velospot.data.local.database.DestinationHistoryDatabase
 import de.velospot.data.local.dao.PlannedRouteDao
 import de.velospot.data.local.dao.RouteAttemptDao
 import de.velospot.data.local.database.PlannedRoutesDatabase
@@ -39,6 +41,7 @@ import de.velospot.data.repository.RecordedRidesRepositoryImpl
 import de.velospot.data.repository.BikeProfilesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.data.repository.SavedPlacesRepositoryImpl
+import de.velospot.data.repository.DestinationHistoryRepositoryImpl
 import de.velospot.data.settings.MapSettingsDataStore
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
@@ -48,6 +51,7 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.BikeProfilesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.domain.repository.DestinationHistoryRepository
 import de.velospot.data.repository.PlannedRoutesRepositoryImpl
 import de.velospot.domain.repository.PlannedRoutesRepository
 import okhttp3.OkHttpClient
@@ -269,6 +273,30 @@ object NetworkModule {
         savedPlaceDao: SavedPlaceDao
     ): SavedPlacesRepository {
         return SavedPlacesRepositoryImpl(savedPlaceDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDestinationHistoryDatabase(
+        @ApplicationContext context: Context
+    ): DestinationHistoryDatabase {
+        return DestinationHistoryDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecentDestinationDao(
+        database: DestinationHistoryDatabase
+    ): RecentDestinationDao {
+        return database.recentDestinationDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDestinationHistoryRepository(
+        dao: RecentDestinationDao
+    ): DestinationHistoryRepository {
+        return DestinationHistoryRepositoryImpl(dao)
     }
 
     @Provides

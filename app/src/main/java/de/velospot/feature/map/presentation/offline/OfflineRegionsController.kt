@@ -8,12 +8,14 @@ import de.velospot.core.routing.isInternetAvailable
 import de.velospot.core.routing.isWifiConnected
 import de.velospot.core.maptiles.OfflineMapPreferences
 import de.velospot.core.maptiles.OfflineMapRegions
+import de.velospot.core.maptiles.RouteCorridor
 import de.velospot.data.brouter.BRouterProfile
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.maptiles.OfflineMapTilesManager
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
 import de.velospot.domain.model.NoInternetConnectionException
+import de.velospot.domain.model.PlannedRoute
 import de.velospot.feature.map.presentation.OfflineRegionsUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,15 +88,14 @@ class OfflineRegionsController(
 
     // ── Download a new region ──────────────────────────────────────────────────
 
-    /** Latitude/longitude of the region whose download is pending a Wi-Fi decision. */
-    private var pendingLat: Double? = null
-    private var pendingLon: Double? = null
+    /** The download awaiting a Wi-Fi / mobile-data decision (a region or a route). */
+    private var pendingDownload: (() -> Unit)? = null
 
     fun confirmDownloadOnMobileData() {
         _showWifiWarning.value = false
-        val lat = pendingLat ?: return
-        val lon = pendingLon ?: return
-        startDownloadAt(lat, lon)
+        val action = pendingDownload ?: return
+        pendingDownload = null
+        action()
     }
 
     /**
@@ -122,17 +123,35 @@ class OfflineRegionsController(
             onDuplicateRegion()
             return
         }
+        gateDownload { startDownloadAt(lat, lon) }
+    }
+
+    /**
+     * Downloads the **whole corridor** of a planned [route] for offline use — the
+     * map tiles along the route (not just a box around the start) *and* every BRouter
+     * routing tile the route passes through — so a long tour into a dead zone works
+     * end-to-end offline.
+     */
+    fun downloadRouteCorridor(route: PlannedRoute) {
+        val points = route.geometry
+            .map { it.latitude to it.longitude }
+            .ifEmpty { route.waypoints.map { it.latitude to it.longitude } }
+        if (points.isEmpty()) return
+        gateDownload { startRouteDownload(route, points) }
+    }
+
+    /** Applies the connectivity / Wi-Fi gate, then runs [download] (or defers it). */
+    private fun gateDownload(download: () -> Unit) {
         if (!isInternetAvailable(context)) {
             onDownloadError(MapError.NoInternetConnection)
             return
         }
-        pendingLat = lat
-        pendingLon = lon
         if (!isWifiConnected(context)) {
+            pendingDownload = download
             _showWifiWarning.value = true
             return
         }
-        startDownloadAt(lat, lon)
+        download()
     }
 
     private fun startDownloadAt(lat: Double, lon: Double) {
@@ -183,6 +202,7 @@ class OfflineRegionsController(
                         latitude = lat,
                         longitude = lon,
                         createdAt = System.currentTimeMillis(),
+                        routingTiles = listOf(segmentManager.segmentTileNameForLocation(lat, lon)),
                     )
                 )
                 OfflineRoutingPreferences.setOfflineRoutingEnabled(context, true)
@@ -203,19 +223,102 @@ class OfflineRegionsController(
         }
     }
 
+    /**
+     * Downloads a whole route corridor: the map-tile boxes tiling the route, then
+     * every BRouter routing tile the route passes through. Registered as one pack
+     * (named `pack-<id>`, like a point region) so it lists and deletes as a unit.
+     */
+    private fun startRouteDownload(route: PlannedRoute, points: List<Pair<Double, Double>>) {
+        val id = UUID.randomUUID().toString()
+        _uiState.value = _uiState.value.copy(
+            downloading = OfflineRegionsUiState.Downloading(OfflineRegionsUiState.Phase.MAP)
+        )
+        scope.launch {
+            runCatching {
+                // Phase 1 — the map tiles for every box tiling the route corridor.
+                val boxes = RouteCorridor.corridorBoxes(points)
+                tilesManager.downloadRouteCorridor(
+                    boxes = boxes,
+                    styleUrl = styleUrl,
+                    regionName = mapRegionName(id),
+                ) { fraction, bytes, regionIndex, totalRegions ->
+                    // Fold per-box progress into one overall 0f–1f fraction.
+                    val overall = if (fraction >= 0f && totalRegions > 0) {
+                        ((regionIndex - 1) + fraction) / totalRegions
+                    } else -1f
+                    _uiState.value = _uiState.value.copy(
+                        downloading = OfflineRegionsUiState.Downloading(
+                            phase = OfflineRegionsUiState.Phase.MAP,
+                            fraction = overall,
+                            downloadedBytes = bytes,
+                        )
+                    )
+                }
+                // Phase 2 — every BRouter 5°×5° routing tile the route crosses.
+                _uiState.value = _uiState.value.copy(
+                    downloading = OfflineRegionsUiState.Downloading(OfflineRegionsUiState.Phase.ROUTING)
+                )
+                segmentManager.downloadSegmentsForRoute(points) { downloaded, total, fileIndex, totalFiles, _ ->
+                    val perFile = if (total > 0L) downloaded / total.toFloat() else 0f
+                    val overall = if (totalFiles > 0) ((fileIndex - 1) + perFile) / totalFiles else -1f
+                    _uiState.value = _uiState.value.copy(
+                        downloading = OfflineRegionsUiState.Downloading(
+                            phase = OfflineRegionsUiState.Phase.ROUTING,
+                            fraction = overall,
+                            downloadedBytes = downloaded,
+                        )
+                    )
+                }
+            }.onSuccess {
+                store.add(
+                    OfflineRegionPack(
+                        id = id,
+                        label = route.name,
+                        latitude = points[points.size / 2].first,
+                        longitude = points[points.size / 2].second,
+                        createdAt = System.currentTimeMillis(),
+                        routingTiles = segmentManager.requiredSegmentNamesForPoints(points),
+                    )
+                )
+                OfflineRoutingPreferences.setOfflineRoutingEnabled(context, true)
+                OfflineMapPreferences.setHasOfflineMap(context, true)
+                _uiState.value = _uiState.value.copy(regions = store.list(), downloading = null)
+                refreshTotalSize()
+            }.onFailure { throwable ->
+                runCatching { tilesManager.deleteRegionByName(mapRegionName(id)) }
+                _uiState.value = _uiState.value.copy(downloading = null)
+                onDownloadError(
+                    when (throwable) {
+                        is NoInternetConnectionException -> MapError.NoInternetConnection
+                        else                             -> MapError.Unknown(throwable.message)
+                    }
+                )
+            }
+        }
+    }
+
     // ── Delete regions ─────────────────────────────────────────────────────────
 
-    /** Deletes one region: its map tiles and — unless shared — its routing tile. */
+    /** Deletes one region: its map tiles and — unless shared — its routing tile(s). */
     fun deleteRegion(id: String) {
         val pack = store.list().firstOrNull { it.id == id } ?: return
         scope.launch {
             runCatching { tilesManager.deleteRegionByName(mapRegionName(id)) }
-            // Only delete the routing tile if no other region shares that 5° tile.
-            val tile = segmentManager.segmentTileNameForLocation(pack.latitude, pack.longitude)
+            // The tiles this pack needs (legacy entries fall back to the anchor tile).
+            val myTiles = pack.routingTiles.ifEmpty {
+                listOf(segmentManager.segmentTileNameForLocation(pack.latitude, pack.longitude))
+            }
+            // The tiles every *other* remaining pack still needs.
             val stillNeeded = store.list()
                 .filterNot { it.id == id }
-                .any { segmentManager.segmentTileNameForLocation(it.latitude, it.longitude) == tile }
-            if (!stillNeeded) segmentManager.deleteSegmentTile(tile)
+                .flatMap { other ->
+                    other.routingTiles.ifEmpty {
+                        listOf(segmentManager.segmentTileNameForLocation(other.latitude, other.longitude))
+                    }
+                }
+                .toSet()
+            // Only remove routing tiles no other region depends on.
+            myTiles.filterNot { it in stillNeeded }.forEach { segmentManager.deleteSegmentTile(it) }
             store.remove(id)
             finishDeletion()
         }
