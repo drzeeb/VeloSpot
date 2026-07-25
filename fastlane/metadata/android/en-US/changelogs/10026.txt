@@ -1,0 +1,6 @@
+• Unified offline use: download the map and routing together per region – multiple regions supported
+• Download a whole route corridor (map tiles + routing) for offline use
+• AMOLED map: true black for dark night rides and less battery drain
+• Recent destinations right in the search bar – frequent places one tap away
+• First-launch welcome onboarding and a polished "My routes" list
+

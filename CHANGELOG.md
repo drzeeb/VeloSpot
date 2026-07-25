@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v1.0.26] - 2026-07-26
+
 ### Added
 - **AMOLED pure-black map (a dark-mode sub-option)** — a new **AMOLED** toggle in *Settings → Appearance & map* switches the dark map to a true-black style (`map_style_amoled.json`, derived from `map_style_dark.json` with a `#000000` background, near-black fills and black text halos) so OLED panels can switch pixels off and save battery on night rides. It's an extension of dark mode: enabling it also turns dark mode on if it wasn't already, and it has no effect in light mode. Off by default and persisted via the DataStore-backed `MapSettingsRepository` (`amoledEnabled`, `MapViewModel.amoledEnabled`); the style reloads live when toggled (a new `MAP_STYLE_URL_AMOLED` resolved by `mapStyleUrl(isDarkTheme, amoled)`). Localised across all eight supported languages (`menu_amoled_mode`).
 - **Recent destinations in the search bar** — focusing the (empty) address search field now initially expands its dropdown to show the **last 3 destinations** the rider navigated to, so a frequent place is one tap away without re-typing the address. Every navigation start (parking spot, address, saved place, custom pin) is recorded — de-duplicated by rounded coordinate and capped — in a dedicated, isolated Room store (`DestinationHistoryDatabase` / `recent_destinations`, independent of the parking / rides / places stores), exposed reactively via a new `DestinationHistoryRepository` and `MapViewModel.recentDestinations`. Localised across all eight supported languages (`search_recent_title`, `recent_destination_fallback`).
