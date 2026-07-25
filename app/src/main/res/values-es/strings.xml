@@ -106,6 +106,10 @@
     <string name="common_delete">Eliminar</string>
     <string name="common_remove">Quitar</string>
     <string name="common_close">Cerrar</string>
+    <string name="common_more_options">Más opciones</string>
+    <string name="route_map_short">Mapa</string>
+    <string name="route_leaderboard_short">Clasificación</string>
+    <string name="route_offline_short">Sin conexión</string>
     <string name="route_show_on_map">Mostrar en el mapa</string>
     <string name="route_stat_stops">Paradas</string>
     <string name="route_leaderboard_view_all">Ver todo</string>
@@ -244,6 +248,10 @@
     <string name="menu_layers">Capas</string>
     <string name="menu_navigation_view">Vista del mapa (2D/3D)</string>
     <string name="menu_portrait_lock">Bloquear en orientación vertical</string>
+    <string name="menu_amoled_mode">Mapa negro AMOLED</string>
+    <string name="recent_destination_fallback">Destino</string>
+    <string name="search_recent_title">Recientes</string>
+    <string name="offline_download_route">Descargar para uso sin conexión</string>
     <string name="menu_rounded_buildings">Edificios 3D redondeados</string>
     <string name="menu_voice_guidance">Guía por voz</string>
     <string name="menu_keep_screen_on">Mantener la pantalla encendida al circular</string>

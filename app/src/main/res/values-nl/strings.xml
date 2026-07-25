@@ -106,6 +106,10 @@
     <string name="common_delete">Verwijderen</string>
     <string name="common_remove">Verwijderen</string>
     <string name="common_close">Sluiten</string>
+    <string name="common_more_options">Meer opties</string>
+    <string name="route_map_short">Kaart</string>
+    <string name="route_leaderboard_short">Ranglijst</string>
+    <string name="route_offline_short">Offline</string>
     <string name="route_show_on_map">Op kaart tonen</string>
     <string name="route_stat_stops">Stops</string>
     <string name="route_leaderboard_view_all">Alles bekijken</string>
@@ -171,6 +175,10 @@
     <string name="menu_voice_guidance">Spraakbegeleiding</string>
     <string name="menu_keep_screen_on">Scherm aan houden tijdens het rijden</string>
     <string name="menu_portrait_lock">Vergrendel in portretstand</string>
+    <string name="menu_amoled_mode">AMOLED-zwarte kaart</string>
+    <string name="recent_destination_fallback">Bestemming</string>
+    <string name="search_recent_title">Recent</string>
+    <string name="offline_download_route">Downloaden voor offline gebruik</string>
     <string name="menu_rounded_buildings">Afgeronde 3D-gebouwen</string>
     <string name="menu_simulate_route_start">▶ Route simuleren (nep-GPS)</string>
     <string name="menu_simulate_route_stop">⏹ Routesimulatie stoppen</string>

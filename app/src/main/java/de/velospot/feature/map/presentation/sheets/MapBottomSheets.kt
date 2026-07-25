@@ -227,6 +227,11 @@ internal fun MapBottomSheets(
                 screenUiState.closePlannedRoutes()
                 viewModel.showRouteOnMap(route)
             },
+            onDownloadOffline = { route ->
+                // Close the list so the map's download-progress overlay is visible.
+                screenUiState.closePlannedRoutes()
+                viewModel.downloadRouteForOffline(route)
+            },
             onDelete = viewModel::deletePlannedRoute
         )
     }

@@ -153,6 +153,7 @@ class MapViewModelTest {
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
             plannedRoutesRepository = FakePlannedRoutesRepository(),
+            destinationHistoryRepository = FakeDestinationHistoryRepository(),
             mapSettings           = FakeMapSettingsRepository(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
@@ -825,6 +826,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val portraitLockEnabled: Flow<Boolean> = _portraitLock
     private val _roundedBuildings = MutableStateFlow(false)
     override val roundedBuildingsEnabled: Flow<Boolean> = _roundedBuildings
+    private val _amoled = MutableStateFlow(false)
+    override val amoledEnabled: Flow<Boolean> = _amoled
     private val _rideViewOptions = MutableStateFlow(RideViewOptions())
     override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
     private val _onboardingCompleted = MutableStateFlow(true)
@@ -839,6 +842,7 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override suspend fun setKeepScreenOn(enabled: Boolean) { _keepScreenOn.value = enabled }
     override suspend fun setPortraitLock(enabled: Boolean) { _portraitLock.value = enabled }
     override suspend fun setRoundedBuildings(enabled: Boolean) { _roundedBuildings.value = enabled }
+    override suspend fun setAmoled(enabled: Boolean) { _amoled.value = enabled }
     override suspend fun setShowMaxSpeedBubble(enabled: Boolean) {
         _rideViewOptions.value = _rideViewOptions.value.copy(showMaxSpeedBubble = enabled)
     }
@@ -847,6 +851,36 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     }
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         _onboardingCompleted.value = completed
+    }
+}
+
+private class FakeDestinationHistoryRepository : de.velospot.domain.repository.DestinationHistoryRepository {
+    private val store = MutableStateFlow<List<de.velospot.domain.model.RecentDestination>>(emptyList())
+
+    override fun recentDestinations(limit: Int): Flow<List<de.velospot.domain.model.RecentDestination>> =
+        kotlinx.coroutines.flow.MutableStateFlow(
+            store.value.filter { it.kind == de.velospot.domain.model.DestinationKind.RECENT }.take(limit)
+        )
+
+    override fun pinnedDestinations(): Flow<List<de.velospot.domain.model.RecentDestination>> =
+        kotlinx.coroutines.flow.MutableStateFlow(
+            store.value.filter { it.kind != de.velospot.domain.model.DestinationKind.RECENT }
+        )
+
+    override suspend fun record(name: String, latitude: Double, longitude: Double, address: String?) {
+        val id = "%.4f,%.4f".format(latitude, longitude)
+        store.value = store.value.filterNot { it.id == id } + de.velospot.domain.model.RecentDestination(
+            id = id, name = name, latitude = latitude, longitude = longitude,
+            address = address, lastUsedAt = 0L, kind = de.velospot.domain.model.DestinationKind.RECENT
+        )
+    }
+
+    override suspend fun pin(id: String, kind: de.velospot.domain.model.DestinationKind) {
+        store.value = store.value.map { if (it.id == id) it.copy(kind = kind) else it }
+    }
+
+    override suspend fun remove(id: String) {
+        store.value = store.value.filterNot { it.id == id }
     }
 }
 

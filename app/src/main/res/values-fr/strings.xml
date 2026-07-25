@@ -106,6 +106,10 @@
     <string name="common_delete">Supprimer</string>
     <string name="common_remove">Retirer</string>
     <string name="common_close">Fermer</string>
+    <string name="common_more_options">Plus d\'options</string>
+    <string name="route_map_short">Carte</string>
+    <string name="route_leaderboard_short">Classement</string>
+    <string name="route_offline_short">Hors ligne</string>
     <string name="route_show_on_map">Afficher sur la carte</string>
     <string name="route_stat_stops">Arrêts</string>
     <string name="route_leaderboard_view_all">Tout voir</string>
@@ -171,6 +175,10 @@
     <string name="menu_voice_guidance">Guidage vocal</string>
     <string name="menu_keep_screen_on">Garder l’écran allumé pendant le trajet</string>
     <string name="menu_portrait_lock">Verrouiller en mode portrait</string>
+    <string name="menu_amoled_mode">Carte noir AMOLED</string>
+    <string name="recent_destination_fallback">Destination</string>
+    <string name="search_recent_title">Récents</string>
+    <string name="offline_download_route">Télécharger pour usage hors ligne</string>
     <string name="menu_rounded_buildings">Bâtiments 3D arrondis</string>
     <string name="menu_simulate_route_start">▶ Simuler l\'itinéraire (GPS fictif)</string>
     <string name="menu_simulate_route_stop">⏹ Arrêter la simulation</string>

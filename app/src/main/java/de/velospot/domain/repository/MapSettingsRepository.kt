@@ -43,6 +43,13 @@ interface MapSettingsRepository {
      */
     val roundedBuildingsEnabled: Flow<Boolean>
 
+    /**
+     * Whether the **AMOLED** (pure-black) map style is used while dark mode is on.
+     * Defaults to `false` (the regular dark style). Has no effect in light mode.
+     * A true-black map lets OLED panels switch pixels off, saving battery at night.
+     */
+    val amoledEnabled: Flow<Boolean>
+
     /** The rider's persisted "inspect a past ride" overlay choices. */
     val rideViewOptions: Flow<RideViewOptions>
 
@@ -59,6 +66,7 @@ interface MapSettingsRepository {
     suspend fun setKeepScreenOn(enabled: Boolean)
     suspend fun setPortraitLock(enabled: Boolean)
     suspend fun setRoundedBuildings(enabled: Boolean)
+    suspend fun setAmoled(enabled: Boolean)
     suspend fun setShowMaxSpeedBubble(enabled: Boolean)
     suspend fun setColorTrackBySpeed(enabled: Boolean)
     suspend fun setOnboardingCompleted(completed: Boolean)

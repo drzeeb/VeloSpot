@@ -104,6 +104,31 @@ class OfflineMapTilesManager(private val context: Context) {
     /** True when at least one offline map region has been downloaded. */
     suspend fun hasAnyRegion(): Boolean = listRegions().isNotEmpty()
 
+    /**
+     * Downloads the map tiles for a **route corridor**: a series of [boxes] that
+     * together tile the whole route (see [de.velospot.core.maptiles.RouteCorridor]).
+     * All boxes share the same [regionName] so [deleteRegionByName] removes the whole
+     * corridor at once, exactly like a single-box pack. Progress is reported per box.
+     */
+    suspend fun downloadRouteCorridor(
+        boxes: List<GeoBounds>,
+        styleUrl: String,
+        regionName: String,
+        onProgress: ProgressListener = ProgressListener { _, _, _, _ -> },
+    ) {
+        boxes.forEachIndexed { index, bounds ->
+            downloadRegion(
+                bounds = bounds,
+                styleUrl = styleUrl,
+                maxZoom = OfflineMapRegions.REGION_MAX_ZOOM,
+                regionName = regionName,
+                regionIndex = index + 1,
+                totalRegions = boxes.size,
+                onProgress = onProgress,
+            )
+        }
+    }
+
     /** Sum of the completed download size (bytes) across every offline region. */
     suspend fun totalCacheSizeBytes(): Long =
         listRegions().sumOf { runCatching { regionStatus(it).completedResourceSize }.getOrDefault(0L) }

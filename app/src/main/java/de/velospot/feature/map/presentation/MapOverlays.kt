@@ -112,6 +112,8 @@ internal data class MapMenuCardState(
     val portraitLockEnabled: Boolean = false,
     /** Whether the 3D buildings are drawn with rounded corners. */
     val roundedBuildingsEnabled: Boolean = false,
+    /** Whether the AMOLED (pure-black) map style is used in dark mode. */
+    val amoledEnabled: Boolean = false,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -136,6 +138,7 @@ internal data class MapMenuCardActions(
     val onToggleKeepScreenOn: () -> Unit = {},
     val onTogglePortraitLock: () -> Unit = {},
     val onToggleRoundedBuildings: () -> Unit = {},
+    val onToggleAmoled: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
     val onOpenRides: () -> Unit = {},

@@ -135,8 +135,7 @@ class BRouterSegmentManager(
     fun requiredSegmentNames(
         fromLat: Double, fromLon: Double,
         toLat: Double, toLon: Double
-    ): List<String> {
-        val minLon = minOf(fromLon, toLon)
+    ): List<String> {        val minLon = minOf(fromLon, toLon)
         val maxLon = maxOf(fromLon, toLon)
         val minLat = minOf(fromLat, toLat)
         val maxLat = maxOf(fromLat, toLat)
@@ -151,6 +150,36 @@ class BRouterSegmentManager(
             lon += 5
         }
         return names
+    }
+
+    /**
+     * The distinct BRouter 5°×5° tile file names covering every point of a route
+     * [points] (lat, lon). Used to fetch the whole corridor of a planned route for
+     * offline routing, not just the tile around the start.
+     */
+    fun requiredSegmentNamesForPoints(points: List<Pair<Double, Double>>): List<String> =
+        points.map { (lat, lon) -> segmentFileName(tileDegree(lon), tileDegree(lat)) }.distinct()
+
+    /**
+     * Downloads every routing tile a route [points] passes through (only the
+     * missing ones), reporting per-tile progress. Mirrors
+     * [downloadSegmentsForLocation] but for a whole route corridor.
+     */
+    suspend fun downloadSegmentsForRoute(
+        points: List<Pair<Double, Double>>,
+        onProgress: (
+            downloaded: Long,
+            total: Long,
+            fileIndex: Int,
+            totalFiles: Int,
+            fileName: String
+        ) -> Unit = { _, _, _, _, _ -> }
+    ) = withContext(Dispatchers.IO) {
+        val missing = requiredSegmentNamesForPoints(points).filter { !File(segmentsDir, it).exists() }
+        val total = missing.size
+        missing.forEachIndexed { index, name ->
+            downloadSegment(name) { dl, tot -> onProgress(dl, tot, index + 1, total, name) }
+        }
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

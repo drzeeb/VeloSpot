@@ -6,13 +6,11 @@ on:
   push:
     branches: [main]
 
+# Least-privilege by default: the whole workflow only needs read access to the
+# repo. The one job that comments on PRs / uploads coverage via OIDC elevates its
+# own permissions below (Token-Permissions hardening for OpenSSF Scorecard).
 permissions:
   contents: read
-  actions: write
-  # Allow the coverage step to post/update a summary comment on pull requests.
-  pull-requests: write
-  # Required for Codecov's tokenless (OIDC) upload.
-  id-token: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -27,6 +25,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -54,11 +53,18 @@ jobs:
     name: ci-test
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' || github.event_name == 'push'
+    permissions:
+      contents: read
+      # Post/update the coverage summary comment on pull requests.
+      pull-requests: write
+      # Codecov's tokenless (OIDC) upload.
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5

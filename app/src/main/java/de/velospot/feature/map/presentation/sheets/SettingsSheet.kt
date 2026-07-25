@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
@@ -180,6 +181,19 @@ internal fun DisplaySettingsSheet(
                     else R.string.menu_enable_dark_mode
                 ),
                 onClick = actions.onToggleDarkMode
+            )
+            // AMOLED pure-black map — a sub-option of dark mode. Toggling it on also
+            // switches the app into dark mode (handled in the action).
+            SettingsRow(
+                icon = Icons.Default.Contrast,
+                title = stringResource(R.string.menu_amoled_mode),
+                onClick = actions.onToggleAmoled,
+                trailing = {
+                    Switch(
+                        checked = state.amoledEnabled,
+                        onCheckedChange = { actions.onToggleAmoled() }
+                    )
+                }
             )
             SettingsRow(
                 icon = Icons.Default.Language,

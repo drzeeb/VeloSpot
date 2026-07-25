@@ -25,11 +25,21 @@ import org.maplibre.geojson.Point
 // Free vector tile styles from OpenFreeMap – no API key required. The dark style
 // is bundled in assets and reuses the very same OpenFreeMap vector tiles
 // (OpenMapTiles schema) as the light style, so no extra tile provider is needed.
-internal const val MAP_STYLE_URL_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
-internal const val MAP_STYLE_URL_DARK  = "asset://map_style_dark.json"
+internal const val MAP_STYLE_URL_LIGHT  = "https://tiles.openfreemap.org/styles/liberty"
+internal const val MAP_STYLE_URL_DARK   = "asset://map_style_dark.json"
+// Pure-black variant of the dark style for OLED screens (battery-friendly at night).
+internal const val MAP_STYLE_URL_AMOLED = "asset://map_style_amoled.json"
 
-internal fun mapStyleUrl(isDarkTheme: Boolean): String =
-    if (isDarkTheme) MAP_STYLE_URL_DARK else MAP_STYLE_URL_LIGHT
+/**
+ * Resolves the vector-tile style for the current theme. When [amoled] is on and
+ * the theme is dark, the true-black AMOLED style is used instead of the regular
+ * dark one. AMOLED has no effect in light mode.
+ */
+internal fun mapStyleUrl(isDarkTheme: Boolean, amoled: Boolean = false): String = when {
+    isDarkTheme && amoled -> MAP_STYLE_URL_AMOLED
+    isDarkTheme           -> MAP_STYLE_URL_DARK
+    else                  -> MAP_STYLE_URL_LIGHT
+}
 
 // ── Initial camera ─────────────────────────────────────────────────────────────
 internal const val TRIER_LAT   = 49.7596

@@ -39,6 +39,9 @@ jobs:
           # BRouter is compiled from the pinned `brouter-upstream` submodule, so
           # it must be checked out for assembleFdroidRelease to build.
           submodules: recursive
+          # The release only reads files and publishes via GITHUB_TOKEN (env), it
+          # never pushes with the git credential — so don't persist it.
+          persist-credentials: false
 
       # ── Compute version from Git tag ──────────────────────────────────────────
       # Format: vX.Y.Z  →  versionName = X.Y.Z  |  versionCode = X*10000 + Y*100 + Z
