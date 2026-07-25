@@ -169,33 +169,54 @@ kover {
                     "*_Impl*",
                     // Moshi-generated JSON adapters
                     "*JsonAdapter",
-                    // Compose UI + previews (exercised by instrumented/UI tests, not JVM units)
+                    // Compose UI + previews (exercised by instrumented/UI tests, not JVM units).
+                    // Trailing wildcards also drop the synthetic lambda / `…Kt` facade classes
+                    // Kotlin generates for these files, which otherwise leak into coverage.
                     "*ComposableSingletons*",
                     "*.*Screen*Kt",
+                    "*Screen*Kt$*",
                     "de.velospot.ui.*",
-                    // Dependency injection wiring (no logic to unit-test)
+                    // Dependency injection wiring (no logic to unit-test). Modules live in
+                    // `core.di`, so both the legacy and the real package are excluded.
                     "de.velospot.di.*",
+                    "de.velospot.core.di.*",
                     // Room persistence declarations (interfaces / abstract classes / data holders)
                     "de.velospot.data.local.dao.*",
                     "de.velospot.data.local.database.*",
                     "de.velospot.data.local.entity.*",
-                    // Android framework entry points (require an instrumented environment)
-                    "de.velospot.MainActivity",
-                    "de.velospot.BaseApplication",
-                    "de.velospot.core.tracking.RideRecordingService",
-                    "de.velospot.core.tracking.RideRecordingTileService",
+                    // Jetpack DataStore persistence — needs a real Context / backing files,
+                    // so it is exercised by instrumented tests (same rationale as Room above).
+                    "de.velospot.data.settings.MapSettingsDataStore*",
+                    // Native routing bridge: drives the bundled BRouter core over real .rd5
+                    // segment files (integration/on-device territory, no JVM-unit surface).
+                    "de.velospot.data.brouter.BRouterEngine*",
+                    // GPX import parser is a thin wrapper around android.util.Xml, which is a
+                    // non-functional stub under JVM unit tests (needs an instrumented env).
+                    "de.velospot.core.gpx.GpxParser*",
+                    // Android framework entry points (require an instrumented environment).
+                    // Trailing `*` also excludes their generated lambda classes.
+                    "de.velospot.MainActivity*",
+                    "de.velospot.BaseApplication*",
+                    "de.velospot.core.tracking.RideRecordingService*",
+                    "de.velospot.core.tracking.RideRecordingTileService*",
                     "de.velospot.core.tracking.RideRecordingWidget*",
-                    "de.velospot.core.tracking.BikeServiceNotifier",
-                    // MapLibre / Canvas rendering & camera glue (needs a real GL surface)
+                    "de.velospot.core.tracking.BikeServiceNotifier*",
+                    // System location provider glue (FusedLocationProvider callbacks —
+                    // needs an instrumented environment / Play services).
+                    "de.velospot.data.location.LocationRepositoryImpl*",
+                    // MapLibre / Canvas rendering & camera glue (needs a real GL surface).
+                    // Trailing `*` also excludes the generated lambda + `…Kt` facade classes.
                     "de.velospot.feature.map.presentation.markers.*",
-                    "*NavigationManager",
-                    "*NavigationVoiceGuide",
-                    "*RideShareCardRenderer",
-                    "*RideRouteMapSnapshotter",
-                    "*MapInitializer",
+                    "*NavigationManager*",
+                    "*NavigationVoiceGuide*",
+                    "*RideShareCardRenderer*",
+                    "*RideRouteMapSnapshotter*",
+                    "*MapInitializer*",
+                    "*RideReplayMap*",
+                    "*RouteElevationProfile*",
                     // Offline map tiles download is pure MapLibre OfflineManager glue
                     // (its pure region maths is covered by OfflineMapRegionsTest).
-                    "*OfflineMapTilesManager",
+                    "*OfflineMapTilesManager*",
                 )
                 annotatedBy(
                     "androidx.compose.runtime.Composable",
@@ -282,6 +303,9 @@ dependencies {
     testImplementation(libs.kotlinxCoroutinesTest)
     testImplementation(libs.mockitoCore)
     testImplementation(libs.mockitoKotlin)
+    // Real org.json on the unit-test classpath so classes using it (e.g. the offline
+    // regions store) are JVM-testable — the android.jar stub throws "not mocked".
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

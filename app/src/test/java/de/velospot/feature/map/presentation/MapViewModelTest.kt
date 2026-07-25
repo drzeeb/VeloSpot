@@ -349,6 +349,69 @@ class MapViewModelTest {
         assertEquals(MapError.EmptyRouteGeometry, (state as NavigationUiState.Error).error)
     }
 
+    // ── Persisted map/ride settings ──────────────────────────────────────────
+
+    @Test
+    fun `navigation and display setters persist through map settings`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.setNavigation3DEnabled(false)
+        vm.setVoiceGuidanceEnabled(true)
+        vm.setKeepScreenOnEnabled(false)
+        vm.setPortraitLockEnabled(true)
+        vm.setRoundedBuildingsEnabled(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(false, vm.is3DNavigation.value)
+        assertEquals(true, vm.voiceGuidanceEnabled.value)
+        assertEquals(false, vm.keepScreenOnEnabled.value)
+        assertEquals(true, vm.portraitLockEnabled.value)
+        assertEquals(true, vm.roundedBuildingsEnabled.value)
+    }
+
+    @Test
+    fun `setLayerVisible flips the layer visibility flow`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val category = MapLayerCategory.entries.first()
+
+        vm.setLayerVisible(category, false)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val off = vm.layerVisibility.value
+        vm.setLayerVisible(category, true)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val on = vm.layerVisibility.value
+
+        assertTrue(off != on)
+    }
+
+    @Test
+    fun `onboarding can be replayed and completed`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.replayOnboarding()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(false, vm.onboardingCompleted.value)
+
+        vm.completeOnboarding()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(true, vm.onboardingCompleted.value)
+    }
+
+    @Test
+    fun `ride view option setters are applied without error`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.setMaxSpeedBubbleEnabled(true)
+        vm.setColorTrackBySpeedEnabled(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+        // Reaching here means the launched settings writes completed cleanly.
+        assertTrue(vm.uiState.value is MapUiState)
+    }
+
     @Test
     fun `startInAppNavigation forwards correct from and to coordinates to routing repository`() = runTest {
         val destination = sampleSpace(id = "target")
