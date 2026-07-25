@@ -1,0 +1,6 @@
+• Vereinheitlichte Offline-Nutzung: Karte und Routing pro Region zusammen herunterladen – mehrere Regionen möglich
+• Ganzen Routen-Korridor (Kartenkacheln + Routing) für die Offline-Nutzung herunterladen
+• AMOLED-Karte: echtes Schwarz für dunkle Nachtfahrten und weniger Akkuverbrauch
+• Letzte Ziele direkt in der Suchleiste – häufige Orte mit einem Tipp
+• Willkommens-Onboarding beim ersten Start und eine aufgeräumte „Meine Routen"-Liste
+
