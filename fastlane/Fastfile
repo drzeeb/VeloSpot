@@ -34,6 +34,12 @@ platform :android do
   desc "Upload the release AAB + store metadata to Google Play"
   lane :deploy do |options|
     upload_to_play_store(
+      # Pass the service-account key explicitly. The Appfile's `json_key_data`
+      # is NOT reliably forwarded to the supply action, so without this supply
+      # falls back to Application Default Credentials and fails with
+      # "Your credentials were not found". Mirror the `verify` lane, which
+      # authenticates the same way.
+      json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"],
       track: options[:track] || "production",
       release_status: options[:status] || "draft",
       aab: options[:aab] || "app/build/outputs/bundle/release/app-release.aab",
