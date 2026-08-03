@@ -66,7 +66,7 @@ OSM data is available under the ODbL. This means:
   - Only the on-device routing modules are compiled (`btools.router`, `.mapaccess`,
     `.util`, `.codec`, `.expressions`); the server / map-creation modules and their
     protobuf/osmosis dependencies are excluded.
-  - Contains no proprietary dependencies — fully reproducible for F-Droid.
+  - Contains no proprietary dependencies.
 - **Usage**: Offline bicycle route calculation entirely on-device
 
 ### MapLibre Android SDK

@@ -38,7 +38,7 @@ PowerShell (Windows) — quote the `-P` argument and keep it on one line:
 
 ```powershell
 adb shell rm -rf /sdcard/Pictures/VeloSpotScreenshots
-.\gradlew :app:connectedGooglePlayDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=de.velospot.screenshots.PageScreenshotTest"
+.\gradlew :app:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=de.velospot.screenshots.PageScreenshotTest"
 adb pull /sdcard/Pictures/VeloSpotScreenshots ./screenshots
 ```
 
@@ -47,7 +47,7 @@ PowerShell:
 
 ```bash
 adb shell rm -rf /sdcard/Pictures/VeloSpotScreenshots
-./gradlew :app:connectedGooglePlayDebugAndroidTest \
+./gradlew :app:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=de.velospot.screenshots.PageScreenshotTest
 adb pull /sdcard/Pictures/VeloSpotScreenshots ./screenshots
 ```

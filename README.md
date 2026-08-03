@@ -145,7 +145,7 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - **Navigation**: BRouter offline routing + a custom `NavigationManager` (Choreographer-driven 3D follow camera, snap-to-route map matching, `fill-extrusion` 3D buildings)
 - **Geocoding**: Nominatim REST API (lazy, on-demand, cached)
 - **Routing**: BRouter (on-device, offline) with OSRM online fallback
-- **Location**: Android runtime permissions — `FusedLocationProviderClient` (Google Play flavor) / `LocationManager` (F-Droid flavor)
+- **Location**: Android runtime permissions — `FusedLocationProviderClient` (Google Play Services Fused Location Provider)
 - **Build System**: Gradle
 - **Data Pipeline**: Python + pyosmium (`scripts/extract_osm_parking.py`)
 
@@ -305,9 +305,9 @@ Generate a JaCoCo-compatible coverage report from the JVM unit tests:
 
 ```bash
 # XML (used by CI / Codecov)
-./gradlew :app:koverXmlReportFdroid
-# Human-readable HTML → app/build/reports/kover/htmlFdroid/index.html
-./gradlew :app:koverHtmlReportFdroid
+./gradlew :app:koverXmlReportDebug
+# Human-readable HTML → app/build/reports/kover/htmlDebug/index.html
+./gradlew :app:koverHtmlReportDebug
 ```
 
 CI runs the coverage report on every pull request, posts a summary comment and uploads the result to Codecov (see the badge above). Generated code (Hilt, Room) and pure Compose UI are excluded so the figure reflects testable logic.
@@ -346,7 +346,7 @@ VeloSpot follows software supply-chain best practices so users and packagers can
   ```bash
   ./gradlew :app:cyclonedxDirectBom   # → app/build/reports/cyclonedx/bom.json + bom.xml
   ```
-- **Reproducible F-Droid builds** — the F-Droid flavor is byte-for-byte reproducible (VCS info and AGP dependency-metadata blocks are stripped from the APK).
+- **Deterministic APK metadata** — the AGP dependency-metadata block is stripped from the APK (kept only in the AAB for Google Play), keeping the sideload APK lean.
 - **CodeQL & Dependency Review** — static analysis and dependency vulnerability checks run on every pull request.
 
 ## 🔧 Configuration

@@ -1,8 +1,8 @@
 name: Android Lint
 
-# Runs Android Lint against the canonical F-Droid debug build and uploads the
-# HTML/XML report as a build artifact. Catches resource, performance and
-# potential-leak issues early.
+# Runs Android Lint against the canonical debug build and uploads the HTML/XML
+# report as a build artifact. Catches resource, performance and potential-leak
+# issues early.
 on:
   push:
     branches: [main]
@@ -17,7 +17,7 @@ env:
 
 jobs:
   lint:
-    name: Android Lint (fdroid debug)
+    name: Android Lint (debug)
     runs-on: ubuntu-latest
 
     steps:
@@ -38,7 +38,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Android Lint
-        run: ./gradlew :app:lintFdroidDebug --no-daemon
+        run: ./gradlew :app:lintDebug --no-daemon
 
       - name: Upload lint report
         if: always()
@@ -46,7 +46,7 @@ jobs:
         with:
           name: android-lint-report
           path: |
-            app/build/reports/lint-results-fdroidDebug.html
-            app/build/reports/lint-results-fdroidDebug.xml
+            app/build/reports/lint-results-debug.html
+            app/build/reports/lint-results-debug.xml
           if-no-files-found: warn
 
