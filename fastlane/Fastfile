@@ -1,0 +1,49 @@
+# fastlane configuration for VeloSpot.
+#
+# The `deploy` lane uploads the already-built, signed release AAB plus the store
+# listing and "What's New" changelogs (fastlane/metadata/android) to Google Play.
+# It is invoked by .github/workflows/release.yml after the Gradle `bundleRelease`
+# build. Credentials come from the PLAY_SERVICE_ACCOUNT_JSON env var (a Google
+# Play service-account JSON key), wired up in fastlane/Appfile.
+#
+# Run manually (local):
+#   PLAY_SERVICE_ACCOUNT_JSON="$(cat play-sa.json)" \
+#     bundle exec fastlane deploy track:internal status:completed \
+#       aab:app/build/outputs/bundle/release/app-release.aab
+
+default_platform(:android)
+
+platform :android do
+  desc "Verify the Play service-account key can authenticate against the API"
+  lane :verify do
+    validate_play_store_json_key(
+      json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+    # Also confirm the account actually has access to THIS app (not just valid
+    # credentials). Reading the production track's version codes needs the
+    # app-level release permission; it succeeds (possibly empty) once the
+    # service account is granted access to de.velospot in the Play Console.
+    codes = google_play_track_version_codes(
+      package_name: "de.velospot",
+      track: "production",
+      json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+    UI.success("Play API reachable. Production track version codes: #{codes}")
+  end
+
+  desc "Upload the release AAB + store metadata to Google Play"
+  lane :deploy do |options|
+    upload_to_play_store(
+      track: options[:track] || "production",
+      release_status: options[:status] || "draft",
+      aab: options[:aab] || "app/build/outputs/bundle/release/app-release.aab",
+      metadata_path: "fastlane/metadata/android",
+      skip_upload_apk: true,
+      # Screenshots rarely change and their upload is slow/flaky; push them
+      # explicitly with `bundle exec fastlane supply` when they actually change.
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+end
+

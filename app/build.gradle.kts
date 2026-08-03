@@ -8,8 +8,8 @@ plugins {
     alias(libs.plugins.hiltAndroid)
     // Kotlin code coverage (Kover). Generates JaCoCo-compatible XML/HTML reports
     // from the JVM unit tests. Report tasks per Android variant, e.g.
-    //   ./gradlew :app:koverXmlReportFdroidDebug
-    //   ./gradlew :app:koverHtmlReportFdroidDebug
+    //   ./gradlew :app:koverXmlReportDebug
+    //   ./gradlew :app:koverHtmlReportDebug
     alias(libs.plugins.kover)
     // CycloneDX generates a Software Bill of Materials (SBOM) for supply-chain
     // transparency. Applied here (not at the root) so the per-project "direct"
@@ -62,9 +62,8 @@ android {
         minSdk = 26
         targetSdk = 37
 
-        // Static version literals - F-Droid reads these directly via regex.
-        // The release workflow updates them via sed before committing the release tag,
-        // so the tagged commit always contains the correct values.
+        // Static version literals. The release workflow greps these to verify they
+        // match the pushed Git tag before building, so keep them as plain literals.
         // WARNING: Do NOT replace these literals with dynamic expressions.
         versionCode = 10026
         versionName = "1.0.26"
@@ -72,16 +71,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    flavorDimensions += "distribution"
-
-    productFlavors {
-        create("googlePlay") {
-            dimension = "distribution"
-        }
-        create("fdroid") {
-            dimension = "distribution"
-        }
-    }
 
     buildTypes {
         release {
@@ -96,15 +85,6 @@ android {
                 signingConfigs.getByName("release")
             else
                 signingConfigs.getByName("debug")
-
-            // Reproducible builds: do NOT embed the Git commit hash into
-            // META-INF/version-control-info.textproto. AGP writes this VCS info at
-            // build time, which is non-reproducible and is the ONLY file that differs
-            // between F-Droid's rebuild and the signed release APK. Disabling it makes
-            // the F-Droid build byte-for-byte reproducible. (AGP 8.0+ `vcsInfo` DSL.)
-            vcsInfo {
-                include = false
-            }
         }
     }
     compileOptions {
@@ -116,9 +96,9 @@ android {
         buildConfig = true
     }
 
-    // F-Droid rejects the AGP-generated, Google-signed "Dependency metadata" signing
-    // block (it is opaque/non-reproducible). It only lands in the APK, so we strip it
-    // there while keeping it in the AAB for Google Play's upload-time processing.
+    // Keep the AGP-generated "Dependency metadata" block out of the APK (it is opaque
+    // and non-reproducible) while keeping it in the AAB for Google Play's upload-time
+    // processing.
     dependenciesInfo {
         includeInApk = false
         includeInBundle = true
@@ -139,19 +119,13 @@ kotlin {
 // ---------------------------------------------------------------------------
 // Test coverage (Kover)
 // ---------------------------------------------------------------------------
-// Coverage is measured on the F-Droid debug variant (the canonical CI build).
-// Android projects don't auto-register a variant with Kover, so we explicitly
-// bind `fdroidDebug`; this also feeds Kover's aggregated "total" report, so
-// `./gradlew :app:koverXmlReport` / `:app:koverHtmlReport` produce the result.
+// Coverage is measured on the debug variant (the canonical CI build). The
+// Android integration auto-registers the `debug` reports variant, so the report
+// tasks `:app:koverXmlReportDebug` / `:app:koverHtmlReportDebug` are available.
 // Generated code (Hilt/Dagger, Room, Compose synthetics) and pure-UI/DI classes
 // carry no meaningful unit-test coverage, so they are excluded to keep the
 // percentage representative of the actually testable logic.
 kover {
-    currentProject {
-        createVariant("fdroid") {
-            add("fdroidDebug")
-        }
-    }
     reports {
         filters {
             excludes {
@@ -232,16 +206,16 @@ kover {
 // ---------------------------------------------------------------------------
 // A JSON + XML SBOM is produced for supply-chain transparency and attached to
 // each GitHub Release (see .github/workflows/release.yml). The per-project
-// "direct" task scans the F-Droid release runtime classpath — the canonical,
-// reproducible build that actually ships. It transitively includes the
-// :brouter module's runtime dependencies, so this one classpath covers
-// everything in the APK. (includeConfigs entries are matched as regexes.)
+// "direct" task scans the release runtime classpath — the canonical build that
+// actually ships. It transitively includes the :brouter module's runtime
+// dependencies, so this one classpath covers everything in the APK/AAB.
+// (includeConfigs entries are matched as regexes.)
 tasks.named<org.cyclonedx.gradle.CyclonedxDirectTask>("cyclonedxDirectBom") {
     projectType.set(org.cyclonedx.model.Component.Type.APPLICATION)
     schemaVersion.set(org.cyclonedx.Version.VERSION_16)
     componentName.set("de.velospot")
     componentVersion.set("1.0.26")
-    includeConfigs.set(listOf("fdroidReleaseRuntimeClasspath"))
+    includeConfigs.set(listOf("releaseRuntimeClasspath"))
     // Stable, explicit output locations (attached to releases by CI).
     jsonOutput.set(layout.buildDirectory.file("reports/cyclonedx/bom.json"))
     xmlOutput.set(layout.buildDirectory.file("reports/cyclonedx/bom.xml"))
@@ -250,9 +224,9 @@ tasks.named<org.cyclonedx.gradle.CyclonedxDirectTask>("cyclonedxDirectBom") {
 dependencies {
 
     // BRouter offline routing engine.
-    // Built reproducibly from source via the :brouter module, which compiles the
-    // pinned `brouter-upstream` git submodule (BRouter v1.7.9). No pre-built JAR,
-    // no binary blob, no F-Droid prebuild step — a plain Gradle build resolves it.
+    // Built from source via the :brouter module, which compiles the pinned
+    // `brouter-upstream` git submodule (BRouter v1.7.9). No pre-built JAR and no
+    // binary blob — a plain Gradle build resolves it.
     // See brouter/README.md for the module/submodule setup.
     implementation(project(":brouter"))
 
@@ -275,9 +249,9 @@ dependencies {
     ksp(libs.hiltAndroidCompiler)
     implementation(libs.androidxHiltNavigationCompose)
     // Hilt/Dagger's generated components reference @CanIgnoreReturnValue from
-    // error_prone_annotations. The googlePlay flavor gets it transitively via
-    // play-services, but the fdroid flavor does not, so declare it explicitly for
-    // all flavors (compile-time only annotation).
+    // error_prone_annotations, pulled in transitively via play-services. Declare it
+    // explicitly (compile-time only annotation) so the build never depends on that
+    // transitive edge.
     compileOnly(libs.errorProneAnnotations)
 
     implementation(libs.retrofitCore)
@@ -296,8 +270,8 @@ dependencies {
     // the main-thread SharedPreferences reads for the map's UI toggles).
     implementation(libs.androidxDatastorePreferences)
 
-    // Location Services – only for the Google Play flavor (proprietary, not F-Droid-compatible)
-    "googlePlayImplementation"(libs.playServicesLocation)
+    // Location Services (Google Play Services Fused Location Provider)
+    implementation(libs.playServicesLocation)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinxCoroutinesTest)
