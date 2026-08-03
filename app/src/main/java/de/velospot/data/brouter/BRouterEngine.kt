@@ -312,8 +312,12 @@ class BRouterEngine(
          *      profiles actually replace the stale copies in internal storage on existing
          *      installs — otherwise [ensureProfiles] keeps the old (possibly broken) files
          *      and routing fails ("route data incomplete") for every profile.
+         * - 12: prefer bike paths over gravel — trekking and shortest now detect gravel /
+         *      loose unpaved surfaces and surcharge such tracks, so a dedicated cycleway (or
+         *      a paved way) wins over a nearby "Schotterweg" while the gravel way stays
+         *      usable when there is no reasonable alternative (fastbike already avoided it).
          */
-        private const val PROFILES_VERSION = "11"
+        private const val PROFILES_VERSION = "12"
         private const val PROFILES_VERSION_FILE = ".profiles_version"
 
         // ── Start-reversal detection (see startUTurnForwardDir) ───────────────
