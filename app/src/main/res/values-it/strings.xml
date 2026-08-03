@@ -382,6 +382,11 @@
     <string name="ride_stop">Ferma</string>
     <string name="ride_start">Registra percorso</string>
     <string name="ride_discard">Annulla</string>
+    <string name="ride_pause">Pausa</string>
+    <string name="ride_resume">Riprendi</string>
+    <string name="ride_paused">Corsa in pausa</string>
+    <string name="ride_pause_cd">Metti in pausa la registrazione</string>
+    <string name="ride_resume_cd">Riprendi la registrazione</string>
     <string name="ride_saved">Percorso salvato</string>
     <string name="ride_too_short">Percorso troppo breve per salvarlo</string>
     <string name="ride_stat_time">Tempo</string>

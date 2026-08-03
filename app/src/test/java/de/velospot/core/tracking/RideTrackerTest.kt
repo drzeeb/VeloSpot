@@ -224,6 +224,52 @@ class RideTrackerTest {
         // smoothing has not shortened it.
         assertTrue("raw distance ~222 m", ride.distanceMeters in 210.0..235.0)
     }
+
+    // ── Pause / resume (commute train/ferry legs) ─────────────────────────────
+
+    @Test
+    fun `paused fixes add no distance and no moving time`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        tracker.addPoint(baseLat, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.001, baseLon, 10_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        val distanceBeforePause = tracker.currentStats().distanceMeters
+
+        // Board the train: pause, then a long fast leg that must be ignored entirely.
+        tracker.pause(11_000L)
+        tracker.addPoint(0.100, baseLon, 60_000L, speedMps = 30f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.200, baseLon, 120_000L, speedMps = 30f, altitudeMeters = null, accuracyMeters = 6f)
+        val paused = tracker.currentStats(120_000L)
+        assertTrue("recording is flagged paused", paused.isPaused)
+        assertEquals("no distance added while paused", distanceBeforePause, paused.distanceMeters, 1e-6)
+        assertEquals("no track points added while paused", 2, paused.pointCount)
+    }
+
+    @Test
+    fun `resume starts a new track segment and excludes paused time`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        tracker.addPoint(baseLat, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.001, baseLon, 10_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+
+        // 100 s train leg, ignored, then resume and continue riding.
+        tracker.pause(10_000L)
+        tracker.resume(110_000L)
+        tracker.addPoint(0.002, baseLon, 120_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+        tracker.addPoint(0.003, baseLon, 130_000L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 6f)
+
+        val ride = tracker.stop(130_000L)
+        requireNotNull(ride)
+        // Third point (index 2) is the first fix after resume → begins a new segment.
+        assertTrue("first resumed point begins a new segment", ride.points[2].segmentStart)
+        assertTrue("earlier points are not segment starts",
+            !ride.points[0].segmentStart && !ride.points[1].segmentStart)
+        // The gap (0.001 → 0.002) must NOT be counted: only 0→0.001 and 0.002→0.003
+        // contribute, ~111 m each ≈ 222 m total (not ~333 m).
+        assertTrue("gap distance excluded (~222 m)", ride.distanceMeters in 200.0..245.0)
+        // Elapsed excludes the 100 s pause: last point at 130 s − 100 s pause = 30 s.
+        assertEquals("paused time excluded from elapsed", 30L, ride.elapsedSeconds)
+    }
 }
 
 

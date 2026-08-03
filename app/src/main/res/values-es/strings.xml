@@ -381,6 +381,11 @@
     <string name="ride_stop">Detener</string>
     <string name="ride_start">Grabar trayecto</string>
     <string name="ride_discard">Descartar</string>
+    <string name="ride_pause">Pausar</string>
+    <string name="ride_resume">Reanudar</string>
+    <string name="ride_paused">Trayecto en pausa</string>
+    <string name="ride_pause_cd">Pausar la grabación</string>
+    <string name="ride_resume_cd">Reanudar la grabación</string>
     <string name="ride_saved">Ruta guardada</string>
     <string name="ride_too_short">Ruta demasiado corta para guardar</string>
     <string name="ride_stat_time">Tiempo</string>

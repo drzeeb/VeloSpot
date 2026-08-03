@@ -70,6 +70,14 @@ class RideRecordingService : Service() {
                 stopRecordingService()
                 return START_NOT_STICKY
             }
+            ACTION_PAUSE -> {
+                manager.pause()
+                return START_STICKY
+            }
+            ACTION_RESUME -> {
+                manager.resume()
+                return START_STICKY
+            }
             else -> startInForeground()
         }
         return START_STICKY
@@ -145,6 +153,7 @@ class RideRecordingService : Service() {
     }
 
     private fun buildNotification(stats: de.velospot.domain.model.LiveRideStats?): Notification {
+        val paused = stats?.isPaused == true
         val contentText = if (stats != null) {
             "${formatRideDuration(stats.elapsedSeconds)}  •  " +
                 "${formatRideDistance(stats.distanceMeters)}  •  " +
@@ -161,9 +170,27 @@ class RideRecordingService : Service() {
             pendingIntentFlags()
         )
 
+        // The middle action toggles pause/resume so a commuter can freeze the ride
+        // for a train/ferry leg without opening the app.
+        val pauseAction = if (paused) {
+            NotificationCompat.Action(
+                0,
+                getString(R.string.ride_resume),
+                actionIntent(ACTION_RESUME, REQ_RESUME)
+            )
+        } else {
+            NotificationCompat.Action(
+                0,
+                getString(R.string.ride_pause),
+                actionIntent(ACTION_PAUSE, REQ_PAUSE)
+            )
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_ride_recording)
-            .setContentTitle(getString(R.string.ride_recording))
+            .setContentTitle(
+                getString(if (paused) R.string.ride_paused else R.string.ride_recording)
+            )
             .setContentText(contentText)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -171,6 +198,7 @@ class RideRecordingService : Service() {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(contentIntent)
+            .addAction(pauseAction)
             .addAction(
                 0,
                 getString(R.string.ride_stop_save),
@@ -224,11 +252,15 @@ class RideRecordingService : Service() {
         const val ACTION_START = "de.velospot.action.RIDE_RECORDING_START"
         const val ACTION_STOP = "de.velospot.action.RIDE_RECORDING_STOP"
         const val ACTION_DISCARD = "de.velospot.action.RIDE_RECORDING_DISCARD"
+        const val ACTION_PAUSE = "de.velospot.action.RIDE_RECORDING_PAUSE"
+        const val ACTION_RESUME = "de.velospot.action.RIDE_RECORDING_RESUME"
 
         private const val CHANNEL_ID = "ride_recording"
         private const val NOTIFICATION_ID = 4711
         private const val REQ_STOP = 1
         private const val REQ_DISCARD = 2
+        private const val REQ_PAUSE = 3
+        private const val REQ_RESUME = 4
 
         /** Wake-lock tag (namespaced, shown in `dumpsys power`). */
         private const val WAKELOCK_TAG = "VeloSpot:ride-recording"

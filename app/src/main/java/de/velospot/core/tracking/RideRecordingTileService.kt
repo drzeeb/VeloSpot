@@ -13,10 +13,15 @@ import de.velospot.core.location.hasLocationPermission
 import javax.inject.Inject
 
 /**
- * Quick Settings tile that starts/stops a ride recording with a single tap,
- * without opening the app. It shares the singleton [RideRecordingManager] with the
- * map UI, the foreground service and the widget, so the recording state is always
+ * Quick Settings tile controlling a ride recording with a single tap, without
+ * opening the app. It shares the singleton [RideRecordingManager] with the map UI,
+ * the foreground service and the widget, so the recording state is always
  * consistent across all entry points.
+ *
+ * As a one-tap control it is optimised for the **commute** flow: a tap **starts**
+ * a recording when idle, **pauses** it while recording (e.g. boarding a train/
+ * ferry) and **resumes** it when paused. Ending a ride is a deliberate action left
+ * to the always-present notification action ("Stop & save"), the widget or the app.
  *
  * When location permission is missing, the tile opens the app instead so the user
  * can grant it (a recording is useless without GPS).
@@ -33,26 +38,44 @@ class RideRecordingTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        if (!manager.isRecording && !hasLocationPermission(this)) {
-            // Can't record without GPS — bounce the user into the app to grant it.
-            openApp()
-            return
+        if (!manager.isRecording) {
+            if (!hasLocationPermission(this)) {
+                // Can't record without GPS — bounce the user into the app to grant it.
+                openApp()
+                return
+            }
+            // Idle → start a fresh recording.
+            manager.toggle()
+        } else {
+            // Recording → pause; paused → resume.
+            manager.togglePause()
         }
-        manager.toggle()
         updateTile()
     }
 
     private fun updateTile() {
         val tile = qsTile ?: return
         val recording = manager.isRecording
-        tile.state = if (recording) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+        val paused = manager.isPaused
+        // Active (highlighted) only while actively recording; a paused ride and an
+        // idle tile both read as inactive so the highlight means "capturing now".
+        tile.state = if (recording && !paused) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.label = getString(
-            if (recording) R.string.ride_recording else R.string.ride_record_start
+            when {
+                !recording -> R.string.ride_record_start
+                paused -> R.string.ride_paused
+                else -> R.string.ride_recording
+            }
         )
         tile.icon = Icon.createWithResource(this, R.drawable.ic_ride_recording)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // The subtitle previews the next tap's action.
             tile.subtitle = getString(
-                if (recording) R.string.ride_stop else R.string.ride_record_start
+                when {
+                    !recording -> R.string.ride_record_start
+                    paused -> R.string.ride_resume
+                    else -> R.string.ride_pause
+                }
             )
         }
         tile.updateTile()

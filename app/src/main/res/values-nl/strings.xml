@@ -380,6 +380,11 @@
     <string name="ride_stop">Stoppen</string>
     <string name="ride_start">Rit opnemen</string>
     <string name="ride_discard">Verwijderen</string>
+    <string name="ride_pause">Pauzeren</string>
+    <string name="ride_resume">Hervatten</string>
+    <string name="ride_paused">Rit gepauzeerd</string>
+    <string name="ride_pause_cd">Opname pauzeren</string>
+    <string name="ride_resume_cd">Opname hervatten</string>
     <string name="ride_saved">Rit opgeslagen</string>
     <string name="ride_too_short">Rit te kort om op te slaan</string>
     <string name="ride_stat_time">Tijd</string>

@@ -820,6 +820,13 @@ class MapViewModel @Inject constructor(
     val rideTrackPoints: StateFlow<List<RoutePoint>> = rideTracking.trackPoints
 
     /**
+     * The recorded/inspected track split into segments at every pause, so a paused
+     * leg (a train/ferry stretch on a commute) is drawn as a gap on the map rather
+     * than a straight line joined across it.
+     */
+    val rideTrackSegments: StateFlow<List<List<RoutePoint>>> = rideTracking.trackSegments
+
+    /**
      * The rider's persisted "inspect a past ride" overlay choices (max-speed
      * bubble + colour-by-speed track). Global and remembered across sessions, so
      * the last-used settings apply to every ride opened afterwards.
@@ -852,6 +859,13 @@ class MapViewModel @Inject constructor(
         rideTracking.discard()
         updateFollowSession()
     }
+
+    /**
+     * Pauses/resumes the active recording — the commuter's "on the train/ferry now"
+     * control. While paused, distance/time and the track freeze; resuming continues
+     * the ride as a new segment so the paused leg is stored and drawn as a gap.
+     */
+    fun togglePauseRideTracking() = rideTracking.togglePause()
 
     // ── Name-on-stop prompt (manual recordings) ───────────────────────────────
 

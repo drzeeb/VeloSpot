@@ -63,7 +63,8 @@ internal class RideRecordingPersistence(context: Context) {
         maxSpeedMps: Double,
         elevationGain: Double,
         elevationLoss: Double,
-        name: String? = null
+        name: String? = null,
+        pausedMillis: Long = 0L
     ) {
         val f = metaFile ?: return
         runCatching {
@@ -75,6 +76,7 @@ internal class RideRecordingPersistence(context: Context) {
                     appendLine("maxSpeedMps=$maxSpeedMps")
                     appendLine("elevationGain=$elevationGain")
                     appendLine("elevationLoss=$elevationLoss")
+                    appendLine("pausedMillis=$pausedMillis")
                 }
             )
             val trimmed = name?.trim()?.takeIf { it.isNotBlank() }
@@ -109,6 +111,7 @@ internal class RideRecordingPersistence(context: Context) {
         val startedAt = meta["startedAt"]?.toLongOrNull() ?: points.first().timestamp
         val endedAt = points.last().timestamp
         val movingSeconds = meta["movingSeconds"]?.toLongOrNull() ?: 0L
+        val pausedMillis = meta["pausedMillis"]?.toLongOrNull() ?: 0L
         val name = runCatching { nameFile?.takeIf { it.exists() }?.readText()?.trim() }
             .getOrNull()
             ?.takeIf { it.isNotBlank() }
@@ -118,7 +121,7 @@ internal class RideRecordingPersistence(context: Context) {
             startedAt = startedAt,
             endedAt = endedAt,
             distanceMeters = distance,
-            elapsedSeconds = ((endedAt - startedAt) / 1000).coerceAtLeast(0),
+            elapsedSeconds = ((endedAt - startedAt - pausedMillis) / 1000).coerceAtLeast(0),
             movingSeconds = movingSeconds,
             avgSpeedMps = if (movingSeconds > 0) distance / movingSeconds else 0.0,
             maxSpeedMps = meta["maxSpeedMps"]?.toDoubleOrNull() ?: 0.0,
@@ -139,7 +142,8 @@ internal class RideRecordingPersistence(context: Context) {
             p.timestamp.toString(),
             p.speedMps?.toString() ?: "",
             p.altitudeMeters?.toString() ?: "",
-            p.accuracyMeters?.toString() ?: ""
+            p.accuracyMeters?.toString() ?: "",
+            if (p.segmentStart) "1" else ""
         ).joinToString(",")
 
     private fun decodePoint(line: String): TrackPoint? = runCatching {
@@ -151,7 +155,8 @@ internal class RideRecordingPersistence(context: Context) {
             timestamp = parts[2].toLong(),
             speedMps = parts.getOrNull(3)?.takeIf { it.isNotEmpty() }?.toFloat(),
             altitudeMeters = parts.getOrNull(4)?.takeIf { it.isNotEmpty() }?.toDouble(),
-            accuracyMeters = parts.getOrNull(5)?.takeIf { it.isNotEmpty() }?.toFloat()
+            accuracyMeters = parts.getOrNull(5)?.takeIf { it.isNotEmpty() }?.toFloat(),
+            segmentStart = parts.getOrNull(6)?.takeIf { it.isNotEmpty() } == "1"
         )
     }.getOrNull()
 

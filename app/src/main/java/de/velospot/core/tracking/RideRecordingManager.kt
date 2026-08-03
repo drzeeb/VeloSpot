@@ -86,6 +86,15 @@ class RideRecordingManager(
     private val _liveTrackPoints = MutableStateFlow<List<RoutePoint>>(emptyList())
     val liveTrackPoints: StateFlow<List<RoutePoint>> = _liveTrackPoints.asStateFlow()
 
+    /**
+     * The live track split into **segments** at every pause: each inner list is one
+     * continuous stretch, and consecutive stretches are separated by a gap (a paused
+     * train/ferry leg). Drawn as a broken polyline so the pause reads as a gap rather
+     * than a straight line. The first (and usually only) segment is the whole ride.
+     */
+    private val _liveTrackSegments = MutableStateFlow<List<List<RoutePoint>>>(emptyList())
+    val liveTrackSegments: StateFlow<List<List<RoutePoint>>> = _liveTrackSegments.asStateFlow()
+
     /** One-shot lifecycle events (ride saved / discarded as too short). */
     private val _events = MutableSharedFlow<RideRecordingEvent>(extraBufferCapacity = 4)
     val events: SharedFlow<RideRecordingEvent> = _events.asSharedFlow()
@@ -132,6 +141,9 @@ class RideRecordingManager(
     }
 
     val isRecording: Boolean get() = tracker.isRecording
+
+    /** Whether the active recording is currently paused (train/ferry leg / break). */
+    val isPaused: Boolean get() = tracker.isPaused
 
     /** Whether the current recording was auto-started by navigation (vs. the FAB). */
     var isAutoStartedByNavigation = false
@@ -190,6 +202,7 @@ class RideRecordingManager(
         recordingStartedAt = startedAt
         tracker.start(startedAt)
         _liveTrackPoints.value = emptyList()
+        _liveTrackSegments.value = emptyList()
         _trackingState.value = RideTrackingUiState.Recording(tracker.currentStats())
         // Open the crash-recovery session before the first (seed) fix is appended.
         persist { persistence.begin(startedAt) }
@@ -221,6 +234,7 @@ class RideRecordingManager(
         pendingRideName = null
         _trackingState.value = RideTrackingUiState.Idle
         _liveTrackPoints.value = emptyList()
+        _liveTrackSegments.value = emptyList()
         if (ride != null) {
             scope.launch {
                 // Tag the ride with the rider's active bike (or the default), resolved
@@ -259,6 +273,7 @@ class RideRecordingManager(
         isAutoStartedByNavigation = false
         _trackingState.value = RideTrackingUiState.Idle
         _liveTrackPoints.value = emptyList()
+        _liveTrackSegments.value = emptyList()
         _events.tryEmit(RideRecordingEvent.Discarded)
         persist { persistence.clear() }
         locationController.setRecording(false)
@@ -268,6 +283,56 @@ class RideRecordingManager(
 
     /** Resets the elevation cursor — call whenever the active route changes. */
     fun onRouteChanged() { lastElevationIndex = 0 }
+
+    /**
+     * Pauses the active recording (e.g. the rider boards a train/ferry on a commute).
+     * Distance, moving time and the track freeze until [resume]; the elapsed timer
+     * stops. GPS keeps running so resuming is instant. No-op when idle/already paused.
+     */
+    fun pause() {
+        if (!tracker.isRecording || tracker.isPaused) return
+        tracker.pause(System.currentTimeMillis())
+        val stats = tracker.currentStats(System.currentTimeMillis())
+        _trackingState.value = RideTrackingUiState.Recording(stats)
+        persistMeta(stats)
+        refreshExternalControls()
+    }
+
+    /**
+     * Resumes a paused recording. The paused span stays out of the elapsed time and
+     * the next accepted fix starts a fresh track segment, so the paused stretch is
+     * stored, drawn and exported as a **gap**. No-op when idle / not paused.
+     */
+    fun resume() {
+        if (!tracker.isRecording || !tracker.isPaused) return
+        tracker.resume(System.currentTimeMillis())
+        val stats = tracker.currentStats(System.currentTimeMillis())
+        _trackingState.value = RideTrackingUiState.Recording(stats)
+        persistMeta(stats)
+        refreshExternalControls()
+    }
+
+    /** Toggles pause/resume for the single Pause control (FAB, notification). */
+    fun togglePause() {
+        if (tracker.isPaused) resume() else pause()
+    }
+
+    /** Persists the running aggregates (incl. paused time) for crash recovery. */
+    private fun persistMeta(stats: de.velospot.domain.model.LiveRideStats) {
+        val name = pendingRideName
+        persist {
+            persistence.writeMeta(
+                startedAt = recordingStartedAt,
+                distanceMeters = stats.distanceMeters,
+                movingSeconds = stats.movingSeconds,
+                maxSpeedMps = stats.maxSpeedMps,
+                elevationGain = stats.elevationGainMeters,
+                elevationLoss = stats.elevationLossMeters,
+                name = name,
+                pausedMillis = tracker.elapsedPausedMillis
+            )
+        }
+    }
 
     /**
      * Toggles the recording: stops a running one (persisting it), otherwise starts a
@@ -326,7 +391,18 @@ class RideRecordingManager(
         _trackingState.value = RideTrackingUiState.Recording(stats)
         if (tracker.trackPoints.size > pointsBefore) {
             val accepted = tracker.trackPoints.last()
-            _liveTrackPoints.update { it + RoutePoint(accepted.latitude, accepted.longitude) }
+            val routePoint = RoutePoint(accepted.latitude, accepted.longitude)
+            _liveTrackPoints.update { it + routePoint }
+            // Maintain the segmented mirror: a point flagged as a segment start (the
+            // first fix after a resume) opens a new stretch, so the paused leg draws
+            // as a gap; otherwise extend the current stretch.
+            _liveTrackSegments.update { segments ->
+                if (accepted.segmentStart || segments.isEmpty()) {
+                    segments + listOf(listOf(routePoint))
+                } else {
+                    segments.dropLast(1) + listOf(segments.last() + routePoint)
+                }
+            }
             // Stream the accepted fix to disk for crash recovery. Skipped for
             // simulated (mock) fixes — those rides are debug-only and not recovered.
             if (!suppressRealFixes) {
@@ -340,7 +416,8 @@ class RideRecordingManager(
                         maxSpeedMps = stats.maxSpeedMps,
                         elevationGain = stats.elevationGainMeters,
                         elevationLoss = stats.elevationLossMeters,
-                        name = name
+                        name = name,
+                        pausedMillis = tracker.elapsedPausedMillis
                     )
                 }
             }

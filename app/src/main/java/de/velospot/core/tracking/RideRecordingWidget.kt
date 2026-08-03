@@ -49,6 +49,11 @@ class RideRecordingWidget : AppWidgetProvider() {
                 }
                 renderAll(context)
             }
+            ACTION_PAUSE_TOGGLE -> {
+                // Only meaningful while recording; pauses/resumes without opening the app.
+                manager.togglePause()
+                renderAll(context)
+            }
             ACTION_REFRESH -> renderAll(context)
         }
     }
@@ -72,11 +77,18 @@ class RideRecordingWidget : AppWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.widget_ride_recording)
 
         val stats = (manager.trackingState.value as? RideTrackingUiState.Recording)?.stats
+        val paused = stats?.isPaused == true
 
         // Title reflects the current state.
         views.setTextViewText(
             R.id.widget_title,
-            context.getString(if (recording) R.string.ride_recording else R.string.ride_record_start)
+            context.getString(
+                when {
+                    paused -> R.string.ride_paused
+                    recording -> R.string.ride_recording
+                    else -> R.string.ride_record_start
+                }
+            )
         )
 
         // Live elapsed time: a Chronometer ticks on its own in the launcher process,
@@ -85,11 +97,13 @@ class RideRecordingWidget : AppWidgetProvider() {
         // already accumulated), then it counts up by itself.
         if (recording) {
             val elapsedMillis = (stats?.elapsedSeconds ?: 0L) * 1_000L
+            // While paused the elapsed time is frozen: anchor the base so the widget
+            // shows the accumulated time, but do not let the Chronometer tick on.
             views.setChronometer(
                 R.id.widget_chronometer,
                 SystemClock.elapsedRealtime() - elapsedMillis,
                 null,
-                true
+                !paused
             )
             views.setViewVisibility(R.id.widget_chronometer, View.VISIBLE)
         } else {
@@ -128,6 +142,24 @@ class RideRecordingWidget : AppWidgetProvider() {
 
         // The button carries the toggle; tapping the whole widget opens the app.
         views.setOnClickPendingIntent(R.id.widget_button, togglePendingIntent(context))
+
+        // Pause/Resume button: only shown while a recording is active. Its icon and
+        // label swap between Pause and Resume depending on the paused state.
+        if (recording) {
+            views.setViewVisibility(R.id.widget_pause_button, View.VISIBLE)
+            views.setImageViewResource(
+                R.id.widget_pause_icon,
+                if (paused) R.drawable.ic_widget_play else R.drawable.ic_widget_pause
+            )
+            views.setTextViewText(
+                R.id.widget_pause_label,
+                context.getString(if (paused) R.string.ride_resume else R.string.ride_pause)
+            )
+            views.setOnClickPendingIntent(R.id.widget_pause_button, pausePendingIntent(context))
+        } else {
+            views.setViewVisibility(R.id.widget_pause_button, View.GONE)
+        }
+
         views.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent(context))
         appWidgetManager.updateAppWidget(widgetId, views)
     }
@@ -153,6 +185,18 @@ class RideRecordingWidget : AppWidgetProvider() {
         )
     }
 
+    private fun pausePendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, RideRecordingWidget::class.java)
+            .setAction(ACTION_PAUSE_TOGGLE)
+            .setPackage(context.packageName)
+        return PendingIntent.getBroadcast(
+            context,
+            2,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
     /** Tapping the widget body (outside the button) opens the app. */
     private fun openAppPendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java)
@@ -167,6 +211,7 @@ class RideRecordingWidget : AppWidgetProvider() {
 
     companion object {
         const val ACTION_TOGGLE = "de.velospot.action.WIDGET_RIDE_TOGGLE"
+        const val ACTION_PAUSE_TOGGLE = "de.velospot.action.WIDGET_RIDE_PAUSE_TOGGLE"
         const val ACTION_REFRESH = "de.velospot.action.WIDGET_RIDE_REFRESH"
     }
 }
