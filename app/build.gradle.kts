@@ -65,8 +65,8 @@ android {
         // Static version literals. The release workflow greps these to verify they
         // match the pushed Git tag before building, so keep them as plain literals.
         // WARNING: Do NOT replace these literals with dynamic expressions.
-        versionCode = 10026
-        versionName = "1.0.26"
+        versionCode = 10027
+        versionName = "1.0.27"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -214,7 +214,7 @@ tasks.named<org.cyclonedx.gradle.CyclonedxDirectTask>("cyclonedxDirectBom") {
     projectType.set(org.cyclonedx.model.Component.Type.APPLICATION)
     schemaVersion.set(org.cyclonedx.Version.VERSION_16)
     componentName.set("de.velospot")
-    componentVersion.set("1.0.26")
+    componentVersion.set("1.0.27")
     includeConfigs.set(listOf("releaseRuntimeClasspath"))
     // Stable, explicit output locations (attached to releases by CI).
     jsonOutput.set(layout.buildDirectory.file("reports/cyclonedx/bom.json"))
