@@ -88,8 +88,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -112,7 +112,7 @@ ksp {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -214,7 +214,7 @@ tasks.named<org.cyclonedx.gradle.CyclonedxDirectTask>("cyclonedxDirectBom") {
     projectType.set(org.cyclonedx.model.Component.Type.APPLICATION)
     schemaVersion.set(org.cyclonedx.Version.VERSION_16)
     componentName.set("de.velospot")
-    componentVersion.set("1.0.27")
+    componentVersion.set(android.defaultConfig.versionName ?: "")
     includeConfigs.set(listOf("releaseRuntimeClasspath"))
     // Stable, explicit output locations (attached to releases by CI).
     jsonOutput.set(layout.buildDirectory.file("reports/cyclonedx/bom.json"))
@@ -279,7 +279,7 @@ dependencies {
     testImplementation(libs.mockitoKotlin)
     // Real org.json on the unit-test classpath so classes using it (e.g. the offline
     // regions store) are JVM-testable — the android.jar stub throws "not mocked".
-    testImplementation("org.json:json:20240303")
+    testImplementation(libs.orgJson)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
