@@ -14,6 +14,23 @@
 default_platform(:android)
 
 platform :android do
+  desc "Verify the Play service-account key can authenticate against the API"
+  lane :verify do
+    validate_play_store_json_key(
+      json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+    # Also confirm the account actually has access to THIS app (not just valid
+    # credentials). Reading the production track's version codes needs the
+    # app-level release permission; it succeeds (possibly empty) once the
+    # service account is granted access to de.velospot in the Play Console.
+    codes = google_play_track_version_codes(
+      package_name: "de.velospot",
+      track: "production",
+      json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+    UI.success("Play API reachable. Production track version codes: #{codes}")
+  end
+
   desc "Upload the release AAB + store metadata to Google Play"
   lane :deploy do |options|
     upload_to_play_store(
