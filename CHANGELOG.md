@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v1.0.27] - 2026-08-04
+
 ### Added
 - **Pause & resume a ride — for commuters who hop on a train or ferry mid-way** — ride recording can now be **paused** and later **resumed**, so a daily bike-to-work commute that includes, say, a 30 km train leg (or a ferry crossing) is captured as **one ride** without the in-between counting. While paused, incoming GPS fixes are discarded so the pause adds **no distance and no time**, and the elapsed timer freezes and continues exactly where it left off; the first fix after resuming opens a **new track segment**, so the skipped stretch is stored as a real **gap** rather than a straight line drawn across it. The gap survives everywhere the track does: it is persisted (and crash-recovered) via a new `TrackPoint.segmentStart` flag, exported as a separate `<trkseg>` in the **GPX** file (the portable, Strava/Garmin-friendly way to store an interruption), and drawn as multiple polyline segments on the map (live and for saved rides) via a pure, JVM-testable `List<TrackPoint>.splitIntoSegments()`. Pause/resume is reachable from **every** recording surface: the live map overlay, the ongoing **notification**, the home-screen **widget**, the **quick-settings tile**, and the **navigation** screen (the recording pauses while the route guidance keeps running). Covered by `RideTrackerTest`, `GpxWriterTest` and `TrackSegmentsTest`. Localised across all eight supported languages.
 
