@@ -13,6 +13,11 @@ import androidx.compose.runtime.Immutable
  * @property altitudeMeters Altitude in metres when the fix carried one, else `null`.
  * @property accuracyMeters Horizontal accuracy (1σ radius) of the fix in metres
  *  when known, else `null`. Kept so the track can be re-filtered or quality-scored.
+ * @property segmentStart `true` when this point begins a **new track segment**
+ *  after a pause (e.g. the rider paused for a train/ferry leg and resumed later).
+ *  The stretch between the previous point and this one is a **gap**: it is not
+ *  drawn as a connecting line, is excluded from distance/time, and is exported as a
+ *  separate `<trkseg>` in GPX. The very first point of a ride is not a break.
  */
 data class TrackPoint(
     val latitude: Double,
@@ -20,7 +25,8 @@ data class TrackPoint(
     val timestamp: Long,
     val speedMps: Float? = null,
     val altitudeMeters: Double? = null,
-    val accuracyMeters: Float? = null
+    val accuracyMeters: Float? = null,
+    val segmentStart: Boolean = false
 )
 
 /**
@@ -118,6 +124,8 @@ data class LiveRideStats(
     val maxSpeedMps: Double = 0.0,
     val elevationGainMeters: Double = 0.0,
     val elevationLossMeters: Double = 0.0,
-    val pointCount: Int = 0
+    val pointCount: Int = 0,
+    /** Whether the recording is currently **paused** (e.g. on a train/ferry leg). */
+    val isPaused: Boolean = false
 )
 

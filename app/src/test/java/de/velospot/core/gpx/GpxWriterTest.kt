@@ -34,8 +34,29 @@ class GpxWriterTest {
     }
 
     @Test
-    fun `emits coordinates, elevation and iso time for points`() {
-        val gpx = GpxWriter.write(listOf(ride("R", listOf(TrackPoint(49.75, 6.64, 0L, 5f, 130.0)))))
+    fun `a paused leg splits the track into two trkseg segments`() {
+        val gpx = GpxWriter.write(
+            listOf(
+                ride(
+                    "Commute",
+                    listOf(
+                        TrackPoint(49.75, 6.64, 0L, 5f, 130.0),
+                        TrackPoint(49.76, 6.64, 10_000L, 5f, 131.0),
+                        // First fix after resuming from the train leg → new segment.
+                        TrackPoint(50.10, 6.90, 1_800_000L, 5f, 140.0, segmentStart = true),
+                        TrackPoint(50.11, 6.90, 1_810_000L, 5f, 141.0)
+                    )
+                )
+            )
+        )
+        // The single ride is still one <trk>, but the gap yields two <trkseg>s.
+        assertEquals(1, Regex("<trk>").findAll(gpx).count())
+        assertEquals(2, Regex("<trkseg>").findAll(gpx).count())
+        assertEquals(2, Regex("</trkseg>").findAll(gpx).count())
+    }
+
+    @Test
+    fun `emits coordinates, elevation and iso time for points`() {        val gpx = GpxWriter.write(listOf(ride("R", listOf(TrackPoint(49.75, 6.64, 0L, 5f, 130.0)))))
         // Coordinates are fixed-7-decimal, dot-separated (no scientific notation).
         assertTrue(gpx.contains("lat=\"49.7500000\""))
         assertTrue(gpx.contains("lon=\"6.6400000\""))

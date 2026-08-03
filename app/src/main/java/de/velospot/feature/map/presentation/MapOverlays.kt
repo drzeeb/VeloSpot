@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Speed
@@ -351,7 +352,10 @@ internal fun BoxScope.MapNavigationOverlay(
     onStopNavigation: () -> Unit,
     onDismissError: () -> Unit,
     progress: de.velospot.core.navigation.NavigationProgress? = null,
-    onCancel: () -> Unit = {}
+    onCancel: () -> Unit = {},
+    isRecordingRide: Boolean = false,
+    isRidePaused: Boolean = false,
+    onPauseToggle: () -> Unit = {}
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
@@ -533,6 +537,28 @@ internal fun BoxScope.MapNavigationOverlay(
                             }
                         }
                         Spacer(Modifier.width(8.dp))
+                        // Pause/resume the background ride recording during navigation
+                        // (e.g. a break or a train/ferry leg on a commute). Shown only
+                        // while a ride is actually being recorded.
+                        if (isRecordingRide) {
+                            FloatingActionButton(
+                                onClick = onPauseToggle,
+                                modifier = Modifier.size(46.dp),
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isRidePaused) Icons.Default.PlayArrow
+                                                  else Icons.Default.Pause,
+                                    contentDescription = stringResource(
+                                        id = if (isRidePaused) R.string.ride_resume_cd
+                                             else R.string.ride_pause_cd
+                                    )
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                        }
                         FloatingActionButton(
                             onClick = onStopNavigation,
                             modifier = Modifier.size(46.dp),
@@ -840,8 +866,10 @@ internal fun BoxScope.RecordRideFab(
 internal fun BoxScope.RideTrackingOverlay(
     stats: de.velospot.domain.model.LiveRideStats,
     onStop: () -> Unit,
-    onDiscard: () -> Unit
+    onDiscard: () -> Unit,
+    onPauseToggle: () -> Unit
 ) {
+    val paused = stats.isPaused
     Card(
         modifier = Modifier
             .align(Alignment.TopCenter)
@@ -859,11 +887,16 @@ internal fun BoxScope.RideTrackingOverlay(
                     modifier = Modifier
                         .size(10.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.error)
+                        .background(
+                            if (paused) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.error
+                        )
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(id = R.string.ride_recording),
+                    text = stringResource(
+                        id = if (paused) R.string.ride_paused else R.string.ride_recording
+                    ),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -895,6 +928,14 @@ internal fun BoxScope.RideTrackingOverlay(
                 SecondaryActionButton(
                     text = stringResource(id = R.string.ride_discard),
                     onClick = onDiscard,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(10.dp))
+                SecondaryActionButton(
+                    text = stringResource(
+                        id = if (paused) R.string.ride_resume else R.string.ride_pause
+                    ),
+                    onClick = onPauseToggle,
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(10.dp))

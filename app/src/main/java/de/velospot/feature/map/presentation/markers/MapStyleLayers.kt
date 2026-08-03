@@ -470,16 +470,28 @@ internal fun ensureParkedBikeLayer(style: Style) {
 
 /**
  * Idempotently registers the recorded-ride track line and replaces its geometry.
- * Drawn as a dashed line in the supplied [colorInt] beneath the parking markers,
- * so it never paints over a pin. Pass an empty list to clear it.
+ * Drawn as a line in the supplied [colorInt] beneath the parking markers, so it
+ * never paints over a pin.
+ *
+ * Takes the track as a list of **segments**: each inner list is one continuous
+ * stretch drawn as its own line feature, so the gaps between segments (a paused
+ * train/ferry leg on a commute) are left unconnected rather than joined by a
+ * straight line. Pass an empty list to clear it.
  */
-internal fun updateTrackLayer(style: Style, points: List<Pair<Double, Double>>, colorInt: Int) {
-    val data = if (points.size > 1) {
-        FeatureCollection.fromFeature(
+internal fun updateTrackLayer(
+    style: Style,
+    segments: List<List<Pair<Double, Double>>>,
+    colorInt: Int
+) {
+    val features = segments
+        .filter { it.size > 1 }
+        .map { seg ->
             Feature.fromGeometry(
-                LineString.fromLngLats(points.map { Point.fromLngLat(it.second, it.first) })
+                LineString.fromLngLats(seg.map { Point.fromLngLat(it.second, it.first) })
             )
-        )
+        }
+    val data = if (features.isNotEmpty()) {
+        FeatureCollection.fromFeatures(features)
     } else {
         FeatureCollection.fromFeatures(emptyList())
     }

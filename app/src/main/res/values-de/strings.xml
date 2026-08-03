@@ -386,6 +386,11 @@
     <string name="ride_stop">Stopp</string>
     <string name="ride_start">Fahrt aufzeichnen</string>
     <string name="ride_discard">Verwerfen</string>
+    <string name="ride_pause">Pause</string>
+    <string name="ride_resume">Fortsetzen</string>
+    <string name="ride_paused">Fahrt pausiert</string>
+    <string name="ride_pause_cd">Aufzeichnung pausieren</string>
+    <string name="ride_resume_cd">Aufzeichnung fortsetzen</string>
     <string name="ride_saved">Fahrt gespeichert</string>
     <string name="ride_too_short">Fahrt zu kurz zum Speichern</string>
     <string name="ride_stat_time">Zeit</string>

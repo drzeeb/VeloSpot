@@ -46,6 +46,7 @@ import de.velospot.feature.map.presentation.markers.createAnalysisBubbleIcon
 import de.velospot.feature.map.presentation.markers.RideBubbleGlyph
 import de.velospot.feature.map.presentation.markers.drawableToBitmap
 import de.velospot.feature.map.presentation.markers.updateTrackLayer
+import de.velospot.core.map.splitIntoSegments
 import de.velospot.feature.map.presentation.markers.updateTrackSpeedLayer
 import de.velospot.feature.map.presentation.rememberMapViewWithLifecycle
 import org.maplibre.android.geometry.LatLngBounds
@@ -195,7 +196,11 @@ fun RideReplayMap(
                 if (speedColoured) {
                     updateTrackSpeedLayer(loaded, segments, maxSpeedMps, visible = true)
                 } else {
-                    updateTrackLayer(loaded, ride.points.map { it.latitude to it.longitude }, 0x2962FF)
+                    updateTrackLayer(
+                        loaded,
+                        ride.points.splitIntoSegments().map { seg -> seg.map { it.latitude to it.longitude } },
+                        0x2962FF
+                    )
                 }
                 addRideMarkers(loaded, mapData.markers)
                 addValueBubbles(loaded, mapData.markers)

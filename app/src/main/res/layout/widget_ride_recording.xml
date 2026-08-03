@@ -63,42 +63,90 @@
 
     </LinearLayout>
 
-    <!-- Start/Stop button: a styled row (icon + label) with a rounded, filled
-         background. Plain RemoteViews can't host a Material button, so this is a
-         LinearLayout carrying the click intent. Non-weighted + a minimum height, so
-         it is laid out at full size first and stays visible even on a short widget. -->
+    <!-- Action row: an optional Pause/Resume button (shown only while recording)
+         next to the Start/Stop button. Non-weighted + a minimum height, so the
+         controls are laid out at full size first and stay visible on a short widget. -->
     <LinearLayout
-        android:id="@+id/widget_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:minHeight="40dp"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:background="@drawable/widget_button_start_background"
-        android:clickable="true"
-        android:focusable="true">
+        android:gravity="center">
 
-        <ImageView
-            android:id="@+id/widget_button_icon"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
-            android:src="@drawable/ic_widget_play"
-            android:contentDescription="@null" />
-
-        <TextView
-            android:id="@+id/widget_button_label"
+        <!-- Pause/Resume: toggles a running recording without opening the app.
+             Hidden (GONE) while idle. -->
+        <LinearLayout
+            android:id="@+id/widget_pause_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="@string/ride_record_start" />
+            android:layout_marginEnd="6dp"
+            android:minHeight="40dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:background="@drawable/widget_button_start_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/widget_pause_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_widget_pause"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/widget_pause_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="13sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/ride_pause" />
+
+        </LinearLayout>
+
+        <!-- Start/Stop button: a styled row (icon + label) with a rounded, filled
+             background. Plain RemoteViews can't host a Material button, so this is a
+             LinearLayout carrying the click intent. -->
+        <LinearLayout
+            android:id="@+id/widget_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="40dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:background="@drawable/widget_button_start_background"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/widget_button_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_widget_play"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/widget_button_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="13sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/ride_record_start" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

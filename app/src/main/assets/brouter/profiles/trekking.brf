@@ -125,6 +125,13 @@ assign ispaved = or surface=paved|asphalt|concrete|paving_stones|sett smoothness
 assign isunpaved = not or ispaved or ( and surface= smoothness= ) or surface=fine_gravel|cobblestone smoothness=intermediate|bad
 assign probablyGood = or ispaved and ( or isbike highway=footway ) not isunpaved
 
+# Detect coarse gravel / loose unpaved surfaces ("Schotterweg"). A cyclist reported
+# that the trekking profile picked such a gravel track even though a dedicated
+# cycleway (Fahrradweg) ran only a few metres away. These tracks get an extra
+# surcharge below so a proper bike path is always preferred; the gravel track is
+# only used when there is no reasonable cycleway alternative.
+assign isgravel = surface=gravel|pebblestone|rock|unpaved|ground|dirt|earth|mud|sand
+
 
 #
 # this is the cost (in Meter) for a 90-degree turn
@@ -385,6 +392,7 @@ assign costfactor
   #
   else if ( highway=track|road|path|footway ) then
   (
+    add ( if isgravel then 1.2 else 0 )   # de-prefer gravel so a nearby cycleway always wins
     if      ( tracktype=grade1 ) then ( if probablyGood then 1.0 else 1.3 )
     else if ( tracktype=grade2 ) then ( if probablyGood then 1.1 else 2.0 )
     else if ( tracktype=grade3 ) then ( if probablyGood then 1.5 else 3.0 )

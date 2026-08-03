@@ -141,7 +141,7 @@ fun MainMapScreen(
     val onboardingCompleted  by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
-    val rideTrackPoints      by viewModel.rideTrackPoints.collectAsStateWithLifecycle()
+    val rideTrackSegments    by viewModel.rideTrackSegments.collectAsStateWithLifecycle()
     val recordedRideTracks   by viewModel.recordedRideTracks.collectAsStateWithLifecycle()
     val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
     val rideViewOptions      by viewModel.rideViewOptions.collectAsStateWithLifecycle()
@@ -683,7 +683,7 @@ fun MainMapScreen(
     // split (and reroutes if the rider leaves it), so overlaying the jagged raw-GPS
     // recording line on top looks messy and redundant. The real GPS fixes are still
     // recorded for the ride analysis — only their on-map polyline is suppressed here.
-    LaunchedEffect(maplibreMap, styleVersion, rideTrackPoints, selectedRide, activeNavigation != null, rideViewOptions.colorTrackBySpeed) {
+    LaunchedEffect(maplibreMap, styleVersion, rideTrackSegments, selectedRide, activeNavigation != null, rideViewOptions.colorTrackBySpeed) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
         // While recording, coalesce a burst of fixes into one redraw (the effect is
         // cancelled & restarted on each new emission, so only the last one redraws).
@@ -697,21 +697,21 @@ fun MainMapScreen(
                 de.velospot.core.map.RideSpeedSegments.build(ride.points)
             }
             de.velospot.feature.map.presentation.markers.updateTrackLayer(
-                style = style, points = emptyList(), colorInt = markerStyleConfig.routeColor
+                style = style, segments = emptyList(), colorInt = markerStyleConfig.routeColor
             )
             updateTrackSpeedLayer(style, segments, ride.maxSpeedMps, visible = true)
         } else {
             updateTrackSpeedLayer(style, emptyList(), 0.0, visible = false)
             // Suppress the live recording polyline while the navigation route owns
             // the map; still draw the track when just recording or inspecting a ride.
-            val points = if (activeNavigation != null && ride == null) {
+            val segments = if (activeNavigation != null && ride == null) {
                 emptyList()
             } else {
-                rideTrackPoints.map { it.latitude to it.longitude }
+                rideTrackSegments.map { seg -> seg.map { it.latitude to it.longitude } }
             }
             de.velospot.feature.map.presentation.markers.updateTrackLayer(
                 style = style,
-                points = points,
+                segments = segments,
                 colorInt = markerStyleConfig.routeColor
             )
         }
@@ -752,7 +752,10 @@ fun MainMapScreen(
             progress          = navigationProgress,
             onStopNavigation  = viewModel::stopInAppNavigation,
             onDismissError    = viewModel::clearNavigationError,
-            onCancel          = viewModel::cancelRouteCalculation
+            onCancel          = viewModel::cancelRouteCalculation,
+            isRecordingRide   = rideTrackingState is RideTrackingUiState.Recording,
+            isRidePaused      = (rideTrackingState as? RideTrackingUiState.Recording)?.stats?.isPaused == true,
+            onPauseToggle     = viewModel::togglePauseRideTracking
         )
 
         // Turn-by-turn banner (top) — only during active navigation.
@@ -940,7 +943,8 @@ fun MainMapScreen(
                 RideTrackingOverlay(
                     stats     = recording.stats,
                     onStop    = viewModel::requestStopRideTracking,
-                    onDiscard = viewModel::discardRideTracking
+                    onDiscard = viewModel::discardRideTracking,
+                    onPauseToggle = viewModel::togglePauseRideTracking
                 )
             }
             RecordRideFab(

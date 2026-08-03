@@ -47,7 +47,15 @@ object GpxWriter {
             // Standard GPX activity type (matches what Garmin & co. emit).
             sb.append("    <type>cycling</type>\n")
             sb.append("    <trkseg>\n")
-            for (p in ride.points) {
+            ride.points.forEachIndexed { index, p ->
+                // A point flagged as a segment start (the first fix after the rider
+                // resumed from a pause — e.g. a train/ferry leg) begins a new
+                // <trkseg>, so the paused stretch is a real gap in the GPX rather
+                // than a straight line joined across it. Never break before point 0.
+                if (p.segmentStart && index > 0) {
+                    sb.append("    </trkseg>\n")
+                    sb.append("    <trkseg>\n")
+                }
                 sb.append("      <trkpt lat=\"").append(coord(p.latitude))
                     .append("\" lon=\"").append(coord(p.longitude)).append("\">\n")
                 p.altitudeMeters?.let {

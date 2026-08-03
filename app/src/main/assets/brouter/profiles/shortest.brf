@@ -89,8 +89,16 @@ assign has_cycleway_infra =
   or cycleway:left=track|lane
      cycleway:right=track|lane
 
+# Detect coarse gravel / loose unpaved surfaces ("Schotterweg"). Even the shortest
+# route should avoid these for a standard bike rider, so they get a surcharge below.
+# The gravel way is still usable when there is no reasonable paved alternative.
+assign isgravel = surface=gravel|pebblestone|rock|unpaved|ground|dirt|earth|mud|sand
+
 assign costfactor
   add accesspenalty
+
+  # avoid gravel/unpaved tracks even on the shortest route (paved way / cycleway wins)
+  add ( switch isgravel 2 0 )
 
   switch and highway= not route=ferry  100000
 

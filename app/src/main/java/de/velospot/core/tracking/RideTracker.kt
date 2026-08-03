@@ -57,6 +57,27 @@ class RideTracker {
     var isRecording: Boolean = false
         private set
 
+    /**
+     * Whether the recording is currently **paused** (e.g. the rider is on a train/
+     * ferry leg of a commute). While paused, incoming fixes are ignored — they add
+     * neither distance, moving time nor track geometry — and the elapsed timer is
+     * frozen. The first fix accepted after [resume] begins a **new track segment**
+     * ([TrackPoint.segmentStart]), so the paused stretch reads as a gap rather than
+     * a straight line drawn across it.
+     */
+    var isPaused: Boolean = false
+        private set
+
+    /** Wall-clock time the current pause started (valid only while [isPaused]). */
+    private var pauseStartedAt: Long = 0L
+    /** Total time spent in **completed** pauses so far (excluded from elapsed). */
+    private var pausedMillis: Long = 0L
+    /** Set on [resume]; makes the next accepted fix start a new track segment. */
+    private var pendingSegmentBreak: Boolean = false
+
+    /** Total time (ms) spent in **completed** pauses — excluded from elapsed time. */
+    val elapsedPausedMillis: Long get() = pausedMillis
+
     /** The captured points so far (for drawing the live track on the map). */
     val trackPoints: List<TrackPoint> get() = points
 
@@ -78,7 +99,43 @@ class RideTracker {
         hasRaw = false
         lastSegSpeedMps = 0.0
         hasSegSpeed = false
+        isPaused = false
+        pauseStartedAt = 0L
+        pausedMillis = 0L
+        pendingSegmentBreak = false
         isRecording = true
+    }
+
+    /**
+     * Pauses the recording. Subsequent fixes are ignored (no distance/time/geometry)
+     * and the elapsed timer freezes until [resume]. No-op when not recording or
+     * already paused.
+     */
+    fun pause(now: Long) {
+        if (!isRecording || isPaused) return
+        isPaused = true
+        pauseStartedAt = now
+    }
+
+    /**
+     * Resumes a paused recording. The paused span is added to [pausedMillis] (so it
+     * stays out of the elapsed time) and the next accepted fix starts a fresh track
+     * segment, breaking the geometry/speed/altitude continuity so the gap is neither
+     * drawn nor counted. No-op when not recording or not paused.
+     */
+    fun resume(now: Long) {
+        if (!isRecording || !isPaused) return
+        pausedMillis += (now - pauseStartedAt).coerceAtLeast(0L)
+        isPaused = false
+        pendingSegmentBreak = true
+        // Break the continuity so the stretch across the pause is not measured or
+        // drawn: the first resumed fix becomes a fresh anchor with no back-segment.
+        hasRaw = false
+        hasSegSpeed = false
+        windowLat.clear()
+        windowLon.clear()
+        smoothedAltitude = null
+        lastRegisteredAltitude = null
     }
 
     /**
@@ -103,6 +160,11 @@ class RideTracker {
         accuracyMeters: Float? = null
     ): LiveRideStats {
         if (!isRecording) return currentStats()
+
+        // While paused (e.g. on a train/ferry leg), drop every fix: it must add no
+        // distance, moving time or geometry, and the stretch across the pause stays
+        // a gap. The elapsed timer is frozen by currentStats while paused.
+        if (isPaused) return currentStats()
 
         // Accuracy gate: drop low-quality fixes before they can pollute the track.
         // A fix without a reported accuracy is given the benefit of the doubt.
@@ -245,6 +307,11 @@ class RideTracker {
         val smoothLat = windowLat.average()
         val smoothLon = windowLon.average()
 
+        // The first fix accepted after a resume opens a new track segment, so the
+        // paused stretch is stored/exported as a gap rather than a connecting line.
+        val startsSegment = pendingSegmentBreak
+        pendingSegmentBreak = false
+
         points.add(
             TrackPoint(
                 latitude = smoothLat,
@@ -252,7 +319,8 @@ class RideTracker {
                 timestamp = timestamp,
                 speedMps = pointSpeed,
                 altitudeMeters = altitudeMeters,
-                accuracyMeters = accuracyMeters
+                accuracyMeters = accuracyMeters,
+                segmentStart = startsSegment
             )
         )
         return currentStats()
@@ -266,19 +334,23 @@ class RideTracker {
      *  accepted fix's timestamp (the behaviour used from [addPoint]).
      */
     fun currentStats(now: Long = points.lastOrNull()?.timestamp ?: startedAt): LiveRideStats {
-        val elapsedMillis = now - startedAt
+        // Exclude paused time (completed pauses plus any in-progress one) so the
+        // elapsed timer freezes while paused and resumes exactly where it left off.
+        val pausedSoFar = pausedMillis + if (isPaused) (now - pauseStartedAt).coerceAtLeast(0L) else 0L
+        val elapsedMillis = now - startedAt - pausedSoFar
         val movingSecs = movingMillis / 1000
         val avg = if (movingSecs > 0) distanceMeters / movingSecs else 0.0
         return LiveRideStats(
             elapsedSeconds = (elapsedMillis / 1000).coerceAtLeast(0),
             movingSeconds = movingSecs,
             distanceMeters = distanceMeters,
-            currentSpeedMps = points.lastOrNull()?.speedMps ?: 0f,
+            currentSpeedMps = if (isPaused) 0f else points.lastOrNull()?.speedMps ?: 0f,
             avgSpeedMps = avg,
             maxSpeedMps = maxSpeedMps,
             elevationGainMeters = elevationGain,
             elevationLossMeters = elevationLoss,
-            pointCount = points.size
+            pointCount = points.size,
+            isPaused = isPaused
         )
     }
 
@@ -289,10 +361,12 @@ class RideTracker {
      */
     fun stop(endTimestamp: Long): RecordedRide? {
         isRecording = false
+        isPaused = false
         if (points.size < MIN_POINTS || distanceMeters < MIN_DISTANCE_METERS) {
             return null
         }
-        val elapsedMillis = (points.last().timestamp - startedAt).coerceAtLeast(0)
+        // Exclude completed pauses (train/ferry legs) from the wall-clock duration.
+        val elapsedMillis = (points.last().timestamp - startedAt - pausedMillis).coerceAtLeast(0)
         val movingSecs = movingMillis / 1000
         val avg = if (movingSecs > 0) distanceMeters / movingSecs else 0.0
         return RecordedRide(
@@ -313,6 +387,7 @@ class RideTracker {
     /** Aborts the recording without producing a ride. */
     fun discard() {
         isRecording = false
+        isPaused = false
         points.clear()
     }
 

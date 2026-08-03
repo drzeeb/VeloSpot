@@ -380,6 +380,11 @@
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Tour ophuelen</string>
     <string name="ride_discard">Verwerfen</string>
+    <string name="ride_pause">Paus</string>
+    <string name="ride_resume">Weiderfueren</string>
+    <string name="ride_paused">Faart pauséiert</string>
+    <string name="ride_pause_cd">Opnam pauséieren</string>
+    <string name="ride_resume_cd">Opnam weiderfueren</string>
     <string name="ride_saved">Tour gespäichert</string>
     <string name="ride_too_short">Tour ze kuerz fir ze späicheren</string>
     <string name="ride_stat_time">Zäit</string>

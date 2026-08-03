@@ -3,6 +3,7 @@ package de.velospot.feature.map.presentation.ride
 import de.velospot.core.tracking.RideRecordingEvent
 import de.velospot.core.tracking.RideRecordingManager
 import de.velospot.core.tracking.RideTrackingUiState
+import de.velospot.core.map.splitIntoSegments
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
@@ -93,6 +94,21 @@ class RideTrackingController(
         else selected?.points?.map { RoutePoint(it.latitude, it.longitude) } ?: emptyList()
     }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
+    /**
+     * The map polyline **split into segments** at every pause, so a paused leg (a
+     * train/ferry stretch on a commute) is drawn as a gap rather than a straight
+     * line. While recording it mirrors the live segments; while inspecting a saved
+     * ride it splits that ride's track at every [de.velospot.domain.model.TrackPoint.segmentStart].
+     */
+    val trackSegments: StateFlow<List<List<RoutePoint>>> = combine(
+        manager.liveTrackSegments,
+        manager.trackingState,
+        _selectedRide
+    ) { liveSegments, state, selected ->
+        if (state is RideTrackingUiState.Recording) liveSegments
+        else selected?.points?.splitIntoSegments() ?: emptyList()
+    }.stateIn(scope, SharingStarted.Eagerly, emptyList())
+
     val isRecording: Boolean get() = manager.isRecording
 
     /** Whether the current recording was auto-started by navigation (vs. the FAB). */
@@ -129,6 +145,9 @@ class RideTrackingController(
 
     /** Stops the active recording, persisting it when long enough. */
     fun stop() = manager.stop()
+
+    /** Toggles pause/resume of the active recording (train/ferry leg / break). */
+    fun togglePause() = manager.togglePause()
 
     /** Discards the active recording without saving anything. */
     fun discard() = manager.discard()
