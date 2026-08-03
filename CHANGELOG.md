@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Google Play publish failed with "Your credentials were not found"** — the `release.yml` Play upload step aborted in `upload_to_play_store` because the `supply` action never received the service-account key and fell back to Application Default Credentials. The `deploy` lane relied on the `Appfile`'s `json_key_data(...)`, which is not reliably forwarded to `supply`. The `deploy` lane in `fastlane/Fastfile` now passes `json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"]` explicitly (mirroring the working `verify` lane), so the AAB uploads to Google Play again.
+
 ## [v1.0.27] - 2026-08-04
 
 ### Added
