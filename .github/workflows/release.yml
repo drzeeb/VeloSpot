@@ -56,7 +56,7 @@ jobs:
     steps:
       # ── Checkout ──────────────────────────────────────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           # BRouter is compiled from the pinned `brouter-upstream` submodule, so
@@ -91,7 +91,7 @@ jobs:
 
       # ── JDK ───────────────────────────────────────────────────────────────────
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           java-version: "17"
           distribution: "temurin"
@@ -172,7 +172,7 @@ jobs:
       # Generate cryptographically verifiable provenance for the release artifacts.
       # Consumers can verify with:  gh attestation verify <file> --repo <repo>
       - name: Attest artifact build provenance
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4
         with:
           subject-path: |
             app/build/outputs/apk/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
@@ -198,7 +198,7 @@ jobs:
 
       # ── Create GitHub Release ─────────────────────────────────────────────────
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "VeloSpot ${{ steps.version.outputs.tag }}"
@@ -253,7 +253,7 @@ jobs:
         if: env.PLAY_JSON_PRESENT == 'true'
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "3.4.10"
           bundler-cache: true
 
       - name: Publish to Google Play

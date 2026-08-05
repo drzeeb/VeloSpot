@@ -17,7 +17,7 @@ jobs:
       PLAY_JSON_PRESENT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - name: Fail early if the secret is missing
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Ruby (fastlane)
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "3.4.10"
           bundler-cache: true
       - name: Validate Play service account
         env:
