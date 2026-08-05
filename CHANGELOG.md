@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Ride-recording controls could get stuck out of sync after the app was killed** — the home-screen widget, quick-settings tile, ongoing notification and in-app UI now stay consistent after the app process is killed and recreated. The recording manager re-syncs the widget and tile during crash recovery, so a stale "Recording/Stop" widget no longer lingers, and if the system refuses to start the foreground service (Android 12+ background-start restriction) the in-memory recording state is rolled back instead of falsely reporting a recording with no live service.
 - **Google Play publish failed with "Your credentials were not found"** — the `release.yml` Play upload step aborted in `upload_to_play_store` because the `supply` action never received the service-account key and fell back to Application Default Credentials. The `deploy` lane relied on the `Appfile`'s `json_key_data(...)`, which is not reliably forwarded to `supply`. The `deploy` lane in `fastlane/Fastfile` now passes `json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"]` explicitly (mirroring the working `verify` lane), so the AAB uploads to Google Play again.
 
 ### Changed
