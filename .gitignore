@@ -21,14 +21,26 @@ local.properties
 
 # ---------------------------------------------------------------------------
 # Release signing secrets – NEVER commit these.
-# Losing the keystore makes reproducible F-Droid updates impossible (see
-# docs/RELEASING.md), so back it up securely OUTSIDE the repository.
+# Losing the upload key complicates Play updates (see docs/RELEASING.md), so
+# back it up securely OUTSIDE the repository.
 # ---------------------------------------------------------------------------
 keystore.properties
 *.jks
 *.keystore
 *.p12
 *.base64
+
+# ---------------------------------------------------------------------------
+# fastlane / Bundler artifacts (release upload tooling). The Play service
+# account JSON is a secret and must NEVER be committed.
+# ---------------------------------------------------------------------------
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+play-sa.json
+*play-service-account*.json
+.bundle/
+vendor/bundle/
 
 
 # Kotlin compiler artifacts

@@ -12,6 +12,24 @@ on:
         description: "Release tag (e.g. v1.0.8)"
         required: true
         default: "v1.0.0"
+      play_track:
+        description: "Google Play track to publish to"
+        required: false
+        default: "production"
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+      play_status:
+        description: "Play release status (draft = review & publish in console)"
+        required: false
+        default: "draft"
+        type: choice
+        options:
+          - draft
+          - completed
 
 permissions:
   contents: write
@@ -25,19 +43,24 @@ env:
 
 jobs:
   release:
-    name: Build & Release (F-Droid + Google Play)
+    name: Build & Release (Google Play)
     # Do not re-run when the security-release workflow pushed the tag itself.
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    # Whether the Google Play service-account secret is configured. Used to gate
+    # the automated Play upload so the workflow still succeeds (build + GitHub
+    # Release only) when the secret is absent.
+    env:
+      PLAY_JSON_PRESENT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
 
     steps:
       # ── Checkout ──────────────────────────────────────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           # BRouter is compiled from the pinned `brouter-upstream` submodule, so
-          # it must be checked out for assembleFdroidRelease to build.
+          # it must be checked out for the release build to succeed.
           submodules: recursive
           # The release only reads files and publishes via GITHUB_TOKEN (env), it
           # never pushes with the git credential — so don't persist it.
@@ -68,7 +91,7 @@ jobs:
 
       # ── JDK ───────────────────────────────────────────────────────────────────
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           java-version: "17"
           distribution: "temurin"
@@ -118,25 +141,22 @@ jobs:
             echo "::warning::No '## [v${VERSION_NAME}]' heading found in CHANGELOG.md — promote the [Unreleased] section in your release PR before tagging."
           fi
 
-      # ── Build APKs ────────────────────────────────────────────────────────────
-      - name: Build F-Droid & Google Play Release APKs
+      # ── Build release AAB + APK ───────────────────────────────────────────────
+      # The AAB (App Bundle) is what Google Play distributes; the universal APK is
+      # attached to the GitHub Release for direct sideloading.
+      - name: Build release AAB & APK
         run: |
-          ./gradlew assembleFdroidRelease assembleGooglePlayRelease --no-daemon
+          ./gradlew bundleRelease assembleRelease --no-daemon
 
-      # ── Rename APKs ───────────────────────────────────────────────────────────
-      # The F-Droid APK uses the EXACT stable name required by the fdroiddata
-      # "Binaries" URL:  https://github.com/drzeeb/VeloSpot/releases/download/v%v/VeloSpot-v%v.apk
-      # i.e. VeloSpot-v<versionName>.apk  (TAG already equals v<versionName>).
-      - name: Rename APKs
+      # ── Rename the sideload APK ───────────────────────────────────────────────
+      - name: Rename APK
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          mv app/build/outputs/apk/fdroid/release/app-fdroid-release.apk \
-             "app/build/outputs/apk/fdroid/release/VeloSpot-${TAG}.apk"
-          mv app/build/outputs/apk/googlePlay/release/app-googlePlay-release.apk \
-             "app/build/outputs/apk/googlePlay/release/VeloSpot-${TAG}-googlePlay.apk"
+          mv app/build/outputs/apk/release/app-release.apk \
+             "app/build/outputs/apk/release/VeloSpot-${TAG}.apk"
 
       # ── SBOM (CycloneDX) ──────────────────────────────────────────────────────
-      # Produce a Software Bill of Materials from the app's F-Droid release runtime
+      # Produce a Software Bill of Materials from the app's release runtime
       # classpath (transitively includes the :brouter module) for supply-chain
       # transparency.
       - name: Generate SBOM (CycloneDX)
@@ -149,19 +169,14 @@ jobs:
           cp app/build/reports/cyclonedx/bom.xml  "VeloSpot-${TAG}-sbom.cdx.xml"
 
       # ── Build provenance (SLSA / Sigstore attestations) ───────────────────────
-      # Generate cryptographically verifiable provenance for the release APKs and
-      # the SBOM. Consumers can verify with:  gh attestation verify <file> --repo <repo>
-      - name: Attest APK build provenance
-        uses: actions/attest-build-provenance@v4
+      # Generate cryptographically verifiable provenance for the release artifacts.
+      # Consumers can verify with:  gh attestation verify <file> --repo <repo>
+      - name: Attest artifact build provenance
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4
         with:
           subject-path: |
-            app/build/outputs/apk/fdroid/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
-            app/build/outputs/apk/googlePlay/release/VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk
-
-      - name: Attest SBOM provenance
-        uses: actions/attest-build-provenance@v4
-        with:
-          subject-path: |
+            app/build/outputs/apk/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
+            app/build/outputs/bundle/release/app-release.aab
             VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.json
             VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.xml
 
@@ -183,7 +198,7 @@ jobs:
 
       # ── Create GitHub Release ─────────────────────────────────────────────────
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "VeloSpot ${{ steps.version.outputs.tag }}"
@@ -194,12 +209,12 @@ jobs:
 
             ---
 
-            ### 📥 APK Variants
+            ### 📥 Artifacts
 
             | File | Description |
             |---|---|
-            | `VeloSpot-${{ steps.version.outputs.tag }}.apk` | **F-Droid flavor** – no Google services, ready to sideload; this is the APK F-Droid reproducibly verifies |
-            | `VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk` | **Google Play flavor** – includes Google Play Services Location |
+            | `VeloSpot-${{ steps.version.outputs.tag }}.apk` | Universal APK, ready to sideload |
+            | `app-release.aab` | Android App Bundle (uploaded to Google Play) |
             | `VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.json` / `.xml` | **CycloneDX SBOM** – full dependency + license inventory |
 
             ### 🔐 Supply-chain verification
@@ -215,15 +230,39 @@ jobs:
             1. Download the APK below.
             2. On your Android device: **Settings → Apps → Install unknown apps** → allow your browser or file manager.
             3. Open the APK and tap **Install**.
-
-            > The **F-Droid flavor** is also available on [F-Droid](https://f-droid.org/packages/de.velospot/).
           files: |
-            app/build/outputs/apk/fdroid/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
-            app/build/outputs/apk/googlePlay/release/VeloSpot-${{ steps.version.outputs.tag }}-googlePlay.apk
+            app/build/outputs/apk/release/VeloSpot-${{ steps.version.outputs.tag }}.apk
+            app/build/outputs/bundle/release/app-release.aab
             VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.json
             VeloSpot-${{ steps.version.outputs.tag }}-sbom.cdx.xml
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Publish to Google Play (fastlane supply) ──────────────────────────────
+      # Uploads the signed AAB plus the store listing + "What's New" changelogs
+      # from fastlane/metadata/android to the chosen track. Runs only when the
+      # PLAY_SERVICE_ACCOUNT_JSON secret is configured (otherwise the workflow
+      # still succeeds with just the GitHub Release above).
+      #
+      # Track/status default to `production` / `draft`: the release is created in
+      # the Play Console but not rolled out, so you review it and press "Publish".
+      # Manual runs can pick a different track/status via the workflow inputs.
+      - name: Set up Ruby (fastlane)
+        if: env.PLAY_JSON_PRESENT == 'true'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.10"
+          bundler-cache: true
+
+      - name: Publish to Google Play
+        if: env.PLAY_JSON_PRESENT == 'true'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          bundle exec fastlane deploy \
+            track:"${{ github.event.inputs.play_track || 'production' }}" \
+            status:"${{ github.event.inputs.play_status || 'draft' }}" \
+            aab:"app/build/outputs/bundle/release/app-release.aab"
 

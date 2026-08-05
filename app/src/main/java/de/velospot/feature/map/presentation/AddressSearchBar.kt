@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -162,7 +162,12 @@ internal fun AddressSearchBar(
             ) {
                 if (hasResults) {
                     LazyColumn {
-                        items(results, key = { it.displayName + it.latitude }) { result ->
+                        // Nominatim can return several hits sharing the same
+                        // display name AND latitude (e.g. a place plus its
+                        // administrative boundary), so a content-based key is not
+                        // unique and crashes LazyColumn. The list is ephemeral and
+                        // never reordered, so the item index is a safe unique key.
+                        itemsIndexed(results, key = { index, _ -> index }) { index, result ->
                             SearchResultItem(
                                 result   = result,
                                 onClick  = {
@@ -170,7 +175,7 @@ internal fun AddressSearchBar(
                                     focusManager.clearFocus()
                                 }
                             )
-                            if (result != results.last()) {
+                            if (index < results.lastIndex) {
                                 HorizontalDivider(
                                     modifier  = Modifier.padding(horizontal = 16.dp),
                                     thickness = 0.5.dp,

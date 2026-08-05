@@ -1,37 +1,22 @@
-# Releasing VeloSpot (reproducible F-Droid builds)
-
-VeloSpot is built so that **F-Droid can reproduce the exact APK** you publish on
-GitHub Releases — byte-for-byte identical except for the signing block. This page
-explains how to build reproducibly, manage the signing key, and cut a release.
-
-> **Why reproducibility matters:** F-Droid rebuilds the app from this repository's
-> tagged source and compares the result against your signed release APK. If they
-> match, F-Droid ships *your* signed binary. This requires that **no step depends
-> on anything outside the pinned source** — which is why BRouter is compiled from
-> a pinned git submodule and there are no prebuild scripts or binary blobs.
-
+# Releasing VeloSpot (Google Play)
+VeloSpot ships to the **Google Play Store**. The release is fully automated: pushing
+a `vX.Y.Z` Git tag builds a signed **App Bundle (AAB)**, publishes a GitHub Release
+(with a sideload APK + SBOM + provenance) and — if the Play service-account secret is
+configured — uploads the AAB and store metadata to Google Play via **fastlane**.
 ---
-
 ## 1. One-time setup after cloning
-
 BRouter (the offline routing engine) is compiled from source via a **pinned git
 submodule**. Initialise it once:
-
 ```bash
 git clone https://github.com/drzeeb/VeloSpot.git
 cd VeloSpot
 git submodule update --init --recursive
 ```
-
 If you forget this step, the build fails fast with a clear message telling you to
 run the command above.
-
 ### Pinning / bumping BRouter
-
 The submodule (`brouter-upstream/`) is locked to a specific commit (BRouter
-`v1.7.9`). Every checkout — yours, CI and F-Droid — therefore compiles the same
-source. To bump BRouter later:
-
+`v1.7.9`). To bump BRouter later:
 ```bash
 cd brouter-upstream
 git fetch --tags
@@ -40,193 +25,106 @@ cd ..
 git add brouter-upstream
 git commit -m "chore: bump BRouter to v1.7.10"
 ```
-
 ---
-
-## 2. Building reproducibly (local)
-
-Use the **same JDK that F-Droid uses (JDK 17, Temurin)** and the project's pinned
-Gradle wrapper (do not run with a system Gradle):
-
+## 2. Building locally
 ```bash
-# JDK 17 must be active (java -version → 17)
-./gradlew :app:assembleFdroidRelease
+# JDK 17 must be active (java -version -> 17)
+./gradlew bundleRelease      # AAB -> app/build/outputs/bundle/release/app-release.aab
+./gradlew assembleRelease    # APK -> app/build/outputs/apk/release/app-release.apk
 ```
-
-No preparation scripts are needed — a plain Gradle invocation resolves BRouter
-from the `:brouter` source module. The unsigned/locally-signed APK is written to:
-
-```
-app/build/outputs/apk/fdroid/release/app-fdroid-release.apk
-```
-
-Determinism is enforced by:
-
-- **BRouter from pinned source** (`:brouter` module + submodule commit).
-- **`dependenciesInfo { includeInApk = false }`** — strips the AGP-generated,
-  Google-signed "dependency metadata" block (opaque/non-reproducible) from the APK.
-- **Pinned toolchain** — fixed Gradle wrapper (`gradle-wrapper.properties`), AGP
-  and Kotlin versions (`gradle/libs.versions.toml`), and JDK 17.
-- **Reproducible archives** in the `:brouter` module (no timestamps, stable order).
-
+Signing credentials are resolved from a gitignored `keystore.properties` or from
+environment variables (see section 3). Without them the build falls back to debug signing.
 ---
-
 ## 3. Signing key management
-
 ### Where credentials come from
-
 The release `signingConfig` reads credentials in this order:
-
 1. **`keystore.properties`** at the repo root (for local releases) — *gitignored*.
 2. **Environment variables** (CI) — `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`,
    `KEY_ALIAS`, `KEY_PASSWORD`.
-
-If neither is present, the build falls back to the debug signing config (so
-ordinary local builds still work).
-
 `keystore.properties` (never commit this):
-
 ```properties
 storeFile=/absolute/path/to/release.jks
 storePassword=********
 keyAlias=velospot
 keyPassword=********
 ```
-
 `keystore.properties`, `*.jks`, `*.keystore`, `*.p12` and `*.base64` are all listed
 in `.gitignore`.
-
-### Creating a keystore (one-time)
-
-```bash
-keytool -genkeypair -v \
-  -keystore release.jks \
-  -alias velospot \
-  -keyalg RSA -keysize 4096 -validity 10000
-```
-
-### ⚠️ Back up the keystore — losing it is fatal
-
-Store `release.jks` **and** its passwords in a secure, offline backup (password
-manager + encrypted offsite copy). **If you lose the key:**
-
-- You can no longer publish updates that F-Droid can reproducibly verify against
-  your previous releases.
-- The `AllowedAPKSigningKeys` fingerprint in `fdroiddata` would have to change,
-  which is a disruptive, manual process.
-
-Treat the keystore as the single most important secret of the project.
-
+### Play App Signing
+With **Play App Signing** (recommended), Google holds the final app-signing key and
+your `release.jks` is only the **upload key**. Losing the upload key is recoverable
+(you can request a reset in the Play Console); the final signing key stays safe with
+Google. Back up the upload key and its passwords anyway (password manager + encrypted
+offsite copy).
 ---
-
-## 4. Determining the signing certificate SHA-256 fingerprint
-
-F-Droid pins your certificate via `AllowedAPKSigningKeys` in `fdroiddata`. Get the
-SHA-256 fingerprint with either of:
-
-```bash
-# From a built & signed APK:
-apksigner verify --print-certs VeloSpot-v1.0.13.apk
-
-# Or directly from the keystore:
-keytool -list -v -keystore release.jks -alias velospot
-```
-
-Use the **SHA-256** value (lowercase, colons removed) as `AllowedAPKSigningKeys`.
-
----
-
-## 5. Cutting a release (GitHub Actions)
-
+## 4. Cutting a release (GitHub Actions)
 The release **content** (version bump + changelog) is prepared **in the release PR**,
-*before* tagging. The `.github/workflows/release.yml` workflow then only **builds,
-signs and publishes** — it never rewrites files, never moves the tag and never opens
-a sync PR. This keeps `main` and the release tag perfectly in sync (no drift) while
-respecting the protected `main` branch.
-
+*before* tagging. The `.github/workflows/release.yml` workflow then **builds, signs,
+publishes the GitHub Release and uploads to Google Play** — it never rewrites files
+or moves the tag.
 ### Step 1 — Prepare the release PR (off `main`)
-
 In a normal PR to `main`, do all three:
-
 1. **Bump the version** in `app/build.gradle.kts`
-   (`versionCode = X*10000 + Y*100 + Z`, `versionName = "X.Y.Z"`).
-   These are static literals F-Droid parses via regex — keep them literal.
+   (`versionCode = X*10000 + Y*100 + Z`, `versionName = "X.Y.Z"` — keep them literal;
+   the workflow greps them to verify they match the tag).
 2. **Promote the changelog**: rename the `## [Unreleased]` section to
    `## [vX.Y.Z] — YYYY-MM-DD` and insert a fresh, empty `## [Unreleased]` above it.
-3. **Add the F-Droid "What's New" files** (read by F-Droid as release notes):
+3. **Add the Play "What''s New" files** (uploaded as the Play release notes):
    `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt` and
    `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
-
-Get the PR reviewed, green (`ci-build` / `ci-test`) and **merged** into `main`.
-
+Get the PR reviewed, green and **merged** into `main`.
 ### Step 2 — Tag the merge commit and push
-
-The tag MUST point to the merged commit on `main` (reproducibility: the tagged
-source is exactly what was reviewed and what F-Droid rebuilds):
-
 ```bash
 git checkout main
 git pull --ff-only
-git tag vX.Y.Z          # on the merge/release commit
+git tag vX.Y.Z          # on the merged release commit
 git push origin vX.Y.Z
 ```
-
 ### Step 3 — The workflow builds & publishes
-
 On the `vX.Y.Z` tag push, `release.yml`:
-
 - checks out the repo **with submodules**,
-- **verifies** the static `versionCode` / `versionName` literals match the tag and
-  warns if the `## [vX.Y.Z]` changelog heading is missing (fails fast on mismatch —
-  so a forgotten bump can't ship a mislabelled APK),
-- runs `assembleFdroidRelease` (+ `assembleGooglePlayRelease`),
-- signs with the keystore decoded from `KEYSTORE_BASE64`,
-- uploads the F-Droid APK as **`VeloSpot-vX.Y.Z.apk`** (the exact name the
-  fdroiddata `Binaries` URL expects:
-  `https://github.com/drzeeb/VeloSpot/releases/download/v%v/VeloSpot-v%v.apk`).
-
-
+- **verifies** the static `versionCode` / `versionName` literals match the tag
+  (fails fast on mismatch),
+- runs `bundleRelease` + `assembleRelease`, signs with the keystore decoded from
+  `KEYSTORE_BASE64`,
+- generates the CycloneDX SBOM + build-provenance attestations,
+- creates the GitHub Release (AAB + `VeloSpot-vX.Y.Z.apk` + SBOM),
+- **uploads the AAB + store metadata to Google Play** with fastlane (only if the
+  `PLAY_SERVICE_ACCOUNT_JSON` secret is set).
+By default the Play upload targets the **`production`** track with status **`draft`**:
+a release is created in the Play Console but not rolled out, so you review it and
+press **Publish**. To pick a different track/status (e.g. `internal` / `completed`),
+start the workflow manually via **Run workflow** and choose the inputs.
 ### Required GitHub Actions secrets
-
-Set these once under **Settings → Secrets and variables → Actions**:
-
+Set these once under **Settings -> Secrets and variables -> Actions**:
 | Secret | Value |
 |---|---|
-| `KEYSTORE_BASE64` | base64 of `release.jks` |
+| `KEYSTORE_BASE64` | base64 of `release.jks` (the upload key) |
 | `KEYSTORE_PASSWORD` | keystore password |
 | `KEY_ALIAS` | signing key alias |
 | `KEY_PASSWORD` | key password |
-
+| `PLAY_SERVICE_ACCOUNT_JSON` | Google Play service-account JSON key (Play upload) |
 Generate `KEYSTORE_BASE64` (one-time):
-
 ```bash
 # macOS / Linux
 base64 -i release.jks | tr -d '\n'
-
 # Windows (PowerShell)
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("release.jks"))
 ```
-
 ---
-
-## 6. fdroiddata recipe (reference)
-
-The custom `prebuild` step and the `BRouter` `srclib` are **no longer needed**. The
-recipe in `fdroiddata` simplifies to a standard Gradle build of the `fdroid`
-flavor, with submodules enabled and the binary verified against your release:
-
-```yaml
-Builds:
-  - versionName: 1.0.13
-    versionCode: 10013
-    commit: v1.0.13
-    subdir: app
-    submodules: true
-    gradle:
-      - fdroid
-
-AllowedAPKSigningKeys: <SHA-256 fingerprint from step 4>
-
-Binaries: https://github.com/drzeeb/VeloSpot/releases/download/v%v/VeloSpot-v%v.apk
+## 5. Google Play service account (one-time)
+To let CI upload builds, create a service account with Play Developer API access:
+1. In the **Google Play Console -> Users and permissions**, invite a service account
+   (or create one in **Google Cloud Console -> IAM & Admin -> Service Accounts**, then
+   grant it access in the Play Console with the *Release* permissions on the app).
+2. Create a **JSON key** for that service account and download it.
+3. Store the JSON as the `PLAY_SERVICE_ACCOUNT_JSON` GitHub secret.
+The upload itself is driven by fastlane `supply` (see `fastlane/Fastfile`), which
+reads the store listing and per-version changelogs from `fastlane/metadata/android`.
+### Uploading store metadata / screenshots manually
+The release workflow skips screenshot upload (slow/flaky). When the listing or
+screenshots change, push them explicitly:
+```bash
+PLAY_SERVICE_ACCOUNT_JSON="$(cat play-sa.json)" \
+  bundle exec fastlane supply --skip_upload_apk true --skip_upload_aab true
 ```
-

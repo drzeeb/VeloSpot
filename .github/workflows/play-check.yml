@@ -1,0 +1,36 @@
+name: Play connection check
+# Manual, on-demand check that the PLAY_SERVICE_ACCOUNT_JSON secret can
+# authenticate against the Google Play Developer API AND has access to the
+# de.velospot app. Run it from the Actions tab via "Run workflow" ??? no local
+# Ruby/fastlane needed. Uploads nothing.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+jobs:
+  verify:
+    name: Verify Google Play access
+    runs-on: ubuntu-latest
+    env:
+      PLAY_JSON_PRESENT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Fail early if the secret is missing
+        if: env.PLAY_JSON_PRESENT != 'true'
+        run: |
+          echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not set under Settings -> Secrets and variables -> Actions."
+          exit 1
+      - name: Set up Ruby (fastlane)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.10"
+          bundler-cache: true
+      - name: Validate Play service account
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: bundle exec fastlane verify

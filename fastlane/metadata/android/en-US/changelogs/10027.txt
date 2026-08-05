@@ -1,0 +1,4 @@
+• Pause & resume a ride – a commute with a train or ferry leg stays one ride, without the break counting
+• Bike paths are now preferred over gravel tracks (trekking and shortest-route profiles)
+• Fixed a crash on duplicate address-search results
+

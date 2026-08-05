@@ -1,0 +1,4 @@
+• Fahrt pausieren & fortsetzen – Pendelfahrten mit Zug- oder Fährabschnitt bleiben eine Fahrt, ohne dass die Pause zählt
+• Radwege werden jetzt gegenüber Schotterwegen bevorzugt (Trekking- und Kürzeste-Route-Profil)
+• Absturz bei doppelten Treffern in der Adresssuche behoben
+

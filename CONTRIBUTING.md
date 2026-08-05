@@ -79,23 +79,20 @@ git submodule update --init --recursive
 
 ## Building and testing
 
-The project has two product flavours under the `distribution` dimension:
-
-- **`googlePlay`** — uses Google Play Services (Fused location).
-- **`fdroid`** — fully free/open-source, no Google dependencies. This is the
-  canonical flavour used in CI.
+VeloSpot builds a single Google Play distribution (location via the Play Services
+Fused Location Provider).
 
 Common commands (use `gradlew.bat` on Windows):
 
 ```bash
-# Build the F-Droid debug APK (the canonical CI build, no GMS required)
-./gradlew :app:assembleFdroidDebug
+# Build the debug APK (the canonical CI build)
+./gradlew :app:assembleDebug
 
 # Run the unit tests
-./gradlew :app:testFdroidDebugUnitTest
+./gradlew :app:testDebugUnitTest
 
 # Run Android Lint
-./gradlew :app:lintFdroidDebug
+./gradlew :app:lintDebug
 ```
 
 Please make sure unit tests and Lint pass locally before opening a pull request —
@@ -112,8 +109,7 @@ the same checks run in CI.
 - Keep user-facing strings localised — VeloSpot ships in **8 languages**, so new
   strings must be added to `strings.xml` (English) and, where possible, the other
   translations.
-- Avoid adding new third-party dependencies unless necessary, and never add
-  proprietary dependencies to the `fdroid` flavour.
+- Avoid adding new third-party dependencies unless necessary.
 
 ## Commit messages
 
