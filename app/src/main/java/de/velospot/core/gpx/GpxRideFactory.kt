@@ -2,6 +2,7 @@ package de.velospot.core.gpx
 
 import de.velospot.core.navigation.GeoMath
 import de.velospot.core.tracking.ElevationAccumulator
+import de.velospot.core.tracking.RideTracker
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
 import java.util.UUID
@@ -18,7 +19,15 @@ import java.util.UUID
 object GpxRideFactory {
 
     private const val MOVING_SPEED_THRESHOLD_MPS = 0.8
-    private const val MAX_PLAUSIBLE_SPEED_MPS = 35.0
+
+    /**
+     * Physical plausibility ceiling for a GPX segment speed, shared with the live
+     * [RideTracker] so both import and recording reject the same implausible
+     * "teleport" outliers (a cycling ride faster than this is treated as a bad
+     * timestamp/coordinate). GPX segment speed is geometry-derived, so this only
+     * discards a garbage segment's contribution to the max/moving stats.
+     */
+    private val MAX_PLAUSIBLE_SPEED_MPS = RideTracker.MAX_PLAUSIBLE_SPEED_MPS
     private const val MIN_POINTS = 2
     private const val MIN_DISTANCE_METERS = 10.0
 

@@ -78,6 +78,20 @@ interface RecordedRidesRepository {
      */
     suspend fun recomputeStoredElevation() {}
 
+    /**
+     * One-off maintenance pass that recomputes each stored ride's `maxSpeedMps`
+     * from its per-point Doppler `speedMps` and writes the corrected aggregate
+     * column back. Fixes historical rides whose peak speed was understated by the
+     * now-removed "corroboration gate" in the recorder (real 60+ km/h descents
+     * were pinned to the noisier position-derived speed). The raw stored Doppler
+     * speeds are trusted (they already passed the recorder's gates when recorded);
+     * the aggregate is simply the max over all points whose `speedMps` is non-null
+     * and within `[0, MAX_PLAUSIBLE_SPEED_MPS]`. Rides without any in-range speed
+     * sample are left unchanged. Idempotent (deterministic recompute). Default is a
+     * no-op so in-memory test fakes needn't override it.
+     */
+    suspend fun recomputeStoredMaxSpeed() {}
+
     /** Removes every recorded ride. */
     suspend fun clearAll()
 }

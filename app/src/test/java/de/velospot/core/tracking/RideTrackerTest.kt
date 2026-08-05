@@ -14,6 +14,15 @@ class RideTrackerTest {
     private val baseLat = 0.0
     private val baseLon = 0.0
 
+    /**
+     * Metres per 1° of latitude at the equator (matches GeoMath's spherical earth,
+     * 6_371_000 m × π/180). Lets the max-speed sequences below express positions in
+     * plain metres so the implied per-segment speeds are exact and the acceleration
+     * gate's < 4 m/s² margin is easy to reason about.
+     */
+    private val metersPerDeg = 6_371_000.0 * Math.PI / 180.0
+    private fun latOf(meters: Double): Double = meters / metersPerDeg
+
     @Test
     fun `recording flag toggles with start and stop`() {
         val tracker = RideTracker()
@@ -109,25 +118,108 @@ class RideTrackerTest {
         val stats = tracker.addPoint(0.001, baseLon, 3_000L, speedMps = 40f, altitudeMeters = null, accuracyMeters = 60f)
         assertEquals(0.0, stats.distanceMeters, 0.001)
         assertEquals(1, stats.pointCount)
-        // Max speed stays 0: the lone first fix's reported speed has no position
-        // baseline to corroborate it, and the drift fix was rejected outright.
-        assertEquals(0.0, stats.maxSpeedMps, 0.001)
+        // The drift fix is rejected outright, so its 40 m/s Doppler never counts. The
+        // max reflects only the one accepted fix's honest 5 m/s reading (the removed
+        // corroboration gate no longer suppresses a lone accepted sample).
+        assertEquals(5.0, stats.maxSpeedMps, 0.001)
     }
 
     @Test
-    fun `doppler speed spike that the track does not support is ignored for max speed`() {
+    fun `doppler spike backed by a position jump is rejected by the acceleration gate`() {
+        // The old model dropped a Doppler spike via a "corroboration factor" (the
+        // reading had to stay within 1.5× the position-derived speed). That gate is
+        // gone: an accepted fix now honours its raw Doppler speed. A genuine spike is
+        // still rejected — but as a WHOLE fix by the acceleration gate — because a
+        // Doppler glitch is virtually always accompanied by a position jump that
+        // implies a physically impossible change of speed on a reliable ≥1 s baseline.
         val tracker = RideTracker()
         tracker.start(0L)
-        // Steady ~5.6 m/s ride: ~55.6 m (0.0005°) every 10 s.
-        tracker.addPoint(0.0000, baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
-        // Reported 6 m/s is corroborated by the ~5.6 m/s geometry → counts.
-        tracker.addPoint(0.0005, baseLon, 10_000L, speedMps = 6f, altitudeMeters = null, accuracyMeters = 5f)
-        // GPS Doppler glitch: reports 20 m/s (72 km/h) while the position only moved
-        // ~5.6 m/s — far above the corroboration tolerance, so it must NOT set the max.
-        tracker.addPoint(0.0010, baseLon, 20_000L, speedMps = 20f, altitudeMeters = null, accuracyMeters = 5f)
-        val ride = tracker.stop(20_000L)
-        requireNotNull(ride)
-        assertEquals("spike ignored, max is the corroborated 6 m/s", 6.0, ride.maxSpeedMps, 0.001)
+        // Calm ~6 m/s baseline at a realistic ~1 s cadence.
+        tracker.addPoint(latOf(0.0), baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
+        tracker.addPoint(latOf(6.0), baseLon, 1_000L, speedMps = 6f, altitudeMeters = null, accuracyMeters = 5f)
+        // Glitch: the position leaps ~20 m in 1 s (≈20 m/s) while reporting a 20 m/s
+        // Doppler value. That is an acceleration of ~14 m/s² from the 6 m/s baseline —
+        // far above the 4 m/s² gate — so the fix is dropped entirely: it neither joins
+        // the track nor raises the max speed.
+        val stats = tracker.addPoint(latOf(26.0), baseLon, 2_000L, speedMps = 20f, altitudeMeters = null, accuracyMeters = 5f)
+        assertEquals("acceleration-gated spike adds no track point", 2, stats.pointCount)
+        assertEquals("spike dropped as a whole, max is the accepted 6 m/s", 6.0, stats.maxSpeedMps, 0.001)
+    }
+
+    @Test
+    fun `genuine sustained fast descent is kept in max speed`() {
+        // Regression for the "wrong recorded MAX SPEED" bug. Mirrors real device
+        // traces (rides 8b628c69 / fa0bb7a0 had ~70–77 km/h points accepted): on a
+        // fast descent the instantaneous Doppler speed legitimately leads the
+        // interval-averaged position speed. The removed 1.5× corroboration gate
+        // wrongly clamped the peak to the lower geometry value; the new logic keeps
+        // the real Doppler peak.
+        val tracker = RideTracker()
+        tracker.start(0L)
+        // Per-second fixes. Position ramps 6→12 m/s (segment accel ≤ 3 m/s², so the
+        // acceleration gate never trips); the Doppler value ramps higher, up to
+        // 20 m/s (72 km/h), leading the geometry as a real descent does.
+        // meters:   0    6    14    24    35    47   (cumulative)
+        // segSpeed:      6     8    10    11    12   (m/s over each 1 s)
+        // doppler:  5    6     9    13    17    20
+        tracker.addPoint(latOf(0.0), baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
+        tracker.addPoint(latOf(6.0), baseLon, 1_000L, speedMps = 6f, altitudeMeters = null, accuracyMeters = 5f)
+        tracker.addPoint(latOf(14.0), baseLon, 2_000L, speedMps = 9f, altitudeMeters = null, accuracyMeters = 5f)
+        tracker.addPoint(latOf(24.0), baseLon, 3_000L, speedMps = 13f, altitudeMeters = null, accuracyMeters = 5f)
+        tracker.addPoint(latOf(35.0), baseLon, 4_000L, speedMps = 17f, altitudeMeters = null, accuracyMeters = 5f)
+        val stats = tracker.addPoint(latOf(47.0), baseLon, 5_000L, speedMps = 20f, altitudeMeters = null, accuracyMeters = 5f)
+        // Every fix is a plausible, non-spiking descent sample → all kept.
+        assertEquals("all descent fixes are accepted", 6, stats.pointCount)
+        // NEW logic: the 20 m/s Doppler peak survives. OLD corroboration would have
+        // pinned this to ~13 m/s (the last reading within 1.5× of the geometry), so
+        // this assertion fails on the old logic and passes on the new.
+        assertTrue(
+            "genuine ~72 km/h descent kept (got ${stats.maxSpeedMps})",
+            stats.maxSpeedMps >= 16.7 // 60 km/h
+        )
+        assertEquals("max equals the real Doppler peak", 20.0, stats.maxSpeedMps, 0.001)
+    }
+
+    @Test
+    fun `single gps teleport spike is still rejected from max speed`() {
+        // The physical ceiling was raised to 27 m/s (~97 km/h) to admit real fast
+        // descents, but it must still guard a true teleport. A lone fix implying a
+        // > 27 m/s position jump is dropped as a whole, so it can neither join the
+        // track nor inflate the max speed.
+        val tracker = RideTracker()
+        tracker.start(0L)
+        tracker.addPoint(latOf(0.0), baseLon, 0L, speedMps = 5f, altitudeMeters = null, accuracyMeters = 5f)
+        val base = tracker.addPoint(latOf(10.0), baseLon, 1_000L, speedMps = 6f, altitudeMeters = null, accuracyMeters = 5f)
+        assertEquals("baseline max is the accepted 6 m/s", 6.0, base.maxSpeedMps, 0.001)
+        // A ~60 m jump in 1 s (≈60 m/s, above the 27 m/s ceiling) reporting a fast
+        // 25 m/s Doppler value → rejected outright before the max block is reached.
+        val stats = tracker.addPoint(latOf(70.0), baseLon, 2_000L, speedMps = 25f, altitudeMeters = null, accuracyMeters = 5f)
+        assertEquals("teleport spike adds no track point", 2, stats.pointCount)
+        assertEquals("teleport does not raise the max speed", 6.0, stats.maxSpeedMps, 0.001)
+    }
+
+    @Test
+    fun `doppler reading above the physical ceiling is ignored for max speed`() {
+        // A fix can be accepted on geometry (accuracy/burst/teleport/accel gates all
+        // look at the position, not the Doppler value) yet carry an over-ceiling
+        // Doppler reading. The remaining `spd <= MAX_PLAUSIBLE_SPEED_MPS` guard must
+        // keep that over-ceiling value out of the max, while a value just under the
+        // ceiling is honoured. We assert both on one plausible ~12 m/s track.
+        val tracker = RideTracker()
+        tracker.start(0L)
+        // Steady ~12 m/s geometry (segment accel ≈ 0 → nothing is gate-rejected).
+        tracker.addPoint(latOf(0.0), baseLon, 0L, speedMps = 10f, altitudeMeters = null, accuracyMeters = 5f)
+        tracker.addPoint(latOf(12.0), baseLon, 1_000L, speedMps = 12f, altitudeMeters = null, accuracyMeters = 5f)
+        // Accepted fix but its Doppler (30 m/s ≈ 108 km/h) is above the 27 m/s
+        // ceiling → the fix is kept as a track point but the reading is NOT counted.
+        val overCeiling = tracker.addPoint(latOf(24.0), baseLon, 2_000L, speedMps = 30f, altitudeMeters = null, accuracyMeters = 5f)
+        assertEquals("over-ceiling fix is still accepted as a point", 3, overCeiling.pointCount)
+        assertEquals("over-ceiling Doppler is not counted", 12.0, overCeiling.maxSpeedMps, 0.001)
+        // A value just under the ceiling (26 m/s ≈ 94 km/h) on the same plausible
+        // track IS kept, proving only the ceiling — not corroboration — bounds the max.
+        val underCeiling = tracker.addPoint(latOf(36.0), baseLon, 3_000L, speedMps = 26f, altitudeMeters = null, accuracyMeters = 5f)
+        assertEquals("under-ceiling fix is accepted", 4, underCeiling.pointCount)
+        assertEquals("just-under-ceiling Doppler is kept", 26.0, underCeiling.maxSpeedMps, 0.001)
     }
 
     @Test
