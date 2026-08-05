@@ -4,6 +4,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import de.velospot.core.tracking.AltitudeSample
 import de.velospot.core.tracking.ElevationAccumulator
+import de.velospot.core.tracking.RideTracker
 import de.velospot.data.local.dao.RecordedRideDao
 import de.velospot.data.local.dao.RecordedRideSummaryRow
 import de.velospot.data.local.entity.RecordedRideEntity
@@ -108,6 +109,28 @@ class RecordedRidesRepositoryImpl @Inject constructor(
                 result.lossMeters != entity.elevationLossMeters
             ) {
                 recordedRideDao.updateElevation(entity.id, result.gainMeters, result.lossMeters)
+            }
+        }
+    }
+
+    override suspend fun recomputeStoredMaxSpeed() = withContext(Dispatchers.Default) {
+        // Recompute the peak speed for every stored ride from its raw per-point
+        // Doppler speeds and write only that derived column back. The stored speeds
+        // were already accepted through the recorder's gates when recorded, so they
+        // are trusted here: the aggregate is simply the max over in-range samples,
+        // guarded by a non-negative floor and the shared physical ceiling. This
+        // self-corrects both the summary flow (a direct column projection) and the
+        // detail view for historical rides understated by the old corroboration
+        // gate. Rides without any in-range speed sample are skipped.
+        recordedRideDao.getAllFlow().first().forEach { entity ->
+            val points = runCatching { pointsAdapter.fromJson(entity.pointsJson) }
+                .getOrNull().orEmpty()
+            val maxSpeed = points
+                .mapNotNull { it.speedMps?.toDouble() }
+                .filter { it in 0.0..RideTracker.MAX_PLAUSIBLE_SPEED_MPS }
+                .maxOrNull() ?: return@forEach
+            if (maxSpeed != entity.maxSpeedMps) {
+                recordedRideDao.updateMaxSpeed(entity.id, maxSpeed)
             }
         }
     }

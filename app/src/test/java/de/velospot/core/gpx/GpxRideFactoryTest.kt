@@ -2,6 +2,7 @@ package de.velospot.core.gpx
 
 import de.velospot.core.tracking.AltitudeSample
 import de.velospot.core.tracking.ElevationAccumulator
+import de.velospot.core.tracking.RideTracker
 import de.velospot.testsupport.ElevationFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -58,6 +59,33 @@ class GpxRideFactoryTest {
         assertEquals(0L, ride.elapsedSeconds)
         assertEquals(0.0, ride.maxSpeedMps, 0.0)
         assertTrue(ride.distanceMeters > 100.0)
+    }
+
+    @Test
+    fun `ignores a GPX segment above the shared plausibility ceiling for max speed`() {
+        // The import ceiling is now shared with the live RideTracker: a segment
+        // faster than ~27 m/s is treated as a bad timestamp/coordinate and must not
+        // contribute to maxSpeed, while a plausible fast segment below it is kept.
+        // ~111.32 m per 0.001 deg latitude.
+        val track = ParsedTrack(
+            name = null,
+            points = listOf(
+                ParsedTrackPoint(0.0, 0.0, null, 0L),
+                // ~222.6 m in 10 s -> ~22.3 m/s (below ceiling -> kept)
+                ParsedTrackPoint(0.002, 0.0, null, 10_000L),
+                // ~333.9 m in 10 s -> ~33.4 m/s (above 27 m/s ceiling -> rejected;
+                // the old 35 m/s ceiling would have wrongly accepted it)
+                ParsedTrackPoint(0.005, 0.0, null, 20_000L)
+            )
+        )
+        val ride = GpxRideFactory.toRecordedRide(track)
+        assertNotNull(ride)
+        ride!!
+        assertTrue(
+            "implausible >ceiling segment must not set maxSpeed",
+            ride.maxSpeedMps < RideTracker.MAX_PLAUSIBLE_SPEED_MPS
+        )
+        assertTrue("kept segment ~22 m/s drives maxSpeed", ride.maxSpeedMps in 20.0..24.0)
     }
 
     @Test

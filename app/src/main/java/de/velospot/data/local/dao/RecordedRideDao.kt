@@ -89,6 +89,15 @@ interface RecordedRideDao {
     @Query("UPDATE recorded_rides SET elevationGainMeters = :gain, elevationLossMeters = :loss WHERE id = :id")
     suspend fun updateElevation(id: String, gain: Double, loss: Double)
 
+    /**
+     * Overwrites the denormalised max-speed aggregate column for a ride. Used by
+     * the one-off backfill that recomputes the peak from the stored per-point
+     * Doppler speeds; touches only this derived column (no track rewrite, no
+     * schema change).
+     */
+    @Query("UPDATE recorded_rides SET maxSpeedMps = :maxSpeedMps WHERE id = :id")
+    suspend fun updateMaxSpeed(id: String, maxSpeedMps: Double)
+
     /** Detaches every ride from [bikeProfileId] (used when its bike is deleted). */
     @Query("UPDATE recorded_rides SET bikeProfileId = NULL WHERE bikeProfileId = :bikeProfileId")
     suspend fun clearBikeProfile(bikeProfileId: String)

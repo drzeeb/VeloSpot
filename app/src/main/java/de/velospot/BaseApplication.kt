@@ -38,6 +38,7 @@ class BaseApplication : Application() {
         // MapLibre is initialised lazily via MapLibre.getInstance(context)
         // inside rememberMapViewWithLifecycle – no global setup needed here.
         runElevationBackfillOnce()
+        runMaxSpeedBackfillOnce()
     }
 
     /**
@@ -58,8 +59,28 @@ class BaseApplication : Application() {
         }
     }
 
+    /**
+     * One-off recompute of stored rides' peak speed from their per-point Doppler
+     * speeds (fixes historical rides understated by the recorder's now-removed
+     * corroboration gate). Guarded by a persisted flag so it runs at most once per
+     * install; the recompute itself is deterministic/idempotent, so re-running is
+     * harmless. Runs off the main thread.
+     */
+    private fun runMaxSpeedBackfillOnce() {
+        val prefs = getSharedPreferences(MAINTENANCE_PREFS, MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_MAX_SPEED_BACKFILL_DONE, false)) return
+        appScope.launch {
+            val repo = EntryPointAccessors
+                .fromApplication(this@BaseApplication, MaintenanceEntryPoint::class.java)
+                .recordedRidesRepository()
+            runCatching { repo.recomputeStoredMaxSpeed() }
+                .onSuccess { prefs.edit { putBoolean(KEY_MAX_SPEED_BACKFILL_DONE, true) } }
+        }
+    }
+
     private companion object {
         const val MAINTENANCE_PREFS = "velospot_maintenance"
         const val KEY_ELEVATION_BACKFILL_DONE = "elevation_backfill_v1_done"
+        const val KEY_MAX_SPEED_BACKFILL_DONE = "max_speed_backfill_v1_done"
     }
 }

@@ -185,10 +185,9 @@ class RideTracker {
         val previous = points.lastOrNull()
         var pointSpeed = speedMps
 
-        // Position-derived speed of this segment and whether it is a *reliable*
-        // baseline for cross-checking the reported speed (long enough interval that
-        // GPS jitter doesn't dominate the division). Both feed the max-speed gate.
-        var segSpeedMps = 0.0
+        // Whether this segment is a *reliable* baseline (long enough interval that
+        // GPS jitter doesn't dominate the division). [segSpeedReliable] gates the
+        // acceleration check and the moving/baseline bookkeeping below.
         var segSpeedReliable = false
 
         if (previous != null && hasRaw) {
@@ -218,7 +217,6 @@ class RideTracker {
                         return currentStats()
                     }
                 }
-                segSpeedMps = segSpeed
                 if (segMeters >= MIN_SEGMENT_METERS) {
                     distanceMeters += segMeters
                 }
@@ -236,18 +234,18 @@ class RideTracker {
         }
 
         // Max speed: the device-reported (GPS Doppler) speed is the most direct
-        // measurement, but it can briefly **spike** to wildly wrong values (seen at
-        // ~50–70 km/h on a bike) while the position barely moved — a sensor glitch,
-        // typically on a low-accuracy fix. So a sample may raise the max only when
-        // **corroborated by the geometry**: there must be a reliable position-derived
-        // baseline and the speed may not exceed it by more than [SPEED_CORROBORATION_FACTOR].
-        // This rejects the Doppler spikes while still honouring genuine fast (e.g.
-        // downhill) stretches where both the sensor and the track agree.
+        // measurement. Any fix that reaches this line has already survived the
+        // accuracy, burst, teleport and acceleration gates above, which reject
+        // Doppler/position spikes *as a whole* (the fix is dropped, never reaching
+        // here). The acceleration gate in particular is the primary anti-spike
+        // defence. We therefore honour the raw Doppler speed of an accepted fix and
+        // let it raise the max — this is what makes genuine fast descents (60+ km/h)
+        // register instead of being pinned to the noisier position-derived speed.
+        // Only two guards remain: a non-negative lower bound and the physical ceiling
+        // [MAX_PLAUSIBLE_SPEED_MPS] (a real-descent-safe teleport guard).
         pointSpeed?.let { sp ->
             val spd = sp.toDouble()
-            if (spd in 0.0..MAX_PLAUSIBLE_SPEED_MPS &&
-                segSpeedReliable && spd <= segSpeedMps * SPEED_CORROBORATION_FACTOR
-            ) {
+            if (spd in 0.0..MAX_PLAUSIBLE_SPEED_MPS) {
                 maxSpeedMps = maxOf(maxSpeedMps, spd)
             }
         }
@@ -365,8 +363,15 @@ class RideTracker {
         private const val MIN_SEGMENT_METERS = 1.5
         /** Speed above which the rider counts as "moving" (~2.9 km/h). */
         private const val MOVING_SPEED_THRESHOLD_MPS = 0.8
-        /** Reject fixes implying a faster-than-plausible bike speed (~79 km/h). */
-        private const val MAX_PLAUSIBLE_SPEED_MPS = 22.0
+        /**
+         * Physical speed ceiling (m/s, ~97 km/h) above which a fix is treated as an
+         * implausible teleport. Cycling downhill (road / e-gravel) can legitimately
+         * exceed 60 km/h, so this ceiling only guards against physically impossible
+         * position jumps, never against real fast descents. Shared as the single
+         * source of truth by both the teleport-reject and the max-speed candidate,
+         * and read by the historical max-speed backfill in the rides repository.
+         */
+        internal const val MAX_PLAUSIBLE_SPEED_MPS = 27.0
         /**
          * Reject fixes implying a physically impossible change of speed between two
          * reliable segments. 4 m/s² is ~0.4 g — still well beyond a cyclist's real
@@ -391,13 +396,6 @@ class RideTracker {
          * point of real rides. Anything faster than this carries no new information.
          */
         private const val MIN_FIX_INTERVAL_MILLIS = 250L
-        /**
-         * How far the reported (GPS Doppler) speed may exceed the corroborating
-         * position-derived speed before it's treated as a sensor spike and ignored
-         * for the max-speed statistic. 1.5× tolerates honest Doppler lead on a fix
-         * while still discarding the gross 2–5× glitches.
-         */
-        private const val SPEED_CORROBORATION_FACTOR = 1.5
         /**
          * Reject fixes whose reported horizontal accuracy (1σ radius) is worse than
          * this. GPS multipath in urban canyons / under 3D building shadow — exactly
