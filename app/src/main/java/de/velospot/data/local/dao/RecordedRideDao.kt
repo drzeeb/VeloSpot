@@ -81,6 +81,14 @@ interface RecordedRideDao {
     @Query("UPDATE recorded_rides SET sourceRouteId = :sourceRouteId WHERE id = :id")
     suspend fun updateSourceRoute(id: String, sourceRouteId: String?)
 
+    /**
+     * Overwrites the denormalised elevation aggregate columns for a ride. Used by
+     * the one-off backfill that recomputes gain/loss from the stored raw track;
+     * touches only the two derived columns (no track rewrite, no schema change).
+     */
+    @Query("UPDATE recorded_rides SET elevationGainMeters = :gain, elevationLossMeters = :loss WHERE id = :id")
+    suspend fun updateElevation(id: String, gain: Double, loss: Double)
+
     /** Detaches every ride from [bikeProfileId] (used when its bike is deleted). */
     @Query("UPDATE recorded_rides SET bikeProfileId = NULL WHERE bikeProfileId = :bikeProfileId")
     suspend fun clearBikeProfile(bikeProfileId: String)

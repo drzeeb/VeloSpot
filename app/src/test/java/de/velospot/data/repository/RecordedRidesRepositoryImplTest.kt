@@ -45,6 +45,8 @@ class RecordedRidesRepositoryImplTest {
 
         override suspend fun updateName(id: String, name: String?) = mutate(id) { it.copy(name = name) }
         override suspend fun updateArchivedAt(id: String, archivedAt: Long?) = mutate(id) { it.copy(archivedAt = archivedAt) }
+        override suspend fun updateElevation(id: String, gain: Double, loss: Double) =
+            mutate(id) { it.copy(elevationGainMeters = gain, elevationLossMeters = loss) }
         override suspend fun updateBikeProfile(id: String, bikeProfileId: String?) = mutate(id) { it.copy(bikeProfileId = bikeProfileId) }
         override suspend fun updateSourceRoute(id: String, sourceRouteId: String?) = mutate(id) { it.copy(sourceRouteId = sourceRouteId) }
 
