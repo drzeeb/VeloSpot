@@ -3,6 +3,7 @@ package de.velospot.core.tracking
 import android.content.Context
 import android.content.Intent
 import android.content.ComponentName
+import android.os.Build
 import android.service.quicksettings.TileService
 import androidx.core.content.ContextCompat
 import de.velospot.core.location.LocationController
@@ -130,6 +131,13 @@ class RideRecordingManager(
                     persistence.clear()
                 }
             }
+            // A recreated process always comes up Idle (in-memory state was reset by
+            // construction). Re-paint the out-of-app controls so a widget/tile still
+            // showing a stale "Recording / Stop" (left behind by the killed process)
+            // self-corrects to the true idle state. Without this the stale "Stop"
+            // widget would, on tap, START a brand-new recording, because toggle()
+            // keys off isRecording — which is now false.
+            refreshExternalControls()
             // Then drain the live write queue for the rest of the process lifetime.
             for (op in persistOps) runCatching { op() }
         }
@@ -213,7 +221,17 @@ class RideRecordingManager(
         // radio at high accuracy and (with the foreground service) alive in the
         // background, regardless of whether a map ViewModel is around.
         locationController.setRecording(true)
-        startService()
+        if (!startService()) {
+            // The foreground service refused to start — e.g. a background
+            // startForegroundService throwing ForegroundServiceStartNotAllowedException
+            // on Android 12+. Roll back the in-memory start so no surface can claim
+            // "recording" while there is no live foreground service keeping the
+            // process (and GPS) alive, then re-paint the controls to the true idle
+            // state. Swallowing the failure here is what previously left the tracker
+            // "recording" in memory with nothing actually running.
+            rollBackFailedStart()
+            return
+        }
         refreshExternalControls()
     }
 
@@ -466,12 +484,51 @@ class RideRecordingManager(
     }
 
 
-    private fun startService() {
-        runCatching {
+    private fun startService(): Boolean {
+        val result = runCatching {
             val intent = Intent(context, RideRecordingService::class.java)
                 .setAction(RideRecordingService.ACTION_START)
             ContextCompat.startForegroundService(context, intent)
         }
+        val error = result.exceptionOrNull()
+        // Treat the start as *failed* only when the platform explicitly refused it
+        // (Android 12+ background foreground-service restriction). That is the one
+        // case where no foreground service actually came up, so the in-memory
+        // recording must be rolled back rather than silently claiming "recording".
+        // Any other / ambiguous outcome (including a stubbed Context in unit tests)
+        // keeps the recording, preserving the previous best-effort behaviour.
+        return !(error != null && isForegroundServiceStartNotAllowed(error))
+    }
+
+    /**
+     * True when [error] is the Android 12+ `ForegroundServiceStartNotAllowedException`
+     * thrown when a foreground service is started from the background. Guarded by the
+     * SDK check so the API-31 type is never referenced on older platforms.
+     */
+    private fun isForegroundServiceStartNotAllowed(error: Throwable): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            error is android.app.ForegroundServiceStartNotAllowedException
+
+
+    /**
+     * Unwinds a [start] that could not bring its foreground service up, returning
+     * the manager to a clean Idle state. Mirrors [discard] (abort without saving)
+     * but is used specifically when the FGS start was refused, so the in-memory
+     * "recording" claim can never outlive the missing service. Re-paints the
+     * external controls so the widget/tile reflect the true (not recording) state.
+     */
+    private fun rollBackFailedStart() {
+        locationJob?.cancel(); locationJob = null
+        stopTicker()
+        tracker.discard()
+        isAutoStartedByNavigation = false
+        pendingRideName = null
+        _trackingState.value = RideTrackingUiState.Idle
+        _liveTrackPoints.value = emptyList()
+        _liveTrackSegments.value = emptyList()
+        persist { persistence.clear() }
+        locationController.setRecording(false)
+        refreshExternalControls()
     }
 
     private fun stopService() {
