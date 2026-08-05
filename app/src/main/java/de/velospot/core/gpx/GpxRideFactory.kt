@@ -1,10 +1,10 @@
 package de.velospot.core.gpx
 
 import de.velospot.core.navigation.GeoMath
+import de.velospot.core.tracking.ElevationAccumulator
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
 import java.util.UUID
-import kotlin.math.abs
 
 /**
  * Turns a [ParsedTrack] (read from an imported GPX) into a [RecordedRide],
@@ -19,8 +19,6 @@ object GpxRideFactory {
 
     private const val MOVING_SPEED_THRESHOLD_MPS = 0.8
     private const val MAX_PLAUSIBLE_SPEED_MPS = 35.0
-    private const val ALT_SMOOTHING_ALPHA = 0.3
-    private const val ELEVATION_THRESHOLD_METERS = 3.0
     private const val MIN_POINTS = 2
     private const val MIN_DISTANCE_METERS = 10.0
 
@@ -39,10 +37,9 @@ object GpxRideFactory {
         var distance = 0.0
         var movingMillis = 0L
         var maxSpeed = 0.0
-        var elevationGain = 0.0
-        var elevationLoss = 0.0
-        var smoothedAlt: Double? = null
-        var lastRegisteredAlt: Double? = null
+        // Cumulative gain/loss via the shared hysteresis integrator (imported GPX
+        // carries no accuracy, so every sample is trusted).
+        val elevation = ElevationAccumulator()
 
         val points = ArrayList<TrackPoint>(raw.size)
         var prev: ParsedTrackPoint? = null
@@ -65,23 +62,7 @@ object GpxRideFactory {
                 }
             }
 
-            // Smoothed elevation gain/loss.
-            p.elevationMeters?.let { alt ->
-                val prevSmoothed = smoothedAlt
-                val smoothed = if (prevSmoothed == null) alt
-                               else prevSmoothed + ALT_SMOOTHING_ALPHA * (alt - prevSmoothed)
-                smoothedAlt = smoothed
-                val baseAlt = lastRegisteredAlt
-                if (baseAlt == null) {
-                    lastRegisteredAlt = smoothed
-                } else {
-                    val delta = smoothed - baseAlt
-                    if (abs(delta) >= ELEVATION_THRESHOLD_METERS) {
-                        if (delta > 0) elevationGain += delta else elevationLoss += -delta
-                        lastRegisteredAlt = smoothed
-                    }
-                }
-            }
+            elevation.add(p.elevationMeters, accuracyMeters = null)
 
             points.add(
                 TrackPoint(
@@ -113,8 +94,8 @@ object GpxRideFactory {
             movingSeconds = movingSeconds,
             avgSpeedMps = avgSpeed,
             maxSpeedMps = maxSpeed,
-            elevationGainMeters = elevationGain,
-            elevationLossMeters = elevationLoss,
+            elevationGainMeters = elevation.gain,
+            elevationLossMeters = elevation.loss,
             points = points.toList(),
             name = name?.trim()?.takeIf { it.isNotBlank() }
         )

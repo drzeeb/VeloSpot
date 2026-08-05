@@ -1,5 +1,7 @@
 package de.velospot.core.tracking
 
+import de.velospot.testsupport.ElevationFixtures
+import de.velospot.domain.model.LiveRideStats
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -269,6 +271,98 @@ class RideTrackerTest {
         assertTrue("gap distance excluded (~222 m)", ride.distanceMeters in 200.0..245.0)
         // Elapsed excludes the 100 s pause: last point at 130 s − 100 s pause = 30 s.
         assertEquals("paused time excluded from elapsed", 30L, ride.elapsedSeconds)
+    }
+
+    // ── Recorded-ride elevation (Höhenmeter) regression ───────────────────────
+
+    /**
+     * Feeds a real altitude series through [RideTracker.addPoint] along a steadily
+     * moving track (constant ~11 m/s, good 6 m accuracy) so no fix is dropped by the
+     * distance/accuracy/acceleration gates and every altitude reaches the shared
+     * [ElevationAccumulator]. Returns the final live stats.
+     */
+    private fun feedAltitudes(altitudes: List<Double>): LiveRideStats {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        var lat = baseLat
+        var stats = tracker.currentStats()
+        altitudes.forEachIndexed { i, alt ->
+            stats = tracker.addPoint(
+                latitude = lat,
+                longitude = baseLon,
+                timestamp = i * 3_000L,
+                speedMps = 5f,
+                altitudeMeters = alt,
+                accuracyMeters = 6f
+            )
+            lat += 0.0003 // ~33 m north each fix → ~11 m/s, under the speed cap
+        }
+        return stats
+    }
+
+    @Test
+    fun `net-descent ride counts realistic loss and does not zero the climb`() {
+        // Ride abf570df (OLD stored gain=0.0, loss=6.49). The refactored accounting
+        // must produce a realistic loss AND must not force the climb to exactly 0.
+        val altitudes = ElevationFixtures.NET_DESCENT_ABF570DF
+        val stats = feedAltitudes(altitudes)
+
+        // The recorder must agree with the shared integrator on the same series.
+        val expected = ElevationAccumulator.compute(altitudes.map { AltitudeSample(it) })
+        assertEquals(expected.gainMeters, stats.elevationGainMeters, 1e-6)
+        assertEquals(expected.lossMeters, stats.elevationLossMeters, 1e-6)
+
+        assertTrue("loss well above the old 6.49 m (got ${stats.elevationLossMeters})",
+            stats.elevationLossMeters > 6.0)
+        assertTrue("loss stays physically sensible", stats.elevationLossMeters < 45.0)
+        assertTrue("climb must not be zero-forced on a net descent (got ${stats.elevationGainMeters})",
+            stats.elevationGainMeters > 3.0)
+        assertTrue("loss dominates on a net descent",
+            stats.elevationLossMeters > stats.elevationGainMeters)
+    }
+
+    @Test
+    fun `net-climb ride counts realistic gain via the recorder`() {
+        // Ride a46709f5 (OLD stored gain=6.36, loss=0.0). Gain is counted; loss is
+        // legitimately ~0 as the mid-ride 50 m plateau is spike-gated.
+        val altitudes = ElevationFixtures.NET_CLIMB_A46709F5
+        val stats = feedAltitudes(altitudes)
+
+        val expected = ElevationAccumulator.compute(altitudes.map { AltitudeSample(it) })
+        assertEquals(expected.gainMeters, stats.elevationGainMeters, 1e-6)
+        assertEquals(expected.lossMeters, stats.elevationLossMeters, 1e-6)
+
+        assertTrue("gain realistic (got ${stats.elevationGainMeters})",
+            stats.elevationGainMeters in 5.0..10.0)
+        assertTrue("gain dominates on a net climb",
+            stats.elevationGainMeters > stats.elevationLossMeters)
+    }
+
+    @Test
+    fun `elevation accounting resumes after a gross altitude spike`() {
+        // The pre-fix froze all further accounting once a > 12 m altitude step-change
+        // was seen. Feed a clean climb, one 60 m spike, then keep climbing: the
+        // accumulator must re-seed on the spike and RESUME counting afterwards.
+        val tracker = RideTracker()
+        tracker.start(0L)
+        var lat = baseLat
+        var t = 0L
+        fun push(alt: Double) {
+            tracker.addPoint(lat, baseLon, t, speedMps = 5f, altitudeMeters = alt, accuracyMeters = 6f)
+            lat += 0.0003
+            t += 3_000L
+        }
+        // Clean climb, then a single 60 m spike.
+        listOf(100.0, 102.0, 104.0, 106.0, 160.0).forEach { push(it) }
+        val gainAtSpike = tracker.currentStats().elevationGainMeters
+
+        // Recover to normal altitude and keep climbing.
+        listOf(108.0, 110.0, 112.0, 114.0).forEach { push(it) }
+        val gainAfter = tracker.currentStats().elevationGainMeters
+
+        assertTrue("some climb was counted before the spike", gainAtSpike > 2.0)
+        assertTrue("accounting must resume after the spike (got $gainAtSpike → $gainAfter)",
+            gainAfter > gainAtSpike + 1.0)
     }
 }
 

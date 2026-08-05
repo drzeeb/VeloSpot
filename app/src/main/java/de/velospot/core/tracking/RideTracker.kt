@@ -23,12 +23,12 @@ class RideTracker {
     private var distanceMeters = 0.0
     private var movingMillis = 0L
     private var maxSpeedMps = 0.0
-    private var elevationGain = 0.0
-    private var elevationLoss = 0.0
-    /** Low-pass-filtered altitude, to tame the heavy noise of GPS-only altitude. */
-    private var smoothedAltitude: Double? = null
-    /** Smoothed altitude at the last point where a gain/loss step was recorded. */
-    private var lastRegisteredAltitude: Double? = null
+    /**
+     * Shared, pure cumulative-elevation integrator (hysteresis peak/valley). Owns
+     * all altitude smoothing, gain/loss, spike-gating and pause continuity so the
+     * recorder, GPX import and profile chart agree exactly.
+     */
+    private val elevation = ElevationAccumulator()
 
     /**
      * Sliding window of the most recent **accepted raw** positions, used to compute
@@ -88,10 +88,7 @@ class RideTracker {
         distanceMeters = 0.0
         movingMillis = 0L
         maxSpeedMps = 0.0
-        elevationGain = 0.0
-        elevationLoss = 0.0
-        smoothedAltitude = null
-        lastRegisteredAltitude = null
+        elevation.reset()
         windowLat.clear()
         windowLon.clear()
         lastRawLat = 0.0
@@ -134,8 +131,9 @@ class RideTracker {
         hasSegSpeed = false
         windowLat.clear()
         windowLon.clear()
-        smoothedAltitude = null
-        lastRegisteredAltitude = null
+        // Break altitude continuity across the gap without discarding accumulated
+        // gain/loss, so the resumed ride doesn't bank a phantom step across it.
+        elevation.breakSegment()
     }
 
     /**
@@ -254,40 +252,11 @@ class RideTracker {
             }
         }
 
-        // Elevation gain/loss. GPS-only altitude is extremely noisy (it can swing
-        // ±10 m between fixes even while standing still), so we first low-pass
-        // filter it and only register a step once the *smoothed* value has moved
-        // by a clear margin — otherwise a parked bike would rack up phantom metres.
-        if (altitudeMeters != null) {
-            val prevSmoothed = smoothedAltitude
-            // Altitude outlier gate: GPS-only altitude can jump ±60 m between two
-            // fixes while the bike barely moved (a vertical velocity of ~20 m/s —
-            // physically impossible). Feeding such a spike into the low-pass filter
-            // still injects a large phantom step (e.g. +60 m × α = +18 m, far past
-            // the dead-band), which is what inflated recorded ascents to ~400 m on
-            // rides whose real gain was single-digit metres. Skip the altitude
-            // accounting for a fix that jumps more than a plausible step from the
-            // current smoothed baseline; the raw value is still kept on the point.
-            if (prevSmoothed != null &&
-                abs(altitudeMeters - prevSmoothed) > MAX_ALTITUDE_STEP_METERS
-            ) {
-                // Implausible altitude spike — ignore for gain/loss and smoothing.
-            } else {
-                val smoothed = if (prevSmoothed == null) altitudeMeters
-                               else prevSmoothed + ALT_SMOOTHING_ALPHA * (altitudeMeters - prevSmoothed)
-                smoothedAltitude = smoothed
-                val base = lastRegisteredAltitude
-                if (base == null) {
-                    lastRegisteredAltitude = smoothed
-                } else {
-                    val delta = smoothed - base
-                    if (abs(delta) >= ELEVATION_THRESHOLD_METERS) {
-                        if (delta > 0) elevationGain += delta else elevationLoss += -delta
-                        lastRegisteredAltitude = smoothed
-                    }
-                }
-            }
-        }
+        // Elevation gain/loss. GPS-only altitude is extremely noisy, so all the
+        // smoothing, spike-gating and hysteresis integration is delegated to the
+        // shared [ElevationAccumulator] (also fed by GPX import and the profile
+        // chart). It reads the fix's horizontal accuracy to de-weight poor fixes.
+        elevation.add(altitudeMeters, accuracyMeters)
 
         // ── Moving-average position smoothing ────────────────────────────────
         // The fix is accepted: record it as the new raw anchor (the distance/speed
@@ -347,8 +316,8 @@ class RideTracker {
             currentSpeedMps = if (isPaused) 0f else points.lastOrNull()?.speedMps ?: 0f,
             avgSpeedMps = avg,
             maxSpeedMps = maxSpeedMps,
-            elevationGainMeters = elevationGain,
-            elevationLossMeters = elevationLoss,
+            elevationGainMeters = elevation.gain,
+            elevationLossMeters = elevation.loss,
             pointCount = points.size,
             isPaused = isPaused
         )
@@ -378,8 +347,8 @@ class RideTracker {
             movingSeconds = movingSecs,
             avgSpeedMps = avg,
             maxSpeedMps = maxSpeedMps,
-            elevationGainMeters = elevationGain,
-            elevationLossMeters = elevationLoss,
+            elevationGainMeters = elevation.gain,
+            elevationLossMeters = elevation.loss,
             points = points.toList()
         )
     }
@@ -447,19 +416,6 @@ class RideTracker {
          * cadence. Only affects geometry — distance/speed use the raw fixes.
          */
         private const val SMOOTHING_WINDOW = 3
-        /** Exponential smoothing factor applied to the noisy GPS altitude (0..1). */
-        private const val ALT_SMOOTHING_ALPHA = 0.3
-        /** Minimum *smoothed* altitude change counted as real ascent/descent. */
-        private const val ELEVATION_THRESHOLD_METERS = 3.0
-        /**
-         * Maximum altitude change between a fix and the current smoothed baseline
-         * that is still treated as real. GPS-only altitude routinely spikes by
-         * 15–60 m between consecutive fixes; anything beyond this is discarded from
-         * the elevation accounting (a bike cannot climb/descend ~12 m in one ~3 s
-         * fix). Without this gate the ±60 m spikes inflated recorded ascents by an
-         * order of magnitude (≈400 m instead of the real ≈5–10 m).
-         */
-        private const val MAX_ALTITUDE_STEP_METERS = 12.0
 
         private const val MIN_POINTS = 2
         private const val MIN_DISTANCE_METERS = 20.0

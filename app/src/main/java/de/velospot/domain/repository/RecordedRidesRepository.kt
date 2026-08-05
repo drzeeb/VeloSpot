@@ -68,6 +68,16 @@ interface RecordedRidesRepository {
     /** Removes a recorded ride by its id. */
     suspend fun removeRide(id: String)
 
+    /**
+     * One-off maintenance pass that recomputes each stored ride's cumulative
+     * gain/loss from its raw GPS track (with the shared elevation integrator) and
+     * writes the corrected aggregate columns back. Fixes historical rides whose
+     * denormalised elevation was under-counted by the old accumulator. Idempotent
+     * (deterministic recompute); rides without altitude points stay at `0`. Default
+     * is a no-op so in-memory test fakes needn't override it.
+     */
+    suspend fun recomputeStoredElevation() {}
+
     /** Removes every recorded ride. */
     suspend fun clearAll()
 }

@@ -2,6 +2,8 @@ package de.velospot.data.repository
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import de.velospot.core.tracking.AltitudeSample
+import de.velospot.core.tracking.ElevationAccumulator
 import de.velospot.data.local.dao.RecordedRideDao
 import de.velospot.data.local.dao.RecordedRideSummaryRow
 import de.velospot.data.local.entity.RecordedRideEntity
@@ -11,6 +13,7 @@ import de.velospot.domain.model.TrackPoint
 import de.velospot.domain.repository.RecordedRidesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -88,6 +91,26 @@ class RecordedRidesRepositoryImpl @Inject constructor(
 
     override suspend fun totalDistanceForBike(bikeProfileId: String): Double =
         recordedRideDao.totalDistanceForBike(bikeProfileId)
+
+    override suspend fun recomputeStoredElevation() = withContext(Dispatchers.Default) {
+        // Recompute gain/loss for every stored ride from its raw altitudes using the
+        // shared integrator, then write only the two derived columns back. This
+        // self-corrects both the summary flow (a direct column projection) and the
+        // detail view. Rides without altitude points keep 0/0 and are skipped.
+        recordedRideDao.getAllFlow().first().forEach { entity ->
+            val points = runCatching { pointsAdapter.fromJson(entity.pointsJson) }
+                .getOrNull().orEmpty()
+            if (points.none { it.altitudeMeters != null }) return@forEach
+            val result = ElevationAccumulator.compute(
+                points.map { AltitudeSample(it.altitudeMeters, it.accuracyMeters) }
+            )
+            if (result.gainMeters != entity.elevationGainMeters ||
+                result.lossMeters != entity.elevationLossMeters
+            ) {
+                recordedRideDao.updateElevation(entity.id, result.gainMeters, result.lossMeters)
+            }
+        }
+    }
 
     private fun RecordedRideSummaryRow.toDomain() = RecordedRideSummary(
         id = id,

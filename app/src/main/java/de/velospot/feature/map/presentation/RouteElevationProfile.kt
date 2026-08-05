@@ -20,6 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.navigation.GeoMath
+import de.velospot.core.tracking.AltitudeSample
+import de.velospot.core.tracking.ElevationAccumulator
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.TrackPoint
 import kotlin.math.roundToInt
@@ -180,17 +182,33 @@ private fun buildElevationProfile(
 
     val distances = ArrayList<Double>(withElev.size)
     var cumulative = 0.0
-    var ascent = 0.0
-    var descent = 0.0
     var prev: ElevSample? = null
-    for ((i, p) in withElev.withIndex()) {
+    for (p in withElev) {
         if (prev != null) {
             cumulative += GeoMath.distanceMeters(prev.latitude, prev.longitude, p.latitude, p.longitude)
-            val delta = elevations[i] - elevations[i - 1]
-            if (delta > 0) ascent += delta else descent += -delta
         }
         distances.add(cumulative)
         prev = p
+    }
+
+    // Ascent/descent. For a recorded ride (smooth) use the shared hysteresis
+    // integrator so the profile figures match the stat boxes exactly; for the
+    // planned-route terrain profile (smooth = false) keep the raw per-node deltas.
+    val ascent: Double
+    val descent: Double
+    if (smooth) {
+        val result = ElevationAccumulator.compute(withElev.map { AltitudeSample(it.elevation) })
+        ascent = result.gainMeters
+        descent = result.lossMeters
+    } else {
+        var up = 0.0
+        var down = 0.0
+        for (i in 1 until elevations.size) {
+            val delta = elevations[i] - elevations[i - 1]
+            if (delta > 0) up += delta else down += -delta
+        }
+        ascent = up
+        descent = down
     }
     return ElevationProfileData(
         distances = distances,
