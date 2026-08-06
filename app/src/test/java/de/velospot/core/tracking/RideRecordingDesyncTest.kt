@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import de.velospot.core.location.LocationController
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.repository.LocationPowerProfile
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import kotlinx.coroutines.CoroutineScope
@@ -189,7 +190,7 @@ class RideRecordingDesyncTest {
         assertFalse(manager.isPaused)
         assertTrue(manager.trackingState.value is RideTrackingUiState.Recording)
         // start() declared its location need and never rolled it back.
-        verify(locationRepo).startLocationUpdates(highAccuracy = true)
+        verify(locationRepo).startLocationUpdates(LocationPowerProfile.NAVIGATION_OR_MOVING)
         verify(locationRepo, never()).stopLocationUpdates()
     }
 

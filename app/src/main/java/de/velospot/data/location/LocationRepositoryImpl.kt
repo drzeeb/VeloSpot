@@ -10,6 +10,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
 import de.velospot.domain.model.GeoCoordinate
+import de.velospot.domain.repository.LocationPowerProfile
 import de.velospot.domain.repository.LocationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,11 +51,13 @@ class LocationRepositoryImpl @Inject constructor(
      * Start receiving location updates.
      * Must be called after permissions are granted.
      *
-     * @param highAccuracy `true` for frequent GPS fixes during active navigation,
-     *  `false` (default) for a battery-friendly balanced-power mode used while the
-     *  user is just browsing the map.
+     * @param profile the requested GPS-radio power profile. [LocationPowerProfile.NAVIGATION_OR_MOVING]
+     *  requests frequent GPS fixes (active navigation or moving recording),
+     *  [LocationPowerProfile.IDLE_RECORDING] drops the GNSS engine to a power-saving
+     *  cadence while the rider stands still, and [LocationPowerProfile.BROWSE] is the
+     *  battery-friendly mode used while just viewing the map.
      */
-    override fun startLocationUpdates(highAccuracy: Boolean) {
+    override fun startLocationUpdates(profile: LocationPowerProfile) {
         if (!checkPermissionSync()) return
 
         locationCallback?.let {
@@ -71,16 +74,26 @@ class LocationRepositoryImpl @Inject constructor(
             // Permission denied or not yet granted.
         }
 
-        // Power-aware request: high-accuracy GPS only while navigating, otherwise a
-        // balanced-power mode with a longer interval and a minimum displacement so
-        // the GPS chip is not woken up while the user stands still.
-        val priority = if (highAccuracy) {
-            Priority.PRIORITY_HIGH_ACCURACY
-        } else {
-            Priority.PRIORITY_BALANCED_POWER_ACCURACY
+        // Power-aware request. High-accuracy GPS only while navigating or actively
+        // moving during a recording; when the rider has been standing still for a
+        // sustained period (or paused) we drop to a balanced-power request with a
+        // longer interval and a small min-displacement so the GNSS engine can idle
+        // and the battery lasts a full-day tour. Map browsing keeps today's mode.
+        val priority = when (profile) {
+            LocationPowerProfile.NAVIGATION_OR_MOVING -> Priority.PRIORITY_HIGH_ACCURACY
+            LocationPowerProfile.IDLE_RECORDING,
+            LocationPowerProfile.BROWSE -> Priority.PRIORITY_BALANCED_POWER_ACCURACY
         }
-        val intervalMs   = if (highAccuracy) 3_000L else 15_000L
-        val minDistanceM = if (highAccuracy) 5f else 20f
+        val intervalMs = when (profile) {
+            LocationPowerProfile.NAVIGATION_OR_MOVING -> 3_000L
+            LocationPowerProfile.IDLE_RECORDING -> 12_000L
+            LocationPowerProfile.BROWSE -> 15_000L
+        }
+        val minDistanceM = when (profile) {
+            LocationPowerProfile.NAVIGATION_OR_MOVING -> 5f
+            LocationPowerProfile.IDLE_RECORDING -> 10f
+            LocationPowerProfile.BROWSE -> 20f
+        }
 
         val locationRequest = LocationRequest.Builder(priority, intervalMs)
             .setMinUpdateDistanceMeters(minDistanceM)
