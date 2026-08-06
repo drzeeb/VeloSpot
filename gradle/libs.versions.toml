@@ -28,6 +28,9 @@ errorProneAnnotations = "2.50.0"
 kover = "0.9.9"
 cyclonedx = "3.3.0"
 json = "20240303"
+benchmark = "1.5.0-beta01"
+profileinstaller = "1.4.1"
+androidxTestRunner = "1.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -69,6 +72,9 @@ mockitoKotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version
 androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidxTestUiautomator" }
 errorProneAnnotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorProneAnnotations" }
 orgJson = { group = "org.json", name = "json", version.ref = "json" }
+androidxBenchmarkMacroJunit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+androidxProfileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidxTestRunner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -78,4 +84,6 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hiltAndroid = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 cyclonedx = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
 
