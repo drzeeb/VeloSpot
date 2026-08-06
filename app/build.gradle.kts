@@ -225,7 +225,7 @@ dependencies {
 
     // BRouter offline routing engine.
     // Built from source via the :brouter module, which compiles the pinned
-    // `brouter-upstream` git submodule (BRouter v1.7.9). No pre-built JAR and no
+    // `brouter-upstream` git submodule (BRouter v1.7.10). No pre-built JAR and no
     // binary blob — a plain Gradle build resolves it.
     // See brouter/README.md for the module/submodule setup.
     implementation(project(":brouter"))

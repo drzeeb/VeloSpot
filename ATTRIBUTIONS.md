@@ -58,11 +58,11 @@ OSM data is available under the ODbL. This means:
 ## 📦 Libraries
 
 ### BRouter (offline routing engine)
-- **Version**: 1.7.9
+- **Version**: 1.7.10
 - **License**: MIT License
 - **Source code**: https://github.com/abrensch/brouter
 - **Integration**: Compiled **from source** by the `:brouter` Gradle module from the
-  pinned `brouter-upstream` git submodule (BRouter `v1.7.9`). No binary is committed.
+  pinned `brouter-upstream` git submodule (BRouter `v1.7.10`). No binary is committed.
   - Only the on-device routing modules are compiled (`btools.router`, `.mapaccess`,
     `.util`, `.codec`, `.expressions`); the server / map-creation modules and their
     protobuf/osmosis dependencies are excluded.

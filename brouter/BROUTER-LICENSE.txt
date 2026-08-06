@@ -26,7 +26,7 @@ This file documents the license of BRouter, which the :brouter Gradle module
 compiles from source (no binary is committed to this repository).
 
 Source code: https://github.com/abrensch/brouter
-Version:     1.7.9  (pinned via the `brouter-upstream` git submodule)
+Version:     1.7.10  (pinned via the `brouter-upstream` git submodule)
 License:     MIT (as stated in the BRouter repository)
 
 The :brouter module compiles only the on-device routing modules:
