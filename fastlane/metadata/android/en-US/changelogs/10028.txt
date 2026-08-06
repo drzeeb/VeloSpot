@@ -1,0 +1,8 @@
+• New golden-hour alert on the map warns you just before sunrise or sunset, with a live countdown
+• Corrected elevation gain/loss on recorded rides
+• Fixed max speed – no longer capped too low on fast descents
+• More reliable start/stop across the widget and app
+• Saves battery: GPS eases off while you're stopped
+• Faster app start
+• Updated offline routing engine (BRouter)
+
