@@ -215,6 +215,15 @@
     <string name="settings_title">Instellingen</string>
     <string name="settings_section_quick_actions">Snelle acties</string>
     <string name="settings_section_appearance">Weergave &amp; kaart</string>
+    <!-- Golden hour / sunrise-sunset alert -->
+    <string name="sun_alert_settings_title">Gouden uur-melding</string>
+    <string name="sun_alert_sunrise">Zonsopkomst</string>
+    <string name="sun_alert_sunset">Zonsondergang</string>
+    <string name="sun_alert_fab_sunrise_desc">Zonsopkomst nadert</string>
+    <string name="sun_alert_fab_sunset_desc">Zonsondergang nadert</string>
+    <string name="sun_alert_until_sunrise">tot zonsopkomst</string>
+    <string name="sun_alert_until_sunset">tot zonsondergang</string>
+    <string name="sun_alert_golden_hour">Gouden uur</string>
     <string name="map_actions">Acties</string>
     <string name="settings_group_navigation">Navigatie &amp; routes</string>
     <string name="settings_section_routing">Route</string>

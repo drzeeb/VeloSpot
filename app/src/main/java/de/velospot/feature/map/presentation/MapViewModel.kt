@@ -11,6 +11,9 @@ import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.map.RideViewOptions
 import de.velospot.core.routing.OfflineRoutingPreferences
 import de.velospot.core.share.GpxExporter
+import de.velospot.core.util.SunAlertState
+import de.velospot.core.util.SunTimes
+import de.velospot.core.util.activeSunAlert
 import de.velospot.data.brouter.ElevationPreference
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.NominatimGeocoder
@@ -54,6 +57,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -537,6 +541,61 @@ class MapViewModel @Inject constructor(
     fun setAmoledEnabled(enabled: Boolean) {
         viewModelScope.launch { mapSettings.setAmoled(enabled) }
     }
+
+    /**
+     * Whether the sunrise/sunset **"golden hour"** alert FAB may appear on the map.
+     * Persisted across sessions; defaults to enabled.
+     */
+    val sunAlertEnabled: StateFlow<Boolean> =
+        mapSettings.sunAlertEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    /** Toggles the golden-hour sunrise/sunset alert on/off and persists the choice. */
+    fun setSunAlertEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setSunAlertEnabled(enabled) }
+    }
+
+    /**
+     * The currently-active golden-hour alert (`null` = hide the FAB), derived from
+     * the live [userLocation], the [sunAlertEnabled] toggle and a ~1-minute ticker.
+     *
+     * Sun events are recomputed each tick — the NOAA calculation is trivial — so a
+     * change of location, date, or the passage of time all re-evaluate visibility
+     * via [activeSunAlert]. Emits `null` whenever the toggle is off, the location is
+     * unknown, or the relevant event does not occur (polar day/night) / is outside
+     * its 30-minute pre-window.
+     */
+    val sunAlert: StateFlow<SunAlertState?> =
+        combine(
+            userLocation,
+            sunAlertEnabled,
+            kotlinx.coroutines.flow.flow {
+                while (true) {
+                    emit(java.time.Instant.now())
+                    delay(60_000L)
+                }
+            }
+        ) { location, enabled, now ->
+            if (!enabled || location == null) return@combine null
+            val zone = java.time.ZoneId.systemDefault()
+            val today = java.time.LocalDate.now(zone)
+            val events = SunTimes.compute(
+                latitude = location.latitude,
+                longitude = location.longitude,
+                date = today,
+                zone = zone
+            )
+            activeSunAlert(now = now, events = events)
+        }.stateIn(
+            viewModelScope,
+            // WhileSubscribed (not Eagerly) so the endless 1-minute ticker only runs
+            // while the map UI actually observes the alert: it stops when the app is
+            // backgrounded (saving battery) and never spins during unit tests that
+            // don't collect this flow — an Eagerly-started ticker would make the test
+            // scheduler's advanceUntilIdle() loop forever on the recurring delay.
+            SharingStarted.WhileSubscribed(5_000L),
+            null
+        )
+
 
     /**
      * Whether the first-launch **welcome onboarding** has been completed. `null`

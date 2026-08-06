@@ -115,6 +115,8 @@ internal data class MapMenuCardState(
     val roundedBuildingsEnabled: Boolean = false,
     /** Whether the AMOLED (pure-black) map style is used in dark mode. */
     val amoledEnabled: Boolean = false,
+    /** Whether the golden-hour sunrise/sunset alert FAB may appear on the map. */
+    val sunAlertEnabled: Boolean = true,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -140,6 +142,7 @@ internal data class MapMenuCardActions(
     val onTogglePortraitLock: () -> Unit = {},
     val onToggleRoundedBuildings: () -> Unit = {},
     val onToggleAmoled: () -> Unit = {},
+    val onToggleSunAlert: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
     val onOpenRides: () -> Unit = {},

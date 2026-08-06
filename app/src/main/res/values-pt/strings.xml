@@ -215,6 +215,15 @@
     <string name="settings_title">Definições</string>
     <string name="settings_section_quick_actions">Ações rápidas</string>
     <string name="settings_section_appearance">Aparência e mapa</string>
+    <!-- Golden hour / sunrise-sunset alert -->
+    <string name="sun_alert_settings_title">Alerta de hora dourada</string>
+    <string name="sun_alert_sunrise">Nascer do sol</string>
+    <string name="sun_alert_sunset">Pôr do sol</string>
+    <string name="sun_alert_fab_sunrise_desc">Nascer do sol próximo</string>
+    <string name="sun_alert_fab_sunset_desc">Pôr do sol próximo</string>
+    <string name="sun_alert_until_sunrise">até ao nascer do sol</string>
+    <string name="sun_alert_until_sunset">até ao pôr do sol</string>
+    <string name="sun_alert_golden_hour">Hora dourada</string>
     <string name="map_actions">Ações</string>
     <string name="settings_group_navigation">Navegação e rotas</string>
     <string name="settings_section_routing">Rota</string>

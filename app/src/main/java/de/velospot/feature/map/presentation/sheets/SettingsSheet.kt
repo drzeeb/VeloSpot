@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.WbTwilight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -218,6 +219,18 @@ internal fun DisplaySettingsSheet(
                     Switch(
                         checked = state.portraitLockEnabled,
                         onCheckedChange = { actions.onTogglePortraitLock() }
+                    )
+                }
+            )
+            // Golden-hour sunrise/sunset alert FAB toggle.
+            SettingsRow(
+                icon = Icons.Default.WbTwilight,
+                title = stringResource(R.string.sun_alert_settings_title),
+                onClick = actions.onToggleSunAlert,
+                trailing = {
+                    Switch(
+                        checked = state.sunAlertEnabled,
+                        onCheckedChange = { actions.onToggleSunAlert() }
                     )
                 }
             )

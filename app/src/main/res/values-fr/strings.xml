@@ -216,6 +216,15 @@
     <string name="settings_title">Paramètres</string>
     <string name="settings_section_quick_actions">Actions rapides</string>
     <string name="settings_section_appearance">Apparence &amp; carte</string>
+    <!-- Golden hour / sunrise-sunset alert -->
+    <string name="sun_alert_settings_title">Alerte heure dorée</string>
+    <string name="sun_alert_sunrise">Lever du soleil</string>
+    <string name="sun_alert_sunset">Coucher du soleil</string>
+    <string name="sun_alert_fab_sunrise_desc">Lever du soleil imminent</string>
+    <string name="sun_alert_fab_sunset_desc">Coucher du soleil imminent</string>
+    <string name="sun_alert_until_sunrise">avant le lever du soleil</string>
+    <string name="sun_alert_until_sunset">avant le coucher du soleil</string>
+    <string name="sun_alert_golden_hour">Heure dorée</string>
     <string name="map_actions">Actions</string>
     <string name="settings_group_navigation">Navigation &amp; itinéraires</string>
     <string name="settings_section_routing">Itinéraire</string>

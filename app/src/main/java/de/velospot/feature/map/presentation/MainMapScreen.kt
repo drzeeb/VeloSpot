@@ -138,6 +138,8 @@ fun MainMapScreen(
     val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
     val roundedBuildingsEnabled by viewModel.roundedBuildingsEnabled.collectAsStateWithLifecycle()
     val amoledEnabled        by viewModel.amoledEnabled.collectAsStateWithLifecycle()
+    val sunAlertEnabled      by viewModel.sunAlertEnabled.collectAsStateWithLifecycle()
+    val sunAlert             by viewModel.sunAlert.collectAsStateWithLifecycle()
     val onboardingCompleted  by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
@@ -777,6 +779,7 @@ fun MainMapScreen(
             portraitLockEnabled = portraitLockEnabled,
             roundedBuildingsEnabled = roundedBuildingsEnabled,
             amoledEnabled      = amoledEnabled,
+            sunAlertEnabled    = sunAlertEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -804,6 +807,7 @@ fun MainMapScreen(
                 if (!amoledEnabled && !isDarkTheme) onDarkThemeToggle()
                 viewModel.setAmoledEnabled(!amoledEnabled)
             },
+            onToggleSunAlert      = { viewModel.setSunAlertEnabled(!sunAlertEnabled) },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,
@@ -972,6 +976,14 @@ fun MainMapScreen(
         // follow button takes over once the rider pans the map away.
         if (!isFollowSession) {
             MyLocationFab(onClick = requestOrUseLocation)
+        }
+
+        // Golden-hour sunrise/sunset alert FAB — bottom-left so it never overlaps
+        // the right-edge FABs or the centre-right speed-dial. Only shown outside
+        // active navigation (consistent with the speed-dial); visibility within the
+        // 30-minute pre-window is decided upstream (sunAlert == null hides it).
+        if (activeNavigation == null) {
+            SunAlertFab(sunAlert = sunAlert)
         }
 
         // ── Recorded-ride detail — non-modal sheet ───────────────────────────
