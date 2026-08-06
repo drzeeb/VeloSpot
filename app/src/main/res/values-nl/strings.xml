@@ -412,6 +412,25 @@
     <string name="hud_stat_grade">Helling</string>
     <string name="hud_stat_eta">Aankomst</string>
     <string name="hud_stat_remaining">Resterend</string>
+    <string name="hud_stat_heart_rate">Hartslag</string>
+    <string name="hud_stat_power">Vermogen</string>
+    <string name="hud_stat_cadence">Cadans</string>
+
+    <!-- External BLE sensors (speed/cadence, power, heart-rate) -->
+    <string name="sensors_title">Sensoren</string>
+    <string name="sensors_subtitle">Koppel externe Bluetooth-sensoren voor snelheid, cadans, vermogen en hartslag. Ze verbinden automatisch wanneer je een rit start.</string>
+    <string name="sensors_scan">Scannen</string>
+    <string name="sensors_scanning">Scannen…</string>
+    <string name="sensors_none_found">Nog geen sensoren gevonden</string>
+    <string name="sensors_remember">Onthouden</string>
+    <string name="sensors_forget">Vergeten</string>
+    <string name="sensors_connected">Verbonden</string>
+    <string name="sensors_permission_needed">Bluetooth-toestemming is vereist om sensoren te vinden en te verbinden.</string>
+    <string name="sensors_wheel_size">Wielmaat (voor snelheidssensor)</string>
+    <string name="sensor_profile_speed_cadence">Snelheid/Cadans</string>
+    <string name="sensor_unit_bpm">bpm</string>
+    <string name="sensor_unit_watts">W</string>
+    <string name="sensor_unit_rpm">rpm</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Ritdetails sluiten</string>
     <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>

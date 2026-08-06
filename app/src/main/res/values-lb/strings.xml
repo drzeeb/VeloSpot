@@ -412,6 +412,25 @@
     <string name="hud_stat_grade">Steigung</string>
     <string name="hud_stat_eta">Arrivée</string>
     <string name="hud_stat_remaining">Reschtstreck</string>
+    <string name="hud_stat_heart_rate">Puls</string>
+    <string name="hud_stat_power">Leeschtung</string>
+    <string name="hud_stat_cadence">Trëttfrequenz</string>
+
+    <!-- External BLE sensors (speed/cadence, power, heart-rate) -->
+    <string name="sensors_title">Sensoren</string>
+    <string name="sensors_subtitle">Extern Bluetooth-Sensore fir Vitesse, Trëttfrequenz, Leeschtung a Puls koppelen. Si verbanne sech automatesch, wann s du eng Faart ufänks.</string>
+    <string name="sensors_scan">Sichen</string>
+    <string name="sensors_scanning">Sich leeft…</string>
+    <string name="sensors_none_found">Nach keng Sensore fonnt</string>
+    <string name="sensors_remember">Behalen</string>
+    <string name="sensors_forget">Vergiessen</string>
+    <string name="sensors_connected">Verbonnen</string>
+    <string name="sensors_permission_needed">Fir Sensoren ze fannen an ze verbannen ass d\'Bluetooth-Erlaabnis néideg.</string>
+    <string name="sensors_wheel_size">Radgréisst (fir de Vitesse-Sensor)</string>
+    <string name="sensor_profile_speed_cadence">Vitesse/Trëttfrequenz</string>
+    <string name="sensor_unit_bpm">bpm</string>
+    <string name="sensor_unit_watts">W</string>
+    <string name="sensor_unit_rpm">U/min</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fahrtdetailer zoumaachen</string>
     <string name="ride_detail_drag_hint">Erof zéien • d\'Kaart bleift benotzbar</string>
