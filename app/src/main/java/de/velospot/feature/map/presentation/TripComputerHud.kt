@@ -240,6 +240,49 @@ private fun ExpandedHud(stats: LiveRideStats, navigationProgress: NavigationProg
     }
 }
 
+/**
+ * Compact trip-computer stat row **merged into the navigation card** during active
+ * navigation. Shows only the values the navigation card's header does not already
+ * carry (it already shows remaining distance, remaining time and current speed):
+ * average speed, elapsed ride time, wall-clock ETA and live grade. This keeps the
+ * two bottom cards as one unified surface instead of two overlapping ones.
+ */
+@Composable
+internal fun NavTripComputerRow(
+    stats: LiveRideStats,
+    navigationProgress: NavigationProgress
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HudStatCell(
+            value = formatRideSpeed(stats.avgSpeedMps),
+            label = stringResource(R.string.hud_stat_avg_speed),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(12.dp))
+        HudStatCell(
+            value = formatRideDuration(stats.elapsedSeconds),
+            label = stringResource(R.string.ride_stat_time),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(12.dp))
+        HudStatCell(
+            value = formatEta(navigationProgress.remainingSeconds),
+            label = stringResource(R.string.hud_stat_eta),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(12.dp))
+        HudStatCell(
+            value = formatGrade(stats.currentGradePercent),
+            label = stringResource(R.string.hud_stat_grade),
+            icon = Icons.Default.Terrain,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
 /** Large emphasised current-speed cell used by both layouts. */
 @Composable
 private fun HeroSpeedCell(value: String, label: String, modifier: Modifier = Modifier) {

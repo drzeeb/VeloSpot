@@ -759,7 +759,13 @@ fun MainMapScreen(
             onCancel          = viewModel::cancelRouteCalculation,
             isRecordingRide   = rideTrackingState is RideTrackingUiState.Recording,
             isRidePaused      = (rideTrackingState as? RideTrackingUiState.Recording)?.stats?.isPaused == true,
-            onPauseToggle     = viewModel::togglePauseRideTracking
+            onPauseToggle     = viewModel::togglePauseRideTracking,
+            // Merge the trip-computer stats into the navigation card while recording,
+            // if the HUD is enabled — the standalone HUD band is suppressed during
+            // navigation (below), so the values live in one unified card instead.
+            tripStats         = if (hudEnabled) {
+                (rideTrackingState as? RideTrackingUiState.Recording)?.stats
+            } else null
         )
 
         // Turn-by-turn banner (top) — only during active navigation.
@@ -768,9 +774,11 @@ fun MainMapScreen(
         }
 
         // Trip Computer HUD (bottom band) — only while a ride is being recorded and
-        // the user has opted in. Sits at the bottom with navigationBarsPadding, so it
-        // never overlaps the top turn-by-turn banner.
-        if (hudEnabled) {
+        // the user has opted in, and NOT during active navigation. During navigation
+        // the trip-computer stats are instead MERGED into the MapNavigationOverlay
+        // card (see tripStats above), so there is a single unified bottom card rather
+        // than two overlapping ones.
+        if (hudEnabled && activeNavigation == null) {
             (rideTrackingState as? RideTrackingUiState.Recording)?.let { recording ->
                 TripComputerHud(
                     stats = recording.stats,

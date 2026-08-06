@@ -361,7 +361,13 @@ internal fun BoxScope.MapNavigationOverlay(
     onCancel: () -> Unit = {},
     isRecordingRide: Boolean = false,
     isRidePaused: Boolean = false,
-    onPauseToggle: () -> Unit = {}
+    onPauseToggle: () -> Unit = {},
+    /**
+     * Live ride stats to **merge into** the active-navigation card as an extra
+     * trip-computer row (average speed, elapsed time, ETA, grade). Non-null only
+     * when a ride is being recorded and the HUD is enabled; `null` hides the row.
+     */
+    tripStats: de.velospot.domain.model.LiveRideStats? = null
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
@@ -577,6 +583,18 @@ internal fun BoxScope.MapNavigationOverlay(
                                 contentDescription = stringResource(id = R.string.navigation_stop)
                             )
                         }
+                    }
+
+                    // Merged trip-computer row: the values the header above does not
+                    // already show (avg speed, elapsed time, ETA, grade). Shown only
+                    // once the first GPS fix has produced live progress + stats, so
+                    // the recording HUD and the navigation card read as one card.
+                    if (tripStats != null && progress != null) {
+                        Spacer(Modifier.height(12.dp))
+                        NavTripComputerRow(
+                            stats = tripStats,
+                            navigationProgress = progress
+                        )
                     }
 
                     AnimatedVisibility(
