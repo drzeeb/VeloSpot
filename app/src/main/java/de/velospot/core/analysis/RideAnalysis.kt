@@ -2,6 +2,7 @@ package de.velospot.core.analysis
 
 import de.velospot.core.navigation.GeoMath
 import de.velospot.core.tracking.estimateRideCalories
+import de.velospot.core.tracking.estimateRideCo2SavedGrams
 import de.velospot.core.tracking.estimateRideWorkJoules
 import de.velospot.domain.model.RecordedRide
 import kotlin.math.roundToInt
@@ -27,6 +28,8 @@ data class RideAnalysis(
     val elevationGainMeters: Double,
     val elevationLossMeters: Double,
     val caloriesKcal: Int,
+    /** Grams of CO₂ the rider saved by cycling this ride instead of driving. */
+    val co2SavedGrams: Double,
     /** Per-kilometre splits in ride order (the last one may be a partial km). */
     val splits: List<KmSplit>,
     /** Time spent in each speed band, for the speed-distribution chart. */
@@ -129,6 +132,7 @@ fun analyzeRide(ride: RecordedRide): RideAnalysis {
         elevationGainMeters = ride.elevationGainMeters,
         elevationLossMeters = ride.elevationLossMeters,
         caloriesKcal = estimateRideCalories(ride),
+        co2SavedGrams = estimateRideCo2SavedGrams(ride.distanceMeters),
         splits = splits,
         speedHistogram = histogram,
         fastestSplitIndex = fastest?.index ?: -1,

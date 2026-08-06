@@ -1,10 +1,13 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+### Added
+- **"CO₂ saved" now shown per ride, not just in the totals** — the full-screen **ride analysis** stat tiles now include a **"CO₂ saved"** metric next to distance, duration, elevation and calories, so a rider sees how much car tailpipe CO₂ that single ride avoided (e.g. a 27 km commute reads `3.2 kg`), and the existing aggregate figure in the **statistics dashboard** ("My rides") reads identically. The saved amount is derived purely from each ride's stored distance at a single, tunable rate — **`CO2_GRAMS_SAVED_PER_KM = 120.0`** g/km (EU fleet-average new-car tailpipe emissions) — so there is **no new Room column and no migration**. The calculation and rate now live in one place, the new `de.velospot.core.tracking.RideCo2` (`estimateRideCo2SavedGrams(distanceMeters)` plus `RecordedRide`/`RecordedRideSummary` overloads), replacing the previously private constant/formula that only the dashboard used; both the per-ride analysis (`RideAnalysis.co2SavedGrams`, populated in `analyzeRide`) and the aggregate (`computeRideStatistics`) call it, so they can never drift. Formatting is shared through a new `formatCo2Saved` helper in `core.format.RideFormat` (whole **grams** under 1 kg, e.g. `850 g`; **kilograms** with one decimal at/above 1 kg, e.g. `3.2 kg`), matching the locale behaviour of the sibling `formatRideDistance`/`formatRideElevation` helpers. Covered by new JVM unit tests `RideCo2Test` (120 g/km scaling, zero/negative distance, and per-ride vs. summed-total aggregation equivalence) and `RideFormatTest` (the grams↔kilograms boundary). New user-facing string key: `ride_stat_co2_saved` ("CO₂ saved") in `values/` (German provided; remaining locales pending translation); the aggregate reuses the existing `ride_stats_co2`.
 
 ### Changed
 - **Address search & geocoding now powered by Komoot's Photon API instead of Nominatim** — both reverse geocoding (address on marker tap, place names for recorded rides and offline regions) and the forward-geocoding address search bar now use [Photon](https://photon.komoot.io/), Komoot's free, open-source (Apache 2.0), OpenStreetMap-based (ODbL 1.0) geocoder, for noticeably better free-text search. No API key is required and no personal data is transmitted — only the search term or coordinates (plus the IP, as with any HTTP request). Forward search still restricts results to the bundled countries **DE/FR/LU** (now filtered client-side). The new `PhotonApi` / `PhotonGeocoder` / `PhotonRateLimitInterceptor` replace the former `NominatimApi` / `NominatimGeocoder` / `NominatimRateLimitInterceptor` equivalents. Docs and attributions (`README`, `ATTRIBUTIONS`, `PRIVACY`, `SECURITY`, `scripts/README`) updated accordingly.

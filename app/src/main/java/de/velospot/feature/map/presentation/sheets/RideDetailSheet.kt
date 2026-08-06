@@ -1,6 +1,7 @@
 package de.velospot.feature.map.presentation.sheets
 
 import de.velospot.feature.map.presentation.*
+import de.velospot.core.format.formatCo2Saved
 import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
@@ -65,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.tracking.estimateRideCalories
+import de.velospot.core.tracking.estimateRideCo2SavedGrams
 import de.velospot.domain.model.RecordedRide
 import de.velospot.feature.map.presentation.ride.RideShareDialog
 import kotlinx.coroutines.launch
@@ -303,6 +305,13 @@ internal fun RideDetailSheet(
                         modifier = Modifier.fillMaxWidth(),
                         label = stringResource(R.string.ride_stats_calories),
                         value = "≈ %,d kcal".format(estimateRideCalories(ride))
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+                    StatBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = stringResource(R.string.ride_stat_co2_saved),
+                        value = formatCo2Saved(estimateRideCo2SavedGrams(ride))
                     )
 
 

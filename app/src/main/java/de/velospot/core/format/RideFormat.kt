@@ -41,3 +41,11 @@ internal fun formatRideSpeed(metersPerSecond: Float): String =
 /** Formats an elevation amount in metres, e.g. `↑ 124 m`. */
 internal fun formatRideElevation(meters: Double): String = "${meters.roundToInt()} m"
 
+/**
+ * Formats a CO₂ mass: whole grams under 1 kg (e.g. `850 g`), otherwise kilograms
+ * with one decimal (e.g. `3.2 kg`). Used by both the per-ride "CO₂ saved" tile and
+ * the aggregate statistics dashboard so they read identically.
+ */
+internal fun formatCo2Saved(grams: Double): String =
+    if (grams < 1_000) "${grams.roundToInt()} g" else "%.1f kg".format(grams / 1_000.0)
+

@@ -186,6 +186,7 @@
     <string name="ride_stat_max_speed">Max speed</string>
     <string name="ride_stat_elevation_gain">Elevation gain</string>
     <string name="ride_stat_elevation_loss">Elevation loss</string>
+    <string name="ride_stat_co2_saved">CO₂ saved</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Close ride details</string>
     <string name="ride_detail_drag_hint">Drag down • map stays interactive</string>
