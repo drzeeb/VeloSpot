@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Google Play publish failed with "No value found for 'package_name'"** — the `release.yml` Play upload aborted in `upload_to_play_store`. The `fastlane/Appfile` called `json_key_data(ENV[...])`, which is not a valid Appfile method on the current fastlane/supply version and raised `undefined method 'json_key_data'`, aborting Appfile evaluation **before** `package_name` was registered — so `supply` never received the package name. The `json_key_data` line was removed from the `Appfile` (the key is already passed explicitly per action in the `Fastfile`), and the `deploy` lane now also passes `package_name: "de.velospot"` explicitly (mirroring the working `verify` lane), so the AAB upload is self-contained and no longer depends on the Appfile.
+
 ## [v1.0.28] - 2026-08-06
 
 ### Added

@@ -1,3 +1,8 @@
-json_key_data(ENV["PLAY_SERVICE_ACCOUNT_JSON"]) if ENV["PLAY_SERVICE_ACCOUNT_JSON"]
+# The Play service-account key is passed explicitly to each action in the Fastfile
+# (json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"]). It is intentionally NOT set
+# here: on this fastlane/supply version `json_key_data(...)` is not a valid Appfile
+# method and raised `undefined method 'json_key_data'`, which aborted Appfile
+# evaluation before `package_name` was registered — making supply fail with
+# "No value found for 'package_name'".
 package_name("de.velospot")
 
