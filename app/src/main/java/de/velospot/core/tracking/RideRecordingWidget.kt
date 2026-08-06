@@ -15,7 +15,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.MainActivity
 import de.velospot.R
 import de.velospot.core.format.formatRideDistance
-import de.velospot.core.location.hasLocationPermission
 import javax.inject.Inject
 
 /**
@@ -38,13 +37,18 @@ class RideRecordingWidget : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (intent.action) {
             ACTION_TOGGLE -> {
-                if (!manager.isRecording && !hasLocationPermission(context)) {
-                    // No GPS permission — open the app so the user can grant it.
-                    context.startActivity(
-                        Intent(context, MainActivity::class.java)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
+                if (!manager.isRecording) {
+                    // Idle → start via MainActivity so the recording (and its location
+                    // foreground service) begins from a foreground Activity context.
+                    // A background foreground-service start is blocked on Android 12+
+                    // (and aggressively on ColorOS/OPPO) when the app is closed, which
+                    // previously left the tracker "recording" with nothing captured.
+                    // The Activity also covers the missing-GPS-permission case: it opens
+                    // so the user can grant it, then starts once granted.
+                    context.startActivity(MainActivity.startRideRecordingIntent(context))
                 } else {
+                    // Already recording → stop in place. Toggling an already-running
+                    // recording needs no foreground context.
                     manager.toggle()
                 }
                 renderAll(context)
