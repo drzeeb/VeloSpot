@@ -190,6 +190,7 @@ class MapViewModelTest {
             plannedRoutesRepository = FakePlannedRoutesRepository(),
             destinationHistoryRepository = FakeDestinationHistoryRepository(),
             mapSettings           = FakeMapSettingsRepository(),
+            sensorRepository      = FakeSensorRepository(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }
@@ -979,5 +980,22 @@ private class FakeRoutingRepository(
         error?.let { throw it }
         return route
     }
+}
+
+private class FakeSensorRepository : de.velospot.domain.repository.SensorRepository {
+    override val snapshot =
+        MutableStateFlow(de.velospot.core.sensors.SensorSnapshot())
+    override val rememberedAddresses: Flow<Set<String>> = MutableStateFlow(emptySet())
+    override val wheelCircumferenceMeters: Flow<Double> =
+        MutableStateFlow(de.velospot.core.sensors.SensorParsers.DEFAULT_WHEEL_CIRCUMFERENCE_METERS)
+
+    override fun scan(): Flow<List<de.velospot.core.sensors.DiscoveredSensor>> =
+        MutableStateFlow(emptyList())
+
+    override suspend fun remember(address: String) = Unit
+    override suspend fun forget(address: String) = Unit
+    override fun connectRemembered() = Unit
+    override fun disconnectAll() = Unit
+    override suspend fun setWheelCircumferenceMeters(meters: Double) = Unit
 }
 

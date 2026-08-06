@@ -154,7 +154,8 @@ internal data class MapMenuCardActions(
     val onOpenPlannedRoutes: () -> Unit = {},
     val onOpenDisplaySettings: () -> Unit = {},
     val onOpenNavRouting: () -> Unit = {},
-    val onOpenBikeGarage: () -> Unit = {}
+    val onOpenBikeGarage: () -> Unit = {},
+    val onOpenSensors: () -> Unit = {}
 )
 
 @Composable
@@ -367,7 +368,12 @@ internal fun BoxScope.MapNavigationOverlay(
      * trip-computer row (average speed, elapsed time, ETA, grade). Non-null only
      * when a ride is being recorded and the HUD is enabled; `null` hides the row.
      */
-    tripStats: de.velospot.domain.model.LiveRideStats? = null
+    tripStats: de.velospot.domain.model.LiveRideStats? = null,
+    /**
+     * Live external-sensor readings merged into the navigation card's trip-computer
+     * row (heart rate · power · cadence). `null` hides the extra cells.
+     */
+    sensorSnapshot: de.velospot.core.sensors.SensorSnapshot? = null
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
@@ -593,7 +599,8 @@ internal fun BoxScope.MapNavigationOverlay(
                         Spacer(Modifier.height(12.dp))
                         NavTripComputerRow(
                             stats = tripStats,
-                            navigationProgress = progress
+                            navigationProgress = progress,
+                            sensor = sensorSnapshot
                         )
                     }
 

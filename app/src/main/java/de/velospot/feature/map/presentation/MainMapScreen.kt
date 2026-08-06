@@ -158,6 +158,7 @@ fun MainMapScreen(
     val previewedRoute        by viewModel.previewedRoute.collectAsStateWithLifecycle()
     val previewedRouteSummary by viewModel.previewedRouteSummary.collectAsStateWithLifecycle()
     val recentDestinations    by viewModel.recentDestinations.collectAsStateWithLifecycle()
+    val sensorSnapshot        by viewModel.sensorSnapshot.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -765,7 +766,9 @@ fun MainMapScreen(
             // navigation (below), so the values live in one unified card instead.
             tripStats         = if (hudEnabled) {
                 (rideTrackingState as? RideTrackingUiState.Recording)?.stats
-            } else null
+            } else null,
+            // Live external-sensor cells (HR/power/cadence) inside the merged card.
+            sensorSnapshot    = if (hudEnabled) sensorSnapshot else null
         )
 
         // Turn-by-turn banner (top) — only during active navigation.
@@ -784,7 +787,8 @@ fun MainMapScreen(
                     stats = recording.stats,
                     navigationProgress = navigationProgress,
                     expanded = hudExpanded,
-                    onToggleExpanded = { viewModel.setHudExpanded(!hudExpanded) }
+                    onToggleExpanded = { viewModel.setHudExpanded(!hudExpanded) },
+                    sensor = sensorSnapshot
                 )
             }
         }
@@ -842,7 +846,8 @@ fun MainMapScreen(
             onOpenPlannedRoutes   = screenUiState::openPlannedRoutes,
             onOpenDisplaySettings = screenUiState::openDisplaySettings,
             onOpenNavRouting      = screenUiState::openNavRouting,
-            onOpenBikeGarage      = screenUiState::openBikeGarage
+            onOpenBikeGarage      = screenUiState::openBikeGarage,
+            onOpenSensors         = screenUiState::openSensors
         )
         Row(
             modifier = Modifier
@@ -897,6 +902,21 @@ fun MainMapScreen(
         if (screenUiState.isBikeGarageSheetVisible) {
             de.velospot.feature.map.presentation.sheets.BikeGarageSheet(
                 onDismiss = screenUiState::closeBikeGarage
+            )
+        }
+        // External BLE sensor pairing (speed/cadence, power, heart-rate).
+        if (screenUiState.isSensorsSheetVisible) {
+            val rememberedSensors by viewModel.rememberedSensorAddresses.collectAsStateWithLifecycle()
+            val wheelCircumference by viewModel.wheelCircumferenceMeters.collectAsStateWithLifecycle()
+            de.velospot.feature.map.presentation.sheets.SensorsSheet(
+                snapshot = sensorSnapshot,
+                rememberedAddresses = rememberedSensors,
+                wheelCircumferenceMeters = wheelCircumference,
+                scan = viewModel::scanSensors,
+                onRemember = viewModel::rememberSensor,
+                onForget = viewModel::forgetSensor,
+                onSetWheelCircumference = viewModel::setWheelCircumferenceMeters,
+                onDismiss = screenUiState::closeSensors
             )
         }
 

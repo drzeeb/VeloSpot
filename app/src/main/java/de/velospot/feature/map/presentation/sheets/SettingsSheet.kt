@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RoundedCorner
 import androidx.compose.material.icons.filled.ScreenLockPortrait
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
@@ -116,6 +117,12 @@ internal fun SettingsSheet(
                 icon = Icons.AutoMirrored.Filled.DirectionsBike,
                 title = stringResource(R.string.bike_garage_settings_entry),
                 onClick = actions.onOpenBikeGarage
+            )
+            SettingsRow(
+                icon = Icons.Default.Sensors,
+                title = stringResource(R.string.sensors_title),
+                onClick = actions.onOpenSensors,
+                trailing = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
             )
             SettingsRow(
                 icon = Icons.Default.Info,

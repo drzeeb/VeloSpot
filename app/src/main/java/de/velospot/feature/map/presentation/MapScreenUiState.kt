@@ -54,6 +54,10 @@ internal class MapScreenUiState {
     var isNavRoutingSheetVisible by mutableStateOf(false)
         private set
 
+    /** Sub-sheet: external BLE sensor pairing (speed/cadence/power/heart-rate). */
+    var isSensorsSheetVisible by mutableStateOf(false)
+        private set
+
     /** Opens the unified Settings sheet (top-bar menu button). */
     fun expandMenu() {
         isSettingsSheetVisible = true
@@ -162,6 +166,16 @@ internal class MapScreenUiState {
 
     fun closeNavRouting() {
         isNavRoutingSheetVisible = false
+    }
+
+    /** Opens the external-sensor pairing sub-sheet from the main Settings sheet. */
+    fun openSensors() {
+        isSensorsSheetVisible = true
+        dismissMenu()
+    }
+
+    fun closeSensors() {
+        isSensorsSheetVisible = false
     }
 }
 

@@ -42,6 +42,7 @@ import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
 import de.velospot.core.navigation.NavigationProgress
+import de.velospot.core.sensors.SensorSnapshot
 import de.velospot.domain.model.LiveRideStats
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -73,7 +74,8 @@ internal fun BoxScope.TripComputerHud(
     stats: LiveRideStats,
     navigationProgress: NavigationProgress?,
     expanded: Boolean,
-    onToggleExpanded: () -> Unit
+    onToggleExpanded: () -> Unit,
+    sensor: SensorSnapshot? = null
 ) {
     val paused = stats.isPaused
     val toggleHint = stringResource(R.string.hud_toggle_cd)
@@ -119,9 +121,9 @@ internal fun BoxScope.TripComputerHud(
                 label = "hudLayout"
             ) { isExpanded ->
                 if (isExpanded) {
-                    ExpandedHud(stats, navigationProgress)
+                    ExpandedHud(stats, navigationProgress, sensor)
                 } else {
-                    CompactHud(stats)
+                    CompactHud(stats, sensor)
                 }
             }
 
@@ -135,13 +137,13 @@ internal fun BoxScope.TripComputerHud(
 
 /** Compact layout: hero current speed + small distance & elapsed time. */
 @Composable
-private fun CompactHud(stats: LiveRideStats) {
+private fun CompactHud(stats: LiveRideStats, sensor: SensorSnapshot? = null) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         HeroSpeedCell(
-            value = formatRideSpeed(stats.currentSpeedMps),
+            value = formatRideSpeed(heroSpeedMps(stats, sensor)),
             label = stringResource(R.string.ride_stat_speed),
             modifier = Modifier.weight(1f)
         )
@@ -165,7 +167,7 @@ private fun CompactHud(stats: LiveRideStats) {
  * distance and elevation-gain cells become ETA and remaining distance.
  */
 @Composable
-private fun ExpandedHud(stats: LiveRideStats, navigationProgress: NavigationProgress?) {
+private fun ExpandedHud(stats: LiveRideStats, navigationProgress: NavigationProgress?, sensor: SensorSnapshot? = null) {
     val navigating = navigationProgress != null
 
     Column(
@@ -178,7 +180,7 @@ private fun ExpandedHud(stats: LiveRideStats, navigationProgress: NavigationProg
             verticalAlignment = Alignment.CenterVertically
         ) {
             HeroSpeedCell(
-                value = formatRideSpeed(stats.currentSpeedMps),
+                value = formatRideSpeed(heroSpeedMps(stats, sensor)),
                 label = stringResource(R.string.ride_stat_speed),
                 modifier = Modifier.weight(1f)
             )
@@ -237,8 +239,64 @@ private fun ExpandedHud(stats: LiveRideStats, navigationProgress: NavigationProg
                 modifier = Modifier.weight(1f)
             )
         }
+
+        // Row 3 (only when live): external sensor metrics — heart rate, power,
+        // cadence. A rider with just an HR strap sees only the HR cell.
+        SensorCellsRow(sensor)
     }
 }
+
+/**
+ * Optional extra row of external-sensor cells (heart rate · power · cadence),
+ * rendered only for the metrics that are currently live. Shared by the standalone
+ * HUD and the merged navigation card so both surfaces show the same sensor data.
+ */
+@Composable
+private fun SensorCellsRow(sensor: SensorSnapshot?) {
+    if (sensor == null || !sensor.hasAnyReading) return
+    if (sensor.heartRateBpm == null && sensor.powerWatts == null && sensor.cadenceRpm == null) return
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        sensor.heartRateBpm?.let { bpm ->
+            HudStatCell(
+                value = "$bpm ${stringResource(R.string.sensor_unit_bpm)}",
+                label = stringResource(R.string.hud_stat_heart_rate),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        sensor.powerWatts?.let { watts ->
+            HudStatCell(
+                value = "$watts ${stringResource(R.string.sensor_unit_watts)}",
+                label = stringResource(R.string.hud_stat_power),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        sensor.cadenceRpm?.let { rpm ->
+            HudStatCell(
+                value = "$rpm ${stringResource(R.string.sensor_unit_rpm)}",
+                label = stringResource(R.string.hud_stat_cadence),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        // Pad the remaining cells so the shown ones keep the same column width as
+        // the grid above instead of stretching to fill the row.
+        val shown = listOfNotNull(sensor.heartRateBpm, sensor.powerWatts, sensor.cadenceRpm).size
+        repeat(3 - shown) { Spacer(Modifier.weight(1f)) }
+    }
+}
+
+/**
+ * The speed to show in the hero cell: prefer a wheel sensor's ground speed (more
+ * accurate than GPS) when it is live, otherwise fall back to the GPS speed.
+ */
+private fun heroSpeedMps(stats: LiveRideStats, sensor: SensorSnapshot?): Float =
+    sensor?.speedMps ?: stats.currentSpeedMps
 
 /**
  * Compact trip-computer stat row **merged into the navigation card** during active
@@ -250,36 +308,45 @@ private fun ExpandedHud(stats: LiveRideStats, navigationProgress: NavigationProg
 @Composable
 internal fun NavTripComputerRow(
     stats: LiveRideStats,
-    navigationProgress: NavigationProgress
+    navigationProgress: NavigationProgress,
+    sensor: SensorSnapshot? = null
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        HudStatCell(
-            value = formatRideSpeed(stats.avgSpeedMps),
-            label = stringResource(R.string.hud_stat_avg_speed),
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(Modifier.width(12.dp))
-        HudStatCell(
-            value = formatRideDuration(stats.elapsedSeconds),
-            label = stringResource(R.string.ride_stat_time),
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(Modifier.width(12.dp))
-        HudStatCell(
-            value = formatEta(navigationProgress.remainingSeconds),
-            label = stringResource(R.string.hud_stat_eta),
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(Modifier.width(12.dp))
-        HudStatCell(
-            value = formatGrade(stats.currentGradePercent),
-            label = stringResource(R.string.hud_stat_grade),
-            icon = Icons.Default.Terrain,
-            modifier = Modifier.weight(1f)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HudStatCell(
+                value = formatRideSpeed(stats.avgSpeedMps),
+                label = stringResource(R.string.hud_stat_avg_speed),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(Modifier.width(12.dp))
+            HudStatCell(
+                value = formatRideDuration(stats.elapsedSeconds),
+                label = stringResource(R.string.ride_stat_time),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(Modifier.width(12.dp))
+            HudStatCell(
+                value = formatEta(navigationProgress.remainingSeconds),
+                label = stringResource(R.string.hud_stat_eta),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(Modifier.width(12.dp))
+            HudStatCell(
+                value = formatGrade(stats.currentGradePercent),
+                label = stringResource(R.string.hud_stat_grade),
+                icon = Icons.Default.Terrain,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Extra external-sensor cells (heart rate · power · cadence) when live.
+        SensorCellsRow(sensor)
     }
 }
 
