@@ -162,7 +162,7 @@ internal fun AddressSearchBar(
             ) {
                 if (hasResults) {
                     LazyColumn {
-                        // Nominatim can return several hits sharing the same
+                        // Photon can return several hits sharing the same
                         // display name AND latitude (e.g. a place plus its
                         // administrative boundary), so a content-based key is not
                         // unique and crashes LazyColumn. The list is ephemeral and

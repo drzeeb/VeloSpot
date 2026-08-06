@@ -14,7 +14,7 @@ import dagger.hilt.components.SingletonComponent
 import de.velospot.BuildConfig
 import de.velospot.data.brouter.BRouterEngine
 import de.velospot.data.brouter.BRouterSegmentManager
-import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.data.geocoding.PhotonGeocoder
 import de.velospot.data.local.BikeParkingCacheDataSource
 import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.data.local.dao.BikeParkingSpaceDao
@@ -31,9 +31,9 @@ import de.velospot.data.local.database.DestinationHistoryDatabase
 import de.velospot.data.local.dao.PlannedRouteDao
 import de.velospot.data.local.dao.RouteAttemptDao
 import de.velospot.data.local.database.PlannedRoutesDatabase
-import de.velospot.data.remote.NominatimRateLimitInterceptor
-import de.velospot.data.remote.api.NominatimApi
+import de.velospot.data.remote.PhotonRateLimitInterceptor
 import de.velospot.data.remote.api.OsrmApi
+import de.velospot.data.remote.api.PhotonApi
 import de.velospot.data.repository.BikeParkingRepositoryImpl
 import de.velospot.data.repository.FavoritesRepositoryImpl
 import de.velospot.data.repository.ParkedBikeRepositoryImpl
@@ -68,7 +68,7 @@ import javax.inject.Singleton
 object NetworkModule {
 
     private const val OSRM_BASE_URL = "https://router.project-osrm.org/"
-    private const val NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/"
+    private const val PHOTON_BASE_URL = "https://photon.komoot.io/"
 
     @Provides
     @Singleton
@@ -91,16 +91,16 @@ object NetworkModule {
     }
 
     /**
-     * Dedicated client for Nominatim: carries the [NominatimRateLimitInterceptor]
-     * so the app can never exceed the OSM policy of 1 request/second. Slightly
-     * shorter connect timeout since the endpoint is normally fast.
+     * Dedicated client for Photon: carries the [PhotonRateLimitInterceptor] to stay
+     * polite toward the public instance. Slightly shorter connect timeout since the
+     * endpoint is normally fast.
      */
     @Provides
     @Singleton
-    @Named("nominatim")
-    fun provideNominatimOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+    @Named("photon")
+    fun providePhotonOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(NominatimRateLimitInterceptor())
+            .addInterceptor(PhotonRateLimitInterceptor())
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -147,10 +147,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Named("nominatim")
-    fun provideNominatimRetrofit(@Named("nominatim") okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    @Named("photon")
+    fun providePhotonRetrofit(@Named("photon") okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(NOMINATIM_BASE_URL)
+            .baseUrl(PHOTON_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
@@ -164,8 +164,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideNominatimApi(@Named("nominatim") retrofit: Retrofit): NominatimApi {
-        return retrofit.create(NominatimApi::class.java)
+    fun providePhotonApi(@Named("photon") retrofit: Retrofit): PhotonApi {
+        return retrofit.create(PhotonApi::class.java)
     }
 
     @Provides
@@ -208,9 +208,9 @@ object NetworkModule {
     @Singleton
     fun provideBikeParkingRepository(
         localDataSource: BikeParkingLocalDataSource,
-        nominatimGeocoder: NominatimGeocoder
+        photonGeocoder: PhotonGeocoder
     ): BikeParkingRepository {
-        return BikeParkingRepositoryImpl(localDataSource, nominatimGeocoder)
+        return BikeParkingRepositoryImpl(localDataSource, photonGeocoder)
     }
 
 

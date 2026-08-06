@@ -5,7 +5,7 @@ import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.map.RideViewOptions
 import de.velospot.data.brouter.BRouterSegmentManager
-import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.data.geocoding.PhotonGeocoder
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingType
@@ -55,7 +55,7 @@ class MapViewModelTest {
     private lateinit var mockContext: Context
     private lateinit var mockSegmentManager: BRouterSegmentManager
     private lateinit var mockOfflineMapTilesManager: de.velospot.data.maptiles.OfflineMapTilesManager
-    private lateinit var mockNominatimGeocoder: NominatimGeocoder
+    private lateinit var mockPhotonGeocoder: PhotonGeocoder
 
     /**
      * Every [MapViewModel] built by [makeViewModel] is tracked here and cleared in
@@ -86,7 +86,7 @@ class MapViewModelTest {
         mockContext = mock()
         mockSegmentManager = mock()
         mockOfflineMapTilesManager = mock()
-        mockNominatimGeocoder = mock()
+        mockPhotonGeocoder = mock()
 
         // SharedPreferences stub so OfflineRoutingPreferences doesn't crash
         val sharedPrefs = mock<android.content.SharedPreferences>()
@@ -176,7 +176,7 @@ class MapViewModelTest {
             routingRepository     = routingRepository,
             segmentManager        = mockSegmentManager,
             offlineMapTilesManager = mockOfflineMapTilesManager,
-            nominatimGeocoder     = mockNominatimGeocoder,
+            photonGeocoder        = mockPhotonGeocoder,
             recordingManager      = de.velospot.core.tracking.RideRecordingManager(
                 context = mockContext,
                 locationController = locationController,

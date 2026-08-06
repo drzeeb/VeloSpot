@@ -103,7 +103,7 @@ interface BikeParkingSpaceDao {
 
     /**
      * Persist a resolved address for a single parking space.
-     * Called after a successful Nominatim reverse geocoding to cache the result
+     * Called after a successful Photon reverse geocoding to cache the result
      * and avoid redundant network requests in the future.
      *
      * @param id The unique ID of the parking space

@@ -1,6 +1,6 @@
 package de.velospot.feature.map.presentation.search
 
-import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.data.geocoding.PhotonGeocoder
 import de.velospot.domain.model.AddressSearchResult
 import de.velospot.domain.model.GeoCoordinate
 import kotlinx.coroutines.CoroutineScope
@@ -17,13 +17,13 @@ import kotlinx.coroutines.launch
  * isolated, independently testable and free of any map/selection state.
  *
  * Pure presentation logic — holds no Android dependency beyond the injected
- * [NominatimGeocoder]; the current GPS position is supplied lazily via
+ * [PhotonGeocoder]; the current GPS position is supplied lazily via
  * [currentLocation] so results can be biased towards the user without coupling
  * this controller to the location pipeline.
  */
 class AddressSearchController(
     private val scope: CoroutineScope,
-    private val geocoder: NominatimGeocoder,
+    private val geocoder: PhotonGeocoder,
     private val currentLocation: () -> GeoCoordinate?,
 ) {
     private val _query = MutableStateFlow("")

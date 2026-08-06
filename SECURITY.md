@@ -59,7 +59,7 @@ and cloud backup is disabled. Issues that are particularly relevant include:
 
 - Unintended exposure or leakage of user data off the device.
 - Insecure handling of the optional network calls (address search / reverse
-  geocoding via Nominatim, the one-time BRouter segment download, and map
+  geocoding via Photon, the one-time BRouter segment download, and map
   tiles).
 - Insecure local data storage that could be accessed by other apps.
 

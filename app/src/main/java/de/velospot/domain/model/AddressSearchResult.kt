@@ -1,7 +1,7 @@
 package de.velospot.domain.model
 
 /**
- * A single address search result returned by Nominatim /search.
+ * A single address search result returned by Photon /search.
  *
  * @param displayName Human-readable label shown in the result list.
  * @param latitude    Latitude of the result center.

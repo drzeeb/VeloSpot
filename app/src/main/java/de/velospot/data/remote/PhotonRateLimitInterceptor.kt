@@ -6,18 +6,18 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 /**
- * Client-side rate limiter that enforces the **Nominatim usage policy** of at most
- * one request per second (https://operations.osmfoundation.org/policies/nominatim/).
+ * Client-side rate limiter for the Photon geocoding client.
  *
- * Installed only on the dedicated Nominatim [okhttp3.OkHttpClient] (see
- * `NetworkModule`), it serialises calls and, if two requests arrive closer than
- * [minIntervalMs] apart, sleeps the OkHttp dispatcher thread for the remaining
- * gap. Because Nominatim calls are user-triggered and already debounced, the brief
- * wait is invisible in practice but guarantees the app can never burst past the
- * policy limit (e.g. when several parking pins are tapped in quick succession) and
- * risk an IP ban.
+ * Photon's public instance (https://photon.komoot.io/) asks only for fair use rather
+ * than a hard request-per-second cap, but we keep a polite serialising limiter here:
+ * installed only on the dedicated Photon [okhttp3.OkHttpClient] (see `NetworkModule`),
+ * it serialises calls and, if two requests arrive closer than [minIntervalMs] apart,
+ * sleeps the OkHttp dispatcher thread for the remaining gap. Because geocoding calls
+ * are user-triggered and already debounced, the brief wait is invisible in practice
+ * but guarantees the app can never burst (e.g. when several parking pins are tapped
+ * in quick succession).
  */
-class NominatimRateLimitInterceptor(
+class PhotonRateLimitInterceptor(
     private val minIntervalMs: Long = 1_100L
 ) : Interceptor {
 

@@ -38,7 +38,7 @@ import de.velospot.domain.model.GeoCoordinate
  * map ("custom pin") or a selected address-search result. Both share the exact same
  * card and actions: navigate, save as favourite and remove the pin.
  *
- * Shows the resolved address from Nominatim (or the raw coordinates as fallback while loading).
+ * Shows the resolved address from Photon (or the raw coordinates as fallback while loading).
  *
  * @param pin       The pinned coordinate.
  * @param address   The resolved address string, or null while it is still loading.
@@ -98,7 +98,7 @@ internal fun CustomMapPinSheet(
             // ── Address or coordinates ────────────────────────────────────────
             when {
                 address != null -> {
-                    // Resolved address from Nominatim
+                    // Resolved address from Photon
                     Text(
                         text  = address,
                         style = MaterialTheme.typography.bodyMedium,

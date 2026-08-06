@@ -39,11 +39,12 @@ OSM data is available under the ODbL. This means:
 
 ## 🧭 Services (network, on demand only)
 
-### Nominatim (geocoding)
-- **Operator**: OpenStreetMap Foundation / community instances
-- **URL**: https://nominatim.openstreetmap.org/
-- **License**: ODbL 1.0 (data), Nominatim software under GPL v2+
-- **Usage**: Address resolution on first marker tap (then cached locally), forward geocoding for address search
+### Photon (geocoding)
+- **Operator**: Komoot GmbH / community (free public instance hosted by Komoot)
+- **URL**: https://photon.komoot.io/
+- **License**: Apache License 2.0 (software), ODbL 1.0 (OpenStreetMap data)
+- **Source code**: https://github.com/komoot/photon
+- **Usage**: Address resolution on first marker tap (then cached locally), forward geocoding for the address search bar. No API key required.
 - **Privacy**: No personal data is transmitted – only coordinates or search terms
 
 ### OSRM (online routing, fallback)
