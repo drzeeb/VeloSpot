@@ -35,13 +35,6 @@ class SensorRepositoryImpl(
     private val scope: CoroutineScope
 ) : SensorRepository {
 
-    init {
-        // Mirror the stored wheel circumference into the controller.
-        scope.launch {
-            wheelCircumferenceMeters.collect { controller.wheelCircumferenceMeters = it }
-        }
-    }
-
     override val snapshot: StateFlow<SensorSnapshot> = controller.snapshot
 
     override val rememberedAddresses: Flow<Set<String>> =
@@ -51,6 +44,16 @@ class SensorRepositoryImpl(
         context.sensorDataStore.data.map {
             it[KEY_WHEEL_CIRCUMFERENCE] ?: SensorParsers.DEFAULT_WHEEL_CIRCUMFERENCE_METERS
         }
+
+    init {
+        // Mirror the stored wheel circumference into the controller. Declared AFTER
+        // the property initializers on purpose: an `init` block placed before them
+        // would launch this coroutine while `wheelCircumferenceMeters` is still null
+        // (Kotlin runs initializers in declaration order), crashing with an NPE.
+        scope.launch {
+            wheelCircumferenceMeters.collect { controller.wheelCircumferenceMeters = it }
+        }
+    }
 
     override fun scan(): Flow<List<DiscoveredSensor>> = controller.scan()
 
