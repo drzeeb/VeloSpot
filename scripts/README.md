@@ -161,14 +161,15 @@ Geofabrik updates the country extracts daily. To refresh the bundled data:
 > If the database schema or version changes in the future, bump
 > `BikeParkingDatabase.version` and add a Room migration.
 
-## Nominatim Address Enrichment
+## Photon Address Enrichment
 
 Addresses that are not present in the OSM tags are resolved lazily at runtime
-via the [Nominatim](https://nominatim.openstreetmap.org/reverse) reverse geocoding API.
+via the [Photon](https://photon.komoot.io/) reverse geocoding API (Komoot's
+free, OpenStreetMap-based geocoder).
 The result is cached permanently in the local database so the network is only
 queried once per location.
 
-The Nominatim [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/)
-requires a descriptive `User-Agent` header and at most one request per second.
-Both conditions are met: the `User-Agent` is set in `NominatimApi.kt` and requests
-are only sent on explicit user interaction (tapping a marker).
+Photon has no strict rate limit, but Komoot asks for **fair use** of the free
+public instance (see [github.com/komoot/photon](https://github.com/komoot/photon)).
+VeloSpot honours this: a descriptive `User-Agent` is set in `PhotonApi.kt` and
+requests are only sent on explicit user interaction (tapping a marker).

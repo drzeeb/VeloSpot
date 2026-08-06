@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Address search & geocoding now powered by Komoot's Photon API instead of Nominatim** — both reverse geocoding (address on marker tap, place names for recorded rides and offline regions) and the forward-geocoding address search bar now use [Photon](https://photon.komoot.io/), Komoot's free, open-source (Apache 2.0), OpenStreetMap-based (ODbL 1.0) geocoder, for noticeably better free-text search. No API key is required and no personal data is transmitted — only the search term or coordinates (plus the IP, as with any HTTP request). Forward search still restricts results to the bundled countries **DE/FR/LU** (now filtered client-side). The new `PhotonApi` / `PhotonGeocoder` / `PhotonRateLimitInterceptor` replace the former `NominatimApi` / `NominatimGeocoder` / `NominatimRateLimitInterceptor` equivalents. Docs and attributions (`README`, `ATTRIBUTIONS`, `PRIVACY`, `SECURITY`, `scripts/README`) updated accordingly.
+
 ### Fixed
 - **Google Play publish failed with "No value found for 'package_name'"** — the `release.yml` Play upload aborted in `upload_to_play_store`. The `fastlane/Appfile` called `json_key_data(ENV[...])`, which is not a valid Appfile method on the current fastlane/supply version and raised `undefined method 'json_key_data'`, aborting Appfile evaluation **before** `package_name` was registered — so `supply` never received the package name. The `json_key_data` line was removed from the `Appfile` (the key is already passed explicitly per action in the `Fastfile`), and the `deploy` lane now also passes `package_name: "de.velospot"` explicitly (mirroring the working `verify` lane), so the AAB upload is self-contained and no longer depends on the Appfile.
 

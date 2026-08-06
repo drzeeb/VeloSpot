@@ -24,7 +24,7 @@ interface BikeParkingRepository {
     suspend fun getSpacesByIds(ids: List<String>): List<BikeParkingSpace>
 
     /**
-     * Reverse-geocode the address of [space] via Nominatim if it has none yet,
+     * Reverse-geocode the address of [space] via Photon if it has none yet,
      * persist the result in the local database, and return a copy with the address filled in.
      *
      * Returns the original [space] unchanged if it already has an address,

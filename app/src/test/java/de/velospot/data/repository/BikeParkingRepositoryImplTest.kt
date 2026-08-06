@@ -1,6 +1,6 @@
 package de.velospot.data.repository
 
-import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.data.geocoding.PhotonGeocoder
 import de.velospot.data.local.BikeParkingLocalDataSource
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeParkingType
@@ -19,13 +19,13 @@ import org.mockito.kotlin.whenever
 
 /**
  * Unit tests for [BikeParkingRepositoryImpl] with a mocked local data source and a
- * mocked [NominatimGeocoder]. Covers the read delegation and the lazy address
+ * mocked [PhotonGeocoder]. Covers the read delegation and the lazy address
  * resolution (cache hit, geocode-and-persist, and the "no address found" no-op).
  */
 class BikeParkingRepositoryImplTest {
 
     private val dataSource = mock<BikeParkingLocalDataSource>()
-    private val geocoder = mock<NominatimGeocoder>()
+    private val geocoder = mock<PhotonGeocoder>()
     private val repo = BikeParkingRepositoryImpl(dataSource, geocoder)
 
     private fun space(id: String = "s1", address: String? = null) = BikeParkingSpace(

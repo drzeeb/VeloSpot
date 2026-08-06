@@ -59,7 +59,7 @@ Current website copy highlights:
 - Multi-country coverage — Germany, France and Luxembourg (100 000+ locations from OpenStreetMap, fully offline)
 - Viewport-based loading for smooth performance across whole countries
 - Marker clustering that aggregates dense pins at low zoom
-- Lazy Nominatim reverse geocoding with permanent local cache
+- Lazy Photon reverse geocoding with permanent local cache
 - Address search across all covered countries whose result opens the same sheet as a custom pin (navigate, save, remove)
 - Favorites and direct navigation shortcuts
 - In-app bike navigation with route overlay and destination-focused marker styling

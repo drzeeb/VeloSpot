@@ -411,7 +411,7 @@ set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
 - After the first tap the address is cached permanently in the local database
 
 ### Address search returns no results
-- Make sure you have a network connection; forward geocoding queries Nominatim live
+- Make sure you have a network connection; forward geocoding queries Photon live
 - Results are restricted to the covered countries (Germany, France, Luxembourg) — addresses elsewhere will not appear
 - Try a more specific query (e.g. include the city name)
 

@@ -15,15 +15,15 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 /**
- * Unit tests for [NominatimRateLimitInterceptor] using a mocked [Interceptor.Chain].
+ * Unit tests for [PhotonRateLimitInterceptor] using a mocked [Interceptor.Chain].
  * Verifies the request is forwarded untouched and that a second request arriving
  * within the configured minimum interval is throttled (the OkHttp thread sleeps for the
  * remaining gap), while the very first request passes through immediately.
  */
-class NominatimRateLimitInterceptorTest {
+class PhotonRateLimitInterceptorTest {
 
     private val request: Request =
-        Request.Builder().url("https://nominatim.openstreetmap.org/reverse").build()
+        Request.Builder().url("https://photon.komoot.io/reverse").build()
 
     private fun response(): Response = Response.Builder()
         .request(request)
@@ -46,7 +46,7 @@ class NominatimRateLimitInterceptorTest {
         val expected = response()
         whenever(chain.proceed(any())).thenReturn(expected)
 
-        val result = NominatimRateLimitInterceptor(minIntervalMs = 1).intercept(chain)
+        val result = PhotonRateLimitInterceptor(minIntervalMs = 1).intercept(chain)
 
         assertSame(expected, result)
         verify(chain).proceed(request)
@@ -57,7 +57,7 @@ class NominatimRateLimitInterceptorTest {
         val chain = chain()
 
         val start = System.nanoTime()
-        NominatimRateLimitInterceptor(minIntervalMs = 1_000).intercept(chain)
+        PhotonRateLimitInterceptor(minIntervalMs = 1_000).intercept(chain)
         val elapsedMs = (System.nanoTime() - start) / 1_000_000
 
         assertTrue("first request should pass through immediately, waited ${elapsedMs}ms", elapsedMs < 400)
@@ -66,7 +66,7 @@ class NominatimRateLimitInterceptorTest {
     @Test
     fun `a second immediate request is throttled by roughly the interval`() {
         val chain = chain()
-        val interceptor = NominatimRateLimitInterceptor(minIntervalMs = 150)
+        val interceptor = PhotonRateLimitInterceptor(minIntervalMs = 150)
 
         interceptor.intercept(chain) // primes lastRequestAt, no wait
         val start = System.nanoTime()

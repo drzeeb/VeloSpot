@@ -16,7 +16,7 @@ import de.velospot.core.util.SunTimes
 import de.velospot.core.util.activeSunAlert
 import de.velospot.data.brouter.ElevationPreference
 import de.velospot.data.brouter.BRouterSegmentManager
-import de.velospot.data.geocoding.NominatimGeocoder
+import de.velospot.data.geocoding.PhotonGeocoder
 import de.velospot.data.gpx.GpxFileStore
 import de.velospot.core.tracking.RideRecordingManager
 import de.velospot.core.tracking.RideTrackingUiState
@@ -104,7 +104,7 @@ class MapViewModel @Inject constructor(
     private val routingRepository: RoutingRepository,
     private val segmentManager: BRouterSegmentManager,
     private val offlineMapTilesManager: de.velospot.data.maptiles.OfflineMapTilesManager,
-    private val nominatimGeocoder: NominatimGeocoder,
+    private val photonGeocoder: PhotonGeocoder,
     private val recordingManager: RideRecordingManager,
     private val gpxFileStore: GpxFileStore,
     savedPlacesRepository: SavedPlacesRepository,
@@ -330,7 +330,7 @@ class MapViewModel @Inject constructor(
         val lat = destination.latitude
         val lon = destination.longitude
         viewModelScope.launch {
-            val place = nominatimGeocoder.reverseGeocodePlace(lat, lon)
+            val place = photonGeocoder.reverseGeocodePlace(lat, lon)
             val name = when {
                 isRoundTrip && place != null ->
                     context.getString(de.velospot.R.string.ride_round_trip_name, place)
@@ -390,7 +390,7 @@ class MapViewModel @Inject constructor(
     /** Owns the debounced address-search concern (query, results, in-flight flag). */
     private val addressSearch = AddressSearchController(
         scope = viewModelScope,
-        geocoder = nominatimGeocoder,
+        geocoder = photonGeocoder,
         currentLocation = { _userLocation.value }
     )
     val searchQuery: StateFlow<String> = addressSearch.query
@@ -424,7 +424,7 @@ class MapViewModel @Inject constructor(
         scope = viewModelScope,
         repository = parkedBikeRepository,
         currentLocation = { _userLocation.value },
-        reverseGeocode = { lat, lon -> nominatimGeocoder.reverseGeocode(lat, lon) },
+        reverseGeocode = { lat, lon -> photonGeocoder.reverseGeocode(lat, lon) },
         onUserMessage = { res -> _userMessageRes.value = res },
         onParked = { dismissCustomMapPin() },
         clearOtherSelections = { clearPlaceSelections() },
@@ -638,7 +638,7 @@ class MapViewModel @Inject constructor(
         if (routePlanningController.isPlanning.value) {
             routePlanningController.addWaypoint(lat, lon)
             viewModelScope.launch {
-                val address = nominatimGeocoder.reverseGeocode(lat, lon)
+                val address = photonGeocoder.reverseGeocode(lat, lon)
                 // Re-label the just-added waypoint once its address resolves.
                 routePlanningController.labelLastWaypoint(address?.substringBefore(",")?.trim())
             }
@@ -655,7 +655,7 @@ class MapViewModel @Inject constructor(
             verticalOffsetFraction = 1.0 / 6.0
         )
         viewModelScope.launch {
-            _customMapPinAddress.value = nominatimGeocoder.reverseGeocode(lat, lon)
+            _customMapPinAddress.value = photonGeocoder.reverseGeocode(lat, lon)
         }
     }
 
@@ -950,7 +950,7 @@ class MapViewModel @Inject constructor(
         val location = _userLocation.value
         viewModelScope.launch {
             val place = location?.let {
-                nominatimGeocoder.reverseGeocodePlace(it.latitude, it.longitude)
+                photonGeocoder.reverseGeocodePlace(it.latitude, it.longitude)
             }
             // Only fill the suggestion if the prompt is still open (not cancelled).
             _rideNamePrompt.update { if (it != null) it.copy(suggestion = place) else it }
@@ -1127,7 +1127,7 @@ class MapViewModel @Inject constructor(
         styleUrl = de.velospot.feature.map.presentation.MAP_STYLE_URL_LIGHT,
         store = de.velospot.core.offline.OfflineRegionsStore(context),
         currentLocation = { _userLocation.value },
-        reverseGeocode = { lat, lon -> nominatimGeocoder.reverseGeocodePlace(lat, lon) },
+        reverseGeocode = { lat, lon -> photonGeocoder.reverseGeocodePlace(lat, lon) },
         // Surface offline-download errors as a Toast, not the in-map error card:
         // the card renders behind the (modal) offline sheets, so it would be hidden.
         onDownloadError = { error -> _userMessageRes.value = offlineErrorMessageRes(error) },
