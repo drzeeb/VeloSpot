@@ -1,0 +1,8 @@
+• Neuer „Goldene Stunde“-Hinweis auf der Karte kurz vor Sonnenauf- und -untergang, mit Live-Countdown
+• Korrigierte Höhenmeter (Anstieg/Abstieg) bei aufgezeichneten Fahrten
+• Höchstgeschwindigkeit korrigiert – wird bei schnellen Abfahrten nicht mehr zu niedrig begrenzt
+• Zuverlässigeres Starten/Stoppen in Widget und App
+• Spart Akku: GPS drosselt im Stillstand
+• Schnellerer App-Start
+• Aktualisierte Offline-Routing-Engine (BRouter)
+
