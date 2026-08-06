@@ -59,6 +59,7 @@ import de.velospot.core.analysis.KmSplit
 import de.velospot.core.analysis.RideAnalysis
 import de.velospot.core.analysis.RideMapData
 import de.velospot.core.analysis.SpeedBin
+import de.velospot.core.format.formatCo2Saved
 import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
@@ -199,6 +200,7 @@ private fun RideAnalysisContent(
             StatTile(stringResource(R.string.ride_stat_elevation_gain), "↑ " + formatRideElevation(analysis.elevationGainMeters))
             StatTile(stringResource(R.string.ride_stat_elevation_loss), "↓ " + formatRideElevation(analysis.elevationLossMeters))
             StatTile(stringResource(R.string.ride_stats_calories), "≈ %,d kcal".format(analysis.caloriesKcal))
+            StatTile(stringResource(R.string.ride_stat_co2_saved), formatCo2Saved(analysis.co2SavedGrams))
             if (analysis.avgPowerWatts > 0) {
                 StatTile(stringResource(R.string.ride_analysis_power), "≈ ${analysis.avgPowerWatts} W")
             }

@@ -403,6 +403,7 @@
     <string name="ride_stat_max_speed">Vel. máxima</string>
     <string name="ride_stat_elevation_gain">Subida</string>
     <string name="ride_stat_elevation_loss">Descida</string>
+    <string name="ride_stat_co2_saved">CO₂ poupado</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fechar detalhes do percurso</string>
     <string name="ride_detail_drag_hint">Arraste para baixo • o mapa continua interativo</string>

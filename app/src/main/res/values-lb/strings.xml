@@ -403,6 +403,7 @@
     <string name="ride_stat_max_speed">Max. Vitesse</string>
     <string name="ride_stat_elevation_gain">Opstig</string>
     <string name="ride_stat_elevation_loss">Ofstig</string>
+    <string name="ride_stat_co2_saved">CO₂ gespuert</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fahrtdetailer zoumaachen</string>
     <string name="ride_detail_drag_hint">Erof zéien • d\'Kaart bleift benotzbar</string>

@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
+import de.velospot.core.format.formatCo2Saved
 import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
@@ -134,7 +135,7 @@ internal fun RideStatisticsSection(stats: RideStatistics) {
 
                     // ── Fun facts ─────────────────────────────────────────────
                     StatCategory(stringResource(R.string.ride_stats_cat_fun)) {
-                        StatChip(stringResource(R.string.ride_stats_co2), formatGrams(stats.co2SavedGrams))
+                        StatChip(stringResource(R.string.ride_stats_co2), formatCo2Saved(stats.co2SavedGrams))
                         StatChip(stringResource(R.string.ride_stats_calories), "%,d kcal".format(stats.caloriesBurned))
                         StatChip(stringResource(R.string.ride_stats_earth), "%.3f %%".format(stats.earthCircumferencePercent))
                     }
@@ -198,7 +199,4 @@ private fun StatChip(label: String, value: String, highlight: Boolean = false) {
     }
 }
 
-/** Formats a CO₂ mass: grams under 1 kg, otherwise kilograms with one decimal. */
-private fun formatGrams(grams: Double): String =
-    if (grams < 1_000) "${grams.toInt()} g" else "%.1f kg".format(grams / 1_000.0)
 
