@@ -22,6 +22,7 @@ import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.repository.BikeParkingRepository
 import de.velospot.domain.repository.FavoritesRepository
+import de.velospot.domain.repository.LocationPowerProfile
 import de.velospot.domain.repository.LocationRepository
 import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.ParkedBikeRepository
@@ -930,7 +931,7 @@ private class FakeLocationRepository(
     override fun getCurrentLocationFlow(): Flow<GeoCoordinate?> = locationFlow
 
 
-    override fun startLocationUpdates(highAccuracy: Boolean) {
+    override fun startLocationUpdates(profile: LocationPowerProfile) {
         startUpdatesCallCount += 1
     }
 

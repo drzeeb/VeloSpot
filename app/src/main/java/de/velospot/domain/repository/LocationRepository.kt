@@ -18,14 +18,17 @@ interface LocationRepository {
 
 
     /**
-     * Start listening to location updates.
+     * Start listening to location updates using the given power [profile].
      *
-     * @param highAccuracy when `true`, requests frequent, GPS-based high-accuracy
-     *  fixes (used during active turn-by-turn navigation). When `false` (the
-     *  default), a battery-friendly balanced-power mode with a larger update
-     *  interval and minimum displacement is used for idle map browsing.
+     * Replaces the earlier `highAccuracy: Boolean` with an explicit
+     * [LocationPowerProfile] so the recorder can additionally drop the GNSS engine
+     * to a power-saving cadence while the rider is standing still ([LocationPowerProfile.IDLE_RECORDING]),
+     * without affecting navigation or moving-recording fidelity.
+     *
+     * @param profile the requested GPS-radio power profile; defaults to the
+     *  battery-friendly [LocationPowerProfile.BROWSE] used while just viewing the map.
      */
-    fun startLocationUpdates(highAccuracy: Boolean = false)
+    fun startLocationUpdates(profile: LocationPowerProfile = LocationPowerProfile.BROWSE)
 
     /**
      * Stop listening to location updates.
