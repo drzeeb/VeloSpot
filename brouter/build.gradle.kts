@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // This plain `java-library` module compiles BRouter *from source* instead of
 // shipping a pre-built JAR. The source lives in the pinned git submodule under
-// `brouter-upstream/` (https://github.com/abrensch/brouter @ tag v1.7.9).
+// `brouter-upstream/` (https://github.com/abrensch/brouter @ tag v1.7.10).
 //
 // Only the five on-device routing modules are compiled — exactly the set that
 // the old slimmed `brouter-1.7.9-all.jar` contained:

@@ -16,14 +16,14 @@ If you forget this step, the build fails fast with a clear message telling you t
 run the command above.
 ### Pinning / bumping BRouter
 The submodule (`brouter-upstream/`) is locked to a specific commit (BRouter
-`v1.7.9`). To bump BRouter later:
+`v1.7.10`). To bump BRouter later:
 ```bash
 cd brouter-upstream
 git fetch --tags
-git checkout v1.7.10        # or the desired tag/commit
+git checkout v1.7.11        # or the desired tag/commit
 cd ..
 git add brouter-upstream
-git commit -m "chore: bump BRouter to v1.7.10"
+git commit -m "chore: bump BRouter to v1.7.11"
 ```
 ---
 ## 2. Building locally

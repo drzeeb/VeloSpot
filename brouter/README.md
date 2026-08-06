@@ -10,7 +10,7 @@ prebuild scripts, no binary blobs.
 The BRouter source is pinned as a **git submodule** at the repository root:
 
 ```
-brouter-upstream/   →  https://github.com/abrensch/brouter @ tag v1.7.9
+brouter-upstream/   →  https://github.com/abrensch/brouter @ tag v1.7.10
 ```
 
 The submodule is locked to a specific commit (recorded in the parent repo), so
