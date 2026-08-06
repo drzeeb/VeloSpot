@@ -16,6 +16,10 @@ plugins {
     // task can scan the app's runtime classpath, which transitively includes
     // the :brouter module's dependencies. Task: `cyclonedxDirectBom`.
     alias(libs.plugins.cyclonedx)
+    // Baseline Profile consumer. Merges the profile produced by :baselineprofile
+    // into the release ART profile for faster cold start / first map frames.
+    // Generate/refresh it with `./gradlew :app:generateBaselineProfile`.
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 // ---------------------------------------------------------------------------
@@ -229,6 +233,12 @@ dependencies {
     // binary blob — a plain Gradle build resolves it.
     // See brouter/README.md for the module/submodule setup.
     implementation(project(":brouter"))
+
+    // Installs the bundled Baseline Profile (produced by :baselineprofile) on first
+    // run so ART can AOT/JIT-compile the hot startup path. `baselineProfile(...)`
+    // wires the producer module to the consumer plugin applied above.
+    implementation(libs.androidxProfileinstaller)
+    baselineProfile(project(":baselineprofile"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
