@@ -30,7 +30,7 @@ import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -100,27 +100,44 @@ class MapViewModelTest {
 
     @After
     fun tearDown() {
-        // 1) Cancel the recording managers' background scopes (ticker + GPS collector)
-        //    AND block until they've fully finished, so nothing keeps running on
-        //    background threads once the test's main dispatcher is reset. Merely
-        //    cancelling is not enough: a 1 s stats ticker running on a real Default
-        //    thread could still push one last update to the manager's `trackingState`
-        //    StateFlow *after* `resetMain()`. That late emission wakes the eager
-        //    `viewModelScope` collector in RideTrackingController (which combines the
-        //    manager flows), forcing a dispatch onto the now-reset Main dispatcher and
-        //    crashing with "Module with the Main dispatcher had failed to initialize"
-        //    (Looper unavailable in JVM tests) — the flaky CI failure. Joining the
-        //    cancelled job first guarantees no such post-reset emission can occur.
+        // The flaky CI failure ("Module with the Main dispatcher had failed to
+        // initialize" → Looper unavailable in JVM, surfacing as an
+        // UncaughtExceptionsBeforeTest against the *next* test) comes from a leaked
+        // background coroutine that emits *after* `resetMain()`. Navigation tests
+        // auto-start a ride recording whose RideRecordingManager runs a 1 s stats
+        // ticker + GPS collector on a real Default scope; those never get stopped by
+        // the test body. A late emission to the manager's `trackingState` then wakes
+        // the eager `viewModelScope` collectors in RideTrackingController (which
+        // combine the manager flows) and forces a dispatch onto the now-reset Main
+        // dispatcher. We close the race deterministically, in strict order:
+
+        // 1) Stop any still-running (navigation-auto-started) recording FIRST, while
+        //    Main is still the test dispatcher. `discardRideTracking()` synchronously
+        //    cancels the manager's ticker + GPS jobs (`stopTicker()` / `locationJob`)
+        //    and flips the tracker out of the recording state, so the ticker's
+        //    `while (isActive && tracker.isRecording)` loop can no longer emit. It's a
+        //    no-op for view-models that never recorded.
+        createdViewModels.forEach { vm -> runCatching { vm.discardRideTracking() } }
+
+        // 2) Cancel each manager's background scope and BLOCK until every child job
+        //    (ticker, GPS collector, persistence worker) has fully finished. Using
+        //    cancelAndJoin guarantees no coroutine is still live on a background thread
+        //    once we continue — so nothing can emit after this point. A real, cancellable
+        //    Default scope is used (never the test scheduler, whose advanceUntilIdle()
+        //    would spin forever on the ticker's endless delay loop).
         createdManagerScopes.forEach { scope ->
             runCatching {
-                val job = scope.coroutineContext[kotlinx.coroutines.Job]
-                scope.cancel()
-                kotlinx.coroutines.runBlocking { job?.join() }
+                kotlinx.coroutines.runBlocking {
+                    scope.coroutineContext[kotlinx.coroutines.Job]?.cancelAndJoin()
+                }
             }
         }
         createdManagerScopes.clear()
-        // 2) Cancel each view-model's viewModelScope so no collector coroutine leaks
-        //    into the next test. ViewModel.clear() is not public, so reach it reflectively.
+
+        // 3) Cancel each view-model's viewModelScope so its collector coroutines are
+        //    torn down (still on the live test Main dispatcher, so their cancellation
+        //    dispatches cleanly). ViewModel.clear() is not public, so reach it
+        //    reflectively.
         createdViewModels.forEach { vm ->
             runCatching {
                 androidx.lifecycle.ViewModel::class.java
@@ -130,6 +147,9 @@ class MapViewModelTest {
             }
         }
         createdViewModels.clear()
+
+        // 4) Nothing can emit onto Main anymore (no live background scope, no live
+        //    collector) — safe to reset.
         Dispatchers.resetMain()
     }
 
