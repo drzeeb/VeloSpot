@@ -50,6 +50,13 @@ interface MapSettingsRepository {
      */
     val amoledEnabled: Flow<Boolean>
 
+    /**
+     * Whether the sunrise/sunset **"golden hour"** alert FAB may appear on the
+     * map. Defaults to `true` (enabled). When disabled the alert FAB is never
+     * shown, regardless of the current sun position.
+     */
+    val sunAlertEnabled: Flow<Boolean>
+
     /** The rider's persisted "inspect a past ride" overlay choices. */
     val rideViewOptions: Flow<RideViewOptions>
 
@@ -67,6 +74,7 @@ interface MapSettingsRepository {
     suspend fun setPortraitLock(enabled: Boolean)
     suspend fun setRoundedBuildings(enabled: Boolean)
     suspend fun setAmoled(enabled: Boolean)
+    suspend fun setSunAlertEnabled(enabled: Boolean)
     suspend fun setShowMaxSpeedBubble(enabled: Boolean)
     suspend fun setColorTrackBySpeed(enabled: Boolean)
     suspend fun setOnboardingCompleted(completed: Boolean)

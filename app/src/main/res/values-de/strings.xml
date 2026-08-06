@@ -182,6 +182,15 @@
     <string name="settings_title">Einstellungen</string>
     <string name="settings_section_quick_actions">Schnellaktionen</string>
     <string name="settings_section_appearance">Darstellung &amp; Karte</string>
+    <!-- Golden hour / sunrise-sunset alert -->
+    <string name="sun_alert_settings_title">Warnung goldene Stunde</string>
+    <string name="sun_alert_sunrise">Sonnenaufgang</string>
+    <string name="sun_alert_sunset">Sonnenuntergang</string>
+    <string name="sun_alert_fab_sunrise_desc">Sonnenaufgang bald</string>
+    <string name="sun_alert_fab_sunset_desc">Sonnenuntergang bald</string>
+    <string name="sun_alert_until_sunrise">bis Sonnenaufgang</string>
+    <string name="sun_alert_until_sunset">bis Sonnenuntergang</string>
+    <string name="sun_alert_golden_hour">Goldene Stunde</string>
     <string name="map_actions">Aktionen</string>
     <string name="settings_group_navigation">Navigation &amp; Routing</string>
     <string name="settings_section_routing">Routing</string>

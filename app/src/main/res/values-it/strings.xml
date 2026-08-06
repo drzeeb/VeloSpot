@@ -217,6 +217,15 @@
     <string name="settings_title">Impostazioni</string>
     <string name="settings_section_quick_actions">Azioni rapide</string>
     <string name="settings_section_appearance">Aspetto e mappa</string>
+    <!-- Golden hour / sunrise-sunset alert -->
+    <string name="sun_alert_settings_title">Avviso ora d\'oro</string>
+    <string name="sun_alert_sunrise">Alba</string>
+    <string name="sun_alert_sunset">Tramonto</string>
+    <string name="sun_alert_fab_sunrise_desc">Alba in arrivo</string>
+    <string name="sun_alert_fab_sunset_desc">Tramonto in arrivo</string>
+    <string name="sun_alert_until_sunrise">all\'alba</string>
+    <string name="sun_alert_until_sunset">al tramonto</string>
+    <string name="sun_alert_golden_hour">Ora d\'oro</string>
     <string name="map_actions">Azioni</string>
     <string name="settings_group_navigation">Navigazione e percorsi</string>
     <string name="settings_section_routing">Percorso</string>

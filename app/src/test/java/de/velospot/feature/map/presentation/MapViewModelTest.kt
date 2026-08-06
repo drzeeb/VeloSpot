@@ -842,6 +842,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val roundedBuildingsEnabled: Flow<Boolean> = _roundedBuildings
     private val _amoled = MutableStateFlow(false)
     override val amoledEnabled: Flow<Boolean> = _amoled
+    private val _sunAlert = MutableStateFlow(true)
+    override val sunAlertEnabled: Flow<Boolean> = _sunAlert
     private val _rideViewOptions = MutableStateFlow(RideViewOptions())
     override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
     private val _onboardingCompleted = MutableStateFlow(true)
@@ -857,6 +859,7 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override suspend fun setPortraitLock(enabled: Boolean) { _portraitLock.value = enabled }
     override suspend fun setRoundedBuildings(enabled: Boolean) { _roundedBuildings.value = enabled }
     override suspend fun setAmoled(enabled: Boolean) { _amoled.value = enabled }
+    override suspend fun setSunAlertEnabled(enabled: Boolean) { _sunAlert.value = enabled }
     override suspend fun setShowMaxSpeedBubble(enabled: Boolean) {
         _rideViewOptions.value = _rideViewOptions.value.copy(showMaxSpeedBubble = enabled)
     }

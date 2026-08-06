@@ -12,6 +12,15 @@
     <string name="menu_keep_screen_on">Keep screen on while riding</string>
     <string name="menu_portrait_lock">Lock to portrait orientation</string>
     <string name="menu_amoled_mode">AMOLED pure-black map</string>
+    <!-- Golden hour / sunrise-sunset alert -->
+    <string name="sun_alert_settings_title">Golden hour alert</string>
+    <string name="sun_alert_sunrise">Sunrise</string>
+    <string name="sun_alert_sunset">Sunset</string>
+    <string name="sun_alert_fab_sunrise_desc">Sunrise approaching</string>
+    <string name="sun_alert_fab_sunset_desc">Sunset approaching</string>
+    <string name="sun_alert_until_sunrise">until sunrise</string>
+    <string name="sun_alert_until_sunset">until sunset</string>
+    <string name="sun_alert_golden_hour">Golden hour</string>
     <string name="recent_destination_fallback">Destination</string>
     <string name="search_recent_title">Recent</string>
     <string name="offline_download_route">Download for offline use</string>
