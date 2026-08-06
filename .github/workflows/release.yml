@@ -144,9 +144,16 @@ jobs:
       # ── Build release AAB + APK ───────────────────────────────────────────────
       # The AAB (App Bundle) is what Google Play distributes; the universal APK is
       # attached to the GitHub Release for direct sideloading.
+      # `--refresh-dependencies` forces a fresh resolution of all dependency AND
+      # plugin metadata instead of trusting the Gradle cache restored by
+      # setup-java (`cache: gradle`). A stale/negative entry in that shared cache
+      # made a fresh release runner report a perfectly-published plugin (the
+      # Kotlin Compose plugin, `org.jetbrains.kotlin.plugin.compose`) as "not
+      # found" at configuration time, repeatedly breaking the release build even
+      # though the artifact resolves fine from Maven Central / the Plugin Portal.
       - name: Build release AAB & APK
         run: |
-          ./gradlew bundleRelease assembleRelease --no-daemon
+          ./gradlew bundleRelease assembleRelease --no-daemon --refresh-dependencies
 
       # ── Rename the sideload APK ───────────────────────────────────────────────
       - name: Rename APK
