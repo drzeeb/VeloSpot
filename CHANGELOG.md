@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Opening an imported dense-GPX ride crashed with `SQLiteBlobTooBigException`** — tapping a ride in the **"My rides"** detail sheet could crash with `android.database.sqlite.SQLiteBlobTooBigException: Row too big to fit into CursorWindow` from `RecordedRideDao_Impl.getById`. A ride imported from a very dense GPX serialises its full GPS track into the single `pointsJson` column, which for such tracks exceeds SQLite's ~2 MB per-row `CursorWindow` limit — so **any `SELECT *`** that pulled the whole row (`getById`, `getByIds`, `getAllFlow`) threw as soon as the oversized cell was read into the window. The track-free timeline (an explicit-column projection) was unaffected, so the list worked but opening the ride, and the heatmap / ridden-tracks overlays, crashed. The three `SELECT *` reads are removed and replaced with a track-free **full-meta projection** (`RecordedRideMetaRow` — every column except `pointsJson`, incl. `sourceRouteId`) via new explicit-column DAO queries (`getMetaById`, `getMetaByIds`, `getAllMetaFlow`), and the huge cell is now read **in chunks** with SQLite `substr()` (new `getPointsJsonLength` + `getPointsJsonChunk`; the repository reassembles the track in 256 KB slices that always fit the window). No column ever selects `pointsJson` as one cell again, so the crash cannot recur. This is **migration-free** — only new `@Query` methods were added; no Room entity/schema/version change. Covered by new `RecordedRidesRepositoryImplTest` cases proving a large multi-chunk track round-trips correctly (all points, in order) through both `getRide` and `getRidesWithTracksFlow`.
+
 ## [v1.0.29] - 2026-08-06
 
 ### Added

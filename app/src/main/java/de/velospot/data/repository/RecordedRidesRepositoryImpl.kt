@@ -6,6 +6,7 @@ import de.velospot.core.tracking.AltitudeSample
 import de.velospot.core.tracking.ElevationAccumulator
 import de.velospot.core.tracking.RideTracker
 import de.velospot.data.local.dao.RecordedRideDao
+import de.velospot.data.local.dao.RecordedRideMetaRow
 import de.velospot.data.local.dao.RecordedRideSummaryRow
 import de.velospot.data.local.entity.RecordedRideEntity
 import de.velospot.domain.model.RecordedRide
@@ -46,23 +47,26 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         recordedRideDao.getSummariesFlow().map { rows -> rows.map { it.toDomain() } }
 
     override fun getRidesWithTracksFlow(): Flow<List<RecordedRide>> =
-        recordedRideDao.getAllFlow()
-            .map { entities -> entities.map { it.toDomain() } }
-            // Deserialising every ride's track is CPU-bound; keep it off the main
-            // thread so collectors (the map overlays / analysis) never jank.
+        recordedRideDao.getAllMetaFlow()
+            .map { rows -> rows.map { it.toDomainWith(readPointsJson(it.id)) } }
+            // Reassembling + deserialising every ride's track is CPU-bound; keep it
+            // off the main thread so collectors (the map overlays / analysis) never
+            // jank. Also never selects `pointsJson` whole (chunked reads) so a dense
+            // imported track cannot blow the ~2 MB `CursorWindow` limit.
             .flowOn(Dispatchers.Default)
 
     override suspend fun getRide(id: String): RecordedRide? =
         withContext(Dispatchers.Default) {
-            recordedRideDao.getById(id)?.toDomain()
+            val meta = recordedRideDao.getMetaById(id) ?: return@withContext null
+            meta.toDomainWith(readPointsJson(id))
         }
 
     override suspend fun getRides(ids: List<String>): List<RecordedRide> {
         if (ids.isEmpty()) return emptyList()
         return withContext(Dispatchers.Default) {
             // Re-order to match the requested ids (SQLite's `IN` ignores order).
-            val byId = recordedRideDao.getByIds(ids).associateBy { it.id }
-            ids.mapNotNull { byId[it]?.toDomain() }
+            val byId = recordedRideDao.getMetaByIds(ids).associateBy { it.id }
+            ids.mapNotNull { id -> byId[id]?.toDomainWith(readPointsJson(id)) }
         }
     }
 
@@ -98,17 +102,17 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         // shared integrator, then write only the two derived columns back. This
         // self-corrects both the summary flow (a direct column projection) and the
         // detail view. Rides without altitude points keep 0/0 and are skipped.
-        recordedRideDao.getAllFlow().first().forEach { entity ->
-            val points = runCatching { pointsAdapter.fromJson(entity.pointsJson) }
+        recordedRideDao.getAllMetaFlow().first().forEach { meta ->
+            val points = runCatching { pointsAdapter.fromJson(readPointsJson(meta.id)) }
                 .getOrNull().orEmpty()
             if (points.none { it.altitudeMeters != null }) return@forEach
             val result = ElevationAccumulator.compute(
                 points.map { AltitudeSample(it.altitudeMeters, it.accuracyMeters) }
             )
-            if (result.gainMeters != entity.elevationGainMeters ||
-                result.lossMeters != entity.elevationLossMeters
+            if (result.gainMeters != meta.elevationGainMeters ||
+                result.lossMeters != meta.elevationLossMeters
             ) {
-                recordedRideDao.updateElevation(entity.id, result.gainMeters, result.lossMeters)
+                recordedRideDao.updateElevation(meta.id, result.gainMeters, result.lossMeters)
             }
         }
     }
@@ -122,17 +126,37 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         // self-corrects both the summary flow (a direct column projection) and the
         // detail view for historical rides understated by the old corroboration
         // gate. Rides without any in-range speed sample are skipped.
-        recordedRideDao.getAllFlow().first().forEach { entity ->
-            val points = runCatching { pointsAdapter.fromJson(entity.pointsJson) }
+        recordedRideDao.getAllMetaFlow().first().forEach { meta ->
+            val points = runCatching { pointsAdapter.fromJson(readPointsJson(meta.id)) }
                 .getOrNull().orEmpty()
             val maxSpeed = points
                 .mapNotNull { it.speedMps?.toDouble() }
                 .filter { it in 0.0..RideTracker.MAX_PLAUSIBLE_SPEED_MPS }
                 .maxOrNull() ?: return@forEach
-            if (maxSpeed != entity.maxSpeedMps) {
-                recordedRideDao.updateMaxSpeed(entity.id, maxSpeed)
+            if (maxSpeed != meta.maxSpeedMps) {
+                recordedRideDao.updateMaxSpeed(meta.id, maxSpeed)
             }
         }
+    }
+
+    /**
+     * Reassembles the full `pointsJson` for [id] with bounded [CHUNK]-sized
+     * `substr` reads so the huge cell is never squeezed into a single cursor row —
+     * a dense imported track can exceed SQLite's ~2 MB `CursorWindow` limit and
+     * would otherwise throw `SQLiteBlobTooBigException` on a `SELECT *`. Returns an
+     * empty string when the ride has no track (length null or 0).
+     */
+    private suspend fun readPointsJson(id: String): String {
+        val length = recordedRideDao.getPointsJsonLength(id) ?: 0
+        if (length <= 0) return ""
+        val builder = StringBuilder(length)
+        var start = 1 // SQLite substr is 1-based.
+        while (start <= length) {
+            val chunk = recordedRideDao.getPointsJsonChunk(id, start, CHUNK) ?: break
+            builder.append(chunk)
+            start += CHUNK
+        }
+        return builder.toString()
     }
 
     private fun RecordedRideSummaryRow.toDomain() = RecordedRideSummary(
@@ -152,7 +176,7 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         bikeProfileId = bikeProfileId
     )
 
-    private fun RecordedRideEntity.toDomain() = RecordedRide(
+    private fun RecordedRideMetaRow.toDomainWith(pointsJson: String) = RecordedRide(
         id = id,
         startedAt = startedAt,
         endedAt = endedAt,
@@ -189,5 +213,14 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         bikeProfileId = bikeProfileId,
         sourceRouteId = sourceRouteId
     )
+
+    private companion object {
+        /**
+         * Track slice size (chars) for the chunked `pointsJson` reassembly. 256 KB
+         * stays comfortably under SQLite's ~2 MB `CursorWindow` per-row limit while
+         * keeping the number of round-trips low for typical tracks.
+         */
+        private const val CHUNK = 262_144
+    }
 }
 
