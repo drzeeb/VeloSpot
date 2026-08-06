@@ -404,6 +404,14 @@
     <string name="ride_stat_elevation_gain">Stijging</string>
     <string name="ride_stat_elevation_loss">Daling</string>
     <string name="ride_stat_co2_saved">CO₂ bespaard</string>
+
+    <!-- Trip Computer HUD -->
+    <string name="hud_toggle_title">Boordcomputer (HUD)</string>
+    <string name="hud_toggle_cd">Boordcomputer wisselen tussen compact en uitgebreid</string>
+    <string name="hud_stat_avg_speed">Gem. snelheid</string>
+    <string name="hud_stat_grade">Helling</string>
+    <string name="hud_stat_eta">Aankomst</string>
+    <string name="hud_stat_remaining">Resterend</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Ritdetails sluiten</string>
     <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>

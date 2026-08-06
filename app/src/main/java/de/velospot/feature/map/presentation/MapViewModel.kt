@@ -507,6 +507,31 @@ class MapViewModel @Inject constructor(
     }
 
     /**
+     * Whether the glanceable **Trip Computer HUD** (bottom band shown while a ride
+     * is being recorded) is enabled. Persisted across sessions; defaults to off.
+     */
+    val hudEnabled: StateFlow<Boolean> =
+        mapSettings.hudEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the Trip Computer HUD on/off and persists the choice. */
+    fun setHudEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setHudEnabled(enabled) }
+    }
+
+    /**
+     * Whether the Trip Computer HUD is in its expanded (6-cell grid) state rather
+     * than the compact single-row state. Persisted so the rider's last choice
+     * carries over to the next ride.
+     */
+    val hudExpanded: StateFlow<Boolean> =
+        mapSettings.hudExpanded.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the Trip Computer HUD compact/expanded state and persists it. */
+    fun setHudExpanded(expanded: Boolean) {
+        viewModelScope.launch { mapSettings.setHudExpanded(expanded) }
+    }
+
+    /**
      * Whether the screen orientation is locked to portrait. Persisted across
      * sessions; defaults to disabled (device auto-rotate is followed).
      */

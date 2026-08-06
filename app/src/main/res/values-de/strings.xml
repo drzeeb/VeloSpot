@@ -410,6 +410,14 @@
     <string name="ride_stat_elevation_gain">Anstieg</string>
     <string name="ride_stat_elevation_loss">Abstieg</string>
     <string name="ride_stat_co2_saved">CO₂ gespart</string>
+
+    <!-- Trip Computer HUD -->
+    <string name="hud_toggle_title">Bordcomputer (HUD)</string>
+    <string name="hud_toggle_cd">Bordcomputer zwischen kompakt und erweitert umschalten</string>
+    <string name="hud_stat_avg_speed">Ø Tempo</string>
+    <string name="hud_stat_grade">Steigung</string>
+    <string name="hud_stat_eta">Ankunft</string>
+    <string name="hud_stat_remaining">Reststrecke</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fahrtdetails schließen</string>
     <string name="ride_detail_drag_hint">Nach unten ziehen • Karte bleibt bedienbar</string>

@@ -857,6 +857,10 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val voiceGuidanceEnabled: Flow<Boolean> = _voiceGuidance
     private val _keepScreenOn = MutableStateFlow(true)
     override val keepScreenOnEnabled: Flow<Boolean> = _keepScreenOn
+    private val _hudEnabled = MutableStateFlow(false)
+    override val hudEnabled: Flow<Boolean> = _hudEnabled
+    private val _hudExpanded = MutableStateFlow(false)
+    override val hudExpanded: Flow<Boolean> = _hudExpanded
     private val _portraitLock = MutableStateFlow(false)
     override val portraitLockEnabled: Flow<Boolean> = _portraitLock
     private val _roundedBuildings = MutableStateFlow(false)
@@ -877,6 +881,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override suspend fun set3DNavigation(enabled: Boolean) { _is3DNavigation.value = enabled }
     override suspend fun setVoiceGuidance(enabled: Boolean) { _voiceGuidance.value = enabled }
     override suspend fun setKeepScreenOn(enabled: Boolean) { _keepScreenOn.value = enabled }
+    override suspend fun setHudEnabled(enabled: Boolean) { _hudEnabled.value = enabled }
+    override suspend fun setHudExpanded(expanded: Boolean) { _hudExpanded.value = expanded }
     override suspend fun setPortraitLock(enabled: Boolean) { _portraitLock.value = enabled }
     override suspend fun setRoundedBuildings(enabled: Boolean) { _roundedBuildings.value = enabled }
     override suspend fun setAmoled(enabled: Boolean) { _amoled.value = enabled }

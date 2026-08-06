@@ -406,6 +406,14 @@
     <string name="ride_stat_elevation_gain">Dislivello positivo</string>
     <string name="ride_stat_elevation_loss">Dislivello negativo</string>
     <string name="ride_stat_co2_saved">CO₂ risparmiata</string>
+
+    <!-- Trip Computer HUD -->
+    <string name="hud_toggle_title">Computer di bordo (HUD)</string>
+    <string name="hud_toggle_cd">Alterna il computer di bordo tra compatto ed esteso</string>
+    <string name="hud_stat_avg_speed">Vel. media</string>
+    <string name="hud_stat_grade">Pendenza</string>
+    <string name="hud_stat_eta">Arrivo</string>
+    <string name="hud_stat_remaining">Rimanente</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Chiudi i dettagli del percorso</string>
     <string name="ride_detail_drag_hint">Trascina verso il basso • la mappa resta interattiva</string>

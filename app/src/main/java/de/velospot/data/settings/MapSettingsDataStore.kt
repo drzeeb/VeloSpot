@@ -63,6 +63,12 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     override val keepScreenOnEnabled: Flow<Boolean> =
         data.map { it[KEY_KEEP_SCREEN_ON] ?: true }
 
+    override val hudEnabled: Flow<Boolean> =
+        data.map { it[KEY_HUD_ENABLED] ?: false }
+
+    override val hudExpanded: Flow<Boolean> =
+        data.map { it[KEY_HUD_EXPANDED] ?: false }
+
     override val portraitLockEnabled: Flow<Boolean> =
         data.map { it[KEY_PORTRAIT_LOCK] ?: false }
 
@@ -105,6 +111,12 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     override suspend fun setKeepScreenOn(enabled: Boolean) =
         put(KEY_KEEP_SCREEN_ON, enabled)
 
+    override suspend fun setHudEnabled(enabled: Boolean) =
+        put(KEY_HUD_ENABLED, enabled)
+
+    override suspend fun setHudExpanded(expanded: Boolean) =
+        put(KEY_HUD_EXPANDED, expanded)
+
     override suspend fun setPortraitLock(enabled: Boolean) =
         put(KEY_PORTRAIT_LOCK, enabled)
 
@@ -140,6 +152,8 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
         val KEY_NAV_3D           = booleanPreferencesKey("navigation_3d_enabled")
         val KEY_VOICE_GUIDANCE   = booleanPreferencesKey("navigation_tts_enabled")
         val KEY_KEEP_SCREEN_ON   = booleanPreferencesKey("keep_screen_on_enabled")
+        val KEY_HUD_ENABLED      = booleanPreferencesKey("hud_enabled")
+        val KEY_HUD_EXPANDED     = booleanPreferencesKey("hud_expanded")
         val KEY_PORTRAIT_LOCK    = booleanPreferencesKey("portrait_lock_enabled")
         val KEY_ROUNDED_BUILDINGS = booleanPreferencesKey("rounded_buildings_enabled")
         val KEY_AMOLED           = booleanPreferencesKey("amoled_enabled")

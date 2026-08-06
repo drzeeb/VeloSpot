@@ -135,6 +135,8 @@ fun MainMapScreen(
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val voiceGuidanceEnabled by viewModel.voiceGuidanceEnabled.collectAsStateWithLifecycle()
     val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
+    val hudEnabled           by viewModel.hudEnabled.collectAsStateWithLifecycle()
+    val hudExpanded          by viewModel.hudExpanded.collectAsStateWithLifecycle()
     val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
     val roundedBuildingsEnabled by viewModel.roundedBuildingsEnabled.collectAsStateWithLifecycle()
     val amoledEnabled        by viewModel.amoledEnabled.collectAsStateWithLifecycle()
@@ -765,6 +767,20 @@ fun MainMapScreen(
             MapTurnBanner(progress = navigationProgress)
         }
 
+        // Trip Computer HUD (bottom band) — only while a ride is being recorded and
+        // the user has opted in. Sits at the bottom with navigationBarsPadding, so it
+        // never overlaps the top turn-by-turn banner.
+        if (hudEnabled) {
+            (rideTrackingState as? RideTrackingUiState.Recording)?.let { recording ->
+                TripComputerHud(
+                    stats = recording.stats,
+                    navigationProgress = navigationProgress,
+                    expanded = hudExpanded,
+                    onToggleExpanded = { viewModel.setHudExpanded(!hudExpanded) }
+                )
+            }
+        }
+
 
         // ── Search bar + Menu button – vertically centred in one Row ─────────
         val menuState = MapMenuCardState(
@@ -776,6 +792,7 @@ fun MainMapScreen(
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
             keepScreenOnEnabled = keepScreenOnEnabled,
+            hudEnabled         = hudEnabled,
             portraitLockEnabled = portraitLockEnabled,
             roundedBuildingsEnabled = roundedBuildingsEnabled,
             amoledEnabled      = amoledEnabled,
@@ -800,6 +817,7 @@ fun MainMapScreen(
             onShowParkedBike      = viewModel::showParkedBike,
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
             onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
+            onToggleHud           = { viewModel.setHudEnabled(!hudEnabled) },
             onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!portraitLockEnabled) },
             onToggleRoundedBuildings = { viewModel.setRoundedBuildingsEnabled(!roundedBuildingsEnabled) },
             onToggleAmoled        = {

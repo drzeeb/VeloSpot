@@ -317,7 +317,8 @@ class RideTracker {
             elevationGainMeters = elevation.gain,
             elevationLossMeters = elevation.loss,
             pointCount = points.size,
-            isPaused = isPaused
+            isPaused = isPaused,
+            currentGradePercent = if (isPaused) 0f else computeCurrentGrade(points)
         )
     }
 
@@ -417,6 +418,107 @@ class RideTracker {
 
         private const val MIN_POINTS = 2
         private const val MIN_DISTANCE_METERS = 20.0
+
+        /**
+         * Target span of horizontal distance (metres) over which the live road
+         * grade is measured. GPS altitude is far too noisy to trust a single fix-
+         * to-fix delta (a two-point slope over ~3 m can swing tens of percent from
+         * jitter alone), so we integrate over the last ~40 m of travel. This sits in
+         * the requested 30–60 m band: long enough to average out per-fix altitude
+         * noise, short enough to still track a real change of gradient.
+         */
+        private const val GRADE_WINDOW_METERS = 40.0
+
+        /**
+         * Minimum horizontal distance (metres) the sliding window must cover before a
+         * grade is reported. Below this the altitude delta is dominated by GPS noise,
+         * so [computeCurrentGrade] returns `0f` rather than a jumpy reading.
+         */
+        private const val GRADE_MIN_DISTANCE_METERS = 30.0
+
+        /**
+         * Grade is clamped to `±`this (percent). Real rideable roads rarely exceed
+         * ~20–25%, so anything beyond 30% is almost certainly GPS altitude noise or a
+         * bad fix; clamping keeps the HUD from flashing absurd values.
+         */
+        private const val GRADE_CLAMP_PERCENT = 30f
+
+        /**
+         * Computes the live road grade (slope) in **percent** at the end of the given
+         * track, positive for uphill and negative for downhill.
+         *
+         * Pure and Android-free (reuses [GeoMath]) so it can be unit-tested on the
+         * JVM. GPS altitude is very noisy, so the grade is **not** taken from the last
+         * two fixes: the track is walked backwards from the most recent point,
+         * accumulating horizontal distance until roughly [GRADE_WINDOW_METERS] of
+         * travel is covered, and the slope is obtained by a **least-squares linear
+         * regression** of altitude over cumulative horizontal distance across *every*
+         * fix in that window. Fitting a line through many samples averages out the
+         * per-fix altitude jitter far better than any single delta could, so a noisy
+         * altitude around a flat mean still reads near 0%.
+         *
+         * Returns `0f` when there isn't enough recent, contiguous distance
+         * ([GRADE_MIN_DISTANCE_METERS]), too few altitude samples, or the horizontal
+         * spread is degenerate. The result is clamped to `±`[GRADE_CLAMP_PERCENT] to
+         * reject residual spikes. The walk stops at a [TrackPoint.segmentStart]
+         * boundary so a grade is never measured across a pause gap.
+         */
+        internal fun computeCurrentGrade(points: List<TrackPoint>): Float {
+            if (points.size < 2) return 0f
+
+            // ── 1. Find the window start: walk back until ~GRADE_WINDOW_METERS of
+            // contiguous horizontal travel is covered, never crossing a pause gap.
+            var startIndex = points.lastIndex
+            var horizontal = 0.0
+            var i = points.lastIndex
+            while (i > 0) {
+                val curr = points[i]
+                // The segment feeding a segment-start point is a pause gap, not real
+                // travel: stop the window here rather than measuring across it.
+                if (curr.segmentStart) break
+                val prev = points[i - 1]
+                horizontal += GeoMath.distanceMeters(
+                    prev.latitude, prev.longitude, curr.latitude, curr.longitude
+                )
+                startIndex = i - 1
+                if (horizontal >= GRADE_WINDOW_METERS) break
+                i--
+            }
+            if (horizontal < GRADE_MIN_DISTANCE_METERS) return 0f
+
+            // ── 2. Least-squares fit of altitude (y) over cumulative horizontal
+            // distance (x) across the window. slope = Σ(x-x̄)(y-ȳ) / Σ(x-x̄)².
+            var n = 0
+            var sumX = 0.0
+            var sumY = 0.0
+            var sumXY = 0.0
+            var sumXX = 0.0
+            var cumX = 0.0
+            var prevPt = points[startIndex]
+            points[startIndex].altitudeMeters?.let { alt ->
+                n++; sumX += 0.0; sumY += alt; sumXY += 0.0; sumXX += 0.0
+            }
+            for (j in startIndex + 1..points.lastIndex) {
+                val pt = points[j]
+                cumX += GeoMath.distanceMeters(
+                    prevPt.latitude, prevPt.longitude, pt.latitude, pt.longitude
+                )
+                prevPt = pt
+                val alt = pt.altitudeMeters ?: continue
+                n++
+                sumX += cumX
+                sumY += alt
+                sumXY += cumX * alt
+                sumXX += cumX * cumX
+            }
+            if (n < 2) return 0f
+            val denom = sumXX - sumX * sumX / n
+            if (denom <= 0.0) return 0f
+            val slope = (sumXY - sumX * sumY / n) / denom
+
+            val grade = (slope * 100.0).toFloat()
+            return grade.coerceIn(-GRADE_CLAMP_PERCENT, GRADE_CLAMP_PERCENT)
+        }
     }
 }
 

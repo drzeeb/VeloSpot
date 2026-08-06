@@ -404,6 +404,14 @@
     <string name="ride_stat_elevation_gain">Opstig</string>
     <string name="ride_stat_elevation_loss">Ofstig</string>
     <string name="ride_stat_co2_saved">CO₂ gespuert</string>
+
+    <!-- Trip Computer HUD -->
+    <string name="hud_toggle_title">Bordcomputer (HUD)</string>
+    <string name="hud_toggle_cd">De Bordcomputer tëscht kompakt an erweidert ëmschalten</string>
+    <string name="hud_stat_avg_speed">Ø Tempo</string>
+    <string name="hud_stat_grade">Steigung</string>
+    <string name="hud_stat_eta">Arrivée</string>
+    <string name="hud_stat_remaining">Reschtstreck</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fahrtdetailer zoumaachen</string>
     <string name="ride_detail_drag_hint">Erof zéien • d\'Kaart bleift benotzbar</string>

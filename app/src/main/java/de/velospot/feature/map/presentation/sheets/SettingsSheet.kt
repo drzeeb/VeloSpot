@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RoundedCorner
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.SignalWifiOff
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
@@ -303,6 +304,17 @@ internal fun NavigationRoutingSheet(
                     Switch(
                         checked = state.keepScreenOnEnabled,
                         onCheckedChange = { actions.onToggleKeepScreenOn() }
+                    )
+                }
+            )
+            SettingsRow(
+                icon = Icons.Default.Speed,
+                title = stringResource(R.string.hud_toggle_title),
+                onClick = actions.onToggleHud,
+                trailing = {
+                    Switch(
+                        checked = state.hudEnabled,
+                        onCheckedChange = { actions.onToggleHud() }
                     )
                 }
             )

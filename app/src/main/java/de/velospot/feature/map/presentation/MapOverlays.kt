@@ -109,6 +109,8 @@ internal data class MapMenuCardState(
     val voiceGuidanceEnabled: Boolean = false,
     /** Whether the display is kept awake during navigation / ride recording. */
     val keepScreenOnEnabled: Boolean = true,
+    /** Whether the glanceable Trip Computer HUD is enabled while recording a ride. */
+    val hudEnabled: Boolean = false,
     /** Whether the screen orientation is locked to portrait. */
     val portraitLockEnabled: Boolean = false,
     /** Whether the 3D buildings are drawn with rounded corners. */
@@ -139,6 +141,7 @@ internal data class MapMenuCardActions(
     val onShowParkedBike: () -> Unit = {},
     val onToggleVoiceGuidance: () -> Unit = {},
     val onToggleKeepScreenOn: () -> Unit = {},
+    val onToggleHud: () -> Unit = {},
     val onTogglePortraitLock: () -> Unit = {},
     val onToggleRoundedBuildings: () -> Unit = {},
     val onToggleAmoled: () -> Unit = {},
