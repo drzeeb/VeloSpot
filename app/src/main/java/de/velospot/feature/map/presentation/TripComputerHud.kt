@@ -64,8 +64,9 @@ private const val TABULAR_FIGURES = "tnum"
  *   While navigating ([navigationProgress] non-null) the distance and elevation-gain
  *   cells are swapped for ETA and remaining distance.
  *
- * Sits at the bottom with [navigationBarsPadding]; the turn-by-turn banner
- * ([MapTurnBanner]) stays at the top, so the two never overlap.
+ * Vertically it is lifted to sit in the free band **between the bottom-right record
+ * FAB and the centre-right actions speed-dial ("+")**, so it never overlaps either
+ * of them; the turn-by-turn banner ([MapTurnBanner]) stays at the top.
  */
 @Composable
 internal fun BoxScope.TripComputerHud(
@@ -81,7 +82,11 @@ internal fun BoxScope.TripComputerHud(
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .navigationBarsPadding()
-            .padding(horizontal = 12.dp, vertical = 12.dp)
+            // Lift the band clear of the bottom-right record FAB: its top edge sits
+            // at 88 dp (inset) + 56 dp (FAB height) = 144 dp above the nav bar, so a
+            // 152 dp bottom inset leaves a small gap above it while staying below the
+            // centre-right speed-dial.
+            .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 152.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .clickable(
