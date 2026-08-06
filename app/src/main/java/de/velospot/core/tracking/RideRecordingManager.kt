@@ -80,6 +80,16 @@ class RideRecordingManager(
 
     private val tracker = RideTracker()
 
+    /**
+     * Debounced movement classifier. While recording, its stationary/moving verdict
+     * is folded into [LocationController] so the GPS radio idles during sustained
+     * stops (traffic light / café / ferry-train legs / paused) and snaps back to full
+     * fidelity the moment the rider moves — the battery win for long tours.
+     */
+    private val standstillDetector = StandstillDetector()
+    /** Last stationary verdict pushed to the controller (avoids redundant re-applies). */
+    private var lastStationaryApplied = false
+
     private val _trackingState = MutableStateFlow<RideTrackingUiState>(RideTrackingUiState.Idle)
     val trackingState: StateFlow<RideTrackingUiState> = _trackingState.asStateFlow()
 
@@ -206,6 +216,8 @@ class RideRecordingManager(
         pendingRideName = null
         sawSimulatedFix = false
         lastElevationIndex = 0
+        standstillDetector.reset()
+        lastStationaryApplied = false
         val startedAt = System.currentTimeMillis()
         recordingStartedAt = startedAt
         tracker.start(startedAt)
@@ -310,6 +322,8 @@ class RideRecordingManager(
     fun pause() {
         if (!tracker.isRecording || tracker.isPaused) return
         tracker.pause(System.currentTimeMillis())
+        // A paused leg (train/ferry) idles the GPS: fixes are discarded anyway.
+        applyStationary(standstillDetector.setPaused(true))
         val stats = tracker.currentStats(System.currentTimeMillis())
         _trackingState.value = RideTrackingUiState.Recording(stats)
         persistMeta(stats)
@@ -324,6 +338,9 @@ class RideRecordingManager(
     fun resume() {
         if (!tracker.isRecording || !tracker.isPaused) return
         tracker.resume(System.currentTimeMillis())
+        // Resuming restores full-accuracy fixes at once; the dwell re-arms on the
+        // next low-speed fix if the rider is still stopped.
+        applyStationary(standstillDetector.setPaused(false))
         val stats = tracker.currentStats(System.currentTimeMillis())
         _trackingState.value = RideTrackingUiState.Recording(stats)
         persistMeta(stats)
@@ -385,6 +402,17 @@ class RideRecordingManager(
 
     // ── Internals ──────────────────────────────────────────────────────────────
 
+    /**
+     * Pushes a movement verdict to the [LocationController] only on a real
+     * transition, so the GPS request is recomputed once per moving↔stationary
+     * change rather than on every fix.
+     */
+    private fun applyStationary(stationary: Boolean) {
+        if (stationary == lastStationaryApplied) return
+        lastStationaryApplied = stationary
+        locationController.setRecordingStationary(stationary)
+    }
+
     private fun observeLocation() {
         locationJob?.cancel()
         locationJob = scope.launch {
@@ -407,6 +435,12 @@ class RideRecordingManager(
             accuracyMeters = location.accuracyMeters
         )
         _trackingState.value = RideTrackingUiState.Recording(stats)
+        // Feed the debounced movement classifier so the GPS radio idles during
+        // sustained stops and restores full accuracy the moment the rider moves.
+        // Skipped while paused — the pause path already forced the idle profile.
+        if (!tracker.isPaused) {
+            applyStationary(standstillDetector.onFix(stats.currentSpeedMps, System.currentTimeMillis()))
+        }
         if (tracker.trackPoints.size > pointsBefore) {
             val accepted = tracker.trackPoints.last()
             val routePoint = RoutePoint(accepted.latitude, accepted.longitude)
