@@ -100,6 +100,17 @@ android {
         buildConfig = true
     }
 
+    lint {
+        // Lint only needs the app's own (main) sources. Analysing the instrumented
+        // androidTest sources pulls in the full androidTest compile classpath
+        // (JUnit/Espresso/…) to build the androidTest lint model — which the lint CI
+        // job doesn't need and which made `lintDebug` fail (and poisoned the
+        // configuration cache) whenever that classpath couldn't be resolved from a
+        // flaky/forbidding Maven Central. Skipping test sources keeps lint focused
+        // and self-contained; unit/instrumented tests are validated by their own jobs.
+        ignoreTestSources = true
+    }
+
     // Keep the AGP-generated "Dependency metadata" block out of the APK (it is opaque
     // and non-reproducible) while keeping it in the AAB for Google Play's upload-time
     // processing.

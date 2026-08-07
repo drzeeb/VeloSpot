@@ -10,30 +10,55 @@ import de.velospot.domain.model.TrackPoint
 import de.velospot.domain.model.WeatherSnapshot
 import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.RecordedRidesRepository
-import kotlinx.coroutines.Dispatchers
+import de.velospot.testsupport.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RideAnalysisViewModelTest {
 
-    private val dispatcher = StandardTestDispatcher()
+    /**
+     * Installs a controlled test dispatcher as `Dispatchers.Main` and resets it only
+     * *after* [tearDown]. That ordering lets [tearDown] cancel every view-model's
+     * `viewModelScope` (which cancels its `stateIn` collector and the `flowOn`
+     * upstream) and drain the scheduler while the test dispatcher is still Main — so
+     * no leaked coroutine can dispatch onto a reset (missing on the JVM) Main and
+     * surface as a flaky `UncaughtExceptionsBeforeTest` against a later test.
+     */
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
-    @Before fun setUp() = Dispatchers.setMain(dispatcher)
-    @After fun tearDown() = Dispatchers.resetMain()
+    private val dispatcher get() = mainDispatcherRule.dispatcher
+
+    /** View-models built by [viewModel]; their scopes are cancelled in [tearDown]. */
+    private val createdViewModels = mutableListOf<RideAnalysisViewModel>()
+
+    @After
+    fun tearDown() {
+        // Cancel each view-model's viewModelScope (reflectively — clear() is not
+        // public) so its collectors are torn down while Main is still the test
+        // dispatcher, then drain the scheduler before the rule resets Main.
+        createdViewModels.forEach { vm ->
+            runCatching {
+                androidx.lifecycle.ViewModel::class.java
+                    .getDeclaredMethod("clear")
+                    .apply { isAccessible = true }
+                    .invoke(vm)
+            }
+        }
+        createdViewModels.clear()
+        dispatcher.scheduler.advanceUntilIdle()
+    }
 
     private class FakeRidesRepository(rides: List<RecordedRide>) : RecordedRidesRepository {
         val flow = MutableStateFlow(rides)
@@ -117,11 +142,11 @@ class RideAnalysisViewModelTest {
         repository = repo,
         mapSettings = FakeMapSettings(weatherEnabled),
         savedStateHandle = SavedStateHandle(mapOf(RideAnalysisViewModel.ARG_RIDE_ID to rideId)),
-    )
+    ).also { createdViewModels.add(it) }
 
     /**
      * Awaits the first settled (non-[RideAnalysisUiState.Loading]) state. The analysis
-     * runs on a real [Dispatchers.Default] via `flowOn`, so we can't just advance the
+     * runs on a real `Dispatchers.Default` via `flowOn`, so we can't just advance the
      * virtual scheduler — subscribing and awaiting resumes once Default has emitted.
      */
     private suspend fun RideAnalysisViewModel.awaitSettled(): RideAnalysisUiState =
