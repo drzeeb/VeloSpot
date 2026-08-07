@@ -505,10 +505,6 @@
     <string name="ride_export_select_hint">Seleciona os percursos a exportar</string>
     <string name="ride_export_chooser_title">Exportar percursos como GPX</string>
     <string name="ride_export_combined_filename">VeloSpot-percursos-%1$s</string>
-    <string name="ride_export_mode_title">Exportar como GPX</string>
-    <string name="ride_export_mode_message">Combinar os percursos selecionados num ficheiro ou criar um ficheiro por percurso?</string>
-    <string name="ride_export_mode_combined">Um ficheiro combinado</string>
-    <string name="ride_export_mode_separate">Um ficheiro por percurso</string>
     <string name="ride_import_done">Percursos importados</string>
     <string name="ride_import_failed">Nenhum percurso encontrado no ficheiro</string>
     <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->

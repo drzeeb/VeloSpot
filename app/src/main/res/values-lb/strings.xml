@@ -505,10 +505,6 @@
     <string name="ride_export_select_hint">Tourë fir den Export auswielen</string>
     <string name="ride_export_chooser_title">Tourën als GPX exportéieren</string>
     <string name="ride_export_combined_filename">VeloSpot-Tourën-%1$s</string>
-    <string name="ride_export_mode_title">Als GPX exportéieren</string>
-    <string name="ride_export_mode_message">Déi ausgewielten Tourën an eng Datei zesummefaassen oder pro Tour eng eege Datei uleeën?</string>
-    <string name="ride_export_mode_combined">Eng gemeinsam Datei</string>
-    <string name="ride_export_mode_separate">Eng Datei pro Tour</string>
     <string name="ride_import_done">Tourën importéiert</string>
     <string name="ride_import_failed">Keng Tourën an der Datei fonnt</string>
     <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->

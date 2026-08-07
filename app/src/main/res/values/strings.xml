@@ -291,10 +291,6 @@
     <string name="ride_export_select_hint">Select rides to export</string>
     <string name="ride_export_chooser_title">Export rides as GPX</string>
     <string name="ride_export_combined_filename">VeloSpot-rides-%1$s</string>
-    <string name="ride_export_mode_title">Export as GPX</string>
-    <string name="ride_export_mode_message">Combine the selected rides into one file or create a separate file per ride?</string>
-    <string name="ride_export_mode_combined">One combined file</string>
-    <string name="ride_export_mode_separate">One file per ride</string>
     <string name="ride_import_done">Rides imported</string>
     <string name="ride_import_failed">No rides found in the file</string>
     <!-- Per-ride GPX export/share + upload help -->
