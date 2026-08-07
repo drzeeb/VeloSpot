@@ -331,16 +331,15 @@ class RideRecordingManager(
                 // once at save time. Untagged when no garage / no bikes exist yet.
                 val bikeId = runCatching { bikeProfilesRepository?.resolveActiveProfileId() }.getOrNull()
                 val tagged = if (bikeId != null) named.copy(bikeProfileId = bikeId) else named
-                // Attach best-effort weather. Mock rides never get weather. Prefer the
-                // snapshot captured at ride start; if none is present but the feature
-                // is enabled, do a last-chance fetch for the start (or last) point.
-                // A null/offline result never blocks or fails the save.
-                val withWeather = if (tagged.isMock) {
-                    tagged
-                } else {
-                    val weather = pendingWeather ?: fetchStartWeatherAtStop(tagged)
-                    if (weather != null) tagged.copy(weather = weather) else tagged
-                }
+                // Attach best-effort weather (a display-only attribute, so — unlike
+                // statistics/achievements — it is captured for mock rides too, which
+                // makes the simulator usable for testing the feature). Prefer the
+                // snapshot captured at ride start; if none is present (a mock ride,
+                // whose eager start fetch is skipped, or the fetch hadn't completed)
+                // but the opt-in feature is enabled, do a last-chance fetch for the
+                // start (or last) point. A null/offline result never blocks the save.
+                val weather = pendingWeather ?: fetchStartWeatherAtStop(tagged)
+                val withWeather = if (weather != null) tagged.copy(weather = weather) else tagged
                 recordedRidesRepository.saveRide(withWeather)
                 _events.tryEmit(RideRecordingEvent.Saved(withWeather))
                 // Real rides only: check whether this ride pushed the bike past a new
