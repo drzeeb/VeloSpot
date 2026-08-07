@@ -377,10 +377,10 @@ private fun RideListItem(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(2.dp))
+                // Always show "date • distance" so named and unnamed rides read the
+                // same way; the distance is no longer dropped for unnamed recordings.
                 Text(
-                    text = if (rideName != null)
-                        "$dateLabel • ${formatRideDistance(ride.distanceMeters)}"
-                    else dateLabel,
+                    text = "$dateLabel • ${formatRideDistance(ride.distanceMeters)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

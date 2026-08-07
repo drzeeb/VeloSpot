@@ -59,6 +59,14 @@ class RideRecordingManager(
     /** Resolves the bike a finished ride is tagged with. Optional so unit tests can
      *  construct the manager without the garage (then rides stay untagged). */
     private val bikeProfilesRepository: BikeProfilesRepository? = null,
+    /**
+     * Best-effort reverse geocoder used to auto-name an unnamed recording after its
+     * start place at save time (see [stop]). Supplied by Hilt in production; `null`
+     * in unit tests, which then never geocode (rides stay unnamed unless a pending
+     * name was set). A network lookup that fails/returns `null` must never block or
+     * fail the ride save.
+     */
+    private val reverseGeocodePlace: (suspend (Double, Double) -> String?)? = null,
 ) {
     /**
      * Production constructor (Hilt-provided): owns a long-lived [SupervisorJob] on
@@ -70,12 +78,14 @@ class RideRecordingManager(
         locationController: LocationController,
         recordedRidesRepository: RecordedRidesRepository,
         bikeProfilesRepository: BikeProfilesRepository,
+        geocoder: de.velospot.data.geocoding.PhotonGeocoder,
     ) : this(
         context,
         locationController,
         recordedRidesRepository,
         CoroutineScope(SupervisorJob() + Dispatchers.Default),
         bikeProfilesRepository,
+        geocoder::reverseGeocodePlace,
     )
 
     private val tracker = RideTracker()
@@ -267,10 +277,23 @@ class RideRecordingManager(
         _liveTrackSegments.value = emptyList()
         if (ride != null) {
             scope.launch {
+                // Auto-name an unnamed recording after its reverse-geocoded start
+                // place (e.g. "Trier"), exactly like navigation-ride naming, so a
+                // manual/background recording lands in "My rides" with a city label
+                // instead of just its distance. Best-effort: a null/offline result
+                // (or a missing geocoder in tests) leaves the ride unnamed but still
+                // saved — this must never block or fail the save.
+                val autoName = if (ride.name.isNullOrBlank()) {
+                    ride.points.firstOrNull()?.let { start ->
+                        runCatching { reverseGeocodePlace?.invoke(start.latitude, start.longitude) }
+                            .getOrNull()
+                    }
+                } else null
+                val named = ride.copy(name = resolveRideName(ride.name, autoName))
                 // Tag the ride with the rider's active bike (or the default), resolved
                 // once at save time. Untagged when no garage / no bikes exist yet.
                 val bikeId = runCatching { bikeProfilesRepository?.resolveActiveProfileId() }.getOrNull()
-                val tagged = if (bikeId != null) ride.copy(bikeProfileId = bikeId) else ride
+                val tagged = if (bikeId != null) named.copy(bikeProfileId = bikeId) else named
                 recordedRidesRepository.saveRide(tagged)
                 _events.tryEmit(RideRecordingEvent.Saved(tagged))
                 // Real rides only: check whether this ride pushed the bike past a new
@@ -595,6 +618,20 @@ class RideRecordingManager(
     companion object {
         /** Max distance (m) from the active route at which its terrain elevation is trusted. */
         private const val ROUTE_ELEVATION_MATCH_METERS = 50.0
+
+        /**
+         * Pure decision for a saved ride's final name:
+         *  - an explicit [existingName] (typed by the rider or set for a navigation /
+         *    round-trip ride) always wins and is never overridden;
+         *  - otherwise fall back to the reverse-[geocodedPlace] of the start point;
+         *  - `null` only when neither is usable (offline/unknown place) — the ride is
+         *    then saved unnamed and the UI falls back to its date.
+         * Blank strings are treated as absent so an empty prompt never wins.
+         */
+        internal fun resolveRideName(existingName: String?, geocodedPlace: String?): String? {
+            existingName?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+            return geocodedPlace?.trim()?.takeIf { it.isNotBlank() }
+        }
     }
 }
 
