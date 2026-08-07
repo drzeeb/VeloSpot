@@ -11,6 +11,8 @@ import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.maptiles.OfflineMapTilesManager
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.MapError
+import de.velospot.domain.model.PlannedRoute
+import de.velospot.domain.model.RoutePoint
 import de.velospot.testsupport.fakeContextWithPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -137,6 +139,32 @@ class OfflineRegionsControllerTest {
         h.store.add(OfflineRegionPack("existing", "Frankfurt", 50.11, 8.68, 1L))
         h.controller.addRegionAt(50.11, 8.68) // same spot → duplicate
         assertEquals(1, h.duplicates())
+    }
+
+    @Test
+    fun `duplicate route corridor for an already-stored route is rejected`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val h = TestScopeBuilder(scope, context(internet = true, wifi = true))
+        // A corridor pack is stored with the route's name as its label.
+        h.store.add(OfflineRegionPack("existing", "Morning Loop", 50.11, 8.68, 1L))
+
+        h.controller.downloadRouteCorridor(
+            PlannedRoute(
+                id = "r1",
+                name = "Morning Loop",
+                waypoints = emptyList(),
+                geometry = listOf(RoutePoint(50.11, 8.68), RoutePoint(50.12, 8.69)),
+                distanceMeters = 1000.0,
+                elevationGainMeters = 0.0,
+                elevationLossMeters = 0.0,
+                createdAt = 1L,
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals(1, h.duplicates())
+        assertEquals(1, h.store.list().size) // no second pack was created
+        assertNull(h.controller.uiState.value.downloading)
     }
 
     @Test
