@@ -547,6 +547,22 @@
     <string name="ride_share_theme_ocean">Ozean</string>
     <string name="ride_share_theme_berry">Bei</string>
     <string name="ride_share_theme_midnight">Mëtternuecht</string>
+    <!-- Share overall stats as a card ("VeloSpot Wrapped - All-time") -->
+    <string name="stats_share_action">Statistik deelen</string>
+    <string name="stats_share_dialog_title">Deng Statistik deelen</string>
+    <string name="stats_share_dialog_subtitle">Deng ganz Fahrhistorie op enger schécker Kaart — perfekt fir WhatsApp, Telegram oder Instagram.</string>
+    <string name="stats_share_headline_distance">Gesamtdistanz</string>
+    <!-- %1$d = Unzuel vun de Fahrten, %2$d = Unzuel vun aktiven Deeg -->
+    <string name="stats_share_subtitle">%1$d Fahrten · %2$d aktiv Deeg</string>
+    <string name="stats_share_period_all_time">Am Ganzen</string>
+    <!-- %1$s = Mount an Joer vun der éischter Fahrt, z. B. "JUN 2024" -->
+    <string name="stats_share_period_since">Zënter %1$s</string>
+    <!-- %1$.1f = Undeel vum Ëmfang vun der Äerd -->
+    <string name="stats_share_badge_world">%1$.1f%% ronderëm d\'Welt</string>
+    <!-- %1$.1f = wéi oft d\'Héichtemeter den Everest erginn -->
+    <string name="stats_share_badge_everest">%1$.1f× Everest</string>
+    <!-- %1$d = längste Serie an Deeg -->
+    <string name="stats_share_badge_streak">%1$d-Deeg-Serie</string>
     <string name="ride_stop_save">Stoppen &amp; späicheren</string>
     <string name="ride_notification_channel_name">Tour-Opzeechnung</string>
     <string name="ride_notification_channel_description">Zeechent deng Tour weider op, wärend d\'App am Hannergrond leeft.</string>

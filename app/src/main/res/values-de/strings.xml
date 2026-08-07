@@ -553,6 +553,22 @@
     <string name="ride_share_theme_ocean">Ozean</string>
     <string name="ride_share_theme_berry">Beere</string>
     <string name="ride_share_theme_midnight">Mitternacht</string>
+    <!-- Share overall stats as a card ("VeloSpot Wrapped - All-time") -->
+    <string name="stats_share_action">Statistik teilen</string>
+    <string name="stats_share_dialog_title">Statistik teilen</string>
+    <string name="stats_share_dialog_subtitle">Deine gesamte Fahrhistorie auf einer coolen Kachel – perfekt für WhatsApp, Telegram oder Instagram.</string>
+    <string name="stats_share_headline_distance">Gesamtdistanz</string>
+    <!-- %1$d = Anzahl der Fahrten, %2$d = Anzahl aktiver Tage -->
+    <string name="stats_share_subtitle">%1$d Fahrten · %2$d aktive Tage</string>
+    <string name="stats_share_period_all_time">Gesamt</string>
+    <!-- %1$s = Monat und Jahr der ersten Fahrt, z. B. "JUN 2024" -->
+    <string name="stats_share_period_since">Seit %1$s</string>
+    <!-- %1$.1f = Anteil des Erdumfangs -->
+    <string name="stats_share_badge_world">%1$.1f%% um die Welt</string>
+    <!-- %1$.1f = wie oft die Höhenmeter den Everest ergeben -->
+    <string name="stats_share_badge_everest">%1$.1f× Everest</string>
+    <!-- %1$d = längste Serie in Tagen -->
+    <string name="stats_share_badge_streak">%1$d-Tage-Serie</string>
     <string name="ride_stop_save">Stoppen &amp; speichern</string>
     <string name="ride_notification_channel_name">Streckenaufzeichnung</string>
     <string name="ride_notification_channel_description">Zeichnet deine Fahrt weiter auf, während die App im Hintergrund läuft.</string>

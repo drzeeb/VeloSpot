@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,7 +53,12 @@ internal fun RideStatisticsSection(stats: RideStatistics) {
     if (!stats.hasData) return
 
     var expanded by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     val dateFormat = remember { DateFormat.getDateInstance(DateFormat.MEDIUM) }
+
+    if (showShareDialog) {
+        StatsShareDialog(stats = stats, onDismiss = { showShareDialog = false })
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -60,14 +67,18 @@ internal fun RideStatisticsSection(stats: RideStatistics) {
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // ── Header (tap to collapse/expand) ──────────────────────────────
+            // ── Header ───────────────────────────────────────────────────────
+            // Only the title area toggles expand/collapse; the Share button sits
+            // outside that clickable region so tapping it never toggles the card.
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { expanded = !expanded }
+                ) {
                     Text(
                         text = stringResource(R.string.ride_stats_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -83,10 +94,18 @@ internal fun RideStatisticsSection(stats: RideStatistics) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                IconButton(onClick = { showShareDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.stats_share_action),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clickable { expanded = !expanded }
                 )
             }
 

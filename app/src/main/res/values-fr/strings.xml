@@ -548,6 +548,22 @@
     <string name="ride_share_theme_ocean">Océan</string>
     <string name="ride_share_theme_berry">Baie</string>
     <string name="ride_share_theme_midnight">Minuit</string>
+    <!-- Share overall stats as a card ("VeloSpot Wrapped - All-time") -->
+    <string name="stats_share_action">Partager les statistiques</string>
+    <string name="stats_share_dialog_title">Partagez vos statistiques</string>
+    <string name="stats_share_dialog_subtitle">Tout votre historique de sorties réuni dans une carte percutante — parfait pour WhatsApp, Telegram ou Instagram.</string>
+    <string name="stats_share_headline_distance">Distance totale</string>
+    <!-- %1$d = nombre de sorties, %2$d = nombre de jours actifs -->
+    <string name="stats_share_subtitle">%1$d sorties · %2$d jours actifs</string>
+    <string name="stats_share_period_all_time">Depuis le début</string>
+    <!-- %1$s = mois et année de la première sortie, p. ex. "JUN 2024" -->
+    <string name="stats_share_period_since">Depuis %1$s</string>
+    <!-- %1$.1f = pourcentage de la circonférence de la Terre parcourue -->
+    <string name="stats_share_badge_world">%1$.1f%% autour du monde</string>
+    <!-- %1$.1f = combien de fois le dénivelé total équivaut à l\'Everest -->
+    <string name="stats_share_badge_everest">%1$.1f× Everest</string>
+    <!-- %1$d = plus longue série en jours -->
+    <string name="stats_share_badge_streak">Série de %1$d jours</string>
     <string name="ride_stop_save">Arrêter et enregistrer</string>
     <string name="ride_notification_channel_name">Enregistrement du trajet</string>
     <string name="ride_notification_channel_description">Continue d\'enregistrer votre trajet lorsque l\'application est en arrière-plan.</string>

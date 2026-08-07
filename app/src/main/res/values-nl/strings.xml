@@ -547,6 +547,22 @@
     <string name="ride_share_theme_ocean">Oceaan</string>
     <string name="ride_share_theme_berry">Bes</string>
     <string name="ride_share_theme_midnight">Middernacht</string>
+    <!-- Share overall stats as a card ("VeloSpot Wrapped - All-time") -->
+    <string name="stats_share_action">Statistieken delen</string>
+    <string name="stats_share_dialog_title">Deel je statistieken</string>
+    <string name="stats_share_dialog_subtitle">Je volledige rithistorie in één stoere kaart — perfect voor WhatsApp, Telegram of Instagram.</string>
+    <string name="stats_share_headline_distance">Totale afstand</string>
+    <!-- %1$d = aantal ritten, %2$d = aantal actieve dagen -->
+    <string name="stats_share_subtitle">%1$d ritten · %2$d actieve dagen</string>
+    <string name="stats_share_period_all_time">Aller tijden</string>
+    <!-- %1$s = maand en jaar van de eerste rit, bijv. "JUN 2024" -->
+    <string name="stats_share_period_since">Sinds %1$s</string>
+    <!-- %1$.1f = percentage van de omtrek van de aarde -->
+    <string name="stats_share_badge_world">%1$.1f%% rond de wereld</string>
+    <!-- %1$.1f = hoe vaak de totale klim gelijk is aan de Everest -->
+    <string name="stats_share_badge_everest">%1$.1f× Everest</string>
+    <!-- %1$d = langste reeks in dagen -->
+    <string name="stats_share_badge_streak">Reeks van %1$d dagen</string>
     <string name="ride_stop_save">Stoppen en opslaan</string>
     <string name="ride_notification_channel_name">Ritregistratie</string>
     <string name="ride_notification_channel_description">Blijft je rit registreren terwijl de app op de achtergrond draait.</string>
