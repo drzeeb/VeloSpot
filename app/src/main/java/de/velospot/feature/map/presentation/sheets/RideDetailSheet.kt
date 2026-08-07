@@ -108,7 +108,8 @@ internal fun RideDetailSheet(
     onImport: () -> Unit = {},
     /**
      * Whether the opt-in weather feature is enabled. When `true` and the ride
-     * carries a stored snapshot, the "VeloSpot Wrapped" share card shows weather.
+     * carries a stored snapshot, the detail sheet shows the weather box and the
+     * "VeloSpot Wrapped" share card shows weather. When `false`, no weather is shown.
      */
     weatherEnabled: Boolean = false
 ) {
@@ -340,11 +341,14 @@ internal fun RideDetailSheet(
                         value = formatCo2Saved(estimateRideCo2SavedGrams(ride))
                     )
 
-                    // ── Weather at ride start (opt-in Open-Meteo; older rides have
-                    //    none, so nothing is rendered then) ────────────────────────
-                    ride.weather?.let { weather ->
-                        Spacer(Modifier.height(10.dp))
-                        WeatherStatBox(weather = weather, modifier = Modifier.fillMaxWidth())
+                    // ── Weather at ride start (opt-in Open-Meteo) ────────────────
+                    // Shown only while the feature is enabled AND the ride stored a
+                    // snapshot (older rides / feature off render nothing).
+                    if (weatherEnabled) {
+                        ride.weather?.let { weather ->
+                            Spacer(Modifier.height(10.dp))
+                            WeatherStatBox(weather = weather, modifier = Modifier.fillMaxWidth())
+                        }
                     }
 
 
