@@ -699,7 +699,13 @@ fun MainMapScreen(
     // to re-run the marker rendering effect above.
     LaunchedEffect(maplibreMap, isDarkTheme, amoledEnabled) {
         val map = maplibreMap ?: return@LaunchedEffect
-        map.setStyle(mapStyleUrl(isDarkTheme, amoledEnabled)) { _ ->
+        map.setStyle(mapStyleUrl(isDarkTheme, amoledEnabled)) { style ->
+            // Re-localize the base-map place labels to the app language on every
+            // style (re)load — a fresh style resets them to their endonym default.
+            de.velospot.feature.map.presentation.markers.localizeMapLabels(
+                style,
+                de.velospot.feature.map.presentation.markers.currentMapLanguage()
+            )
             styleVersion++
         }
     }
