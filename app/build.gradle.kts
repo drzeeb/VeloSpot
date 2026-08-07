@@ -175,8 +175,12 @@ kover {
                     // Trailing `*` also excludes their generated lambda classes.
                     "de.velospot.MainActivity*",
                     "de.velospot.BaseApplication*",
+                    // Health Connect I/O glue (owns the HealthConnectClient / needs a
+                    // real provider). The pure record blueprint (HealthConnectRideMapper)
+                    // stays covered by HealthConnectRideMapperTest.
+                    "de.velospot.core.health.HealthConnectExporter*",
+                    "de.velospot.core.health.HealthConnectRationaleActivity*",
                     "de.velospot.core.tracking.RideRecordingService*",
-                    "de.velospot.core.tracking.RideRecordingTileService*",
                     "de.velospot.core.tracking.RideRecordingWidget*",
                     "de.velospot.core.tracking.BikeServiceNotifier*",
                     // System location provider glue (FusedLocationProvider callbacks —
@@ -275,6 +279,11 @@ dependencies {
     implementation(libs.roomRuntime)
     implementation(libs.roomKtx)
     ksp(libs.roomCompiler)
+
+    // Health Connect — writes finished rides (exercise session + distance, calories,
+    // elevation and speed) into the on-device Health Connect store so they show up in
+    // the user's health ecosystem. Pure AndroidX, no Google Play Services dependency.
+    implementation(libs.androidxHealthConnectClient)
 
     // Jetpack DataStore – reactive, non-blocking key-value settings (replaces
     // the main-thread SharedPreferences reads for the map's UI toggles).

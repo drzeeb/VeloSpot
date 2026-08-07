@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -67,6 +68,14 @@ class RideRecordingManager(
      * fail the ride save.
      */
     private val reverseGeocodePlace: (suspend (Double, Double) -> String?)? = null,
+    /**
+     * Best-effort hook fired with every freshly-saved ride so it can be
+     * auto-exported to Health Connect when the opt-in setting is on. Supplied by
+     * Hilt in production; `null` in unit tests (which then never auto-export). Must
+     * never block or fail the ride save — the manager always calls it fire-and-forget
+     * inside a `runCatching` on its own scope.
+     */
+    private val onRideSavedForExport: (suspend (RecordedRide) -> Unit)? = null,
 ) {
     /**
      * Production constructor (Hilt-provided): owns a long-lived [SupervisorJob] on
@@ -79,6 +88,8 @@ class RideRecordingManager(
         recordedRidesRepository: RecordedRidesRepository,
         bikeProfilesRepository: BikeProfilesRepository,
         geocoder: de.velospot.data.geocoding.PhotonGeocoder,
+        healthConnectExporter: de.velospot.core.health.HealthConnectExporter,
+        mapSettings: de.velospot.domain.repository.MapSettingsRepository,
     ) : this(
         context,
         locationController,
@@ -86,6 +97,12 @@ class RideRecordingManager(
         CoroutineScope(SupervisorJob() + Dispatchers.Default),
         bikeProfilesRepository,
         geocoder::reverseGeocodePlace,
+        onRideSavedForExport = { ride ->
+            // Best-effort auto-export: silently no-ops when disabled, unavailable or
+            // not permitted. Reads the current opt-in flag at save time.
+            val enabled = mapSettings.healthConnectAutoExportEnabled.first()
+            healthConnectExporter.autoExport(ride, enabled)
+        },
     )
 
     private val tracker = RideTracker()
@@ -147,6 +164,7 @@ class RideRecordingManager(
                     persistence.recover()?.let { recovered ->
                         recordedRidesRepository.saveRide(recovered)
                         _events.tryEmit(RideRecordingEvent.Saved(recovered))
+                        runCatching { onRideSavedForExport?.invoke(recovered) }
                     }
                     persistence.clear()
                 }
@@ -296,6 +314,9 @@ class RideRecordingManager(
                 val tagged = if (bikeId != null) named.copy(bikeProfileId = bikeId) else named
                 recordedRidesRepository.saveRide(tagged)
                 _events.tryEmit(RideRecordingEvent.Saved(tagged))
+                // Best-effort auto-export to Health Connect (opt-in). Fire-and-forget
+                // so it can never block or fail the ride save.
+                runCatching { onRideSavedForExport?.invoke(tagged) }
                 // Real rides only: check whether this ride pushed the bike past a new
                 // shop-service milestone and, if so, notify once (best-effort).
                 if (bikeId != null && !tagged.isMock) {

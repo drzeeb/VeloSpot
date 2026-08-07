@@ -155,7 +155,8 @@ internal data class MapMenuCardActions(
     val onOpenDisplaySettings: () -> Unit = {},
     val onOpenNavRouting: () -> Unit = {},
     val onOpenBikeGarage: () -> Unit = {},
-    val onOpenSensors: () -> Unit = {}
+    val onOpenSensors: () -> Unit = {},
+    val onOpenHealthConnect: () -> Unit = {}
 )
 
 @Composable

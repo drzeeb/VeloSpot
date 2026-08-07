@@ -75,11 +75,19 @@ interface MapSettingsRepository {
     val rideViewOptions: Flow<RideViewOptions>
 
     /**
+     * Whether finished rides are **automatically exported to Health Connect** right
+     * after they are saved. Opt-in; defaults to `false`. Best-effort — a disabled
+     * flag, an unavailable provider or missing permissions simply skip the export.
+     */
+    val healthConnectAutoExportEnabled: Flow<Boolean>
+
+    /**
      * Whether the first-launch **welcome onboarding** has been completed (seen or
      * dismissed). Defaults to `false` so the 3-card welcome sheet is shown once on
      * the first start; it can be re-armed from the About sheet ("view the tour again").
      */
     val onboardingCompleted: Flow<Boolean>
+
 
     suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean)
     suspend fun set3DNavigation(enabled: Boolean)
@@ -93,6 +101,7 @@ interface MapSettingsRepository {
     suspend fun setSunAlertEnabled(enabled: Boolean)
     suspend fun setShowMaxSpeedBubble(enabled: Boolean)
     suspend fun setColorTrackBySpeed(enabled: Boolean)
+    suspend fun setHealthConnectAutoExportEnabled(enabled: Boolean)
     suspend fun setOnboardingCompleted(completed: Boolean)
 }
 

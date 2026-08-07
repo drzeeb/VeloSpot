@@ -8,6 +8,7 @@ import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Science
@@ -65,6 +67,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
 import de.velospot.R
 import de.velospot.core.tracking.estimateRideCalories
 import de.velospot.core.tracking.estimateRideCo2SavedGrams
@@ -99,7 +102,19 @@ internal fun RideDetailSheet(
      * hidden since they need a persisted ride. Closing the sheet then discards it.
      */
     isImportable: Boolean = false,
-    onImport: () -> Unit = {}
+    onImport: () -> Unit = {},
+    /**
+     * Whether the "Export to Health Connect" action may write to Health Connect
+     * (the provider is installed and available). When `false` but
+     * [healthConnectInstallable] is `true`, an "Install Health Connect" action is
+     * shown instead; when both are `false` the action is hidden entirely.
+     */
+    canExportToHealthConnect: Boolean = false,
+    healthConnectInstallable: Boolean = false,
+    /** The Health Connect write permissions requested before an export. */
+    healthConnectWritePermissions: Set<String> = emptySet(),
+    onExportToHealthConnect: () -> Unit = {},
+    onInstallHealthConnect: () -> Unit = {}
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -374,6 +389,45 @@ internal fun RideDetailSheet(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(text = stringResource(R.string.ride_share_action))
+                    }
+
+                    // ── Export the ride to Health Connect ────────────────────
+                    // Writes an exercise session (+ distance, calories, elevation,
+                    // speed) into the health ecosystem. Requesting the write
+                    // permissions uses PermissionController's result contract; an
+                    // already-granted request returns immediately and exports. Hidden
+                    // while previewing an unsaved GPX or when unsupported.
+                    if (!isImportable && (canExportToHealthConnect || healthConnectInstallable)) {
+                        val healthPermissionLauncher = rememberLauncherForActivityResult(
+                            PermissionController.createRequestPermissionResultContract()
+                        ) { granted ->
+                            if (granted.containsAll(healthConnectWritePermissions)) {
+                                onExportToHealthConnect()
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                if (canExportToHealthConnect) {
+                                    healthPermissionLauncher.launch(healthConnectWritePermissions)
+                                } else {
+                                    onInstallHealthConnect()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MonitorHeart,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(
+                                    if (canExportToHealthConnect) R.string.health_connect_export_action
+                                    else R.string.health_connect_install_action
+                                )
+                            )
+                        }
                     }
 
                     // ── Save this ride as a re-rideable route (with a leaderboard) ─

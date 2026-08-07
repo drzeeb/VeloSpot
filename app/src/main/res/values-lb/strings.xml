@@ -431,6 +431,24 @@
     <string name="sensor_unit_bpm">bpm</string>
     <string name="sensor_unit_watts">W</string>
     <string name="sensor_unit_rpm">U/min</string>
+
+    <!-- Health Connect export -->
+    <string name="health_connect_title">Health Connect</string>
+    <string name="health_connect_subtitle">Schreif deng ofgeschloss Faarten an Health Connect, sou datt se an dengen Gesondheets-Apps erschéngen. VeloSpot schreift nëmmen Donnéeën a liest se ni.</string>
+    <string name="health_connect_export_action">Op Health Connect exportéieren</string>
+    <string name="health_connect_install_action">Health Connect installéieren</string>
+    <string name="health_connect_grant_permissions">Berechtegunge ginn</string>
+    <string name="health_connect_manage_permissions">Berechtegunge verwalten</string>
+    <string name="health_connect_auto_export_title">Faarten automatesch exportéieren</string>
+    <string name="health_connect_status_available">Health Connect ass verfügbar</string>
+    <string name="health_connect_status_not_installed">Health Connect ass net installéiert</string>
+    <string name="health_connect_status_update_required">Health Connect brauch en Update</string>
+    <string name="health_connect_status_unsupported">Health Connect gëtt op dësem Apparat net ënnerstëtzt</string>
+    <string name="health_connect_export_success">Faart op Health Connect exportéiert</string>
+    <string name="health_connect_export_failed">Export op Health Connect feelgeschloen</string>
+    <string name="health_connect_export_permission_needed">Gëff Health-Connect-Berechtegunge fir z\'exportéieren</string>
+    <string name="health_connect_export_unavailable">Health Connect ass net verfügbar</string>
+
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fahrtdetailer zoumaachen</string>
     <string name="ride_detail_drag_hint">Erof zéien • d\'Kaart bleift benotzbar</string>

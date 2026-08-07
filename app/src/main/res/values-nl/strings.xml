@@ -431,6 +431,24 @@
     <string name="sensor_unit_bpm">bpm</string>
     <string name="sensor_unit_watts">W</string>
     <string name="sensor_unit_rpm">rpm</string>
+
+    <!-- Health Connect export -->
+    <string name="health_connect_title">Health Connect</string>
+    <string name="health_connect_subtitle">Schrijf je voltooide ritten naar Health Connect zodat ze in je gezondheidsapps verschijnen. VeloSpot schrijft alleen gegevens en leest ze nooit.</string>
+    <string name="health_connect_export_action">Naar Health Connect exporteren</string>
+    <string name="health_connect_install_action">Health Connect installeren</string>
+    <string name="health_connect_grant_permissions">Machtigingen verlenen</string>
+    <string name="health_connect_manage_permissions">Machtigingen beheren</string>
+    <string name="health_connect_auto_export_title">Ritten automatisch exporteren</string>
+    <string name="health_connect_status_available">Health Connect is beschikbaar</string>
+    <string name="health_connect_status_not_installed">Health Connect is niet geïnstalleerd</string>
+    <string name="health_connect_status_update_required">Health Connect heeft een update nodig</string>
+    <string name="health_connect_status_unsupported">Health Connect wordt niet ondersteund op dit apparaat</string>
+    <string name="health_connect_export_success">Rit geëxporteerd naar Health Connect</string>
+    <string name="health_connect_export_failed">Exporteren naar Health Connect mislukt</string>
+    <string name="health_connect_export_permission_needed">Verleen Health Connect-machtigingen om te exporteren</string>
+    <string name="health_connect_export_unavailable">Health Connect is niet beschikbaar</string>
+
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Ritdetails sluiten</string>
     <string name="ride_detail_drag_hint">Sleep omlaag • kaart blijft bruikbaar</string>

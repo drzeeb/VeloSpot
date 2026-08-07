@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RoundedCorner
@@ -122,6 +123,12 @@ internal fun SettingsSheet(
                 icon = Icons.Default.Sensors,
                 title = stringResource(R.string.sensors_title),
                 onClick = actions.onOpenSensors,
+                trailing = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
+            )
+            SettingsRow(
+                icon = Icons.Default.MonitorHeart,
+                title = stringResource(R.string.health_connect_title),
+                onClick = actions.onOpenHealthConnect,
                 trailing = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
             )
             SettingsRow(
