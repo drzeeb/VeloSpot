@@ -410,6 +410,33 @@
     <string name="ride_stat_elevation_gain">Anstieg</string>
     <string name="ride_stat_elevation_loss">Abstieg</string>
     <string name="ride_stat_co2_saved">CO₂ gespart</string>
+
+    <!-- Trip Computer HUD -->
+    <string name="hud_toggle_title">Bordcomputer (HUD)</string>
+    <string name="hud_toggle_cd">Bordcomputer zwischen kompakt und erweitert umschalten</string>
+    <string name="hud_stat_avg_speed">Ø Tempo</string>
+    <string name="hud_stat_grade">Steigung</string>
+    <string name="hud_stat_eta">Ankunft</string>
+    <string name="hud_stat_remaining">Reststrecke</string>
+    <string name="hud_stat_heart_rate">Puls</string>
+    <string name="hud_stat_power">Leistung</string>
+    <string name="hud_stat_cadence">Trittfrequenz</string>
+
+    <!-- External BLE sensors (speed/cadence, power, heart-rate) -->
+    <string name="sensors_title">Sensoren</string>
+    <string name="sensors_subtitle">Externe Bluetooth-Sensoren für Geschwindigkeit, Trittfrequenz, Leistung und Puls koppeln. Sie verbinden sich automatisch, wenn du eine Fahrt startest.</string>
+    <string name="sensors_scan">Suchen</string>
+    <string name="sensors_scanning">Suche läuft…</string>
+    <string name="sensors_none_found">Noch keine Sensoren gefunden</string>
+    <string name="sensors_remember">Merken</string>
+    <string name="sensors_forget">Vergessen</string>
+    <string name="sensors_connected">Verbunden</string>
+    <string name="sensors_permission_needed">Zum Suchen und Verbinden von Sensoren wird die Bluetooth-Berechtigung benötigt.</string>
+    <string name="sensors_wheel_size">Radgröße (für Geschwindigkeitssensor)</string>
+    <string name="sensor_profile_speed_cadence">Geschwindigkeit/Trittfrequenz</string>
+    <string name="sensor_unit_bpm">bpm</string>
+    <string name="sensor_unit_watts">W</string>
+    <string name="sensor_unit_rpm">U/min</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fahrtdetails schließen</string>
     <string name="ride_detail_drag_hint">Nach unten ziehen • Karte bleibt bedienbar</string>

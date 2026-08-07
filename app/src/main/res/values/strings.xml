@@ -187,6 +187,33 @@
     <string name="ride_stat_elevation_gain">Elevation gain</string>
     <string name="ride_stat_elevation_loss">Elevation loss</string>
     <string name="ride_stat_co2_saved">CO₂ saved</string>
+
+    <!-- Trip Computer HUD (glanceable bottom band shown while recording a ride) -->
+    <string name="hud_toggle_title">Trip computer (HUD)</string>
+    <string name="hud_toggle_cd">Toggle the trip computer between compact and expanded</string>
+    <string name="hud_stat_avg_speed">Avg speed</string>
+    <string name="hud_stat_grade">Grade</string>
+    <string name="hud_stat_eta">ETA</string>
+    <string name="hud_stat_remaining">Remaining</string>
+    <string name="hud_stat_heart_rate">Heart rate</string>
+    <string name="hud_stat_power">Power</string>
+    <string name="hud_stat_cadence">Cadence</string>
+
+    <!-- External BLE sensors (speed/cadence, power, heart-rate) -->
+    <string name="sensors_title">Sensors</string>
+    <string name="sensors_subtitle">Pair external Bluetooth speed, cadence, power and heart-rate sensors. They connect automatically when you start a ride.</string>
+    <string name="sensors_scan">Scan</string>
+    <string name="sensors_scanning">Scanning…</string>
+    <string name="sensors_none_found">No sensors found yet</string>
+    <string name="sensors_remember">Remember</string>
+    <string name="sensors_forget">Forget</string>
+    <string name="sensors_connected">Connected</string>
+    <string name="sensors_permission_needed">Bluetooth permission is required to find and connect sensors.</string>
+    <string name="sensors_wheel_size">Wheel size (for speed sensor)</string>
+    <string name="sensor_profile_speed_cadence">Speed/Cadence</string>
+    <string name="sensor_unit_bpm">bpm</string>
+    <string name="sensor_unit_watts">W</string>
+    <string name="sensor_unit_rpm">rpm</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Close ride details</string>
     <string name="ride_detail_drag_hint">Drag down • map stays interactive</string>

@@ -190,6 +190,7 @@ class MapViewModelTest {
             plannedRoutesRepository = FakePlannedRoutesRepository(),
             destinationHistoryRepository = FakeDestinationHistoryRepository(),
             mapSettings           = FakeMapSettingsRepository(),
+            sensorRepository      = FakeSensorRepository(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }
@@ -857,6 +858,10 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val voiceGuidanceEnabled: Flow<Boolean> = _voiceGuidance
     private val _keepScreenOn = MutableStateFlow(true)
     override val keepScreenOnEnabled: Flow<Boolean> = _keepScreenOn
+    private val _hudEnabled = MutableStateFlow(false)
+    override val hudEnabled: Flow<Boolean> = _hudEnabled
+    private val _hudExpanded = MutableStateFlow(false)
+    override val hudExpanded: Flow<Boolean> = _hudExpanded
     private val _portraitLock = MutableStateFlow(false)
     override val portraitLockEnabled: Flow<Boolean> = _portraitLock
     private val _roundedBuildings = MutableStateFlow(false)
@@ -877,6 +882,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override suspend fun set3DNavigation(enabled: Boolean) { _is3DNavigation.value = enabled }
     override suspend fun setVoiceGuidance(enabled: Boolean) { _voiceGuidance.value = enabled }
     override suspend fun setKeepScreenOn(enabled: Boolean) { _keepScreenOn.value = enabled }
+    override suspend fun setHudEnabled(enabled: Boolean) { _hudEnabled.value = enabled }
+    override suspend fun setHudExpanded(expanded: Boolean) { _hudExpanded.value = expanded }
     override suspend fun setPortraitLock(enabled: Boolean) { _portraitLock.value = enabled }
     override suspend fun setRoundedBuildings(enabled: Boolean) { _roundedBuildings.value = enabled }
     override suspend fun setAmoled(enabled: Boolean) { _amoled.value = enabled }
@@ -973,5 +980,22 @@ private class FakeRoutingRepository(
         error?.let { throw it }
         return route
     }
+}
+
+private class FakeSensorRepository : de.velospot.domain.repository.SensorRepository {
+    override val snapshot =
+        MutableStateFlow(de.velospot.core.sensors.SensorSnapshot())
+    override val rememberedAddresses: Flow<Set<String>> = MutableStateFlow(emptySet())
+    override val wheelCircumferenceMeters: Flow<Double> =
+        MutableStateFlow(de.velospot.core.sensors.SensorParsers.DEFAULT_WHEEL_CIRCUMFERENCE_METERS)
+
+    override fun scan(): Flow<List<de.velospot.core.sensors.DiscoveredSensor>> =
+        MutableStateFlow(emptyList())
+
+    override suspend fun remember(address: String) = Unit
+    override suspend fun forget(address: String) = Unit
+    override fun connectRemembered() = Unit
+    override fun disconnectAll() = Unit
+    override suspend fun setWheelCircumferenceMeters(meters: Double) = Unit
 }
 

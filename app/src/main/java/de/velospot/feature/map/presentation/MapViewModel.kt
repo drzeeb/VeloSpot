@@ -10,6 +10,9 @@ import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.map.RideViewOptions
 import de.velospot.core.routing.OfflineRoutingPreferences
+import de.velospot.core.sensors.DiscoveredSensor
+import de.velospot.core.sensors.SensorParsers
+import de.velospot.core.sensors.SensorSnapshot
 import de.velospot.core.share.GpxExporter
 import de.velospot.core.util.SunAlertState
 import de.velospot.core.util.SunTimes
@@ -44,6 +47,7 @@ import de.velospot.domain.repository.PlannedRoutesRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.domain.repository.SensorRepository
 import de.velospot.feature.map.presentation.navigation.NavigationController
 import de.velospot.feature.map.presentation.places.ParkedBikeController
 import de.velospot.feature.map.presentation.places.SavedPlacesController
@@ -53,6 +57,7 @@ import de.velospot.feature.map.presentation.routes.RoutePlanningController
 import de.velospot.feature.map.presentation.search.AddressSearchController
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -113,6 +118,7 @@ class MapViewModel @Inject constructor(
     plannedRoutesRepository: PlannedRoutesRepository,
     private val destinationHistoryRepository: DestinationHistoryRepository,
     private val mapSettings: MapSettingsRepository,
+    private val sensorRepository: SensorRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -504,6 +510,31 @@ class MapViewModel @Inject constructor(
     /** Toggles the keep-display-awake behaviour on/off and persists the choice. */
     fun setKeepScreenOnEnabled(enabled: Boolean) {
         viewModelScope.launch { mapSettings.setKeepScreenOn(enabled) }
+    }
+
+    /**
+     * Whether the glanceable **Trip Computer HUD** (bottom band shown while a ride
+     * is being recorded) is enabled. Persisted across sessions; defaults to off.
+     */
+    val hudEnabled: StateFlow<Boolean> =
+        mapSettings.hudEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the Trip Computer HUD on/off and persists the choice. */
+    fun setHudEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setHudEnabled(enabled) }
+    }
+
+    /**
+     * Whether the Trip Computer HUD is in its expanded (6-cell grid) state rather
+     * than the compact single-row state. Persisted so the rider's last choice
+     * carries over to the next ride.
+     */
+    val hudExpanded: StateFlow<Boolean> =
+        mapSettings.hudExpanded.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the Trip Computer HUD compact/expanded state and persists it. */
+    fun setHudExpanded(expanded: Boolean) {
+        viewModelScope.launch { mapSettings.setHudExpanded(expanded) }
     }
 
     /**
@@ -905,17 +936,61 @@ class MapViewModel @Inject constructor(
 
     val isRecordingRide: Boolean get() = rideTracking.isRecording
 
+    // ── External BLE sensors (speed / cadence / power / heart-rate) ────────────
+
+    /**
+     * Merged live readings from all connected external sensors. Drives the extra
+     * Trip Computer HUD cells and the pairing screen's "is it working?" readout.
+     * Any field stays `null` until that metric is actually live.
+     */
+    val sensorSnapshot: StateFlow<SensorSnapshot> = sensorRepository.snapshot
+
+    /** Persisted MAC addresses of the sensors the rider chose to auto-connect. */
+    val rememberedSensorAddresses: StateFlow<Set<String>> =
+        sensorRepository.rememberedAddresses
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    /** The wheel circumference (metres) used to derive CSC speed. */
+    val wheelCircumferenceMeters: StateFlow<Double> =
+        sensorRepository.wheelCircumferenceMeters
+            .stateIn(viewModelScope, SharingStarted.Eagerly, SensorParsers.DEFAULT_WHEEL_CIRCUMFERENCE_METERS)
+
+    /** Cold scan for nearby sensors; collect to scan, cancel to stop (see repo). */
+    fun scanSensors(): Flow<List<DiscoveredSensor>> = sensorRepository.scan()
+
+    /** Remember [address] so it auto-connects on future rides (and now). */
+    fun rememberSensor(address: String) {
+        viewModelScope.launch { sensorRepository.remember(address) }
+    }
+
+    /** Forget [address], disconnecting it. */
+    fun forgetSensor(address: String) {
+        viewModelScope.launch { sensorRepository.forget(address) }
+    }
+
+    /** Persist the wheel circumference (metres) used for CSC speed. */
+    fun setWheelCircumferenceMeters(meters: Double) {
+        viewModelScope.launch { sensorRepository.setWheelCircumferenceMeters(meters) }
+    }
+
     fun startRideTracking(autoStarted: Boolean = false) {
         rideTracking.start(autoStarted)
         // Lock the camera onto the rider for the whole recording (until they pan).
-        if (rideTracking.isRecording) _isFollowingLocation.value = true
+        if (rideTracking.isRecording) {
+            _isFollowingLocation.value = true
+            // Bring any remembered external BLE sensors online for the ride.
+            sensorRepository.connectRemembered()
+        }
     }
     fun stopRideTracking() {
         rideTracking.stop()
+        // Release the external sensors once the ride ends.
+        sensorRepository.disconnectAll()
         updateFollowSession()
     }
     fun discardRideTracking() {
         rideTracking.discard()
+        sensorRepository.disconnectAll()
         updateFollowSession()
     }
 
@@ -1508,6 +1583,8 @@ class MapViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         navigationController.dispose()
+        // Ensure external sensors are released if the map is torn down mid-ride.
+        sensorRepository.disconnectAll()
         recordingManager.routeElevationProvider = null
         // The map UI is gone: drop its location needs. A still-running background
         // recording keeps the GPS alive via the controller's recording need (and the

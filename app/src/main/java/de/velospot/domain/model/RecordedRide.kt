@@ -126,6 +126,15 @@ data class LiveRideStats(
     val elevationLossMeters: Double = 0.0,
     val pointCount: Int = 0,
     /** Whether the recording is currently **paused** (e.g. on a train/ferry leg). */
-    val isPaused: Boolean = false
+    val isPaused: Boolean = false,
+    /**
+     * Live road **grade** (slope) at the rider's current position, in **percent**:
+     * `altitudeDelta / horizontalDistance * 100`. Positive means uphill, negative
+     * means downhill. Because GPS altitude is very noisy, this is smoothed over a
+     * sliding window covering roughly the last 30–60 m of horizontal travel and
+     * clamped to `-30f..+30f`. It reads `0f` while paused or before enough recent
+     * distance has accumulated for a stable value. Drives the Trip Computer HUD.
+     */
+    val currentGradePercent: Float = 0f
 )
 

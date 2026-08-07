@@ -138,6 +138,8 @@ fun MainMapScreen(
     val is3DNavigation       by viewModel.is3DNavigation.collectAsStateWithLifecycle()
     val voiceGuidanceEnabled by viewModel.voiceGuidanceEnabled.collectAsStateWithLifecycle()
     val keepScreenOnEnabled  by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
+    val hudEnabled           by viewModel.hudEnabled.collectAsStateWithLifecycle()
+    val hudExpanded          by viewModel.hudExpanded.collectAsStateWithLifecycle()
     val portraitLockEnabled  by viewModel.portraitLockEnabled.collectAsStateWithLifecycle()
     val roundedBuildingsEnabled by viewModel.roundedBuildingsEnabled.collectAsStateWithLifecycle()
     val amoledEnabled        by viewModel.amoledEnabled.collectAsStateWithLifecycle()
@@ -159,6 +161,7 @@ fun MainMapScreen(
     val previewedRoute        by viewModel.previewedRoute.collectAsStateWithLifecycle()
     val previewedRouteSummary by viewModel.previewedRouteSummary.collectAsStateWithLifecycle()
     val recentDestinations    by viewModel.recentDestinations.collectAsStateWithLifecycle()
+    val sensorSnapshot        by viewModel.sensorSnapshot.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -776,12 +779,37 @@ fun MainMapScreen(
             onCancel          = viewModel::cancelRouteCalculation,
             isRecordingRide   = rideTrackingState is RideTrackingUiState.Recording,
             isRidePaused      = (rideTrackingState as? RideTrackingUiState.Recording)?.stats?.isPaused == true,
-            onPauseToggle     = viewModel::togglePauseRideTracking
+            onPauseToggle     = viewModel::togglePauseRideTracking,
+            // Merge the trip-computer stats into the navigation card while recording,
+            // if the HUD is enabled — the standalone HUD band is suppressed during
+            // navigation (below), so the values live in one unified card instead.
+            tripStats         = if (hudEnabled) {
+                (rideTrackingState as? RideTrackingUiState.Recording)?.stats
+            } else null,
+            // Live external-sensor cells (HR/power/cadence) inside the merged card.
+            sensorSnapshot    = if (hudEnabled) sensorSnapshot else null
         )
 
         // Turn-by-turn banner (top) — only during active navigation.
         if (activeNavigation != null) {
             MapTurnBanner(progress = navigationProgress)
+        }
+
+        // Trip Computer HUD (bottom band) — only while a ride is being recorded and
+        // the user has opted in, and NOT during active navigation. During navigation
+        // the trip-computer stats are instead MERGED into the MapNavigationOverlay
+        // card (see tripStats above), so there is a single unified bottom card rather
+        // than two overlapping ones.
+        if (hudEnabled && activeNavigation == null) {
+            (rideTrackingState as? RideTrackingUiState.Recording)?.let { recording ->
+                TripComputerHud(
+                    stats = recording.stats,
+                    navigationProgress = navigationProgress,
+                    expanded = hudExpanded,
+                    onToggleExpanded = { viewModel.setHudExpanded(!hudExpanded) },
+                    sensor = sensorSnapshot
+                )
+            }
         }
 
 
@@ -795,6 +823,7 @@ fun MainMapScreen(
             isBikeParked       = parkedBike != null,
             voiceGuidanceEnabled = voiceGuidanceEnabled,
             keepScreenOnEnabled = keepScreenOnEnabled,
+            hudEnabled         = hudEnabled,
             portraitLockEnabled = portraitLockEnabled,
             roundedBuildingsEnabled = roundedBuildingsEnabled,
             amoledEnabled      = amoledEnabled,
@@ -819,6 +848,7 @@ fun MainMapScreen(
             onShowParkedBike      = viewModel::showParkedBike,
             onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
             onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
+            onToggleHud           = { viewModel.setHudEnabled(!hudEnabled) },
             onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!portraitLockEnabled) },
             onToggleRoundedBuildings = { viewModel.setRoundedBuildingsEnabled(!roundedBuildingsEnabled) },
             onToggleAmoled        = {
@@ -835,7 +865,8 @@ fun MainMapScreen(
             onOpenPlannedRoutes   = screenUiState::openPlannedRoutes,
             onOpenDisplaySettings = screenUiState::openDisplaySettings,
             onOpenNavRouting      = screenUiState::openNavRouting,
-            onOpenBikeGarage      = screenUiState::openBikeGarage
+            onOpenBikeGarage      = screenUiState::openBikeGarage,
+            onOpenSensors         = screenUiState::openSensors
         )
         Row(
             modifier = Modifier
@@ -890,6 +921,21 @@ fun MainMapScreen(
         if (screenUiState.isBikeGarageSheetVisible) {
             de.velospot.feature.map.presentation.sheets.BikeGarageSheet(
                 onDismiss = screenUiState::closeBikeGarage
+            )
+        }
+        // External BLE sensor pairing (speed/cadence, power, heart-rate).
+        if (screenUiState.isSensorsSheetVisible) {
+            val rememberedSensors by viewModel.rememberedSensorAddresses.collectAsStateWithLifecycle()
+            val wheelCircumference by viewModel.wheelCircumferenceMeters.collectAsStateWithLifecycle()
+            de.velospot.feature.map.presentation.sheets.SensorsSheet(
+                snapshot = sensorSnapshot,
+                rememberedAddresses = rememberedSensors,
+                wheelCircumferenceMeters = wheelCircumference,
+                scan = viewModel::scanSensors,
+                onRemember = viewModel::rememberSensor,
+                onForget = viewModel::forgetSensor,
+                onSetWheelCircumference = viewModel::setWheelCircumferenceMeters,
+                onDismiss = screenUiState::closeSensors
             )
         }
 

@@ -404,6 +404,33 @@
     <string name="ride_stat_elevation_gain">Subida</string>
     <string name="ride_stat_elevation_loss">Descida</string>
     <string name="ride_stat_co2_saved">CO₂ poupado</string>
+
+    <!-- Trip Computer HUD -->
+    <string name="hud_toggle_title">Computador de bordo (HUD)</string>
+    <string name="hud_toggle_cd">Alternar o computador de bordo entre compacto e expandido</string>
+    <string name="hud_stat_avg_speed">Vel. média</string>
+    <string name="hud_stat_grade">Inclinação</string>
+    <string name="hud_stat_eta">Chegada</string>
+    <string name="hud_stat_remaining">Restante</string>
+    <string name="hud_stat_heart_rate">Freq. card.</string>
+    <string name="hud_stat_power">Potência</string>
+    <string name="hud_stat_cadence">Cadência</string>
+
+    <!-- External BLE sensors (speed/cadence, power, heart-rate) -->
+    <string name="sensors_title">Sensores</string>
+    <string name="sensors_subtitle">Emparelhe sensores Bluetooth externos de velocidade, cadência, potência e frequência cardíaca. Ligam-se automaticamente ao iniciar um percurso.</string>
+    <string name="sensors_scan">Procurar</string>
+    <string name="sensors_scanning">A procurar…</string>
+    <string name="sensors_none_found">Ainda não foram encontrados sensores</string>
+    <string name="sensors_remember">Memorizar</string>
+    <string name="sensors_forget">Esquecer</string>
+    <string name="sensors_connected">Ligado</string>
+    <string name="sensors_permission_needed">É necessária a permissão de Bluetooth para encontrar e ligar sensores.</string>
+    <string name="sensors_wheel_size">Tamanho da roda (para o sensor de velocidade)</string>
+    <string name="sensor_profile_speed_cadence">Velocidade/Cadência</string>
+    <string name="sensor_unit_bpm">bpm</string>
+    <string name="sensor_unit_watts">W</string>
+    <string name="sensor_unit_rpm">rpm</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fechar detalhes do percurso</string>
     <string name="ride_detail_drag_hint">Arraste para baixo • o mapa continua interativo</string>

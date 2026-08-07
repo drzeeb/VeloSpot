@@ -2,6 +2,7 @@ package de.velospot.core.tracking
 
 import de.velospot.testsupport.ElevationFixtures
 import de.velospot.domain.model.LiveRideStats
+import de.velospot.domain.model.TrackPoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -455,6 +456,124 @@ class RideTrackerTest {
         assertTrue("some climb was counted before the spike", gainAtSpike > 2.0)
         assertTrue("accounting must resume after the spike (got $gainAtSpike → $gainAfter)",
             gainAfter > gainAtSpike + 1.0)
+    }
+
+    // ── current grade (live slope %) ─────────────────────────────────────────
+
+    /**
+     * Builds a straight, due-north track of [count] fixes spaced [spacingMeters]
+     * apart, whose altitude at fix `k` is `baseAlt + altPerMeter * k*spacing + noise(k)`.
+     * Positions are expressed in exact metres via [latOf] so the horizontal window
+     * math is deterministic.
+     */
+    private fun northTrack(
+        count: Int,
+        spacingMeters: Double,
+        baseAlt: Double,
+        altPerMeter: Double,
+        noise: (Int) -> Double = { 0.0 }
+    ): List<TrackPoint> = (0 until count).map { k ->
+        val x = k * spacingMeters
+        TrackPoint(
+            latitude = latOf(x),
+            longitude = baseLon,
+            timestamp = k * 3_000L,
+            speedMps = 5f,
+            altitudeMeters = baseAlt + altPerMeter * x + noise(k),
+            accuracyMeters = 6f
+        )
+    }
+
+    @Test
+    fun `flat track reads near zero grade`() {
+        val track = northTrack(count = 20, spacingMeters = 5.0, baseAlt = 100.0, altPerMeter = 0.0)
+        val grade = RideTracker.computeCurrentGrade(track)
+        assertEquals(0f, grade, 0.5f)
+    }
+
+    @Test
+    fun `steady climb reads a positive plausible grade`() {
+        // 8% climb: 0.08 m of ascent per metre travelled.
+        val track = northTrack(count = 20, spacingMeters = 5.0, baseAlt = 100.0, altPerMeter = 0.08)
+        val grade = RideTracker.computeCurrentGrade(track)
+        assertTrue("expected ~8% uphill but was $grade", grade in 6f..10f)
+    }
+
+    @Test
+    fun `descent reads a negative grade`() {
+        val track = northTrack(count = 20, spacingMeters = 5.0, baseAlt = 200.0, altPerMeter = -0.06)
+        val grade = RideTracker.computeCurrentGrade(track)
+        assertTrue("expected ~-6% downhill but was $grade", grade in -8f..-4f)
+    }
+
+    @Test
+    fun `noisy altitude around a flat mean still reads near zero`() {
+        // Flat mean (altPerMeter = 0) with several metres of zero-mean altitude noise
+        // on every fix. A two-point delta of the last two fixes would swing wildly;
+        // the window regression averages it out, proving the smoothing. The count is
+        // chosen so the ~40 m window lands on indices 14..23 (centred on 18.5) and the
+        // even noise term below is symmetric about that centre → provably ~0% slope.
+        val track = northTrack(
+            count = 24, spacingMeters = 5.0, baseAlt = 100.0, altPerMeter = 0.0,
+            noise = { k -> 4.0 * kotlin.math.cos(k - 18.5) }
+        )
+        // Sanity: the last two raw fixes alone imply a steep, bogus grade.
+        val naive = (track[23].altitudeMeters!! - track[22].altitudeMeters!!) / 5.0 * 100.0
+        assertTrue("two-point grade should be steep ($naive%)", kotlin.math.abs(naive) > 5.0)
+        val grade = RideTracker.computeCurrentGrade(track)
+        assertTrue("noisy flat should read near 0% but was $grade", kotlin.math.abs(grade) < 1f)
+    }
+
+    @Test
+    fun `insufficient recent distance reads zero grade`() {
+        // Only ~10 m of travel — below the minimum window distance for a stable read.
+        val track = northTrack(count = 3, spacingMeters = 5.0, baseAlt = 100.0, altPerMeter = 0.08)
+        assertEquals(0f, RideTracker.computeCurrentGrade(track), 0.0001f)
+    }
+
+    @Test
+    fun `extreme slope is clamped to the range`() {
+        // 50% slope — far beyond a real road; must clamp to +30%.
+        val track = northTrack(count = 20, spacingMeters = 5.0, baseAlt = 100.0, altPerMeter = 0.50)
+        assertEquals(30f, RideTracker.computeCurrentGrade(track), 0.0001f)
+        val down = northTrack(count = 20, spacingMeters = 5.0, baseAlt = 500.0, altPerMeter = -0.50)
+        assertEquals(-30f, RideTracker.computeCurrentGrade(down), 0.0001f)
+    }
+
+    @Test
+    fun `paused recording reports zero grade`() {
+        val tracker = RideTracker()
+        tracker.start(0L)
+        var lat = baseLat
+        var t = 0L
+        // Feed a real climb so a non-zero grade would otherwise be reported.
+        repeat(20) {
+            tracker.addPoint(lat, baseLon, t, speedMps = 5f, altitudeMeters = 100.0 + it * 0.4, accuracyMeters = 6f)
+            lat += latOf(5.0)
+            t += 3_000L
+        }
+        assertTrue("grade should be non-zero while riding", tracker.currentStats().currentGradePercent != 0f)
+        tracker.pause(t)
+        assertEquals(0f, tracker.currentStats(t).currentGradePercent, 0.0001f)
+    }
+
+    @Test
+    fun `grade is not measured across a pause gap`() {
+        // A short post-resume segment (only ~15 m) must not borrow altitude from the
+        // pre-pause segment: the walk stops at the segment-start boundary → 0f.
+        val pre = northTrack(count = 10, spacingMeters = 5.0, baseAlt = 100.0, altPerMeter = 0.10)
+        val resumed = (0 until 4).map { k ->
+            TrackPoint(
+                latitude = latOf(1_000.0 + k * 5.0),
+                longitude = baseLon,
+                timestamp = 100_000L + k * 3_000L,
+                speedMps = 5f,
+                altitudeMeters = 300.0 + k * 0.5,
+                accuracyMeters = 6f,
+                segmentStart = k == 0
+            )
+        }
+        assertEquals(0f, RideTracker.computeCurrentGrade(pre + resumed), 0.0001f)
     }
 }
 

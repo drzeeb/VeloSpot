@@ -30,6 +30,20 @@ interface MapSettingsRepository {
     val keepScreenOnEnabled: Flow<Boolean>
 
     /**
+     * Whether the **Trip Computer HUD** overlay is shown on the map. Defaults to
+     * `false` (hidden). When enabled a live stats overlay (speed, distance, time)
+     * is drawn on top of the map while riding.
+     */
+    val hudEnabled: Flow<Boolean>
+
+    /**
+     * Whether the Trip Computer HUD was last shown in its **expanded** state
+     * (`true`) or the **compact** state (`false`). Defaults to `false`. Remembers
+     * the user's last choice so the HUD reopens in the same layout.
+     */
+    val hudExpanded: Flow<Boolean>
+
+    /**
      * Whether the screen orientation is locked to portrait. Defaults to `false`
      * (the app follows the device's auto-rotate). When enabled the map screen
      * stays in portrait so the display does not rotate while cycling.
@@ -71,6 +85,8 @@ interface MapSettingsRepository {
     suspend fun set3DNavigation(enabled: Boolean)
     suspend fun setVoiceGuidance(enabled: Boolean)
     suspend fun setKeepScreenOn(enabled: Boolean)
+    suspend fun setHudEnabled(enabled: Boolean)
+    suspend fun setHudExpanded(expanded: Boolean)
     suspend fun setPortraitLock(enabled: Boolean)
     suspend fun setRoundedBuildings(enabled: Boolean)
     suspend fun setAmoled(enabled: Boolean)

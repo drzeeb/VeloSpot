@@ -109,6 +109,8 @@ internal data class MapMenuCardState(
     val voiceGuidanceEnabled: Boolean = false,
     /** Whether the display is kept awake during navigation / ride recording. */
     val keepScreenOnEnabled: Boolean = true,
+    /** Whether the glanceable Trip Computer HUD is enabled while recording a ride. */
+    val hudEnabled: Boolean = false,
     /** Whether the screen orientation is locked to portrait. */
     val portraitLockEnabled: Boolean = false,
     /** Whether the 3D buildings are drawn with rounded corners. */
@@ -139,6 +141,7 @@ internal data class MapMenuCardActions(
     val onShowParkedBike: () -> Unit = {},
     val onToggleVoiceGuidance: () -> Unit = {},
     val onToggleKeepScreenOn: () -> Unit = {},
+    val onToggleHud: () -> Unit = {},
     val onTogglePortraitLock: () -> Unit = {},
     val onToggleRoundedBuildings: () -> Unit = {},
     val onToggleAmoled: () -> Unit = {},
@@ -151,7 +154,8 @@ internal data class MapMenuCardActions(
     val onOpenPlannedRoutes: () -> Unit = {},
     val onOpenDisplaySettings: () -> Unit = {},
     val onOpenNavRouting: () -> Unit = {},
-    val onOpenBikeGarage: () -> Unit = {}
+    val onOpenBikeGarage: () -> Unit = {},
+    val onOpenSensors: () -> Unit = {}
 )
 
 @Composable
@@ -358,7 +362,18 @@ internal fun BoxScope.MapNavigationOverlay(
     onCancel: () -> Unit = {},
     isRecordingRide: Boolean = false,
     isRidePaused: Boolean = false,
-    onPauseToggle: () -> Unit = {}
+    onPauseToggle: () -> Unit = {},
+    /**
+     * Live ride stats to **merge into** the active-navigation card as an extra
+     * trip-computer row (average speed, elapsed time, ETA, grade). Non-null only
+     * when a ride is being recorded and the HUD is enabled; `null` hides the row.
+     */
+    tripStats: de.velospot.domain.model.LiveRideStats? = null,
+    /**
+     * Live external-sensor readings merged into the navigation card's trip-computer
+     * row (heart rate · power · cadence). `null` hides the extra cells.
+     */
+    sensorSnapshot: de.velospot.core.sensors.SensorSnapshot? = null
 ) {
     when (navigationUiState) {
         is NavigationUiState.Idle -> Unit
@@ -574,6 +589,19 @@ internal fun BoxScope.MapNavigationOverlay(
                                 contentDescription = stringResource(id = R.string.navigation_stop)
                             )
                         }
+                    }
+
+                    // Merged trip-computer row: the values the header above does not
+                    // already show (avg speed, elapsed time, ETA, grade). Shown only
+                    // once the first GPS fix has produced live progress + stats, so
+                    // the recording HUD and the navigation card read as one card.
+                    if (tripStats != null && progress != null) {
+                        Spacer(Modifier.height(12.dp))
+                        NavTripComputerRow(
+                            stats = tripStats,
+                            navigationProgress = progress,
+                            sensor = sensorSnapshot
+                        )
                     }
 
                     AnimatedVisibility(

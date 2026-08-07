@@ -405,6 +405,33 @@
     <string name="ride_stat_elevation_gain">Dénivelé positif</string>
     <string name="ride_stat_elevation_loss">Dénivelé négatif</string>
     <string name="ride_stat_co2_saved">CO₂ économisé</string>
+
+    <!-- Trip Computer HUD -->
+    <string name="hud_toggle_title">Ordinateur de bord (HUD)</string>
+    <string name="hud_toggle_cd">Basculer l\'ordinateur de bord entre compact et étendu</string>
+    <string name="hud_stat_avg_speed">Vit. moy.</string>
+    <string name="hud_stat_grade">Pente</string>
+    <string name="hud_stat_eta">Arrivée</string>
+    <string name="hud_stat_remaining">Restant</string>
+    <string name="hud_stat_heart_rate">Fréq. card.</string>
+    <string name="hud_stat_power">Puissance</string>
+    <string name="hud_stat_cadence">Cadence</string>
+
+    <!-- External BLE sensors (speed/cadence, power, heart-rate) -->
+    <string name="sensors_title">Capteurs</string>
+    <string name="sensors_subtitle">Associez des capteurs Bluetooth externes de vitesse, cadence, puissance et fréquence cardiaque. Ils se connectent automatiquement au démarrage d\'un trajet.</string>
+    <string name="sensors_scan">Rechercher</string>
+    <string name="sensors_scanning">Recherche…</string>
+    <string name="sensors_none_found">Aucun capteur trouvé pour l\'instant</string>
+    <string name="sensors_remember">Mémoriser</string>
+    <string name="sensors_forget">Oublier</string>
+    <string name="sensors_connected">Connecté</string>
+    <string name="sensors_permission_needed">L\'autorisation Bluetooth est nécessaire pour trouver et connecter des capteurs.</string>
+    <string name="sensors_wheel_size">Taille de roue (pour le capteur de vitesse)</string>
+    <string name="sensor_profile_speed_cadence">Vitesse/Cadence</string>
+    <string name="sensor_unit_bpm">bpm</string>
+    <string name="sensor_unit_watts">W</string>
+    <string name="sensor_unit_rpm">tr/min</string>
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fermer les détails du trajet</string>
     <string name="ride_detail_drag_hint">Glissez vers le bas • la carte reste interactive</string>
