@@ -527,7 +527,6 @@
     <string name="ride_export_invalid">Kon geen geldig GPX-bestand maken</string>
     <string name="common_got_it">Begrepen</string>
     <string name="ride_export_gpx_action">Exporteren als GPX</string>
-    <string name="ride_export_gpx_chooser">Rit delen als GPX</string>
     <string name="ride_gpx_help_action">Zo upload je je rit naar Strava en co.</string>
     <string name="ride_gpx_help_title">Upload je rit naar Strava en co.</string>
     <string name="ride_gpx_help_body">1. Exporteer deze rit als GPX met de knop hierboven.\n\n2. Sla het GPX-bestand op of stuur het direct naar een andere app (Drive, Bestanden, e-mail, …).\n\n3. Log in op de website van de aanbieder (Strava, Komoot, Garmin Connect of RideWithGPS) en kies het GPX-bestand onder \u201cActiviteit uploaden\u201d / \u201cImporteren\u201d.\n\nLet op: de mobiele apps van Strava en Komoot kunnen GPX vaak niet rechtstreeks importeren, dus uploaden via de website is de betrouwbare route.</string>

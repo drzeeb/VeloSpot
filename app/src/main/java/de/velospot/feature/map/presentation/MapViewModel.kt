@@ -1093,17 +1093,27 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * Exports a single, already-loaded [ride] (with its full track) as one GPX
-     * file and opens the system **share** sheet — the supported path to get a ride
-     * onto Strava/Komoot/Garmin Connect/RideWithGPS (their paid/limited APIs rule
-     * out a direct integration). The document is built + validated off the main
-     * thread; an invalid track surfaces a toast instead of sharing a broken file.
+     * A single ride's GPX document, built + validated and awaiting a Storage Access
+     * Framework **"Save as"** destination pick from the ride detail sheet. `null`
+     * when nothing is staged. Kept separate from [pendingGpxExport] (the multi-select
+     * "My rides" save) so the two SAF flows never cross-trigger each other.
      */
-    fun shareRideAsGpx(ride: RecordedRide) {
+    private val _pendingRideGpxSave = MutableStateFlow<de.velospot.core.share.GpxDocument?>(null)
+    val pendingRideGpxSave: StateFlow<de.velospot.core.share.GpxDocument?> = _pendingRideGpxSave.asStateFlow()
+
+    /**
+     * Builds + validates a single, already-loaded [ride] (with its full track) into
+     * one GPX document and stages it in [pendingRideGpxSave] so the UI can launch the
+     * SAF "Create document" picker (**"Save as"**) — the supported way to get a ride
+     * onto Strava/Komoot/Garmin Connect/RideWithGPS (their paid/limited APIs rule out
+     * a direct integration). The document is built off the main thread; an invalid
+     * track surfaces a toast and stages nothing instead of saving a broken file.
+     */
+    fun prepareRideGpxSave(ride: RecordedRide) {
         viewModelScope.launch {
             val stamp = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
                 .format(java.util.Date())
-            val documents = withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val document = withContext(kotlinx.coroutines.Dispatchers.IO) {
                 val docs = GpxExporter.buildDocuments(
                     rides = listOf(ride),
                     combineIntoSingleFile = true,
@@ -1111,21 +1121,19 @@ class MapViewModel @Inject constructor(
                         de.velospot.R.string.ride_export_combined_filename, stamp
                     )
                 )
-                val valid = docs.isNotEmpty() &&
-                    docs.all { de.velospot.core.gpx.GpxValidator.validate(it.content).isValid }
-                if (valid) docs else emptyList()
+                docs.firstOrNull()
+                    ?.takeIf { de.velospot.core.gpx.GpxValidator.validate(it.content).isValid }
             }
-            if (documents.isEmpty()) {
+            if (document == null) {
                 _userMessageRes.value = de.velospot.R.string.ride_export_invalid
                 return@launch
             }
-            GpxExporter.share(
-                context = context,
-                documents = documents,
-                chooserTitle = context.getString(de.velospot.R.string.ride_export_gpx_chooser)
-            )
+            _pendingRideGpxSave.value = document
         }
     }
+
+    /** Clears the staged single-ride GPX save once the SAF picker has been handled (or cancelled). */
+    fun consumePendingRideGpxSave() { _pendingRideGpxSave.value = null }
 
     /**
      * GPX documents built and validated for the selected rides, awaiting a Storage

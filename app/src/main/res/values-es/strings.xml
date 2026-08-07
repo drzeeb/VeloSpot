@@ -528,7 +528,6 @@
     <string name="ride_export_save_failed">No se pudo guardar el archivo</string>
     <string name="ride_export_invalid">No se pudo crear un archivo GPX válido</string>
     <string name="ride_export_gpx_action">Exportar como GPX</string>
-    <string name="ride_export_gpx_chooser">Compartir ruta como GPX</string>
     <string name="ride_gpx_help_action">Cómo subir tu ruta a Strava y compañía</string>
     <string name="ride_gpx_help_title">Sube tu ruta a Strava y compañía</string>
     <string name="ride_gpx_help_body">1. Exporta esta ruta como GPX con el botón de arriba.\n\n2. Guarda el archivo GPX o envíalo directamente a otra app (Drive, Archivos, correo, …).\n\n3. Inicia sesión en la web del proveedor (Strava, Komoot, Garmin Connect o RideWithGPS) y elige el archivo GPX en \u201cSubir actividad\u201d / \u201cImportar\u201d.\n\nNota: las apps móviles de Strava y Komoot a menudo no pueden importar GPX directamente, así que subirlo desde la web es la vía fiable.</string>

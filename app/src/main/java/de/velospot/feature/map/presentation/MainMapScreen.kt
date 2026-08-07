@@ -1060,6 +1060,23 @@ fun MainMapScreen(
         // map without a scrim: only its surface consumes touches, leaving the
         // drawn ride track fully pan/pinch/zoom-able above the collapsed sheet.
         selectedRide?.let { ride ->
+            // "Save as" GPX picker for the single ride shown in the detail sheet.
+            // A ride always yields exactly one document, so this is always a
+            // CreateDocument (file) pick. Kept independent from the "My rides"
+            // multi-select save (which stages viewModel.pendingGpxExport instead),
+            // so the two SAF flows never cross-trigger.
+            val pendingRideGpxSave by viewModel.pendingRideGpxSave.collectAsStateWithLifecycle()
+            val gpxSaveLauncher = rememberLauncherForActivityResult(
+                androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/gpx+xml")
+            ) { uri ->
+                val doc = viewModel.pendingRideGpxSave.value
+                if (uri != null && doc != null) viewModel.saveGpxToUri(uri, doc.content)
+                viewModel.consumePendingRideGpxSave()
+            }
+            LaunchedEffect(pendingRideGpxSave) {
+                val doc = pendingRideGpxSave ?: return@LaunchedEffect
+                gpxSaveLauncher.launch(doc.fileName)
+            }
             RideDetailSheet(
                 ride      = ride,
                 onDismiss = {
@@ -1075,7 +1092,7 @@ fun MainMapScreen(
                 onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) },
                 onOpenAnalysis = onOpenRideAnalysis,
                 onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) },
-                onShareGpx = { r -> viewModel.shareRideAsGpx(r) },
+                onSaveGpx = { r -> viewModel.prepareRideGpxSave(r) },
                 isImportable = isPreviewRide,
                 onImport = { viewModel.importPreviewedRide() }
             )

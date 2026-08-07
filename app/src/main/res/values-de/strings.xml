@@ -533,7 +533,6 @@
     <string name="ride_export_save_failed">Datei konnte nicht gespeichert werden</string>
     <string name="ride_export_invalid">Konnte keine gültige GPX-Datei erstellen</string>
     <string name="ride_export_gpx_action">Als GPX exportieren</string>
-    <string name="ride_export_gpx_chooser">Fahrt als GPX teilen</string>
     <string name="ride_gpx_help_action">So lädst du deine Fahrt zu Strava &amp; Co. hoch</string>
     <string name="ride_gpx_help_title">Fahrt zu Strava &amp; Co. hochladen</string>
     <string name="ride_gpx_help_body">1. Exportiere diese Fahrt mit dem Button oben als GPX.\n\n2. Speichere die GPX-Datei oder sende sie direkt an eine andere App (Drive, Dateien, E-Mail, …).\n\n3. Melde dich auf der Website des Anbieters an (Strava, Komoot, Garmin Connect oder RideWithGPS) und wähle die GPX-Datei unter \u201eAktivität hochladen\u201c / \u201eImportieren\u201c aus.\n\nHinweis: Die Strava- und Komoot-Apps können GPX oft nicht direkt importieren – der Upload über die Website ist der zuverlässige Weg.</string>

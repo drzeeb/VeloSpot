@@ -527,7 +527,6 @@
     <string name="ride_export_invalid">Não foi possível criar um ficheiro GPX válido</string>
     <string name="common_got_it">Percebi</string>
     <string name="ride_export_gpx_action">Exportar como GPX</string>
-    <string name="ride_export_gpx_chooser">Partilhar percurso como GPX</string>
     <string name="ride_gpx_help_action">Como enviar o teu percurso para o Strava e afins</string>
     <string name="ride_gpx_help_title">Enviar o teu percurso para o Strava e afins</string>
     <string name="ride_gpx_help_body">1. Exporta este percurso como GPX com o botão acima.\n\n2. Guarda o ficheiro GPX ou envia-o diretamente para outra app (Drive, Ficheiros, e-mail, …).\n\n3. Inicia sessão no site do fornecedor (Strava, Komoot, Garmin Connect ou RideWithGPS) e escolhe o ficheiro GPX em \u201cCarregar atividade\u201d / \u201cImportar\u201d.\n\nNota: as apps móveis do Strava e do Komoot muitas vezes não conseguem importar GPX diretamente, por isso o carregamento pelo site é a via fiável.</string>

@@ -299,7 +299,6 @@
     <string name="ride_import_failed">No rides found in the file</string>
     <!-- Per-ride GPX export/share + upload help -->
     <string name="ride_export_gpx_action">Export as GPX</string>
-    <string name="ride_export_gpx_chooser">Share ride as GPX</string>
     <string name="ride_gpx_help_action">How to upload your ride to Strava &amp; co.</string>
     <string name="ride_gpx_help_title">Upload your ride to Strava &amp; co.</string>
     <string name="ride_gpx_help_body">1. Export this ride as GPX with the button above.\n\n2. Save the GPX file or send it straight to another app (Drive, Files, e-mail, …).\n\n3. Sign in on the provider\u2019s website (Strava, Komoot, Garmin Connect or RideWithGPS) and choose the GPX file under \u201cUpload activity\u201d / \u201cImport\u201d.\n\nNote: the Strava and Komoot mobile apps often can\u2019t import GPX directly, so uploading on the website is the reliable route.</string>
