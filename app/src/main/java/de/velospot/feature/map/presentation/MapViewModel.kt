@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
@@ -1087,6 +1088,41 @@ class MapViewModel @Inject constructor(
                 context = context,
                 documents = documents,
                 chooserTitle = context.getString(de.velospot.R.string.ride_export_chooser_title)
+            )
+        }
+    }
+
+    /**
+     * Exports a single, already-loaded [ride] (with its full track) as one GPX
+     * file and opens the system **share** sheet — the supported path to get a ride
+     * onto Strava/Komoot/Garmin Connect/RideWithGPS (their paid/limited APIs rule
+     * out a direct integration). The document is built + validated off the main
+     * thread; an invalid track surfaces a toast instead of sharing a broken file.
+     */
+    fun shareRideAsGpx(ride: RecordedRide) {
+        viewModelScope.launch {
+            val stamp = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                .format(java.util.Date())
+            val documents = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val docs = GpxExporter.buildDocuments(
+                    rides = listOf(ride),
+                    combineIntoSingleFile = true,
+                    combinedFileName = context.getString(
+                        de.velospot.R.string.ride_export_combined_filename, stamp
+                    )
+                )
+                val valid = docs.isNotEmpty() &&
+                    docs.all { de.velospot.core.gpx.GpxValidator.validate(it.content).isValid }
+                if (valid) docs else emptyList()
+            }
+            if (documents.isEmpty()) {
+                _userMessageRes.value = de.velospot.R.string.ride_export_invalid
+                return@launch
+            }
+            GpxExporter.share(
+                context = context,
+                documents = documents,
+                chooserTitle = context.getString(de.velospot.R.string.ride_export_gpx_chooser)
             )
         }
     }

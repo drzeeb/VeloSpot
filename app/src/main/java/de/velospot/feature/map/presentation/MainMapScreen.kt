@@ -1075,6 +1075,7 @@ fun MainMapScreen(
                 onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) },
                 onOpenAnalysis = onOpenRideAnalysis,
                 onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) },
+                onShareGpx = { r -> viewModel.shareRideAsGpx(r) },
                 isImportable = isPreviewRide,
                 onImport = { viewModel.importPreviewedRide() }
             )

@@ -525,6 +525,12 @@
     <string name="ride_export_saved">Tourën gespäichert</string>
     <string name="ride_export_save_failed">Datei konnt net gespäichert ginn</string>
     <string name="ride_export_invalid">Konnt keng gülteg GPX-Datei erstellen</string>
+    <string name="common_got_it">Verstanen</string>
+    <string name="ride_export_gpx_action">Als GPX exportéieren</string>
+    <string name="ride_export_gpx_chooser">Tour als GPX deelen</string>
+    <string name="ride_gpx_help_action">Wéi s du deng Tour op Strava &amp; Co. luets</string>
+    <string name="ride_gpx_help_title">Deng Tour op Strava &amp; Co. lueden</string>
+    <string name="ride_gpx_help_body">1. Exportéier dës Tour mam Knäppche uewen als GPX.\n\n2. Späicher d\u2019GPX-Datei oder schéck se direkt un eng aner App (Drive, Dateien, E-Mail, …).\n\n3. Mell dech op der Websäit vum Ubidder un (Strava, Komoot, Garmin Connect oder RideWithGPS) a wiel d\u2019GPX-Datei ënner \u201eAktivitéit lueden\u201c / \u201eImportéieren\u201c aus.\n\nBemierkung: D\u2019Strava- an d\u2019Komoot-Apps kënne GPX dacks net direkt importéieren – den Upload iwwer d\u2019Websäit ass de sécheren Wee.</string>
     <string name="ride_save_as_route">Als Streck späicheren</string>
     <string name="ride_saved_as_route">Fahrt als Streck gespäichert</string>
     <string name="ride_route_default_name">Opgezeechent Streck</string>

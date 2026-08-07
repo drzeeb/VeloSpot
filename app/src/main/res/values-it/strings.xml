@@ -527,6 +527,12 @@
     <string name="ride_export_saved">Percorsi salvati</string>
     <string name="ride_export_save_failed">Impossibile salvare il file</string>
     <string name="ride_export_invalid">Impossibile creare un file GPX valido</string>
+    <string name="common_got_it">Ho capito</string>
+    <string name="ride_export_gpx_action">Esporta come GPX</string>
+    <string name="ride_export_gpx_chooser">Condividi il percorso come GPX</string>
+    <string name="ride_gpx_help_action">Come caricare il percorso su Strava e simili</string>
+    <string name="ride_gpx_help_title">Carica il percorso su Strava e simili</string>
+    <string name="ride_gpx_help_body">1. Esporta questo percorso come GPX con il pulsante qui sopra.\n\n2. Salva il file GPX o invialo direttamente a un\u2019altra app (Drive, File, e-mail, …).\n\n3. Accedi al sito del fornitore (Strava, Komoot, Garmin Connect o RideWithGPS) e scegli il file GPX in \u201cCarica attività\u201d / \u201cImporta\u201d.\n\nNota: le app mobili di Strava e Komoot spesso non importano i GPX direttamente, quindi il caricamento dal sito web è la via affidabile.</string>
     <string name="ride_save_as_route">Salva come percorso</string>
     <string name="ride_saved_as_route">Corsa salvata come percorso</string>
     <string name="ride_route_default_name">Percorso registrato</string>
