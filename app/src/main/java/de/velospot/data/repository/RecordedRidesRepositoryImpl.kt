@@ -215,7 +215,11 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         isMock = isMock,
         archivedAt = archivedAt,
         bikeProfileId = bikeProfileId,
-        sourceRouteId = sourceRouteId
+        sourceRouteId = sourceRouteId,
+        // Persist the captured Open-Meteo snapshot so weather survives a reload — it
+        // is shown by the (DB-backed) analysis screen and by re-opening the detail
+        // sheet, not just the in-memory object right after recording. Null stays null.
+        weatherJson = weather?.let { weatherAdapter.toJson(it) }
     )
 
     private companion object {

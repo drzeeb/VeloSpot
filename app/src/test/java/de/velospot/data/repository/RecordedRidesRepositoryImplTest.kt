@@ -9,6 +9,7 @@ import de.velospot.data.local.dao.RecordedRideSummaryRow
 import de.velospot.data.local.entity.RecordedRideEntity
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
+import de.velospot.domain.model.WeatherSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -143,6 +144,35 @@ class RecordedRidesRepositoryImplTest {
     @Test
     fun `getRide returns null for an unknown id`() = runTest {
         assertNull(repo().getRide("nope"))
+    }
+
+    @Test
+    fun `saveRide persists the captured weather snapshot and reads it back`() = runTest {
+        val repo = repo()
+        val weather = WeatherSnapshot(
+            temperatureC = 20.0,
+            apparentTemperatureC = 17.0,
+            humidityPct = 38,
+            precipitationMm = 0.0,
+            weatherCode = 0,
+            windSpeedMps = 2.5,
+            windDirectionDeg = 180,
+            observedAt = 5_000L,
+            latitude = 49.75,
+            longitude = 6.64,
+        )
+        repo.saveRide(ride("w1").copy(weather = weather))
+
+        // Reloaded from the DAO (not the in-memory object), the weather must survive.
+        assertEquals(weather, repo.getRide("w1")!!.weather)
+        assertEquals(weather, repo.getRidesWithTracksFlow().first().single().weather)
+    }
+
+    @Test
+    fun `saveRide without weather leaves it null`() = runTest {
+        val repo = repo()
+        repo.saveRide(ride("w0"))
+        assertNull(repo.getRide("w0")!!.weather)
     }
 
     /**
