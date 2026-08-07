@@ -32,6 +32,34 @@ data class RecordedRideSummaryRow(
 )
 
 /**
+ * Track-free **full-meta** projection of a recorded ride: every entity column
+ * **except** the heavy `pointsJson` (including `sourceRouteId`, which the leaner
+ * [RecordedRideSummaryRow] omits). Returned by the meta queries so a full
+ * [de.velospot.domain.model.RecordedRide] can be rebuilt without ever selecting
+ * `pointsJson` as a whole cell — a dense imported track can exceed SQLite's
+ * ~2 MB per-row `CursorWindow` limit and would otherwise throw
+ * `SQLiteBlobTooBigException` on any `SELECT *`. The track is read separately in
+ * chunks via [RecordedRideDao.getPointsJsonChunk].
+ */
+data class RecordedRideMetaRow(
+    val id: String,
+    val startedAt: Long,
+    val endedAt: Long,
+    val distanceMeters: Double,
+    val elapsedSeconds: Long,
+    val movingSeconds: Long,
+    val avgSpeedMps: Double,
+    val maxSpeedMps: Double,
+    val elevationGainMeters: Double,
+    val elevationLossMeters: Double,
+    val name: String?,
+    val isMock: Boolean,
+    val archivedAt: Long?,
+    val bikeProfileId: String?,
+    val sourceRouteId: String?
+)
+
+/**
  * Data Access Object for completed, recorded rides.
  */
 @Dao
@@ -50,17 +78,54 @@ interface RecordedRideDao {
     )
     fun getSummariesFlow(): Flow<List<RecordedRideSummaryRow>>
 
-    /** All recorded rides **with** their full GPS track, newest first. */
-    @Query("SELECT * FROM recorded_rides ORDER BY startedAt DESC")
-    fun getAllFlow(): Flow<List<RecordedRideEntity>>
+    /**
+     * All recorded rides as **track-free** full-meta rows, newest first. Explicitly
+     * lists every column except `pointsJson` so an oversized track never has to be
+     * squeezed into the `CursorWindow`; callers reassemble the track separately via
+     * the chunked [getPointsJsonChunk] reads.
+     */
+    @Query(
+        "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
+        "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
+        "name, isMock, archivedAt, bikeProfileId, sourceRouteId " +
+        "FROM recorded_rides ORDER BY startedAt DESC"
+    )
+    fun getAllMetaFlow(): Flow<List<RecordedRideMetaRow>>
 
-    /** A single ride **with** its full GPS track, or `null` when it no longer exists. */
-    @Query("SELECT * FROM recorded_rides WHERE id = :id")
-    suspend fun getById(id: String): RecordedRideEntity?
+    /** A single ride's **track-free** full-meta row, or `null` when it no longer exists. */
+    @Query(
+        "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
+        "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
+        "name, isMock, archivedAt, bikeProfileId, sourceRouteId " +
+        "FROM recorded_rides WHERE id = :id"
+    )
+    suspend fun getMetaById(id: String): RecordedRideMetaRow?
 
-    /** The full rides (tracks included) for the given [ids]. */
-    @Query("SELECT * FROM recorded_rides WHERE id IN (:ids)")
-    suspend fun getByIds(ids: List<String>): List<RecordedRideEntity>
+    /** The **track-free** full-meta rows for the given [ids]. */
+    @Query(
+        "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
+        "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
+        "name, isMock, archivedAt, bikeProfileId, sourceRouteId " +
+        "FROM recorded_rides WHERE id IN (:ids)"
+    )
+    suspend fun getMetaByIds(ids: List<String>): List<RecordedRideMetaRow>
+
+    /**
+     * Byte/char length of the stored `pointsJson` for [id], or `null` when the ride
+     * does not exist. Drives the chunked track reassembly (see [getPointsJsonChunk])
+     * so the huge cell is never read whole into the `CursorWindow`.
+     */
+    @Query("SELECT length(pointsJson) FROM recorded_rides WHERE id = :id")
+    suspend fun getPointsJsonLength(id: String): Int?
+
+    /**
+     * A [count]-character slice of `pointsJson` for [id] starting at 1-based [start]
+     * (SQLite `substr` is 1-based). Reading the track in bounded chunks keeps each
+     * cursor row comfortably under the ~2 MB `CursorWindow` limit that a dense
+     * imported track would otherwise blow when selected as one cell.
+     */
+    @Query("SELECT substr(pointsJson, :start, :count) FROM recorded_rides WHERE id = :id")
+    suspend fun getPointsJsonChunk(id: String, start: Int, count: Int): String?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(ride: RecordedRideEntity)
