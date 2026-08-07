@@ -1,7 +1,6 @@
 package de.velospot.core.tracking
 
 import android.app.PendingIntent
-import android.content.Intent
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.service.quicksettings.Tile
@@ -9,7 +8,6 @@ import android.service.quicksettings.TileService
 import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.MainActivity
 import de.velospot.R
-import de.velospot.core.location.hasLocationPermission
 import javax.inject.Inject
 
 /**
@@ -39,17 +37,18 @@ class RideRecordingTileService : TileService() {
     override fun onClick() {
         super.onClick()
         if (!manager.isRecording) {
-            if (!hasLocationPermission(this)) {
-                // Can't record without GPS — bounce the user into the app to grant it.
-                openApp()
-                return
-            }
-            // Idle → start a fresh recording.
-            manager.toggle()
-        } else {
-            // Recording → pause; paused → resume.
-            manager.togglePause()
+            // Idle → start via MainActivity so the recording (and its location
+            // foreground service) begins from a foreground Activity context. A
+            // background foreground-service start is blocked on Android 12+ (and
+            // aggressively on ColorOS/OPPO) when the app is closed. The Activity also
+            // covers the missing-GPS-permission case (it opens so the user can grant
+            // it, then starts once granted).
+            startRecordingViaApp()
+            return
         }
+        // Recording → pause; paused → resume. Both act on the already-running FGS,
+        // so no foreground context is required.
+        manager.togglePause()
         updateTile()
     }
 
@@ -81,9 +80,8 @@ class RideRecordingTileService : TileService() {
         tile.updateTile()
     }
 
-    private fun openApp() {
-        val intent = Intent(this, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    private fun startRecordingViaApp() {
+        val intent = MainActivity.startRideRecordingIntent(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val pending = PendingIntent.getActivity(
                 this, 0, intent,

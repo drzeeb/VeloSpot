@@ -4,6 +4,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import de.velospot.core.tracking.RideTracker
 import de.velospot.data.local.dao.RecordedRideDao
+import de.velospot.data.local.dao.RecordedRideMetaRow
 import de.velospot.data.local.dao.RecordedRideSummaryRow
 import de.velospot.data.local.entity.RecordedRideEntity
 import de.velospot.domain.model.RecordedRide
@@ -31,14 +32,29 @@ class RecordedRidesRepositoryImplTest {
     private class FakeRecordedRideDao : RecordedRideDao {
         val store = MutableStateFlow<List<RecordedRideEntity>>(emptyList())
 
-        private fun sorted() = store.value.sortedByDescending { it.startedAt }
-
         override fun getSummariesFlow(): Flow<List<RecordedRideSummaryRow>> =
             store.map { list -> list.sortedByDescending { it.startedAt }.map { it.toRow() } }
 
-        override fun getAllFlow(): Flow<List<RecordedRideEntity>> = store.map { sorted() }
-        override suspend fun getById(id: String): RecordedRideEntity? = store.value.firstOrNull { it.id == id }
-        override suspend fun getByIds(ids: List<String>): List<RecordedRideEntity> = store.value.filter { it.id in ids }
+        override fun getAllMetaFlow(): Flow<List<RecordedRideMetaRow>> =
+            store.map { list -> list.sortedByDescending { it.startedAt }.map { it.toMetaRow() } }
+
+        override suspend fun getMetaById(id: String): RecordedRideMetaRow? =
+            store.value.firstOrNull { it.id == id }?.toMetaRow()
+
+        override suspend fun getMetaByIds(ids: List<String>): List<RecordedRideMetaRow> =
+            store.value.filter { it.id in ids }.map { it.toMetaRow() }
+
+        override suspend fun getPointsJsonLength(id: String): Int? =
+            store.value.firstOrNull { it.id == id }?.pointsJson?.length
+
+        override suspend fun getPointsJsonChunk(id: String, start: Int, count: Int): String? {
+            // Mirror SQLite substr: 1-based [start], clamped to the string bounds.
+            val json = store.value.firstOrNull { it.id == id }?.pointsJson ?: return null
+            if (start > json.length) return ""
+            val from = (start - 1).coerceIn(0, json.length)
+            val to = (from + count).coerceIn(from, json.length)
+            return json.substring(from, to)
+        }
 
         override suspend fun upsert(ride: RecordedRideEntity) {
             store.value = store.value.filterNot { it.id == ride.id } + ride
@@ -71,6 +87,12 @@ class RecordedRidesRepositoryImplTest {
             id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds,
             avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters,
             name, isMock, archivedAt, bikeProfileId
+        )
+
+        private fun RecordedRideEntity.toMetaRow() = RecordedRideMetaRow(
+            id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds,
+            avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters,
+            name, isMock, archivedAt, bikeProfileId, sourceRouteId
         )
     }
 
@@ -121,6 +143,62 @@ class RecordedRidesRepositoryImplTest {
     @Test
     fun `getRide returns null for an unknown id`() = runTest {
         assertNull(repo().getRide("nope"))
+    }
+
+    /**
+     * Builds a ride whose serialised `pointsJson` comfortably exceeds the 256 KB
+     * chunk size (spanning several chunks), reproducing the dense imported GPX that
+     * used to blow the ~2 MB `CursorWindow` limit on a `SELECT *`. Proves the
+     * chunked `substr` reassembly reconstructs every point, in order.
+     */
+    private fun largeRide(id: String, pointCount: Int) = RecordedRide(
+        id = id,
+        startedAt = 1_000L,
+        endedAt = 4_600L,
+        distanceMeters = 42_000.0,
+        elapsedSeconds = 3_600,
+        movingSeconds = 3_000,
+        avgSpeedMps = 4.1,
+        maxSpeedMps = 9.9,
+        elevationGainMeters = 120.0,
+        elevationLossMeters = 90.0,
+        points = List(pointCount) { i ->
+            TrackPoint(
+                49.0 + i * 0.00001,
+                6.0 + i * 0.00001,
+                1_000L + i * 1_000L,
+                speedMps = 3.5f,
+                altitudeMeters = 180.0 + i,
+                accuracyMeters = 4f,
+            )
+        },
+        name = "Dense import",
+    )
+
+    @Test
+    fun `large track spanning multiple chunks round-trips through getRide`() = runTest {
+        val repo = repo()
+        // ~40k points serialise well over 512 KB, i.e. multiple 256 KB chunks.
+        val ride = largeRide("dense", pointCount = 40_000)
+        repo.saveRide(ride)
+
+        val loaded = repo.getRide("dense")!!
+        assertEquals(ride.points.size, loaded.points.size)
+        assertEquals(ride.points.first().latitude, loaded.points.first().latitude, 0.0)
+        assertEquals(ride.points.last().latitude, loaded.points.last().latitude, 0.0)
+        assertEquals(ride.points.last().timestamp, loaded.points.last().timestamp)
+    }
+
+    @Test
+    fun `large track round-trips through the ridesWithTracks flow`() = runTest {
+        val repo = repo()
+        val ride = largeRide("dense", pointCount = 40_000)
+        repo.saveRide(ride)
+
+        val rides = repo.getRidesWithTracksFlow().first()
+        assertEquals(1, rides.size)
+        assertEquals(ride.points.size, rides.first().points.size)
+        assertEquals(ride.points.last().timestamp, rides.first().points.last().timestamp)
     }
 
     @Test

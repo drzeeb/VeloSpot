@@ -10,6 +10,12 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel superseded runs on the same ref. A new PR push aborts the previous
+# (or stuck/queued) run; pushes to main are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
