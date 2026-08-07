@@ -1,6 +1,7 @@
 package de.velospot.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -12,7 +13,10 @@ import androidx.room.PrimaryKey
  * (`RECENT` / `HOME` / `WORK`); [id] is a rounded-coordinate key so navigating to
  * the same place again updates the existing row instead of piling up duplicates.
  */
-@Entity(tableName = "recent_destinations")
+@Entity(
+    tableName = "recent_destinations",
+    indices = [Index(value = ["kind"])]
+)
 data class RecentDestinationEntity(
     @PrimaryKey
     val id: String,
