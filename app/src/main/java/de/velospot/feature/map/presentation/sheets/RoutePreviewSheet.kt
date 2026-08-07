@@ -1,6 +1,12 @@
 package de.velospot.feature.map.presentation.sheets
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +19,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
@@ -20,24 +29,30 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import de.velospot.R
 import de.velospot.core.analysis.RouteDirectionStats
 import de.velospot.core.analysis.RouteLeaderboardSummary
@@ -59,8 +74,10 @@ private val IMPROVING_COLOR = Color(0xFF2E7D32)
  * the route before riding — its distance, climb and a digest of its leaderboard —
  * and start it forward or reversed, open the full leaderboard, or close.
  *
- * Placed inside the map layout `Box`; it fills the screen but only the bottom card
- * consumes touches, so the map remains interactive.
+ * Placed inside the map layout `Box`; it fills the screen but only the bottom
+ * surface consumes touches, so the map remains interactive. Like the recorded-ride
+ * detail sheet it is **resizable**: drag the handle (or the header) down to collapse
+ * it to a small peek so more of the map shows, and up to reveal the full digest.
  */
 @Composable
 internal fun RoutePreviewSheet(
@@ -72,88 +89,163 @@ internal fun RoutePreviewSheet(
     onDownloadOffline: () -> Unit,
     onClose: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+
+    // Collapsed "peek" shows just the handle + route name so the map is mostly
+    // free; expanded reveals the facts, leaderboard digest and ride actions.
+    val peekHeight = 128.dp
+    val expandedHeight = configuration.screenHeightDp.dp * 0.62f
+    val peekPx = with(density) { peekHeight.toPx() }
+    val expandedPx = with(density) { expandedHeight.toPx() }
+
+    val scope = rememberCoroutineScope()
+    // Start expanded so the rider sees the digest immediately; they can drag it
+    // down to the peek to free up the map.
+    val heightAnim = remember { Animatable(expandedPx) }
+
+    // Keep the live height within bounds across configuration/size changes.
+    LaunchedEffect(expandedPx) {
+        if (heightAnim.value > expandedPx) heightAnim.snapTo(expandedPx)
+    }
+
+    // Back gesture closes the preview (there is no scrim to tap).
+    BackHandler(onBack = onClose)
+
+    val dragState = rememberDraggableState { delta ->
+        // Dragging up yields a negative delta → the sheet grows.
+        scope.launch {
+            heightAnim.snapTo((heightAnim.value - delta).coerceIn(peekPx, expandedPx))
+        }
+    }
+    val snapToNearest: () -> Unit = {
+        val mid = (peekPx + expandedPx) / 2f
+        val target = if (heightAnim.value >= mid) expandedPx else peekPx
+        scope.launch { heightAnim.animateTo(target) }
+    }
+
+    // Full-screen, but only the bottom-aligned surface is a touch target, so the
+    // empty area passes all gestures straight through to the map underneath.
     Box(modifier = Modifier.fillMaxSize()) {
-        Card(
+        Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(horizontal = 12.dp, vertical = 12.dp)
-                .fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f)
-            ),
-            elevation = CardDefaults.cardElevation(8.dp)
+                .fillMaxWidth()
+                .height(with(density) { heightAnim.value.toDp() }),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
+            tonalElevation = 3.dp,
+            shadowElevation = 10.dp
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // ── Header: name + close ─────────────────────────────────────
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = route.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f).headingSemantics()
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // ── Drag handle row (drag to resize, tap ✕ to close) ──────────
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .draggable(
+                            orientation = Orientation.Vertical,
+                            state = dragState,
+                            onDragStopped = { snapToNearest() }
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 10.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                            .size(width = 38.dp, height = 4.dp)
                     )
-                    IconButton(onClick = onClose) {
+                    IconButton(
+                        onClick = onClose,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(end = 4.dp, top = 6.dp)
+                    ) {
                         Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close))
                     }
                 }
 
-                // ── Route facts (constant per route) ─────────────────────────
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PreviewStat(
-                        modifier = Modifier.weight(1f),
-                        label = stringResource(R.string.ride_stat_distance),
-                        value = formatRideDistance(route.distanceMeters)
+                // ── Scrollable content ────────────────────────────────────────
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 12.dp)
+                ) {
+                    // ── Header: route name (kept in the peek) ────────────────
+                    Text(
+                        text = route.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(end = 40.dp).headingSemantics()
                     )
-                    PreviewStat(
-                        modifier = Modifier.weight(1f),
-                        label = stringResource(R.string.ride_stat_elevation_gain),
-                        value = "↑ " + formatRideElevation(route.elevationGainMeters)
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.ride_detail_drag_hint),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    PreviewStat(
-                        modifier = Modifier.weight(1f),
-                        label = stringResource(R.string.ride_stat_elevation_loss),
-                        value = "↓ " + formatRideElevation(route.elevationLossMeters)
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PreviewStat(
-                        modifier = Modifier.weight(1f),
-                        label = stringResource(R.string.route_stat_stops),
-                        value = route.waypoints.size.toString()
-                    )
-                    PreviewStat(
-                        modifier = Modifier.weight(1f),
-                        label = stringResource(R.string.ride_stats_calories),
-                        value = route.estimatedKcal?.let { "≈ %,d kcal".format(it) } ?: "—"
-                    )
-                    Spacer(Modifier.weight(1f))
-                }
 
-                // ── Leaderboard digest ───────────────────────────────────────
-                Spacer(Modifier.height(12.dp))
-                RouteLeaderboardDigest(summary = summary, onOpenLeaderboard = onOpenLeaderboard)
+                    // ── Route facts (constant per route) ─────────────────────
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        PreviewStat(
+                            modifier = Modifier.weight(1f),
+                            label = stringResource(R.string.ride_stat_distance),
+                            value = formatRideDistance(route.distanceMeters)
+                        )
+                        PreviewStat(
+                            modifier = Modifier.weight(1f),
+                            label = stringResource(R.string.ride_stat_elevation_gain),
+                            value = "↑ " + formatRideElevation(route.elevationGainMeters)
+                        )
+                        PreviewStat(
+                            modifier = Modifier.weight(1f),
+                            label = stringResource(R.string.ride_stat_elevation_loss),
+                            value = "↓ " + formatRideElevation(route.elevationLossMeters)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        PreviewStat(
+                            modifier = Modifier.weight(1f),
+                            label = stringResource(R.string.route_stat_stops),
+                            value = route.waypoints.size.toString()
+                        )
+                        PreviewStat(
+                            modifier = Modifier.weight(1f),
+                            label = stringResource(R.string.ride_stats_calories),
+                            value = route.estimatedKcal?.let { "≈ %,d kcal".format(it) } ?: "—"
+                        )
+                        Spacer(Modifier.weight(1f))
+                    }
 
-                // ── Ride actions ─────────────────────────────────────────────
-                Spacer(Modifier.height(14.dp))
-                Button(onClick = onRideForward, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.route_ride))
-                }
-                Spacer(Modifier.height(8.dp))
-                TextButton(onClick = onRideReverse, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.SwapHoriz, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.route_ride_reverse))
-                }
-                Spacer(Modifier.height(8.dp))
-                TextButton(onClick = onDownloadOffline, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.CloudDownload, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.offline_download_route))
+                    // ── Leaderboard digest ───────────────────────────────────
+                    Spacer(Modifier.height(12.dp))
+                    RouteLeaderboardDigest(summary = summary, onOpenLeaderboard = onOpenLeaderboard)
+
+                    // ── Ride actions ─────────────────────────────────────────
+                    Spacer(Modifier.height(14.dp))
+                    Button(onClick = onRideForward, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.route_ride))
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = onRideReverse, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.SwapHoriz, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.route_ride_reverse))
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = onDownloadOffline, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.CloudDownload, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.offline_download_route))
+                    }
                 }
             }
         }
