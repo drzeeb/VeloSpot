@@ -120,6 +120,7 @@ class MapViewModel @Inject constructor(
     private val destinationHistoryRepository: DestinationHistoryRepository,
     private val mapSettings: MapSettingsRepository,
     private val sensorRepository: SensorRepository,
+    private val healthConnectExporter: de.velospot.core.health.HealthConnectExporter,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -1051,6 +1052,58 @@ class MapViewModel @Inject constructor(
     fun renameRecordedRide(id: String, name: String?) = rideTracking.renameRide(id, name)
     fun setRecordedRideArchived(id: String, archived: Boolean) =
         rideTracking.setRideArchived(id, archived)
+
+    // ── Health Connect export ─────────────────────────────────────────────────
+
+    /**
+     * Whether finished rides are auto-exported to Health Connect. Persisted opt-in,
+     * defaults to off. Drives the toggle on the Health Connect settings sheet.
+     */
+    val healthConnectAutoExportEnabled: StateFlow<Boolean> =
+        mapSettings.healthConnectAutoExportEnabled
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles auto-export of finished rides to Health Connect and persists it. */
+    fun setHealthConnectAutoExportEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setHealthConnectAutoExportEnabled(enabled) }
+    }
+
+    /** Whether Health Connect is available / installable on this device (checked live). */
+    fun healthConnectAvailability(): de.velospot.core.health.HealthConnectAvailability =
+        healthConnectExporter.availability()
+
+    /** The exact Health Connect write permissions to request from the UI. */
+    val healthConnectWritePermissions: Set<String>
+        get() = healthConnectExporter.writePermissions
+
+    /** True when all Health Connect write permissions have already been granted. */
+    suspend fun healthConnectPermissionsGranted(): Boolean =
+        healthConnectExporter.hasAllPermissions()
+
+    /** Opens the Play Store to install/update the Health Connect provider app. */
+    fun openHealthConnectInstall() {
+        runCatching { context.startActivity(healthConnectExporter.playStoreIntent()) }
+    }
+
+    /**
+     * Manually exports the given [ride] to Health Connect, surfacing the outcome as
+     * a toast. The detail sheet requests the permissions first; this still reports a
+     * distinct message when permissions turn out to be missing or the provider is
+     * unavailable.
+     */
+    fun exportRideToHealthConnect(ride: RecordedRide) {
+        viewModelScope.launch {
+            _userMessageRes.value = when (healthConnectExporter.exportRide(ride)) {
+                is de.velospot.core.health.HealthConnectExportResult.Success ->
+                    de.velospot.R.string.health_connect_export_success
+                de.velospot.core.health.HealthConnectExportResult.PermissionsMissing ->
+                    de.velospot.R.string.health_connect_export_permission_needed
+                de.velospot.core.health.HealthConnectExportResult.Unavailable ->
+                    de.velospot.R.string.health_connect_export_unavailable
+                else -> de.velospot.R.string.health_connect_export_failed
+            }
+        }
+    }
 
     /**
      * Saves a recorded [ride] — a recording, a navigated ride or a round trip — as

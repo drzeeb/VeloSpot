@@ -870,7 +870,8 @@ fun MainMapScreen(
             onOpenDisplaySettings = screenUiState::openDisplaySettings,
             onOpenNavRouting      = screenUiState::openNavRouting,
             onOpenBikeGarage      = screenUiState::openBikeGarage,
-            onOpenSensors         = screenUiState::openSensors
+            onOpenSensors         = screenUiState::openSensors,
+            onOpenHealthConnect   = screenUiState::openHealthConnect
         )
         Row(
             modifier = Modifier
@@ -940,6 +941,21 @@ fun MainMapScreen(
                 onForget = viewModel::forgetSensor,
                 onSetWheelCircumference = viewModel::setWheelCircumferenceMeters,
                 onDismiss = screenUiState::closeSensors
+            )
+        }
+
+        // Health Connect export settings (availability, permissions, auto-export).
+        if (screenUiState.isHealthConnectSheetVisible) {
+            val healthConnectAvailability = remember { viewModel.healthConnectAvailability() }
+            val autoExportEnabled by viewModel.healthConnectAutoExportEnabled.collectAsStateWithLifecycle()
+            de.velospot.feature.map.presentation.sheets.HealthConnectSheet(
+                availability = healthConnectAvailability,
+                writePermissions = viewModel.healthConnectWritePermissions,
+                autoExportEnabled = autoExportEnabled,
+                checkGranted = viewModel::healthConnectPermissionsGranted,
+                onSetAutoExport = viewModel::setHealthConnectAutoExportEnabled,
+                onInstallHealthConnect = viewModel::openHealthConnectInstall,
+                onDismiss = screenUiState::closeHealthConnect
             )
         }
 
@@ -1060,6 +1076,7 @@ fun MainMapScreen(
         // map without a scrim: only its surface consumes touches, leaving the
         // drawn ride track fully pan/pinch/zoom-able above the collapsed sheet.
         selectedRide?.let { ride ->
+            val healthConnectAvailability = remember { viewModel.healthConnectAvailability() }
             RideDetailSheet(
                 ride      = ride,
                 onDismiss = {
@@ -1076,7 +1093,13 @@ fun MainMapScreen(
                 onOpenAnalysis = onOpenRideAnalysis,
                 onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) },
                 isImportable = isPreviewRide,
-                onImport = { viewModel.importPreviewedRide() }
+                onImport = { viewModel.importPreviewedRide() },
+                canExportToHealthConnect =
+                    healthConnectAvailability == de.velospot.core.health.HealthConnectAvailability.AVAILABLE,
+                healthConnectInstallable = healthConnectAvailability.isInstallable,
+                healthConnectWritePermissions = viewModel.healthConnectWritePermissions,
+                onExportToHealthConnect = { viewModel.exportRideToHealthConnect(ride) },
+                onInstallHealthConnect = { viewModel.openHealthConnectInstall() }
             )
         }
 

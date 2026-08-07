@@ -216,6 +216,7 @@ class MapViewModelTest {
             destinationHistoryRepository = FakeDestinationHistoryRepository(),
             mapSettings           = FakeMapSettingsRepository(),
             sensorRepository      = FakeSensorRepository(),
+            healthConnectExporter = de.velospot.core.health.HealthConnectExporter(mockContext),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }
@@ -1010,6 +1011,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
     private val _onboardingCompleted = MutableStateFlow(true)
     override val onboardingCompleted: Flow<Boolean> = _onboardingCompleted
+    private val _healthConnectAutoExport = MutableStateFlow(false)
+    override val healthConnectAutoExportEnabled: Flow<Boolean> = _healthConnectAutoExport
 
     override suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean) {
         _layerVisibility.value = _layerVisibility.value.withVisibility(category, visible)
@@ -1029,6 +1032,9 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     }
     override suspend fun setColorTrackBySpeed(enabled: Boolean) {
         _rideViewOptions.value = _rideViewOptions.value.copy(colorTrackBySpeed = enabled)
+    }
+    override suspend fun setHealthConnectAutoExportEnabled(enabled: Boolean) {
+        _healthConnectAutoExport.value = enabled
     }
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         _onboardingCompleted.value = completed

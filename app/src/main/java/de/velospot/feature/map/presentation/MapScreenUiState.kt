@@ -58,6 +58,10 @@ internal class MapScreenUiState {
     var isSensorsSheetVisible by mutableStateOf(false)
         private set
 
+    /** Sub-sheet: Health Connect export (availability, permissions, auto-export). */
+    var isHealthConnectSheetVisible by mutableStateOf(false)
+        private set
+
     /** Opens the unified Settings sheet (top-bar menu button). */
     fun expandMenu() {
         isSettingsSheetVisible = true
@@ -176,6 +180,16 @@ internal class MapScreenUiState {
 
     fun closeSensors() {
         isSensorsSheetVisible = false
+    }
+
+    /** Opens the Health Connect export settings sub-sheet from the main Settings sheet. */
+    fun openHealthConnect() {
+        isHealthConnectSheetVisible = true
+        dismissMenu()
+    }
+
+    fun closeHealthConnect() {
+        isHealthConnectSheetVisible = false
     }
 }
 

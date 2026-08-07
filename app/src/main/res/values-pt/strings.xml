@@ -431,6 +431,24 @@
     <string name="sensor_unit_bpm">bpm</string>
     <string name="sensor_unit_watts">W</string>
     <string name="sensor_unit_rpm">rpm</string>
+
+    <!-- Health Connect export -->
+    <string name="health_connect_title">Health Connect</string>
+    <string name="health_connect_subtitle">Grave os seus percursos concluídos no Health Connect para que apareçam nas suas apps de saúde. O VeloSpot apenas escreve dados, nunca os lê.</string>
+    <string name="health_connect_export_action">Exportar para o Health Connect</string>
+    <string name="health_connect_install_action">Instalar o Health Connect</string>
+    <string name="health_connect_grant_permissions">Conceder permissões</string>
+    <string name="health_connect_manage_permissions">Gerir permissões</string>
+    <string name="health_connect_auto_export_title">Exportar percursos automaticamente</string>
+    <string name="health_connect_status_available">O Health Connect está disponível</string>
+    <string name="health_connect_status_not_installed">O Health Connect não está instalado</string>
+    <string name="health_connect_status_update_required">O Health Connect precisa de uma atualização</string>
+    <string name="health_connect_status_unsupported">O Health Connect não é compatível com este dispositivo</string>
+    <string name="health_connect_export_success">Percurso exportado para o Health Connect</string>
+    <string name="health_connect_export_failed">Não foi possível exportar para o Health Connect</string>
+    <string name="health_connect_export_permission_needed">Conceda permissões do Health Connect para exportar</string>
+    <string name="health_connect_export_unavailable">O Health Connect está indisponível</string>
+
     <string name="ride_detail_subtitle">%1$s • ⌀ %2$s</string>
     <string name="ride_detail_close">Fechar detalhes do percurso</string>
     <string name="ride_detail_drag_hint">Arraste para baixo • o mapa continua interativo</string>
