@@ -90,7 +90,7 @@
 
     <main>
         <h1>Privacy Policy for VeloSpot</h1>
-        <p class="updated">Last updated: June 21, 2026</p>
+        <p class="updated">Last updated: August 7, 2026</p>
 
         <p>This privacy policy explains how the <strong>VeloSpot</strong> app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires <strong>no user account</strong>, contains <strong>no advertising</strong>, and uses <strong>no tracking or analytics tools</strong>.</p>
 
@@ -124,7 +124,7 @@
         <ul>
             <li>Favorites (marked bike parking spots)</li>
             <li>Self-saved places (custom pins)</li>
-            <li>Addresses resolved via Nominatim and cached locally</li>
+            <li>Addresses resolved via Photon (Komoot) and cached locally</li>
             <li>App settings (e.g. selected language, dark mode, visible map layers)</li>
         </ul>
         <p>This data is deleted as soon as you uninstall the app or clear the app data in your Android settings.</p>
@@ -140,6 +140,15 @@
             <li><strong>Sharing is user-initiated:</strong> The image leaves your device only when <strong>you</strong> actively choose a target app (e.g. a messenger or social network) in the Android share dialog. From that point on, the image — including the route and statistics it contains — is handled by the app you selected, and <strong>that provider's own privacy policy applies</strong>. Please choose your sharing target consciously, as a route can reveal location information (for example a start or end point near your home).</li>
         </ul>
 
+        <h3>3.5 Health Connect Export (optional)</h3>
+        <ul>
+            <li><strong>Purpose:</strong> If you choose to, VeloSpot can write a finished ride into Android's on-device <strong>Health Connect</strong> data store so that other fitness apps you use can read it. The exported data is limited to the ride's <strong>exercise session</strong> (type "biking"), <strong>distance</strong>, <strong>elevation gained</strong>, <strong>total calories burned</strong> and <strong>speed samples</strong> derived from the recorded track. VeloSpot does <strong>not</strong> export heart rate, power or cadence, and it never <strong>reads</strong> any data from Health Connect.</li>
+            <li><strong>Permissions:</strong> The Health Connect write permissions (<code>android.permission.health.WRITE_EXERCISE</code>, <code>WRITE_DISTANCE</code>, <code>WRITE_ELEVATION_GAINED</code>, <code>WRITE_ACTIVE_CALORIES_BURNED</code>, <code>WRITE_SPEED</code>). These are granted through the separate Health Connect app and can be revoked there at any time.</li>
+            <li><strong>Processing &amp; storage:</strong> The data is written <strong>only on your device</strong> into the Health Connect data store, which is managed by the Health Connect system component (part of Android or the separately installed Health Connect app), <strong>not</strong> by VeloSpot. Nothing is transmitted to the developer.</li>
+            <li><strong>Voluntariness:</strong> This feature is <strong>entirely optional and off by default</strong>. It runs only when you manually trigger an export or explicitly enable automatic export in the settings, and only after you grant the corresponding permissions.</li>
+            <li><strong>Onward sharing:</strong> Once data is in Health Connect, <strong>other apps to which you have granted read access</strong> can access it. Those apps and the Health Connect component are independent data controllers; <strong>their own privacy policies apply</strong>. You control this access in the Health Connect app.</li>
+        </ul>
+
         <h2>4. Network Connections to Third Parties</h2>
         <p>When you use certain features, the app establishes connections to external services. For technical reasons, this transmits your <strong>IP address</strong> to the respective service provider; depending on the feature, additional data listed below is transmitted. These providers are independent data controllers under data protection law.</p>
         <table>
@@ -148,7 +157,7 @@
             </thead>
             <tbody>
                 <tr><td><strong>OpenFreeMap</strong></td><td>Loading vector map tiles (map view &amp; ride-share map snapshot), and — if you enable the optional <em>Offline map</em> — pre-downloading the tiles for a chosen region</td><td>Requested map area, IP address</td><td><a href="https://openfreemap.org/">openfreemap.org</a></td></tr>
-                <tr><td><strong>Nominatim (OpenStreetMap)</strong></td><td>Address search &amp; address resolution (geocoding)</td><td>Search term or coordinates, IP address</td><td><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy">OSM Privacy Policy</a></td></tr>
+                <tr><td><strong>Photon (Komoot)</strong></td><td>Address search &amp; address resolution (geocoding)</td><td>Search term or coordinates, IP address</td><td><a href="https://www.komoot.com/privacy">Komoot Privacy Policy</a></td></tr>
                 <tr><td><strong>OSRM</strong></td><td>Calculating routes (online fallback, if used)</td><td>Start/destination coordinates, IP address</td><td><a href="https://project-osrm.org/">project-osrm.org</a></td></tr>
                 <tr><td><strong>BRouter</strong></td><td>One-time download of offline routing data (map-segment tiles)</td><td>Requested 5°×5° tile (≈ your region), IP address</td><td><a href="https://brouter.de/">brouter.de</a></td></tr>
             </tbody>
@@ -168,6 +177,7 @@
                 <tr><td><code>INTERNET</code></td><td>Loading map tiles, address search/resolution, and one-time offline-routing data download</td></tr>
                 <tr><td><code>ACCESS_NETWORK_STATE</code></td><td>Checking whether a network connection exists</td></tr>
                 <tr><td><code>ACCESS_FINE_LOCATION</code> / <code>ACCESS_COARSE_LOCATION</code></td><td>Displaying your own location and navigation (optional)</td></tr>
+                <tr><td><code>health.WRITE_EXERCISE</code> / <code>WRITE_DISTANCE</code> / <code>WRITE_ELEVATION_GAINED</code> / <code>WRITE_ACTIVE_CALORIES_BURNED</code> / <code>WRITE_SPEED</code></td><td>Optional export of a finished ride to Health Connect (see Section 3.5)</td></tr>
             </tbody>
         </table>
 

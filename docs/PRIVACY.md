@@ -1,6 +1,6 @@
 # Privacy Policy for VeloSpot
 
-**Last updated: June 21, 2026**
+**Last updated: August 7, 2026**
 
 This privacy policy explains how the **VeloSpot** app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires **no user account**, contains **no advertising**, and uses **no tracking or analytics tools**.
 
@@ -47,7 +47,7 @@ The following data is stored **exclusively locally in a database/settings on you
 
 - Favorites (marked bike parking spots)
 - Self-saved places (custom pins)
-- Addresses resolved via Nominatim and cached locally
+- Addresses resolved via Photon (Komoot) and cached locally
 - App settings (e.g. selected language, dark mode, visible map layers)
 
 This data is deleted as soon as you uninstall the app or clear the app data in your Android settings.
@@ -62,6 +62,14 @@ The roughly 100,000 bike parking spots are included in the app as an **offline d
 - **Map cutout:** To draw the map behind the route, the app loads map tiles for the ride's area from **OpenFreeMap** (see Section 4), just like the normal map view. If you are offline, a plain coloured background is used instead and no tiles are requested.
 - **Storage:** The generated image is stored **temporarily in the app's private cache** on your device and is **not** transmitted anywhere by VeloSpot.
 - **Sharing is user-initiated:** The image leaves your device only when **you** actively choose a target app (e.g. a messenger or social network) in the Android share dialog. From that point on, the image — including the route and statistics it contains — is handled by the app you selected, and **that provider's own privacy policy applies**. Please choose your sharing target consciously, as a route can reveal location information (for example a start or end point near your home).
+
+### 3.5 Health Connect Export (optional)
+
+- **Purpose:** If you choose to, VeloSpot can write a finished ride into Android's on-device **Health Connect** data store so that other fitness apps you use can read it. The exported data is limited to the ride's **exercise session** (type "biking"), **distance**, **elevation gained**, **total calories burned** and **speed samples** derived from the recorded track. VeloSpot does **not** export heart rate, power or cadence, and it never **reads** any data from Health Connect.
+- **Permissions:** The Health Connect write permissions (`android.permission.health.WRITE_EXERCISE`, `WRITE_DISTANCE`, `WRITE_ELEVATION_GAINED`, `WRITE_ACTIVE_CALORIES_BURNED`, `WRITE_SPEED`). These are granted through the separate Health Connect app and can be revoked there at any time.
+- **Processing & storage:** The data is written **only on your device** into the Health Connect data store, which is managed by the Health Connect system component (part of Android or the separately installed Health Connect app), **not** by VeloSpot. Nothing is transmitted to the developer.
+- **Voluntariness:** This feature is **entirely optional and off by default**. It runs only when you manually trigger an export or explicitly enable automatic export in the settings, and only after you grant the corresponding permissions.
+- **Onward sharing:** Once data is in Health Connect, **other apps to which you have granted read access** can access it. Those apps and the Health Connect component are independent data controllers; **their own privacy policies apply**. You control this access in the Health Connect app.
 
 ---
 
@@ -91,6 +99,7 @@ When you use certain features, the app establishes connections to external servi
 | `INTERNET` | Loading map tiles, address search/resolution, and one-time offline-routing data download |
 | `ACCESS_NETWORK_STATE` | Checking whether a network connection exists |
 | `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Displaying your own location and navigation (optional) |
+| `health.WRITE_EXERCISE` / `WRITE_DISTANCE` / `WRITE_ELEVATION_GAINED` / `WRITE_ACTIVE_CALORIES_BURNED` / `WRITE_SPEED` | Optional export of a finished ride to Health Connect (see Section 3.5) |
 
 ---
 
