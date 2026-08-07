@@ -54,6 +54,16 @@ OSM data is available under the ODbL. This means:
 - **Source code**: https://github.com/Project-OSRM/osrm-backend
 - **Usage**: Online bicycle routing as fallback when BRouter segments are unavailable
 
+### Open-Meteo (weather)
+- **Operator**: Open-Meteo (free public instance)
+- **URL**: https://open-meteo.com/
+- **License**: Weather data under Creative Commons Attribution 4.0 (CC BY 4.0)
+- **License URL**: https://creativecommons.org/licenses/by/4.0/
+- **Required attribution**: Weather data by Open-Meteo.com
+- **Source code**: https://github.com/open-meteo/open-meteo
+- **Usage**: Optional, **opt-in** current-weather display on the map and a weather snapshot saved with a ride. No API key required.
+- **Privacy**: No personal data is transmitted – only the coordinates the weather is requested for
+
 ---
 
 ## 📦 Libraries
@@ -116,4 +126,4 @@ Map data from OpenStreetMap remains under the ODbL.
 
 ---
 
-**Last updated**: 2026-06-11
+**Last updated**: 2026-08-07

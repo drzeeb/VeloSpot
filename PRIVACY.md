@@ -1,6 +1,6 @@
 # Privacy Policy for VeloSpot
 
-**Last updated: June 21, 2026**
+**Last updated: August 7, 2026**
 
 This privacy policy explains how the **VeloSpot** app ("the app") handles your data. Protecting your privacy is important to us. VeloSpot was built on the principle of data minimization: the app requires **no user account**, contains **no advertising**, and uses **no tracking or analytics tools**.
 
@@ -63,6 +63,13 @@ The roughly 100,000 bike parking spots are included in the app as an **offline d
 - **Storage:** The generated image is stored **temporarily in the app's private cache** on your device and is **not** transmitted anywhere by VeloSpot.
 - **Sharing is user-initiated:** The image leaves your device only when **you** actively choose a target app (e.g. a messenger or social network) in the Android share dialog. From that point on, the image — including the route and statistics it contains — is handled by the app you selected, and **that provider's own privacy policy applies**. Please choose your sharing target consciously, as a route can reveal location information (for example a start or end point near your home).
 
+### 3.5 Weather (optional)
+
+- **Purpose:** If you enable the optional **Weather** setting (**off by default**), the app shows the current weather on the map and saves a weather snapshot (temperature, conditions, wind, humidity, precipitation) together with each recorded ride.
+- **How it works:** When enabled, the app requests the current weather for the map's location (or a ride's start point) from **Open-Meteo** (see Section 4). This transmits those **coordinates** — and, technically, your **IP address** — to Open-Meteo. **No account** is required and **no personal identifiers** are sent.
+- **Storage:** The returned weather snapshot is stored **only locally on your device**, together with the ride; it is **not** transmitted to the developer.
+- **Voluntariness:** The feature is entirely optional and **off by default**. When it is disabled, **no weather requests are made** at all.
+
 ---
 
 ## 4. Network Connections to Third Parties
@@ -75,11 +82,13 @@ When you use certain features, the app establishes connections to external servi
 | **Photon (Komoot)** | Address search & address resolution (geocoding) | Search term or coordinates, IP address | [Komoot Privacy Policy](https://www.komoot.com/privacy) |
 | **OSRM** | Calculating routes (online fallback, if used) | Start/destination coordinates, IP address | [project-osrm.org](https://project-osrm.org/) |
 | **BRouter** | One-time download of offline routing data (map-segment tiles) | Requested 5°×5° tile (≈ your region), IP address | [brouter.de](https://brouter.de/) |
+| **Open-Meteo** | Optional weather display on the map and the weather snapshot saved with a ride | Coordinates, IP address | [open-meteo.com](https://open-meteo.com/) |
 
 **Notes:**
 - These connections only occur **when the respective feature is actively used** (e.g. when panning the map, performing an address search, or tapping a parking spot without a stored address).
 - **Bike navigation via BRouter** computes routes **entirely offline on your device** — no start, destination or route is ever transmitted. Only the **one-time download** of the offline routing data fetches map-segment tiles from brouter.de; the requested tile name reveals only your approximate region.
 - **Ride-share card:** Generating the share card loads OpenFreeMap tiles for the recorded ride's area (its bounding box) to draw the map cutout; this only happens while you preview the card and only when online. The card image itself is created locally — see Section 3.4 for how it is shared.
+- **Weather (Open-Meteo):** Only requested when you have enabled the optional **Weather** feature; the app sends the coordinates it wants the weather for (the map location or a ride's start point) and stores the result locally with the ride. See Section 3.5.
 - The app transmits **no personal identifiers** (no advertising ID, no device ID) to these services.
 
 ---

@@ -71,6 +71,12 @@ interface MapSettingsRepository {
      */
     val sunAlertEnabled: Flow<Boolean>
 
+    /**
+     * Whether the opt-in **Open-Meteo weather** integration is enabled. Defaults to
+     * `false`; while off, no weather network request is ever made.
+     */
+    val weatherEnabled: Flow<Boolean>
+
     /** The rider's persisted "inspect a past ride" overlay choices. */
     val rideViewOptions: Flow<RideViewOptions>
 
@@ -91,6 +97,7 @@ interface MapSettingsRepository {
     suspend fun setRoundedBuildings(enabled: Boolean)
     suspend fun setAmoled(enabled: Boolean)
     suspend fun setSunAlertEnabled(enabled: Boolean)
+    suspend fun setWeatherEnabled(enabled: Boolean)
     suspend fun setShowMaxSpeedBubble(enabled: Boolean)
     suspend fun setColorTrackBySpeed(enabled: Boolean)
     suspend fun setOnboardingCompleted(completed: Boolean)

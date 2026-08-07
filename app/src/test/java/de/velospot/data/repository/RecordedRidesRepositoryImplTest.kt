@@ -92,7 +92,7 @@ class RecordedRidesRepositoryImplTest {
         private fun RecordedRideEntity.toMetaRow() = RecordedRideMetaRow(
             id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds,
             avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters,
-            name, isMock, archivedAt, bikeProfileId, sourceRouteId
+            name, isMock, archivedAt, bikeProfileId, sourceRouteId, weatherJson
         )
     }
 

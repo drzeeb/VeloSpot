@@ -81,6 +81,9 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     override val sunAlertEnabled: Flow<Boolean> =
         data.map { it[KEY_SUN_ALERT] ?: true }
 
+    override val weatherEnabled: Flow<Boolean> =
+        data.map { it[KEY_WEATHER_ENABLED] ?: false }
+
     override val rideViewOptions: Flow<RideViewOptions> = data.map { prefs ->
         RideViewOptions(
             showMaxSpeedBubble = prefs[KEY_MAX_SPEED_BUBBLE] ?: true,
@@ -129,6 +132,9 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     override suspend fun setSunAlertEnabled(enabled: Boolean) =
         put(KEY_SUN_ALERT, enabled)
 
+    override suspend fun setWeatherEnabled(enabled: Boolean) =
+        put(KEY_WEATHER_ENABLED, enabled)
+
     override suspend fun setShowMaxSpeedBubble(enabled: Boolean) =
         put(KEY_MAX_SPEED_BUBBLE, enabled)
 
@@ -158,6 +164,7 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
         val KEY_ROUNDED_BUILDINGS = booleanPreferencesKey("rounded_buildings_enabled")
         val KEY_AMOLED           = booleanPreferencesKey("amoled_enabled")
         val KEY_SUN_ALERT        = booleanPreferencesKey("sun_alert_enabled")
+        val KEY_WEATHER_ENABLED  = booleanPreferencesKey("weather_enabled")
         val KEY_MAX_SPEED_BUBBLE = booleanPreferencesKey("show_max_speed_bubble")
         val KEY_COLOR_BY_SPEED   = booleanPreferencesKey("color_track_by_speed")
         val KEY_ONBOARDING_DONE  = booleanPreferencesKey("onboarding_completed")

@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.WbCloudy
 import androidx.compose.material.icons.filled.WbTwilight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -242,6 +243,19 @@ internal fun DisplaySettingsSheet(
                     )
                 }
             )
+            // Opt-in Open-Meteo weather: shows the current-weather chip on the map.
+            SettingsRow(
+                icon = Icons.Default.WbCloudy,
+                title = stringResource(R.string.weather_toggle_title),
+                subtitle = stringResource(R.string.weather_toggle_summary),
+                onClick = actions.onToggleWeather,
+                trailing = {
+                    Switch(
+                        checked = state.weatherEnabled,
+                        onCheckedChange = { actions.onToggleWeather() }
+                    )
+                }
+            )
             // Rounded 3D buildings: temporarily hidden — the MapLibre
             // fill-extrusion-rounded-corner-distance property has no visible effect
             // yet, so the toggle is kept out of the menu until it works. The
@@ -417,6 +431,7 @@ private fun SettingsRow(
     icon: ImageVector? = null,
     iconTint: Color? = null,
     enabled: Boolean = true,
+    subtitle: String? = null,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null
 ) {
@@ -441,14 +456,25 @@ private fun SettingsRow(
             }
         }
         Spacer(Modifier.size(16.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = contentColor,
+        Column(
             modifier = Modifier
                 .weight(1f)
                 .padding(end = 8.dp)
-        )
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = contentColor
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
+            }
+        }
         if (trailing != null) {
             trailing()
         }

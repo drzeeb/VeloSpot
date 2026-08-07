@@ -32,6 +32,7 @@ import de.velospot.data.local.dao.PlannedRouteDao
 import de.velospot.data.local.dao.RouteAttemptDao
 import de.velospot.data.local.database.PlannedRoutesDatabase
 import de.velospot.data.remote.PhotonRateLimitInterceptor
+import de.velospot.data.remote.api.OpenMeteoApi
 import de.velospot.data.remote.api.OsrmApi
 import de.velospot.data.remote.api.PhotonApi
 import de.velospot.data.repository.BikeParkingRepositoryImpl
@@ -41,6 +42,7 @@ import de.velospot.data.repository.RecordedRidesRepositoryImpl
 import de.velospot.data.repository.BikeProfilesRepositoryImpl
 import de.velospot.data.repository.RoutingRepositoryImpl
 import de.velospot.data.repository.SavedPlacesRepositoryImpl
+import de.velospot.data.repository.WeatherRepositoryImpl
 import de.velospot.data.repository.DestinationHistoryRepositoryImpl
 import de.velospot.data.settings.MapSettingsDataStore
 import de.velospot.domain.repository.BikeParkingRepository
@@ -51,6 +53,7 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.BikeProfilesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.domain.repository.WeatherRepository
 import de.velospot.domain.repository.DestinationHistoryRepository
 import de.velospot.data.repository.PlannedRoutesRepositoryImpl
 import de.velospot.domain.repository.PlannedRoutesRepository
@@ -69,6 +72,7 @@ object NetworkModule {
 
     private const val OSRM_BASE_URL = "https://router.project-osrm.org/"
     private const val PHOTON_BASE_URL = "https://photon.komoot.io/"
+    private const val OPEN_METEO_BASE_URL = "https://api.open-meteo.com/"
 
     @Provides
     @Singleton
@@ -101,6 +105,24 @@ object NetworkModule {
     fun providePhotonOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(PhotonRateLimitInterceptor())
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    /**
+     * Dedicated client for the opt-in Open-Meteo weather integration. Mirrors the
+     * Photon setup (logging interceptor, shorter connect timeout) but needs no
+     * rate-limit interceptor — requests are already throttled by the repository's
+     * in-memory cache.
+     */
+    @Provides
+    @Singleton
+    @Named("openmeteo")
+    fun provideOpenMeteoOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+        return OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -158,6 +180,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("openmeteo")
+    fun provideOpenMeteoRetrofit(@Named("openmeteo") okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(OPEN_METEO_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideOsrmApi(@Named("osrm") retrofit: Retrofit): OsrmApi {
         return retrofit.create(OsrmApi::class.java)
     }
@@ -166,6 +199,18 @@ object NetworkModule {
     @Singleton
     fun providePhotonApi(@Named("photon") retrofit: Retrofit): PhotonApi {
         return retrofit.create(PhotonApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOpenMeteoApi(@Named("openmeteo") retrofit: Retrofit): OpenMeteoApi {
+        return retrofit.create(OpenMeteoApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWeatherRepository(api: OpenMeteoApi): WeatherRepository {
+        return WeatherRepositoryImpl(api)
     }
 
     @Provides

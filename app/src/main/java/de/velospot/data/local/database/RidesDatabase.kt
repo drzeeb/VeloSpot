@@ -20,7 +20,7 @@ import de.velospot.data.local.entity.BikeProfileEntity
  */
 @Database(
     entities = [RecordedRideEntity::class, BikeProfileEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class RidesDatabase : RoomDatabase() {
@@ -116,13 +116,24 @@ abstract class RidesDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v7 → v8: stores an optional weather snapshot with each ride
+         * (`weatherJson`, a JSON-serialised `WeatherSnapshot`) captured from the
+         * opt-in Open-Meteo integration. Existing rides stay `NULL` (no weather).
+         */
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recorded_rides ADD COLUMN weatherJson TEXT")
+            }
+        }
+
         fun getInstance(context: Context): RidesDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     RidesDatabase::class.java,
                     "velospot_rides.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build().also { instance = it }
             }
         }
     }

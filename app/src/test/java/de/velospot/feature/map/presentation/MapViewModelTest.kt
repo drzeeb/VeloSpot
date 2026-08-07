@@ -216,6 +216,7 @@ class MapViewModelTest {
             destinationHistoryRepository = FakeDestinationHistoryRepository(),
             mapSettings           = FakeMapSettingsRepository(),
             sensorRepository      = FakeSensorRepository(),
+            weatherRepository     = FakeWeatherRepository(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }
@@ -1006,6 +1007,8 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override val amoledEnabled: Flow<Boolean> = _amoled
     private val _sunAlert = MutableStateFlow(true)
     override val sunAlertEnabled: Flow<Boolean> = _sunAlert
+    private val _weatherEnabled = MutableStateFlow(false)
+    override val weatherEnabled: Flow<Boolean> = _weatherEnabled
     private val _rideViewOptions = MutableStateFlow(RideViewOptions())
     override val rideViewOptions: Flow<RideViewOptions> = _rideViewOptions
     private val _onboardingCompleted = MutableStateFlow(true)
@@ -1024,6 +1027,7 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
     override suspend fun setRoundedBuildings(enabled: Boolean) { _roundedBuildings.value = enabled }
     override suspend fun setAmoled(enabled: Boolean) { _amoled.value = enabled }
     override suspend fun setSunAlertEnabled(enabled: Boolean) { _sunAlert.value = enabled }
+    override suspend fun setWeatherEnabled(enabled: Boolean) { _weatherEnabled.value = enabled }
     override suspend fun setShowMaxSpeedBubble(enabled: Boolean) {
         _rideViewOptions.value = _rideViewOptions.value.copy(showMaxSpeedBubble = enabled)
     }
@@ -1133,5 +1137,9 @@ private class FakeSensorRepository : de.velospot.domain.repository.SensorReposit
     override fun connectRemembered() = Unit
     override fun disconnectAll() = Unit
     override suspend fun setWheelCircumferenceMeters(meters: Double) = Unit
+}
+
+private class FakeWeatherRepository : de.velospot.domain.repository.WeatherRepository {
+    override suspend fun currentWeather(lat: Double, lon: Double): de.velospot.domain.model.WeatherSnapshot? = null
 }
 
