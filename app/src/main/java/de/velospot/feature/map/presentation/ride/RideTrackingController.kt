@@ -82,6 +82,22 @@ class RideTrackingController(
     val selectedRide: StateFlow<RecordedRide?> = _selectedRide.asStateFlow()
 
     /**
+     * Whether the open [selectedRide] is a **transient GPX preview** — a ride parsed
+     * from an opened `.gpx` file that is NOT yet in the database. While `true` the
+     * detail sheet shows an "Import" button and closing the sheet discards the ride
+     * (nothing is persisted). Cleared the moment the preview is imported or dismissed.
+     */
+    private val _isPreviewRide = MutableStateFlow(false)
+    val isPreviewRide: StateFlow<Boolean> = _isPreviewRide.asStateFlow()
+
+    /**
+     * The full set of rides parsed from the previewed GPX (a multi-`<trk>` file
+     * yields several). The first is shown in the sheet; importing the preview
+     * persists them all. Empty when no preview is open.
+     */
+    private var previewRides: List<RecordedRide> = emptyList()
+
+    /**
      * Polyline drawn on the map: the live track while recording, or the selected
      * ride's track while its detail sheet is open. Empty otherwise.
      */
@@ -182,6 +198,43 @@ class RideTrackingController(
         scope.launch { repository.saveRide(ride) }
     }
 
+    /**
+     * Persists all [rides] parsed from an opened GPX file and opens the first one's
+     * detail sheet (the same view a recorded ride uses). No-op on an empty list.
+     */
+    fun importRidesAndShowFirst(rides: List<RecordedRide>) {
+        val first = rides.firstOrNull() ?: return
+        scope.launch { rides.forEach { repository.saveRide(it) } }
+        showRide(first)
+    }
+
+    /**
+     * Opens the detail sheet for a GPX file's parsed [rides] in **preview** mode —
+     * shown but NOT persisted. The first ride is displayed (and its track drawn on
+     * the map); [importPreview] later saves them all, while [dismissSelectedRide]
+     * simply discards them. No-op on an empty list.
+     */
+    fun showPreview(rides: List<RecordedRide>) {
+        val first = rides.firstOrNull() ?: return
+        previewRides = rides
+        _isPreviewRide.value = true
+        showRide(first)
+    }
+
+    /**
+     * Persists the currently-previewed GPX rides and turns the preview into a normal,
+     * saved ride (the sheet stays open on the now-persisted first ride). No-op when
+     * no preview is open.
+     */
+    fun importPreview() {
+        val rides = previewRides
+        val first = rides.firstOrNull() ?: return
+        previewRides = emptyList()
+        _isPreviewRide.value = false
+        scope.launch { rides.forEach { repository.saveRide(it) } }
+        _selectedRide.value = first
+    }
+
     /** Opens the detail sheet for a recorded ride and draws its track on the map. */
     fun selectRide(summary: RecordedRideSummary) {
         // Optimistically clear other selections; load the full track (off-main in
@@ -210,6 +263,9 @@ class RideTrackingController(
 
     fun dismissSelectedRide() {
         _selectedRide.value = null
+        // Discard any transient GPX preview — nothing was ever persisted.
+        _isPreviewRide.value = false
+        previewRides = emptyList()
     }
 
     fun deleteRide(id: String) {

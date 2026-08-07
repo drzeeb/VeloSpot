@@ -297,6 +297,14 @@
     <string name="ride_export_mode_separate">One file per ride</string>
     <string name="ride_import_done">Rides imported</string>
     <string name="ride_import_failed">No rides found in the file</string>
+    <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
+    <string name="gpx_open_filter_label">Open with VeloSpot</string>
+    <string name="gpx_open_chooser_title">Open GPX file</string>
+    <string name="gpx_open_chooser_message">Import this track into your rides, or just open it to take a look?</string>
+    <string name="gpx_open_import">Import</string>
+    <string name="gpx_open_preview">Just open</string>
+    <string name="gpx_open_cancel">Cancel</string>
+    <string name="ride_import_action">Import ride</string>
     <string name="ride_export_destination_title">Export rides</string>
     <string name="ride_export_share">Share</string>
     <string name="ride_export_save">Save to file</string>

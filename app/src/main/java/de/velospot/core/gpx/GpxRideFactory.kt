@@ -109,5 +109,15 @@ object GpxRideFactory {
             name = name?.trim()?.takeIf { it.isNotBlank() }
         )
     }
+
+    /**
+     * Maps **every** `<trk>` of an imported GPX to its own [RecordedRide], dropping
+     * the tracks too short to keep (see [toRecordedRide]). A multi-track GPX therefore
+     * yields one ride per track — both the direct-import and the preview paths use
+     * this, so opening a multi-track file imports all of its tracks (and the preview
+     * shows the first while keeping the rest ready to import). Pure and unit-testable.
+     */
+    fun toRecordedRides(tracks: List<ParsedTrack>): List<RecordedRide> =
+        tracks.mapNotNull { toRecordedRide(it) }
 }
 
