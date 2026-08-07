@@ -119,6 +119,8 @@ internal data class MapMenuCardState(
     val amoledEnabled: Boolean = false,
     /** Whether the golden-hour sunrise/sunset alert FAB may appear on the map. */
     val sunAlertEnabled: Boolean = true,
+    /** Whether the opt-in Open-Meteo weather feature is enabled. */
+    val weatherEnabled: Boolean = false,
     /** Debug-only: show the GPS route-simulator entry (debug builds only). */
     val showSimulator: Boolean = false,
     /** Debug-only: whether a route is available to simulate (active navigation). */
@@ -146,6 +148,7 @@ internal data class MapMenuCardActions(
     val onToggleRoundedBuildings: () -> Unit = {},
     val onToggleAmoled: () -> Unit = {},
     val onToggleSunAlert: () -> Unit = {},
+    val onToggleWeather: () -> Unit = {},
     val onToggleSimulation: () -> Unit = {},
     val onOpenAbout: () -> Unit = {},
     val onOpenRides: () -> Unit = {},

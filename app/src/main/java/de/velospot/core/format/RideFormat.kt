@@ -49,3 +49,16 @@ internal fun formatRideElevation(meters: Double): String = "${meters.roundToInt(
 internal fun formatCo2Saved(grams: Double): String =
     if (grams < 1_000) "${grams.roundToInt()} g" else "%.1f kg".format(grams / 1_000.0)
 
+/** Formats an air temperature in °C as a whole number, e.g. `12 °C`. */
+internal fun formatWeatherTemperature(celsius: Double): String = "${celsius.roundToInt()} °C"
+
+/** Formats a wind speed (m/s) in the app's `km/h` speed unit, e.g. `18 km/h`. */
+internal fun formatWeatherWind(metersPerSecond: Double): String =
+    "${(metersPerSecond * 3.6).roundToInt()} km/h"
+
+/** Formats a relative humidity as whole percent, e.g. `78 %`. */
+internal fun formatWeatherHumidity(percent: Int): String = "$percent %"
+
+/** Formats a precipitation amount in millimetres with one decimal, e.g. `0.0 mm`. */
+internal fun formatWeatherPrecipitation(millimetres: Double): String = "%.1f mm".format(millimetres)
+

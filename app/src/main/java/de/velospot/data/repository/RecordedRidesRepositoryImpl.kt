@@ -12,6 +12,7 @@ import de.velospot.data.local.entity.RecordedRideEntity
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.model.TrackPoint
+import de.velospot.domain.model.WeatherSnapshot
 import de.velospot.domain.repository.RecordedRidesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +43,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
     private val pointsAdapter = moshi.adapter<List<TrackPoint>>(
         Types.newParameterizedType(List::class.java, TrackPoint::class.java)
     )
+
+    private val weatherAdapter = moshi.adapter(WeatherSnapshot::class.java)
 
     override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> =
         recordedRideDao.getSummariesFlow().map { rows -> rows.map { it.toDomain() } }
@@ -192,7 +195,8 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         isMock = isMock,
         archivedAt = archivedAt,
         bikeProfileId = bikeProfileId,
-        sourceRouteId = sourceRouteId
+        sourceRouteId = sourceRouteId,
+        weather = weatherJson?.let { runCatching { weatherAdapter.fromJson(it) }.getOrNull() }
     )
 
     private fun RecordedRide.toEntity() = RecordedRideEntity(
@@ -211,7 +215,11 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         isMock = isMock,
         archivedAt = archivedAt,
         bikeProfileId = bikeProfileId,
-        sourceRouteId = sourceRouteId
+        sourceRouteId = sourceRouteId,
+        // Persist the captured Open-Meteo snapshot so weather survives a reload — it
+        // is shown by the (DB-backed) analysis screen and by re-opening the detail
+        // sheet, not just the in-memory object right after recording. Null stays null.
+        weatherJson = weather?.let { weatherAdapter.toJson(it) }
     )
 
     private companion object {

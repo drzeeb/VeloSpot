@@ -48,6 +48,9 @@ import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
 import de.velospot.domain.repository.SensorRepository
+import de.velospot.domain.repository.WeatherRepository
+import de.velospot.domain.model.WeatherSnapshot
+import de.velospot.core.navigation.GeoMath
 import de.velospot.feature.map.presentation.navigation.NavigationController
 import de.velospot.feature.map.presentation.places.ParkedBikeController
 import de.velospot.feature.map.presentation.places.SavedPlacesController
@@ -74,6 +77,11 @@ import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
 private const val VIEWPORT_DEBOUNCE_MS  = 300L
+
+/** Minimum move (metres) from the last fetched point before weather is refreshed. */
+private const val WEATHER_MIN_MOVE_M = 5_000.0
+/** Maximum age (ms) of the cached weather snapshot before a refresh is allowed. */
+private const val WEATHER_MAX_AGE_MS = 10 * 60 * 1000L
 
 data class MapCameraTarget(
     val latitude: Double,
@@ -121,6 +129,7 @@ class MapViewModel @Inject constructor(
     private val destinationHistoryRepository: DestinationHistoryRepository,
     private val mapSettings: MapSettingsRepository,
     private val sensorRepository: SensorRepository,
+    private val weatherRepository: WeatherRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -587,6 +596,73 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { mapSettings.setSunAlertEnabled(enabled) }
     }
 
+    // ── Weather (opt-in Open-Meteo) ───────────────────────────────────────────
+
+    /**
+     * Whether the opt-in **Open-Meteo weather** feature is enabled. Persisted
+     * across sessions; defaults to **off**. When off, no weather is ever fetched
+     * (no network calls) and [weather] stays `null` so the map chip is not composed.
+     */
+    val weatherEnabled: StateFlow<Boolean> =
+        mapSettings.weatherEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Toggles the opt-in weather feature on/off and persists the choice. */
+    fun setWeatherEnabled(enabled: Boolean) {
+        viewModelScope.launch { mapSettings.setWeatherEnabled(enabled) }
+    }
+
+    /** Live map-centre coordinate, updated from the viewport (used as the weather fallback). */
+    private val _mapCenter = MutableStateFlow<GeoCoordinate?>(null)
+
+    private val _weather = MutableStateFlow<WeatherSnapshot?>(null)
+
+    /**
+     * The current-weather snapshot shown by the map chip, or `null` when the
+     * feature is disabled or nothing could be fetched. A non-null value always
+     * implies the feature is enabled, so the chip can be composed unconditionally
+     * on `!= null`.
+     */
+    val weather: StateFlow<WeatherSnapshot?> = _weather.asStateFlow()
+
+    /**
+     * Fetches current weather when (and only when) [weatherEnabled] is true,
+     * preferring the live user location, falling back to the map centre. A fetch
+     * is only performed when the location moved materially ([WEATHER_MIN_MOVE_M])
+     * from the last fetched point or the cached snapshot is stale
+     * ([WEATHER_MAX_AGE_MS]) — so ordinary camera moves do not spam the network.
+     * When the toggle is turned off, the state is cleared and no calls are made.
+     */
+    private fun observeWeather() {
+        viewModelScope.launch {
+            combine(
+                weatherEnabled,
+                userLocation,
+                _mapCenter
+            ) { enabled, location, center ->
+                Triple(enabled, location ?: center, System.currentTimeMillis())
+            }.collect { (enabled, point, now) ->
+                if (!enabled) {
+                    // Disabled → never fetch; clear any previously-shown snapshot.
+                    _weather.value = null
+                    return@collect
+                }
+                if (point == null) return@collect
+                val last = _weather.value
+                val movedFar = last == null || GeoMath.distanceMeters(
+                    last.latitude, last.longitude, point.latitude, point.longitude
+                ) > WEATHER_MIN_MOVE_M
+                val stale = last == null || (now - last.observedAt) > WEATHER_MAX_AGE_MS
+                if (!movedFar && !stale) return@collect
+                // Repository is fail-soft (never throws) but guard anyway.
+                val snapshot = runCatching {
+                    weatherRepository.currentWeather(point.latitude, point.longitude)
+                }.getOrNull()
+                // Only replace on success; keep the last good snapshot otherwise, but
+                // never resurrect weather if the user disabled it meanwhile.
+                if (snapshot != null && weatherEnabled.value) _weather.value = snapshot
+            }
+        }
+    }
     /**
      * The currently-active golden-hour alert (`null` = hide the FAB), derived from
      * the live [userLocation], the [sunAlertEnabled] toggle and a ~1-minute ticker.
@@ -1384,6 +1460,7 @@ class MapViewModel @Inject constructor(
         observeUserLocation()
         observeRouteSimulation()
         observeGpxOpenIntents()
+        observeWeather()
     }
 
     /**
@@ -1403,6 +1480,12 @@ class MapViewModel @Inject constructor(
         val latSpan = bbox.maxLat - bbox.minLat
         val lonSpan = bbox.maxLon - bbox.minLon
         if (latSpan > MAX_VIEWPORT_SPAN_DEG || lonSpan > MAX_VIEWPORT_SPAN_DEG) return
+        // Track the live map centre so weather can fall back to it when the user
+        // location is unknown (the fetch itself is debounced by distance/age).
+        _mapCenter.value = GeoCoordinate(
+            latitude = (bbox.minLat + bbox.maxLat) / 2.0,
+            longitude = (bbox.minLon + bbox.maxLon) / 2.0
+        )
         viewportJob?.cancel()
         viewportJob = viewModelScope.launch {
             delay(VIEWPORT_DEBOUNCE_MS)

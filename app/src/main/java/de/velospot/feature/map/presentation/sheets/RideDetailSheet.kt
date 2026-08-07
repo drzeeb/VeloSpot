@@ -6,6 +6,9 @@ import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
+import de.velospot.core.format.formatWeatherHumidity
+import de.velospot.core.format.formatWeatherTemperature
+import de.velospot.core.format.formatWeatherWind
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -69,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.tracking.estimateRideCalories
 import de.velospot.core.tracking.estimateRideCo2SavedGrams
+import de.velospot.core.weather.WmoWeatherCode
 import de.velospot.domain.model.RecordedRide
 import de.velospot.feature.map.presentation.ride.RideShareDialog
 import kotlinx.coroutines.launch
@@ -101,7 +105,13 @@ internal fun RideDetailSheet(
      * hidden since they need a persisted ride. Closing the sheet then discards it.
      */
     isImportable: Boolean = false,
-    onImport: () -> Unit = {}
+    onImport: () -> Unit = {},
+    /**
+     * Whether the opt-in weather feature is enabled. When `true` and the ride
+     * carries a stored snapshot, the detail sheet shows the weather box and the
+     * "VeloSpot Wrapped" share card shows weather. When `false`, no weather is shown.
+     */
+    weatherEnabled: Boolean = false
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -111,7 +121,8 @@ internal fun RideDetailSheet(
     if (showShareDialog) {
         RideShareDialog(
             ride = ride,
-            onDismiss = { showShareDialog = false }
+            onDismiss = { showShareDialog = false },
+            weatherEnabled = weatherEnabled
         )
     }
 
@@ -329,6 +340,16 @@ internal fun RideDetailSheet(
                         label = stringResource(R.string.ride_stat_co2_saved),
                         value = formatCo2Saved(estimateRideCo2SavedGrams(ride))
                     )
+
+                    // ── Weather at ride start (opt-in Open-Meteo) ────────────────
+                    // Shown only while the feature is enabled AND the ride stored a
+                    // snapshot (older rides / feature off render nothing).
+                    if (weatherEnabled) {
+                        ride.weather?.let { weather ->
+                            Spacer(Modifier.height(10.dp))
+                            WeatherStatBox(weather = weather, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
 
 
                     Spacer(Modifier.height(16.dp))
@@ -548,6 +569,84 @@ private fun StatBox(label: String, value: String, modifier: Modifier = Modifier)
         }
     }
 }
+
+/**
+ * Stat box variant for the ride's captured weather: the condition icon + label and
+ * the temperature as the headline, with feels-like / wind / humidity as a compact
+ * secondary line. Styled to match [StatBox].
+ */
+@Composable
+private fun WeatherStatBox(
+    weather: de.velospot.domain.model.WeatherSnapshot,
+    modifier: Modifier = Modifier
+) {
+    val condition = WmoWeatherCode.fromCode(weather.weatherCode)
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = condition.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = formatWeatherTemperature(weather.temperatureC),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(condition.labelRes),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                val secondary = buildList {
+                    weather.apparentTemperatureC?.let {
+                        add(
+                            stringResource(R.string.weather_label_feels_like) +
+                                " " + formatWeatherTemperature(it)
+                        )
+                    }
+                    weather.windSpeedMps?.let {
+                        add(
+                            stringResource(R.string.weather_label_wind) +
+                                " " + formatWeatherWind(it)
+                        )
+                    }
+                    weather.humidityPct?.let {
+                        add(
+                            stringResource(R.string.weather_label_humidity) +
+                                " " + formatWeatherHumidity(it)
+                        )
+                    }
+                }.joinToString("  ·  ")
+                if (secondary.isNotBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = secondary,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
 
 
 

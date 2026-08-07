@@ -71,7 +71,12 @@ data class RecordedRide(
      * for a free ride. Set when a planned route is ridden so the detail screen can
      * hide "Save as route" (the route already exists).
      */
-    val sourceRouteId: String? = null
+    val sourceRouteId: String? = null,
+    /**
+     * Optional weather snapshot captured for this ride from the opt-in Open-Meteo
+     * integration, or `null` when weather was disabled/unavailable at record time.
+     */
+    val weather: WeatherSnapshot? = null
 ) {
     /** Whether this ride is currently archived (hidden from the active timeline). */
     val isArchived: Boolean get() = archivedAt != null

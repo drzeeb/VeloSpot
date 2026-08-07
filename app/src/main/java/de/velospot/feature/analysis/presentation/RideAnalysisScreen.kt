@@ -64,7 +64,13 @@ import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
+import de.velospot.core.format.formatWeatherHumidity
+import de.velospot.core.format.formatWeatherPrecipitation
+import de.velospot.core.format.formatWeatherTemperature
+import de.velospot.core.format.formatWeatherWind
+import de.velospot.core.weather.WmoWeatherCode
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.WeatherSnapshot
 import de.velospot.feature.map.presentation.RideElevationProfile
 import java.text.DateFormat
 import java.util.Date
@@ -210,6 +216,13 @@ private fun RideAnalysisContent(
             }
         }
 
+        // ── Weather at ride start (opt-in Open-Meteo; only for rides that stored a
+        //    snapshot — older rides render nothing) ─────────────────────────────
+        ride.weather?.let { weather ->
+            SectionTitle(stringResource(R.string.weather_heading))
+            WeatherSection(weather = weather, modifier = Modifier.fillMaxWidth())
+        }
+
         // ── Elevation profile (reused) ───────────────────────────────────────
         if (ride.points.count { it.altitudeMeters != null } >= 2) {
             SectionTitle(stringResource(R.string.ride_elevation_chart_title))
@@ -308,6 +321,58 @@ private fun StatTile(label: String, value: String, highlight: Boolean = false) {
     ) {
         Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = onContainer)
         Text(label, style = MaterialTheme.typography.labelSmall, color = onContainer.copy(alpha = 0.7f))
+    }
+}
+
+/**
+ * Weather at the ride's start (opt-in Open-Meteo snapshot): the condition icon +
+ * label headline, then a compact set of stat tiles (temperature, feels-like, wind,
+ * humidity, precipitation) reusing [StatTile], so it matches the analysis styling.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun WeatherSection(weather: WeatherSnapshot, modifier: Modifier = Modifier) {
+    val condition = WmoWeatherCode.fromCode(weather.weatherCode)
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = condition.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.width(28.dp).height(28.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = stringResource(condition.labelRes),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            StatTile(
+                stringResource(R.string.weather_label_temperature),
+                formatWeatherTemperature(weather.temperatureC),
+                highlight = true
+            )
+            weather.apparentTemperatureC?.let {
+                StatTile(stringResource(R.string.weather_label_feels_like), formatWeatherTemperature(it))
+            }
+            weather.windSpeedMps?.let {
+                StatTile(stringResource(R.string.weather_label_wind), formatWeatherWind(it))
+            }
+            weather.humidityPct?.let {
+                StatTile(stringResource(R.string.weather_label_humidity), formatWeatherHumidity(it))
+            }
+            weather.precipitationMm?.let {
+                StatTile(stringResource(R.string.weather_label_precipitation), formatWeatherPrecipitation(it))
+            }
+        }
     }
 }
 

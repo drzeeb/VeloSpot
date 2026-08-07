@@ -56,7 +56,8 @@ data class RecordedRideMetaRow(
     val isMock: Boolean,
     val archivedAt: Long?,
     val bikeProfileId: String?,
-    val sourceRouteId: String?
+    val sourceRouteId: String?,
+    val weatherJson: String?
 )
 
 /**
@@ -87,7 +88,7 @@ interface RecordedRideDao {
     @Query(
         "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
         "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
-        "name, isMock, archivedAt, bikeProfileId, sourceRouteId " +
+        "name, isMock, archivedAt, bikeProfileId, sourceRouteId, weatherJson " +
         "FROM recorded_rides ORDER BY startedAt DESC"
     )
     fun getAllMetaFlow(): Flow<List<RecordedRideMetaRow>>
@@ -96,7 +97,7 @@ interface RecordedRideDao {
     @Query(
         "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
         "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
-        "name, isMock, archivedAt, bikeProfileId, sourceRouteId " +
+        "name, isMock, archivedAt, bikeProfileId, sourceRouteId, weatherJson " +
         "FROM recorded_rides WHERE id = :id"
     )
     suspend fun getMetaById(id: String): RecordedRideMetaRow?
@@ -105,7 +106,7 @@ interface RecordedRideDao {
     @Query(
         "SELECT id, startedAt, endedAt, distanceMeters, elapsedSeconds, movingSeconds, " +
         "avgSpeedMps, maxSpeedMps, elevationGainMeters, elevationLossMeters, " +
-        "name, isMock, archivedAt, bikeProfileId, sourceRouteId " +
+        "name, isMock, archivedAt, bikeProfileId, sourceRouteId, weatherJson " +
         "FROM recorded_rides WHERE id IN (:ids)"
     )
     suspend fun getMetaByIds(ids: List<String>): List<RecordedRideMetaRow>

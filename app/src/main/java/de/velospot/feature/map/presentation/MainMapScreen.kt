@@ -146,6 +146,8 @@ fun MainMapScreen(
     val amoledEnabled        by viewModel.amoledEnabled.collectAsStateWithLifecycle()
     val sunAlertEnabled      by viewModel.sunAlertEnabled.collectAsStateWithLifecycle()
     val sunAlert             by viewModel.sunAlert.collectAsStateWithLifecycle()
+    val weatherEnabled       by viewModel.weatherEnabled.collectAsStateWithLifecycle()
+    val weather              by viewModel.weather.collectAsStateWithLifecycle()
     val onboardingCompleted  by viewModel.onboardingCompleted.collectAsStateWithLifecycle()
     val isSimulatingRoute    by viewModel.isSimulatingRoute.collectAsStateWithLifecycle()
     val rideTrackingState    by viewModel.rideTrackingState.collectAsStateWithLifecycle()
@@ -832,6 +834,7 @@ fun MainMapScreen(
             roundedBuildingsEnabled = roundedBuildingsEnabled,
             amoledEnabled      = amoledEnabled,
             sunAlertEnabled    = sunAlertEnabled,
+            weatherEnabled     = weatherEnabled,
             // Debug-only GPS route simulator: always visible in debug
             // builds, enabled once a route is available to drive along.
             showSimulator      = de.velospot.BuildConfig.DEBUG,
@@ -861,6 +864,7 @@ fun MainMapScreen(
                 viewModel.setAmoledEnabled(!amoledEnabled)
             },
             onToggleSunAlert      = { viewModel.setSunAlertEnabled(!sunAlertEnabled) },
+            onToggleWeather       = { viewModel.setWeatherEnabled(!weatherEnabled) },
             onToggleSimulation    = viewModel::toggleRouteSimulation,
             onOpenAbout           = screenUiState::openAbout,
             onOpenRides           = screenUiState::openRides,
@@ -893,6 +897,20 @@ fun MainMapScreen(
             )
             Spacer(Modifier.width(8.dp))
             MapMenuCard(state = menuState, actions = menuActions)
+        }
+
+        // ── Current-weather chip (opt-in Open-Meteo) ─────────────────────────
+        // Placed under the search bar at the top-start so it does not collide with
+        // the right-edge speed-dial / menu FAB or the bottom HUD. Only composed when
+        // a snapshot exists, which already implies the feature is enabled.
+        weather?.let { snapshot ->
+            WeatherChip(
+                weather = snapshot,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(start = 16.dp, top = 72.dp)
+            )
         }
 
         // Recent destinations now live inside the search bar's initially-expanded
@@ -1094,7 +1112,8 @@ fun MainMapScreen(
                 onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) },
                 onSaveGpx = { r -> viewModel.prepareRideGpxSave(r) },
                 isImportable = isPreviewRide,
-                onImport = { viewModel.importPreviewedRide() }
+                onImport = { viewModel.importPreviewedRide() },
+                weatherEnabled = weatherEnabled
             )
         }
 

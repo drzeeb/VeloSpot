@@ -48,6 +48,8 @@ data class RecordedRideEntity(
     /** Id of the bike ([BikeProfileEntity]) this ride was recorded with, or `null`. */
     val bikeProfileId: String? = null,
     /** Id of the saved planned route this ride was recorded while riding, or `null`. */
-    val sourceRouteId: String? = null
+    val sourceRouteId: String? = null,
+    /** JSON-serialised [de.velospot.domain.model.WeatherSnapshot] captured for the ride, or `null`. */
+    val weatherJson: String? = null
 )
 

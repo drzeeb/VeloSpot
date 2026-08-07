@@ -12,8 +12,11 @@ import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RoutePoint
+import de.velospot.domain.model.WeatherSnapshot
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.BikeProfilesRepository
+import de.velospot.domain.repository.MapSettingsRepository
+import de.velospot.domain.repository.WeatherRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -67,6 +71,19 @@ class RideRecordingManager(
      * fail the ride save.
      */
     private val reverseGeocodePlace: (suspend (Double, Double) -> String?)? = null,
+    /**
+     * Reads the current opt-in weather flag ([MapSettingsRepository.weatherEnabled]).
+     * Supplied by Hilt in production; `null` in unit tests, which then never fetch
+     * weather (rides save without a snapshot, exactly as before this feature).
+     */
+    private val weatherEnabled: (suspend () -> Boolean)? = null,
+    /**
+     * Best-effort current-weather lookup ([WeatherRepository.currentWeather]) used to
+     * stamp a finished ride with the weather at its start point. Fail-soft: a
+     * `null`/offline result (or a missing fetcher in tests) leaves the ride without
+     * weather and must never block or fail the save.
+     */
+    private val fetchWeather: (suspend (Double, Double) -> WeatherSnapshot?)? = null,
 ) {
     /**
      * Production constructor (Hilt-provided): owns a long-lived [SupervisorJob] on
@@ -79,6 +96,8 @@ class RideRecordingManager(
         recordedRidesRepository: RecordedRidesRepository,
         bikeProfilesRepository: BikeProfilesRepository,
         geocoder: de.velospot.data.geocoding.PhotonGeocoder,
+        mapSettingsRepository: MapSettingsRepository,
+        weatherRepository: WeatherRepository,
     ) : this(
         context,
         locationController,
@@ -86,6 +105,8 @@ class RideRecordingManager(
         CoroutineScope(SupervisorJob() + Dispatchers.Default),
         bikeProfilesRepository,
         geocoder::reverseGeocodePlace,
+        weatherEnabled = { mapSettingsRepository.weatherEnabled.first() },
+        fetchWeather = weatherRepository::currentWeather,
     )
 
     private val tracker = RideTracker()
@@ -210,6 +231,20 @@ class RideRecordingManager(
     @Volatile
     var pendingRideName: String? = null
 
+    /**
+     * Best-effort weather snapshot for the start of the active recording, fetched
+     * once (off the recording path) when the first accepted fix arrives — the more
+     * meaningful "weather at the start" reading. Attached to the saved ride in
+     * [stop]. Reset on every [start]; never set for mock rides or when the opt-in
+     * flag is off. A `null` here at [stop] triggers a last-chance best-effort fetch.
+     */
+    @Volatile
+    private var pendingWeather: WeatherSnapshot? = null
+
+    /** Guards against launching more than one start-weather fetch per recording. */
+    @Volatile
+    private var weatherFetchStarted: Boolean = false
+
     private var lastElevationIndex = 0
     private var tickerJob: Job? = null
     private var locationJob: Job? = null
@@ -225,6 +260,8 @@ class RideRecordingManager(
         isAutoStartedByNavigation = autoStarted
         pendingRideName = null
         sawSimulatedFix = false
+        pendingWeather = null
+        weatherFetchStarted = false
         lastElevationIndex = 0
         standstillDetector.reset()
         lastStationaryApplied = false
@@ -294,11 +331,20 @@ class RideRecordingManager(
                 // once at save time. Untagged when no garage / no bikes exist yet.
                 val bikeId = runCatching { bikeProfilesRepository?.resolveActiveProfileId() }.getOrNull()
                 val tagged = if (bikeId != null) named.copy(bikeProfileId = bikeId) else named
-                recordedRidesRepository.saveRide(tagged)
-                _events.tryEmit(RideRecordingEvent.Saved(tagged))
+                // Attach best-effort weather (a display-only attribute, so — unlike
+                // statistics/achievements — it is captured for mock rides too, which
+                // makes the simulator usable for testing the feature). Prefer the
+                // snapshot captured at ride start; if none is present (a mock ride,
+                // whose eager start fetch is skipped, or the fetch hadn't completed)
+                // but the opt-in feature is enabled, do a last-chance fetch for the
+                // start (or last) point. A null/offline result never blocks the save.
+                val weather = pendingWeather ?: fetchStartWeatherAtStop(tagged)
+                val withWeather = if (weather != null) tagged.copy(weather = weather) else tagged
+                recordedRidesRepository.saveRide(withWeather)
+                _events.tryEmit(RideRecordingEvent.Saved(withWeather))
                 // Real rides only: check whether this ride pushed the bike past a new
                 // shop-service milestone and, if so, notify once (best-effort).
-                if (bikeId != null && !tagged.isMock) {
+                if (bikeId != null && !withWeather.isMock) {
                     runCatching {
                         bikeProfilesRepository?.evaluateServiceDue(bikeId)
                     }.getOrNull()?.let { reminder ->
@@ -468,6 +514,11 @@ class RideRecordingManager(
             val accepted = tracker.trackPoints.last()
             val routePoint = RoutePoint(accepted.latitude, accepted.longitude)
             _liveTrackPoints.update { it + routePoint }
+            // Best-effort: fetch the weather at the START coordinate exactly once,
+            // the first time we accept a real fix. Kicked off on the shared scope so
+            // it never blocks recording; guarded so mock/simulated rides and the
+            // opt-out state never trigger a network request.
+            maybeStartWeatherFetch(accepted.latitude, accepted.longitude)
             // Maintain the segmented mirror: a point flagged as a segment start (the
             // first fix after a resume) opens a new stretch, so the paused leg draws
             // as a gap; otherwise extend the current stretch.
@@ -497,6 +548,41 @@ class RideRecordingManager(
                 }
             }
         }
+    }
+
+    /**
+     * Kicks off the one-shot, best-effort start-of-ride weather fetch. No-op when
+     * already started, when the ride is a mock/simulated recording, when the opt-in
+     * flag is unavailable/off, or when no weather fetcher is wired (unit tests). The
+     * lookup runs on the shared [scope] and everything is wrapped in `runCatching`
+     * so it can never block or fail the recording.
+     */
+    private fun maybeStartWeatherFetch(latitude: Double, longitude: Double) {
+        val fetch = fetchWeather ?: return
+        val enabled = weatherEnabled ?: return
+        if (weatherFetchStarted || sawSimulatedFix || suppressRealFixes) return
+        weatherFetchStarted = true
+        scope.launch {
+            runCatching {
+                if (enabled()) pendingWeather = fetch(latitude, longitude)
+            }
+        }
+    }
+
+    /**
+     * Last-chance, best-effort weather fetch at [stop] time, used only when no
+     * start-of-ride snapshot was captured (e.g. the fetch had not completed, or the
+     * first fix never reached [feed]). Fetches the [ride]'s start (or, failing that,
+     * last) point. Respects the opt-in flag and the wired fetcher; returns `null`
+     * — and never throws — when disabled/unavailable/offline.
+     */
+    private suspend fun fetchStartWeatherAtStop(ride: RecordedRide): WeatherSnapshot? {
+        val fetch = fetchWeather ?: return null
+        val enabled = weatherEnabled ?: return null
+        val point = ride.points.firstOrNull() ?: ride.points.lastOrNull() ?: return null
+        return runCatching {
+            if (enabled()) fetch(point.latitude, point.longitude) else null
+        }.getOrNull()
     }
 
     /**
