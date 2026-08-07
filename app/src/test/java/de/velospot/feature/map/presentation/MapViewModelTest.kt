@@ -29,20 +29,19 @@ import de.velospot.domain.repository.ParkedBikeRepository
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.domain.repository.RoutingRepository
 import de.velospot.domain.repository.SavedPlacesRepository
+import de.velospot.testsupport.MainDispatcherRule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -50,7 +49,17 @@ import org.mockito.kotlin.whenever
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    /**
+     * Installs a [StandardTestDispatcher] as `Dispatchers.Main` and — crucially —
+     * only resets Main in its `finished` hook, which runs *after* [tearDown]. That
+     * ordering lets [tearDown] cancel/join every coroutine and drain the scheduler
+     * while the test dispatcher is still Main, so nothing can dispatch onto a
+     * reset (missing on the JVM) Main afterwards. See [MainDispatcherRule].
+     */
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val testDispatcher get() = mainDispatcherRule.dispatcher
 
     private lateinit var mockContext: Context
     private lateinit var mockSegmentManager: BRouterSegmentManager
@@ -82,7 +91,9 @@ class MapViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+        // Main is installed by `mainDispatcherRule` (before this runs) and reset by
+        // it *after* tearDown, so the teardown drain below happens while the test
+        // dispatcher is still Main.
         mockContext = mock()
         mockSegmentManager = mock()
         mockOfflineMapTilesManager = mock()
@@ -149,9 +160,19 @@ class MapViewModelTest {
         }
         createdViewModels.clear()
 
-        // 4) Nothing can emit onto Main anymore (no live background scope, no live
-        //    collector) — safe to reset.
-        Dispatchers.resetMain()
+        // 4) Drain the test scheduler while the test dispatcher is STILL Main. Steps
+        //    1–3 above cancel the view-model scopes and their `combine(...).stateIn`
+        //    collectors; that cancellation (and any StateFlow write from step 1) posts
+        //    cleanup continuations onto the (test) Main dispatcher. If we reset Main
+        //    before those run, a later dispatch onto the now-reset Main would throw
+        //    `IllegalStateException` (Looper unavailable) and surface against the next
+        //    test — the flaky failure. Running the scheduler to idle drains them
+        //    deterministically before Main is reset.
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // 5) Main is reset by `mainDispatcherRule.finished()`, which runs strictly
+        //    after this method — at which point no live coroutine remains that could
+        //    dispatch onto it.
     }
 
     private fun makeViewModel(
