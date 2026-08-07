@@ -505,10 +505,6 @@
     <string name="ride_export_select_hint">Seleciona os percursos a exportar</string>
     <string name="ride_export_chooser_title">Exportar percursos como GPX</string>
     <string name="ride_export_combined_filename">VeloSpot-percursos-%1$s</string>
-    <string name="ride_export_mode_title">Exportar como GPX</string>
-    <string name="ride_export_mode_message">Combinar os percursos selecionados num ficheiro ou criar um ficheiro por percurso?</string>
-    <string name="ride_export_mode_combined">Um ficheiro combinado</string>
-    <string name="ride_export_mode_separate">Um ficheiro por percurso</string>
     <string name="ride_import_done">Percursos importados</string>
     <string name="ride_import_failed">Nenhum percurso encontrado no ficheiro</string>
     <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
@@ -525,6 +521,11 @@
     <string name="ride_export_saved">Percursos guardados</string>
     <string name="ride_export_save_failed">Não foi possível guardar o ficheiro</string>
     <string name="ride_export_invalid">Não foi possível criar um ficheiro GPX válido</string>
+    <string name="common_got_it">Percebi</string>
+    <string name="ride_export_gpx_action">Exportar como GPX</string>
+    <string name="ride_gpx_help_action">Como enviar o teu percurso para o Strava e afins</string>
+    <string name="ride_gpx_help_title">Enviar o teu percurso para o Strava e afins</string>
+    <string name="ride_gpx_help_body">1. Exporta este percurso como GPX com o botão acima.\n\n2. Guarda o ficheiro GPX ou envia-o diretamente para outra app (Drive, Ficheiros, e-mail, …).\n\n3. Inicia sessão no site do fornecedor (Strava, Komoot, Garmin Connect ou RideWithGPS) e escolhe o ficheiro GPX em \u201cCarregar atividade\u201d / \u201cImportar\u201d.\n\nNota: as apps móveis do Strava e do Komoot muitas vezes não conseguem importar GPX diretamente, por isso o carregamento pelo site é a via fiável.</string>
     <string name="ride_save_as_route">Guardar como rota</string>
     <string name="ride_saved_as_route">Percurso guardado como rota</string>
     <string name="ride_route_default_name">Rota gravada</string>

@@ -140,6 +140,7 @@
     <string name="common_yes">Oui</string>
     <string name="common_no">Non</string>
     <string name="common_ok">OK</string>
+    <string name="common_got_it">Compris</string>
     <string name="common_unknown">Inconnu</string>
     <string name="common_covered">Couvert</string>
 
@@ -506,10 +507,6 @@
     <string name="ride_export_select_hint">Sélectionnez les trajets à exporter</string>
     <string name="ride_export_chooser_title">Exporter les trajets en GPX</string>
     <string name="ride_export_combined_filename">VeloSpot-trajets-%1$s</string>
-    <string name="ride_export_mode_title">Exporter en GPX</string>
-    <string name="ride_export_mode_message">Combiner les trajets sélectionnés en un seul fichier ou créer un fichier par trajet ?</string>
-    <string name="ride_export_mode_combined">Un fichier combiné</string>
-    <string name="ride_export_mode_separate">Un fichier par trajet</string>
     <string name="ride_import_done">Trajets importés</string>
     <string name="ride_import_failed">Aucun trajet trouvé dans le fichier</string>
     <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
@@ -526,6 +523,10 @@
     <string name="ride_export_saved">Trajets enregistrés</string>
     <string name="ride_export_save_failed">Impossible d\'enregistrer le fichier</string>
     <string name="ride_export_invalid">Impossible de créer un fichier GPX valide</string>
+    <string name="ride_export_gpx_action">Exporter en GPX</string>
+    <string name="ride_gpx_help_action">Comment envoyer votre sortie vers Strava et cie</string>
+    <string name="ride_gpx_help_title">Envoyer votre sortie vers Strava et cie</string>
+    <string name="ride_gpx_help_body">1. Exportez cette sortie en GPX avec le bouton ci-dessus.\n\n2. Enregistrez le fichier GPX ou envoyez-le directement vers une autre app (Drive, Fichiers, e-mail, …).\n\n3. Connectez-vous sur le site du fournisseur (Strava, Komoot, Garmin Connect ou RideWithGPS) et choisissez le fichier GPX sous \u00ab Importer une activité \u00bb / \u00ab Import \u00bb.\n\nRemarque : les applis mobiles Strava et Komoot ne peuvent souvent pas importer de GPX directement ; le téléversement via le site web est la méthode fiable.</string>
     <string name="ride_save_as_route">Enregistrer comme itinéraire</string>
     <string name="ride_saved_as_route">Trajet enregistré comme itinéraire</string>
     <string name="ride_route_default_name">Itinéraire enregistré</string>

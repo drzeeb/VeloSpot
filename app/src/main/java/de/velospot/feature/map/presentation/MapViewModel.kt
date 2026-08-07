@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
@@ -1090,6 +1091,49 @@ class MapViewModel @Inject constructor(
             )
         }
     }
+
+    /**
+     * A single ride's GPX document, built + validated and awaiting a Storage Access
+     * Framework **"Save as"** destination pick from the ride detail sheet. `null`
+     * when nothing is staged. Kept separate from [pendingGpxExport] (the multi-select
+     * "My rides" save) so the two SAF flows never cross-trigger each other.
+     */
+    private val _pendingRideGpxSave = MutableStateFlow<de.velospot.core.share.GpxDocument?>(null)
+    val pendingRideGpxSave: StateFlow<de.velospot.core.share.GpxDocument?> = _pendingRideGpxSave.asStateFlow()
+
+    /**
+     * Builds + validates a single, already-loaded [ride] (with its full track) into
+     * one GPX document and stages it in [pendingRideGpxSave] so the UI can launch the
+     * SAF "Create document" picker (**"Save as"**) — the supported way to get a ride
+     * onto Strava/Komoot/Garmin Connect/RideWithGPS (their paid/limited APIs rule out
+     * a direct integration). The document is built off the main thread; an invalid
+     * track surfaces a toast and stages nothing instead of saving a broken file.
+     */
+    fun prepareRideGpxSave(ride: RecordedRide) {
+        viewModelScope.launch {
+            val stamp = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                .format(java.util.Date())
+            val document = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val docs = GpxExporter.buildDocuments(
+                    rides = listOf(ride),
+                    combineIntoSingleFile = true,
+                    combinedFileName = context.getString(
+                        de.velospot.R.string.ride_export_combined_filename, stamp
+                    )
+                )
+                docs.firstOrNull()
+                    ?.takeIf { de.velospot.core.gpx.GpxValidator.validate(it.content).isValid }
+            }
+            if (document == null) {
+                _userMessageRes.value = de.velospot.R.string.ride_export_invalid
+                return@launch
+            }
+            _pendingRideGpxSave.value = document
+        }
+    }
+
+    /** Clears the staged single-ride GPX save once the SAF picker has been handled (or cancelled). */
+    fun consumePendingRideGpxSave() { _pendingRideGpxSave.value = null }
 
     /**
      * GPX documents built and validated for the selected rides, awaiting a Storage

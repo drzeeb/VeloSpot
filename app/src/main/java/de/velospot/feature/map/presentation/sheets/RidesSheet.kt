@@ -87,10 +87,7 @@ internal fun RidesSheet(
 
     var selectionMode by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf(emptySet<String>()) }
-    var showModeDialog by remember { mutableStateOf(false) }
     var showDestinationDialog by remember { mutableStateOf(false) }
-    // Chosen file layout (combine vs. separate) carried into the destination dialog.
-    var pendingCombine by remember { mutableStateOf(true) }
 
     val selectedRides = remember(rides, selectedIds) { rides.filter { it.id in selectedIds } }
 
@@ -102,32 +99,19 @@ internal fun RidesSheet(
     // Back exits the selection first (rather than closing the whole sheet).
     BackHandler(enabled = selectionMode) { exitSelection() }
 
-    if (showModeDialog) {
-        ExportModeDialog(
-            onCombined = {
-                showModeDialog = false
-                pendingCombine = true
-                showDestinationDialog = true
-            },
-            onSeparate = {
-                showModeDialog = false
-                pendingCombine = false
-                showDestinationDialog = true
-            },
-            onDismiss = { showModeDialog = false }
-        )
-    }
-
     if (showDestinationDialog) {
         ExportDestinationDialog(
             onShare = {
                 showDestinationDialog = false
-                onExportRides(selectedRides, pendingCombine, false)
+                // Always one file per ride: a combined GPX would be read as a single
+                // activity by Strava/Komoot/Garmin (their upload = one file → one
+                // activity), so multiple rides in one file are merged into one.
+                onExportRides(selectedRides, false, false)
                 exitSelection()
             },
             onSave = {
                 showDestinationDialog = false
-                onExportRides(selectedRides, pendingCombine, true)
+                onExportRides(selectedRides, false, true)
                 exitSelection()
             },
             onDismiss = { showDestinationDialog = false }
@@ -258,14 +242,7 @@ internal fun RidesSheet(
                         ) { Text(stringResource(R.string.ride_export_cancel)) }
                         Button(
                             onClick = {
-                                when (selectedRides.size) {
-                                    0 -> Unit
-                                    1 -> {
-                                        pendingCombine = true
-                                        showDestinationDialog = true
-                                    }
-                                    else -> showModeDialog = true
-                                }
+                                if (selectedRides.isNotEmpty()) showDestinationDialog = true
                             },
                             enabled = selectedIds.isNotEmpty(),
                             modifier = Modifier.weight(1f)
@@ -278,36 +255,6 @@ internal fun RidesSheet(
     }
 }
 
-/** Dialog asking whether multiple exported rides go into one file or separate files. */
-@Composable
-private fun ExportModeDialog(
-    onCombined: () -> Unit,
-    onSeparate: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.ride_export_mode_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.ride_export_mode_message))
-                Spacer(Modifier.height(2.dp))
-                Button(onClick = onCombined, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.ride_export_mode_combined))
-                }
-                OutlinedButton(onClick = onSeparate, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.ride_export_mode_separate))
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.ride_export_cancel))
-            }
-        }
-    )
-}
 
 /** Dialog choosing the export destination: share via another app or save to a file. */
 @Composable

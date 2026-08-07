@@ -291,12 +291,13 @@
     <string name="ride_export_select_hint">Select rides to export</string>
     <string name="ride_export_chooser_title">Export rides as GPX</string>
     <string name="ride_export_combined_filename">VeloSpot-rides-%1$s</string>
-    <string name="ride_export_mode_title">Export as GPX</string>
-    <string name="ride_export_mode_message">Combine the selected rides into one file or create a separate file per ride?</string>
-    <string name="ride_export_mode_combined">One combined file</string>
-    <string name="ride_export_mode_separate">One file per ride</string>
     <string name="ride_import_done">Rides imported</string>
     <string name="ride_import_failed">No rides found in the file</string>
+    <!-- Per-ride GPX export/share + upload help -->
+    <string name="ride_export_gpx_action">Export as GPX</string>
+    <string name="ride_gpx_help_action">How to upload your ride to Strava &amp; co.</string>
+    <string name="ride_gpx_help_title">Upload your ride to Strava &amp; co.</string>
+    <string name="ride_gpx_help_body">1. Export this ride as GPX with the button above.\n\n2. Save the GPX file or send it straight to another app (Drive, Files, e-mail, …).\n\n3. Sign in on the provider\u2019s website (Strava, Komoot, Garmin Connect or RideWithGPS) and choose the GPX file under \u201cUpload activity\u201d / \u201cImport\u201d.\n\nNote: the Strava and Komoot mobile apps often can\u2019t import GPX directly, so uploading on the website is the reliable route.</string>
     <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
     <string name="gpx_open_filter_label">Open with VeloSpot</string>
     <string name="gpx_open_chooser_title">Open GPX file</string>
@@ -555,6 +556,7 @@
     <string name="common_yes">Yes</string>
     <string name="common_no">No</string>
     <string name="common_ok">OK</string>
+    <string name="common_got_it">Got it</string>
     <string name="common_unknown">Unknown</string>
     <string name="common_covered">Covered</string>
 

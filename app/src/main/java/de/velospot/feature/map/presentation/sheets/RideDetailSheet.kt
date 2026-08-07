@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Unarchive
@@ -92,6 +93,7 @@ internal fun RideDetailSheet(
     onSetArchived: (String, Boolean) -> Unit,
     onOpenAnalysis: (String) -> Unit = {},
     onSaveAsRoute: (RecordedRide) -> Unit = {},
+    onSaveGpx: (RecordedRide) -> Unit = {},
     /**
      * When `true` the ride is a transient GPX **preview** (opened from an
      * `ACTION_VIEW` intent, not yet persisted): an "Import" button is shown to save
@@ -104,12 +106,17 @@ internal fun RideDetailSheet(
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showGpxHelp by remember { mutableStateOf(false) }
 
     if (showShareDialog) {
         RideShareDialog(
             ride = ride,
             onDismiss = { showShareDialog = false }
         )
+    }
+
+    if (showGpxHelp) {
+        GpxUploadHelpDialog(onDismiss = { showGpxHelp = false })
     }
 
     if (showDeleteConfirm) {
@@ -376,6 +383,32 @@ internal fun RideDetailSheet(
                         Text(text = stringResource(R.string.ride_share_action))
                     }
 
+                    // ── Save this ride as a GPX file ─────────────────────────
+                    // Persisted rides only (an unsaved preview has no stored
+                    // track). Opens a "Save as" file picker — the supported way to
+                    // get a ride onto Strava/Komoot/Garmin Connect/RideWithGPS —
+                    // see the help link.
+                    if (!isImportable) {
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = { onSaveGpx(ride) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SaveAlt,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(text = stringResource(R.string.ride_export_gpx_action))
+                        }
+                        TextButton(
+                            onClick = { showGpxHelp = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(R.string.ride_gpx_help_action))
+                        }
+                    }
+
                     // ── Save this ride as a re-rideable route (with a leaderboard) ─
                     // Real rides only — a simulator (mock) ride can't seed a board —
                     // and only when the ride didn't already come from a route (then
@@ -473,6 +506,20 @@ private fun RideRenameDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.ride_rename_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun GpxUploadHelpDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ride_gpx_help_title)) },
+        text = { Text(stringResource(R.string.ride_gpx_help_body)) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_got_it))
             }
         }
     )

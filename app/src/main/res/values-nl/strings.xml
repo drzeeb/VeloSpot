@@ -505,10 +505,6 @@
     <string name="ride_export_select_hint">Selecteer ritten om te exporteren</string>
     <string name="ride_export_chooser_title">Ritten exporteren als GPX</string>
     <string name="ride_export_combined_filename">VeloSpot-ritten-%1$s</string>
-    <string name="ride_export_mode_title">Exporteren als GPX</string>
-    <string name="ride_export_mode_message">De geselecteerde ritten in één bestand combineren of per rit een apart bestand maken?</string>
-    <string name="ride_export_mode_combined">Eén gecombineerd bestand</string>
-    <string name="ride_export_mode_separate">Eén bestand per rit</string>
     <string name="ride_import_done">Ritten geïmporteerd</string>
     <string name="ride_import_failed">Geen ritten in het bestand gevonden</string>
     <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
@@ -525,6 +521,11 @@
     <string name="ride_export_saved">Ritten opgeslagen</string>
     <string name="ride_export_save_failed">Kon het bestand niet opslaan</string>
     <string name="ride_export_invalid">Kon geen geldig GPX-bestand maken</string>
+    <string name="common_got_it">Begrepen</string>
+    <string name="ride_export_gpx_action">Exporteren als GPX</string>
+    <string name="ride_gpx_help_action">Zo upload je je rit naar Strava en co.</string>
+    <string name="ride_gpx_help_title">Upload je rit naar Strava en co.</string>
+    <string name="ride_gpx_help_body">1. Exporteer deze rit als GPX met de knop hierboven.\n\n2. Sla het GPX-bestand op of stuur het direct naar een andere app (Drive, Bestanden, e-mail, …).\n\n3. Log in op de website van de aanbieder (Strava, Komoot, Garmin Connect of RideWithGPS) en kies het GPX-bestand onder \u201cActiviteit uploaden\u201d / \u201cImporteren\u201d.\n\nLet op: de mobiele apps van Strava en Komoot kunnen GPX vaak niet rechtstreeks importeren, dus uploaden via de website is de betrouwbare route.</string>
     <string name="ride_save_as_route">Opslaan als route</string>
     <string name="ride_saved_as_route">Rit opgeslagen als route</string>
     <string name="ride_route_default_name">Opgenomen route</string>
