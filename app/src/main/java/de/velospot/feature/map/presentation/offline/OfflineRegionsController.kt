@@ -133,6 +133,14 @@ class OfflineRegionsController(
      * end-to-end offline.
      */
     fun downloadRouteCorridor(route: PlannedRoute) {
+        // Don't download the same corridor twice: a corridor pack is stored with its
+        // route's name as the pack label (see startRouteDownload), so a matching label
+        // means this exact route is already saved offline. Signal it through the same
+        // callback the point path uses so the UX stays consistent.
+        if (route.name.isNotBlank() && store.list().any { it.label == route.name }) {
+            onDuplicateRegion()
+            return
+        }
         val points = route.geometry
             .map { it.latitude to it.longitude }
             .ifEmpty { route.waypoints.map { it.latitude to it.longitude } }
