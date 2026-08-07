@@ -1112,7 +1112,8 @@ fun MainMapScreen(
                 onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) },
                 onSaveGpx = { r -> viewModel.prepareRideGpxSave(r) },
                 isImportable = isPreviewRide,
-                onImport = { viewModel.importPreviewedRide() }
+                onImport = { viewModel.importPreviewedRide() },
+                weatherEnabled = weatherEnabled
             )
         }
 

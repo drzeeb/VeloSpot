@@ -35,10 +35,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +56,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import de.velospot.R
 import de.velospot.core.share.ImageSharer
+import de.velospot.core.format.formatWeatherTemperature
+import de.velospot.core.format.formatWeatherWind
+import de.velospot.core.weather.WmoWeatherCode
 import de.velospot.domain.model.RecordedRide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,7 +77,8 @@ import java.util.Date
 @Composable
 internal fun RideShareDialog(
     ride: RecordedRide,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    weatherEnabled: Boolean = false
 ) {
     val context = LocalContext.current
 
@@ -75,6 +89,29 @@ internal fun RideShareDialog(
     val maxSpeedLabel = stringResource(R.string.ride_share_stat_max_speed)
     val footer = stringResource(R.string.ride_share_footer)
     val shareChooserTitle = stringResource(R.string.ride_share_chooser_title)
+
+    // Build the optional weather label ONLY when the opt-in feature is on AND this
+    // ride carries a stored snapshot. It's shown as a flat icon + temperature next
+    // to the headline distance; the temperature format mirrors the detail & analysis
+    // views (shared weather formatter) and the icon is the SAME Material
+    // WeatherCondition.icon used by the map chip, rasterised flat & tinted white.
+    val weatherIcon = ride.weather
+        ?.takeIf { weatherEnabled }
+        ?.let { rememberFlatWeatherIcon(WmoWeatherCode.fromCode(it.weatherCode).icon) }
+
+    val weatherLabel: RideShareWeatherLabel? = ride.weather
+        ?.takeIf { weatherEnabled }
+        ?.let { weather ->
+            weatherIcon?.let { icon ->
+                RideShareWeatherLabel(
+                    icon = icon,
+                    temperature = formatWeatherTemperature(weather.temperatureC),
+                    wind = weather.windSpeedMps?.let {
+                        stringResource(R.string.weather_label_wind) + " " + formatWeatherWind(it)
+                    }
+                )
+            }
+        }
 
     val dateLabel = remember(ride.startedAt) {
         DateFormat.getDateInstance(DateFormat.LONG).format(Date(ride.startedAt))
@@ -90,7 +127,7 @@ internal fun RideShareDialog(
 
     // Re-render the card whenever the theme (or the map layer) changes, so the
     // preview updates live as the user taps through the colour swatches.
-    val bitmap by produceState<Bitmap?>(initialValue = null, ride.id, selectedTheme, mapLayer) {
+    val bitmap by produceState<Bitmap?>(initialValue = null, ride.id, selectedTheme, mapLayer, weatherLabel) {
         value = null
         value = withContext(Dispatchers.Default) {
             renderRideShareCard(
@@ -102,7 +139,8 @@ internal fun RideShareDialog(
                     avgSpeedLabel = avgSpeedLabel,
                     elevationLabel = elevationLabel,
                     maxSpeedLabel = maxSpeedLabel,
-                    footer = footer
+                    footer = footer,
+                    weather = weatherLabel
                 ),
                 theme = selectedTheme,
                 mapLayer = mapLayer
@@ -197,6 +235,36 @@ internal fun RideShareDialog(
                 }
             }
         }
+    }
+}
+
+/**
+ * Rasterises a Material [imageVector] (the same `WeatherCondition.icon` used by the
+ * map weather chip) into a flat, **white-tinted** Android [Bitmap] so the off-screen
+ * `Canvas` share-card renderer — which can't draw a Compose `ImageVector` — can blit
+ * it next to the headline distance. The result matches the flat icon look of the
+ * map pill (just tinted white to sit on the card's bold headline).
+ */
+@Composable
+private fun rememberFlatWeatherIcon(imageVector: ImageVector): Bitmap {
+    val painter = rememberVectorPainter(image = imageVector)
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    return remember(painter) {
+        val sizePx = 168 // 2× the drawn 84px so it stays crisp when scaled.
+        val imageBitmap = ImageBitmap(sizePx, sizePx)
+        val canvas = Canvas(imageBitmap)
+        CanvasDrawScope().draw(
+            density = density,
+            layoutDirection = layoutDirection,
+            canvas = canvas,
+            size = Size(sizePx.toFloat(), sizePx.toFloat())
+        ) {
+            with(painter) {
+                draw(size = this@draw.size, colorFilter = ColorFilter.tint(Color.White))
+            }
+        }
+        imageBitmap.asAndroidBitmap()
     }
 }
 

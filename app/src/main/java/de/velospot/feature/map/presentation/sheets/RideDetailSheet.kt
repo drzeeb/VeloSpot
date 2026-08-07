@@ -105,7 +105,12 @@ internal fun RideDetailSheet(
      * hidden since they need a persisted ride. Closing the sheet then discards it.
      */
     isImportable: Boolean = false,
-    onImport: () -> Unit = {}
+    onImport: () -> Unit = {},
+    /**
+     * Whether the opt-in weather feature is enabled. When `true` and the ride
+     * carries a stored snapshot, the "VeloSpot Wrapped" share card shows weather.
+     */
+    weatherEnabled: Boolean = false
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -115,7 +120,8 @@ internal fun RideDetailSheet(
     if (showShareDialog) {
         RideShareDialog(
             ride = ride,
-            onDismiss = { showShareDialog = false }
+            onDismiss = { showShareDialog = false },
+            weatherEnabled = weatherEnabled
         )
     }
 

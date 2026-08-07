@@ -27,7 +27,32 @@ internal data class RideShareLabels(
     val avgSpeedLabel: String,
     val elevationLabel: String,
     val maxSpeedLabel: String,
-    val footer: String
+    val footer: String,
+    /**
+     * Optional, pre-formatted weather chip for the ride. Only supplied when the
+     * opt-in weather feature is enabled AND the ride carries a stored snapshot;
+     * when `null` no weather element is drawn and the card is byte-identical to
+     * one rendered without weather.
+     */
+    val weather: RideShareWeatherLabel? = null
+)
+
+/**
+ * The optional weather element for the share card, shown right next to the headline
+ * distance: a flat weather icon and the temperature (with the wind on a second line).
+ * All are supplied by the composable (mirroring the detail & analysis views) so the
+ * renderer stays free of Android resources.
+ *
+ * @property icon a pre-rasterised, flat weather icon bitmap (the same Material
+ *  `WeatherCondition.icon` used by the map chip, tinted white) sized ready to draw.
+ * @property temperature e.g. `12 °C`.
+ * @property wind optional pre-formatted wind text shown below the temperature, e.g.
+ *  `Wind 15 km/h`; omitted when the ride has no wind reading.
+ */
+internal data class RideShareWeatherLabel(
+    val icon: Bitmap,
+    val temperature: String,
+    val wind: String? = null
 )
 
 /**
@@ -79,7 +104,10 @@ internal fun renderRideShareCard(
     drawBackground(canvas, w, h, theme)
     drawBrandRow(canvas, w, dateLabel, theme)
     drawRouteCard(canvas, ride, theme, mapLayer)
-    drawHeadlineDistance(canvas, ride, labels.headline, theme)
+    // The headline distance carries the optional weather symbol + temperature just
+    // to its right; drawn only when a weather label was supplied, so the layout is
+    // unchanged when it's absent.
+    drawHeadlineDistance(canvas, ride, labels.headline, labels.weather, theme)
     drawStatsRow(canvas, ride, w, labels)
     drawFooter(canvas, w, h, labels.footer)
 
@@ -133,6 +161,7 @@ private fun drawBrandRow(canvas: Canvas, w: Int, dateLabel: String, theme: RideS
     }
     canvas.drawText(dateLabel, w - MARGIN, y, date)
 }
+
 
 // ── Route snippet ───────────────────────────────────────────────────────────
 
@@ -284,7 +313,13 @@ private fun drawRouteCard(canvas: Canvas, ride: RecordedRide, theme: RideShareTh
 
 // ── Headline distance ───────────────────────────────────────────────────────
 
-private fun drawHeadlineDistance(canvas: Canvas, ride: RecordedRide, headline: String, theme: RideShareTheme) {
+private fun drawHeadlineDistance(
+    canvas: Canvas,
+    ride: RecordedRide,
+    headline: String,
+    weather: RideShareWeatherLabel?,
+    theme: RideShareTheme
+) {
     val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = theme.accent
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
@@ -308,7 +343,54 @@ private fun drawHeadlineDistance(canvas: Canvas, ride: RecordedRide, headline: S
     val baseline = 1040f
     canvas.drawText(number, MARGIN, baseline, numberPaint)
     val numberWidth = numberPaint.measureText(number)
-    canvas.drawText(unit, MARGIN + numberWidth + 20f, baseline, unitPaint)
+    val unitX = MARGIN + numberWidth + 20f
+    canvas.drawText(unit, unitX, baseline, unitPaint)
+
+    // Optional weather (symbol + temperature) right next to the distance, vertically
+    // centred on the big number. Drawn only when a weather label was supplied.
+    weather?.let { drawHeadlineWeather(canvas, it, unitX + unitPaint.measureText(unit)) }
+}
+
+/**
+ * Draws the ride's weather — a flat icon plus the temperature (and, when present,
+ * the wind on a second line) — starting at [startX], right of the headline distance
+ * and vertically centred on the big number.
+ */
+private fun drawHeadlineWeather(canvas: Canvas, weather: RideShareWeatherLabel, startX: Float) {
+    // Optical centre of the 168px headline number (baseline 1040): cap-height top
+    // ≈ 922, so its middle sits around y ≈ 980.
+    val centerY = 980f
+    val x = startX + 56f
+
+    val iconSize = 84f
+    val iconRect = RectF(x, centerY - iconSize / 2f, x + iconSize, centerY + iconSize / 2f)
+    canvas.drawBitmap(weather.icon, null, iconRect, Paint(Paint.FILTER_BITMAP_FLAG))
+
+    val textX = x + iconSize + 20f
+
+    val tempPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = WHITE
+        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+        textSize = 64f
+    }
+
+    if (weather.wind == null) {
+        // Temperature only — vertically centred on the number.
+        val fm = tempPaint.fontMetrics
+        canvas.drawText(weather.temperature, textX, centerY - (fm.ascent + fm.descent) / 2f, tempPaint)
+        return
+    }
+
+    // Temperature on top, wind underneath — the two-line block centred on the number.
+    val windPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = WHITE_70
+        typeface = Typeface.SANS_SERIF
+        textSize = 34f
+    }
+    val tempBaseline = centerY - 8f
+    val windBaseline = centerY + 46f
+    canvas.drawText(weather.temperature, textX, tempBaseline, tempPaint)
+    canvas.drawText(weather.wind, textX, windBaseline, windPaint)
 }
 
 // ── Stats row ───────────────────────────────────────────────────────────────
