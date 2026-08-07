@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
 import de.velospot.core.format.formatRideSpeed
+import de.velospot.core.location.hasLocationPermission
 import de.velospot.core.tracking.RideTrackingUiState
 import de.velospot.feature.map.presentation.markers.MarkerDisplayConfig
 import de.velospot.feature.map.presentation.markers.MarkerIconSet
@@ -112,6 +113,8 @@ fun MainMapScreen(
     isDarkTheme: Boolean = false,
     onDarkThemeToggle: () -> Unit = {},
     onOpenRideAnalysis: (String) -> Unit = {},
+    autoStartRideRecording: Boolean = false,
+    onAutoStartRideRecordingConsumed: () -> Unit = {},
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -327,6 +330,22 @@ fun MainMapScreen(
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         viewModel.startRideTracking()
+    }
+
+    // ── Auto-start from the widget / Quick-Settings tile ──────────────────────
+    // The widget/tile route "start recording" through MainActivity so the location
+    // foreground service is launched from a foreground Activity (always allowed,
+    // even cold-started on OEMs that block background FGS starts). When that request
+    // arrives, fire the very same start the FAB uses — exactly once. With no location
+    // permission we just consume the request and fall through to the normal UI (the
+    // app is now open, so the user can grant it), matching the widget/tile behaviour.
+    LaunchedEffect(autoStartRideRecording) {
+        if (!autoStartRideRecording) return@LaunchedEffect
+        val hasPermission = hasLocationPermission(context)
+        if (hasPermission && !viewModel.isRecordingRide) {
+            startRideRecording()
+        }
+        onAutoStartRideRecordingConsumed()
     }
 
     // ── Battery: stop GPS in the background, re-arm it on return ───────────────

@@ -26,7 +26,9 @@ object Destinations {
 @Composable
 fun VeloSpotNavHost(
     isDarkTheme: Boolean,
-    onDarkThemeToggle: () -> Unit
+    onDarkThemeToggle: () -> Unit,
+    autoStartRideRecording: Boolean = false,
+    onAutoStartRideRecordingConsumed: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Destinations.MAP) {
@@ -36,7 +38,9 @@ fun VeloSpotNavHost(
                 onDarkThemeToggle = onDarkThemeToggle,
                 onOpenRideAnalysis = { rideId ->
                     navController.navigate(Destinations.rideAnalysis(rideId))
-                }
+                },
+                autoStartRideRecording = autoStartRideRecording,
+                onAutoStartRideRecordingConsumed = onAutoStartRideRecordingConsumed
             )
         }
         composable(
