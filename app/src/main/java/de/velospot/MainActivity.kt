@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color.TRANSPARENT
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -20,49 +21,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import dagger.hilt.android.AndroidEntryPoint
+import de.velospot.core.gpx.GpxOpenBus
 import de.velospot.core.locale.LanguagePreferences
 import de.velospot.core.theme.DarkModePreferences
 import de.velospot.ui.navigation.VeloSpotNavHost
 import de.velospot.ui.theme.VeloSpotTheme
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    /**
-     * Set true when the Activity was launched to auto-start a ride recording
-     * (see [ACTION_START_RIDE_RECORDING] / [EXTRA_START_RIDE_RECORDING]). Backing a
-     * Compose state so the map screen fires the very same start the in-app FAB uses
-     * from a guaranteed-foreground Activity context — the widget/tile route through
-     * here so the location foreground service is always allowed to start, even on a
-     * cold start and on OEMs that block background FGS starts (Android 12+/ColorOS).
-     */
-    private val startRideRecordingRequest: MutableState<Boolean> = mutableStateOf(false)
+    /** Hand-off for a `.gpx` file opened from another app via an `ACTION_VIEW` intent. */
+    @Inject lateinit var gpxOpenBus: GpxOpenBus
+
 
     override fun attachBaseContext(newBase: Context) {
         // Re-apply user-saved language for every Activity recreation.
         super.attachBaseContext(LanguagePreferences.wrap(newBase))
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        // Warm start: make the new intent the Activity's current intent, then latch
-        // the auto-start request so the map screen reacts.
-        setIntent(intent)
-        if (wantsStartRideRecording(intent)) {
-            consumeStartRideRecordingExtras(intent)
-            startRideRecordingRequest.value = true
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Cold start: honour an auto-start request carried by the launch intent.
-        // Consume the marker so a rotation/recreation (which replays this intent)
-        // cannot re-trigger a second recording.
-        if (savedInstanceState == null && wantsStartRideRecording(intent)) {
-            consumeStartRideRecordingExtras(intent)
-            startRideRecordingRequest.value = true
-        }
+        // Route a `.gpx` opened from outside the app (file manager, e-mail, browser
+        // download, share sheet, …) into the map flow so the import-or-preview
+        // chooser appears (handled for both cold start and while already running).
+        handleGpxViewIntent(intent)
         // Draw behind the system bars (Android 15+ / SDK 35+ default). We request
         // fully transparent status and navigation bars so the map and Compose UI
         // extend edge-to-edge; the bar *icon* contrast is then driven from the
@@ -100,15 +83,49 @@ class MainActivity : AppCompatActivity() {
                         onDarkThemeToggle = {
                             darkThemeEnabled = !darkThemeEnabled
                             DarkModePreferences.setDarkModeEnabled(this, darkThemeEnabled)
-                        },
-                        autoStartRideRecording = startRideRecordingRequest.value,
-                        onAutoStartRideRecordingConsumed = {
-                            startRideRecordingRequest.value = false
                         }
                     )
                 }
             }
         }
+    }
+
+    /** Handles a `.gpx` opened while the Activity is already running (singleTask reuse). */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleGpxViewIntent(intent)
+    }
+
+    /**
+     * Extracts the `.gpx` [Uri] from an incoming `ACTION_VIEW` intent and hands it to
+     * the [GpxOpenBus] so the map's `MapViewModel` can show the import-or-preview
+     * chooser.
+     *
+     * The post is **synchronous** on purpose. A cold start from another app (Telegram,
+     * e-mail, …) frequently recreates this Activity once right after `onCreate` (the
+     * per-Activity locale wrapping in [attachBaseContext] / a config change). Posting
+     * from a coroutine tied to the Activity's `lifecycleScope` was therefore **cancelled
+     * mid-flight** before it could deliver — which is exactly why the *first* open after
+     * launch silently did nothing while later (warm) opens worked. Posting inline can't
+     * be cancelled, and the bus is a retained [kotlinx.coroutines.flow.StateFlow], so a
+     * value posted before the `MapViewModel` even exists is still delivered once it
+     * starts collecting. Copying the bytes into private cache (to decouple the later
+     * parse from the transient one-shot URI grant) is done in the ViewModel, on its
+     * `viewModelScope`, which the Activity recreation does not cancel.
+     *
+     * A best-effort persistable read grant is taken first (a harmless no-op — caught —
+     * for the common one-shot grants). Non-view intents (e.g. the launcher) are ignored.
+     */
+    private fun handleGpxViewIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri: Uri = intent.data ?: return
+        runCatching {
+            contentResolver.takePersistableUriPermission(
+                uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
+        gpxOpenBus.post(uri)
     }
 
     companion object {

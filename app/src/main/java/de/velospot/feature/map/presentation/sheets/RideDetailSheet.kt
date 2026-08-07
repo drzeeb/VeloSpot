@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Unarchive
@@ -90,7 +91,15 @@ internal fun RideDetailSheet(
     onRename: (String, String?) -> Unit,
     onSetArchived: (String, Boolean) -> Unit,
     onOpenAnalysis: (String) -> Unit = {},
-    onSaveAsRoute: (RecordedRide) -> Unit = {}
+    onSaveAsRoute: (RecordedRide) -> Unit = {},
+    /**
+     * When `true` the ride is a transient GPX **preview** (opened from an
+     * `ACTION_VIEW` intent, not yet persisted): an "Import" button is shown to save
+     * it, and the DB-bound actions (analysis, save-as-route, archive, delete) are
+     * hidden since they need a persisted ride. Closing the sheet then discards it.
+     */
+    isImportable: Boolean = false,
+    onImport: () -> Unit = {}
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -317,20 +326,42 @@ internal fun RideDetailSheet(
 
                     Spacer(Modifier.height(16.dp))
 
-                    // ── Open the full-screen, in-depth ride analysis ─────────
-                    Button(
-                        onClick = { onOpenAnalysis(ride.id) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
-                            contentDescription = null
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(text = stringResource(R.string.ride_open_analysis))
+                    // ── Import a previewed GPX into "My rides" ───────────────
+                    // Only shown while previewing an opened .gpx file that isn't
+                    // saved yet; persists it and turns it into a normal ride.
+                    if (isImportable) {
+                        Button(
+                            onClick = onImport,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Save,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(text = stringResource(R.string.ride_import_action))
+                        }
+                        Spacer(Modifier.height(8.dp))
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    // ── Open the full-screen, in-depth ride analysis ─────────
+                    // Needs a persisted ride (loaded by id), so it's hidden while
+                    // previewing an unsaved GPX.
+                    if (!isImportable) {
+                        Button(
+                            onClick = { onOpenAnalysis(ride.id) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(text = stringResource(R.string.ride_open_analysis))
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+                    }
 
                     // ── Share as a "VeloSpot Wrapped" card ───────────────────
                     Button(
@@ -349,7 +380,8 @@ internal fun RideDetailSheet(
                     // Real rides only — a simulator (mock) ride can't seed a board —
                     // and only when the ride didn't already come from a route (then
                     // the route already exists, so offering to re-save it is noise).
-                    if (!ride.isMock && ride.sourceRouteId == null) {
+                    // Hidden while previewing an unsaved GPX (no persisted ride yet).
+                    if (!isImportable && !ride.isMock && ride.sourceRouteId == null) {
                         Spacer(Modifier.height(8.dp))
                         Button(
                             onClick = { onSaveAsRoute(ride) },
@@ -364,42 +396,43 @@ internal fun RideDetailSheet(
                         }
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    // ── Archive / restore + delete — persisted rides only ────
+                    if (!isImportable) {
+                        Spacer(Modifier.height(8.dp))
 
-                    // ── Archive / restore ────────────────────────────────────
-                    TextButton(
-                        onClick = { onSetArchived(ride.id, !ride.isArchived) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = if (ride.isArchived) Icons.Default.Unarchive
-                                          else Icons.Default.Archive,
-                            contentDescription = null
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = if (ride.isArchived) stringResource(R.string.ride_unarchive)
-                                   else stringResource(R.string.ride_archive)
-                        )
-                    }
+                        TextButton(
+                            onClick = { onSetArchived(ride.id, !ride.isArchived) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = if (ride.isArchived) Icons.Default.Unarchive
+                                              else Icons.Default.Archive,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = if (ride.isArchived) stringResource(R.string.ride_unarchive)
+                                       else stringResource(R.string.ride_archive)
+                            )
+                        }
 
-                    Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
 
-                    // ── Delete ───────────────────────────────────────────────
-                    TextButton(
-                        onClick = { showDeleteConfirm = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.ride_delete),
-                            color = MaterialTheme.colorScheme.error
-                        )
+                        TextButton(
+                            onClick = { showDeleteConfirm = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.ride_delete),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(8.dp))

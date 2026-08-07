@@ -511,6 +511,14 @@
     <string name="ride_export_mode_separate">Eén bestand per rit</string>
     <string name="ride_import_done">Ritten geïmporteerd</string>
     <string name="ride_import_failed">Geen ritten in het bestand gevonden</string>
+    <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
+    <string name="gpx_open_filter_label">Openen met VeloSpot</string>
+    <string name="gpx_open_chooser_title">GPX-bestand openen</string>
+    <string name="gpx_open_chooser_message">Dit spoor importeren in je ritten of gewoon openen om te bekijken?</string>
+    <string name="gpx_open_import">Importeren</string>
+    <string name="gpx_open_preview">Alleen openen</string>
+    <string name="gpx_open_cancel">Annuleren</string>
+    <string name="ride_import_action">Rit importeren</string>
     <string name="ride_export_destination_title">Ritten exporteren</string>
     <string name="ride_export_share">Delen</string>
     <string name="ride_export_save">Opslaan in bestand</string>

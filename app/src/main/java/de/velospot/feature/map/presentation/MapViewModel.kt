@@ -112,6 +112,7 @@ class MapViewModel @Inject constructor(
     private val photonGeocoder: PhotonGeocoder,
     private val recordingManager: RideRecordingManager,
     private val gpxFileStore: GpxFileStore,
+    private val gpxOpenBus: de.velospot.core.gpx.GpxOpenBus,
     savedPlacesRepository: SavedPlacesRepository,
     parkedBikeRepository: ParkedBikeRepository,
     private val recordedRidesRepository: RecordedRidesRepository,
@@ -1185,6 +1186,102 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    // ── Open a .gpx file from outside the app (ACTION_VIEW intent) ─────────────
+
+    /**
+     * The `.gpx` [android.net.Uri] opened from another app for which the
+     * import-or-preview chooser dialog is showing, or `null` when the chooser is
+     * closed. Fed from the process-level [de.velospot.core.gpx.GpxOpenBus] (posted
+     * by `MainActivity` when it receives the `ACTION_VIEW` intent).
+     */
+    private val _gpxOpenChooser = MutableStateFlow<android.net.Uri?>(null)
+    val gpxOpenChooser: StateFlow<android.net.Uri?> = _gpxOpenChooser.asStateFlow()
+
+    /** Whether the open ride detail sheet is a transient (non-persisted) GPX preview. */
+    val isPreviewRide: StateFlow<Boolean> = rideTracking.isPreviewRide
+
+    /**
+     * Collects the [de.velospot.core.gpx.GpxOpenBus]: when a `.gpx` file is opened
+     * from outside the app, cache it and raise the import-or-preview chooser.
+     *
+     * The bus value is deliberately **not consumed here**. A cold start from another
+     * app (Telegram, e-mail, …) can spin up a *new* Activity + `MapViewModel` while a
+     * previous, being-destroyed one is still collecting. If the first collector
+     * consumed the value, the *new* ViewModel — the one the UI actually shows — would
+     * observe `null` and never raise the dialog (the "only works on the 2nd/3rd try"
+     * bug). Keeping the uri in the retained [kotlinx.coroutines.flow.StateFlow] lets
+     * the currently-shown ViewModel pick it up too; the bus is cleared only once the
+     * user acts on the chooser (import / preview / dismiss).
+     *
+     * The incoming (transient, one-shot) `content://` uri is copied into private app
+     * cache the moment it arrives — while the intent's read grant is still fresh — so
+     * the later parse works off the stable cache uri and never fails on an expired grant.
+     */
+    private fun observeGpxOpenIntents() {
+        viewModelScope.launch {
+            gpxOpenBus.pending.collect { uri ->
+                if (uri != null) {
+                    val stable = gpxFileStore.cacheIncomingGpx(uri) ?: uri
+                    _gpxOpenChooser.value = stable
+                }
+            }
+        }
+    }
+
+    /** Dismisses the import-or-preview chooser without importing or previewing. */
+    fun dismissGpxOpenChooser() {
+        gpxOpenBus.consume()
+        _gpxOpenChooser.value = null
+    }
+
+    /**
+     * Chooser option 1 — **Import directly**: parses the opened GPX, persists every
+     * `<trk>` as a ride and opens the newly-imported ride's detail sheet. A short
+     * toast reports success/failure.
+     */
+    fun importOpenedGpx() {
+        val uri = _gpxOpenChooser.value ?: return
+        gpxOpenBus.consume()
+        _gpxOpenChooser.value = null
+        viewModelScope.launch {
+            val rides = gpxFileStore.readRides(uri)
+            if (rides.isEmpty()) {
+                _userMessageRes.value = de.velospot.R.string.ride_import_failed
+                return@launch
+            }
+            rideTracking.importRidesAndShowFirst(rides)
+            _userMessageRes.value = de.velospot.R.string.ride_import_done
+        }
+    }
+
+    /**
+     * Chooser option 2 — **Just open / preview**: parses the opened GPX and shows it
+     * in the ride detail sheet in transient preview mode WITHOUT persisting it. A
+     * multi-track file previews its first track (the rest are kept ready to import).
+     */
+    fun previewOpenedGpx() {
+        val uri = _gpxOpenChooser.value ?: return
+        gpxOpenBus.consume()
+        _gpxOpenChooser.value = null
+        viewModelScope.launch {
+            val rides = gpxFileStore.readRides(uri)
+            if (rides.isEmpty()) {
+                _userMessageRes.value = de.velospot.R.string.ride_import_failed
+                return@launch
+            }
+            rideTracking.showPreview(rides)
+        }
+    }
+
+    /**
+     * Persists the currently-previewed GPX (from the in-sheet "Import" button) and
+     * turns it into a normal saved ride, confirming with a toast.
+     */
+    fun importPreviewedRide() {
+        rideTracking.importPreview()
+        _userMessageRes.value = de.velospot.R.string.ride_import_done
+    }
+
     // ── Offline usage (map tiles + routing, combined, per region) ──────────────
 
     /**
@@ -1242,6 +1339,7 @@ class MapViewModel @Inject constructor(
         loadSpacesForViewport(BoundingBox.DEFAULT)
         observeUserLocation()
         observeRouteSimulation()
+        observeGpxOpenIntents()
     }
 
     /**

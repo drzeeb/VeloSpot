@@ -158,7 +158,10 @@ class MapViewModelTest {
         bikeParkingRepository: BikeParkingRepository = FakeBikeParkingRepository(),
         favoritesRepository: FavoritesRepository = FakeFavoritesRepository(),
         locationRepository: LocationRepository = FakeLocationRepository(),
-        routingRepository: RoutingRepository = FakeRoutingRepository()
+        routingRepository: RoutingRepository = FakeRoutingRepository(),
+        // Defaulted so all existing call sites are unaffected. Tests that exercise
+        // the opened-GPX cold-start hand-off pass ONE shared bus to two view-models.
+        gpxOpenBus: de.velospot.core.gpx.GpxOpenBus = de.velospot.core.gpx.GpxOpenBus()
     ): MapViewModel {
         val recordedRidesRepository = FakeRecordedRidesRepository()
         // Hand the manager a REAL but cancellable Default scope (cancelled in tearDown)
@@ -184,6 +187,7 @@ class MapViewModelTest {
                 scope = managerScope
             ),
             gpxFileStore          = de.velospot.data.gpx.GpxFileStore(mockContext),
+            gpxOpenBus            = gpxOpenBus,
             savedPlacesRepository = FakeSavedPlacesRepository(),
             parkedBikeRepository  = FakeParkedBikeRepository(),
             recordedRidesRepository = recordedRidesRepository,
@@ -678,6 +682,117 @@ class MapViewModelTest {
         assertEquals(1, attempts.size)
         assertEquals(600L, attempts.first().elapsedSeconds)
         assertEquals(false, attempts.first().reversed)
+    }
+
+    // ── Opened-GPX cold-start hand-off (GpxOpenBus) ──────────────────────────
+    // Guards the regression where a cold-start "open .gpx from another app" opened a
+    // *new* MainActivity + MapViewModel while a previous, being-destroyed one was
+    // still collecting the bus. The old code consumed the bus inside the collector,
+    // so the stale ViewModel cleared it before the newly-shown one started collecting;
+    // the shown VM then observed `null` and never raised the chooser (the "only works
+    // on the 2nd/3rd try" bug). The bus is now consumed only on a user action.
+    //
+    // A mock Uri is posted so no Android framework is needed in this pure JVM test.
+    // GpxFileStore.cacheIncomingGpx(uri) fails gracefully (mock Context has no real
+    // contentResolver/cacheDir) and returns null, so MapViewModel falls back to the
+    // original posted uri — hence the chooser equals the posted uri.
+
+    /**
+     * Awaits the opened-GPX chooser value. `observeGpxOpenIntents()` first hops onto
+     * `Dispatchers.IO` (in `GpxFileStore.cacheIncomingGpx`) before setting
+     * `_gpxOpenChooser`, and that IO hop is a REAL background dispatcher the test
+     * scheduler cannot fast-forward. So we alternate: advance the virtual scheduler
+     * to run the collector up to (and past) the IO hop, then briefly yield real time
+     * for the IO continuation, until the chooser is set (or a timeout guards it).
+     */
+    private fun awaitGpxChooser(viewModel: MapViewModel): android.net.Uri? {
+        repeat(200) {
+            testDispatcher.scheduler.advanceUntilIdle()
+            viewModel.gpxOpenChooser.value?.let { return it }
+            Thread.sleep(10)
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+        return viewModel.gpxOpenChooser.value
+    }
+
+    @Test
+    fun `a newly-shown ViewModel still receives the opened GPX not consumed by the previous one`() = runTest {
+        val bus = de.velospot.core.gpx.GpxOpenBus()
+        val uri = mock<android.net.Uri>()
+        bus.post(uri)
+
+        // VM1 collects the bus but — being torn down on the cold start — must NOT
+        // consume it.
+        val vm1 = makeViewModel(gpxOpenBus = bus)
+        assertEquals(uri, awaitGpxChooser(vm1))
+
+        // VM2 (the ViewModel the UI actually shows) starts collecting the SAME bus
+        // afterwards and must still pick up the retained uri.
+        val vm2 = makeViewModel(gpxOpenBus = bus)
+        assertEquals(uri, awaitGpxChooser(vm2))
+
+        // The value survived both collectors: nobody consumed it.
+        assertEquals(uri, bus.pending.value)
+    }
+
+    @Test
+    fun `dismissGpxOpenChooser consumes the bus`() = runTest {
+        val bus = de.velospot.core.gpx.GpxOpenBus()
+        val uri = mock<android.net.Uri>()
+        bus.post(uri)
+
+        val viewModel = makeViewModel(gpxOpenBus = bus)
+        assertEquals(uri, awaitGpxChooser(viewModel))
+
+        viewModel.dismissGpxOpenChooser()
+
+        assertEquals(null, viewModel.gpxOpenChooser.value)
+        assertEquals(null, bus.pending.value)
+    }
+
+    @Test
+    fun `importOpenedGpx consumes the bus`() = runTest {
+        val bus = de.velospot.core.gpx.GpxOpenBus()
+        val uri = mock<android.net.Uri>()
+        bus.post(uri)
+
+        val viewModel = makeViewModel(gpxOpenBus = bus)
+        assertEquals(uri, awaitGpxChooser(viewModel))
+
+        // The consume happens synchronously before the async GPX read.
+        viewModel.importOpenedGpx()
+
+        assertEquals(null, viewModel.gpxOpenChooser.value)
+        assertEquals(null, bus.pending.value)
+    }
+
+    @Test
+    fun `previewOpenedGpx consumes the bus`() = runTest {
+        val bus = de.velospot.core.gpx.GpxOpenBus()
+        val uri = mock<android.net.Uri>()
+        bus.post(uri)
+
+        val viewModel = makeViewModel(gpxOpenBus = bus)
+        assertEquals(uri, awaitGpxChooser(viewModel))
+
+        // The consume happens synchronously before the async GPX read.
+        viewModel.previewOpenedGpx()
+
+        assertEquals(null, viewModel.gpxOpenChooser.value)
+        assertEquals(null, bus.pending.value)
+    }
+
+    @Test
+    fun `a uri posted before any ViewModel exists is still delivered`() = runTest {
+        // Cold-start ordering: MainActivity posts to the retained StateFlow before the
+        // MapViewModel is even created; the VM must pick it up once it starts collecting.
+        val bus = de.velospot.core.gpx.GpxOpenBus()
+        val uri = mock<android.net.Uri>()
+        bus.post(uri)
+
+        val viewModel = makeViewModel(gpxOpenBus = bus)
+
+        assertEquals(uri, awaitGpxChooser(viewModel))
     }
 
     private fun progress(remainingMeters: Double) = de.velospot.core.navigation.NavigationProgress(

@@ -511,6 +511,14 @@
     <string name="ride_export_mode_separate">Eng Datei pro Tour</string>
     <string name="ride_import_done">Tourën importéiert</string>
     <string name="ride_import_failed">Keng Tourën an der Datei fonnt</string>
+    <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
+    <string name="gpx_open_filter_label">Mat VeloSpot opmaachen</string>
+    <string name="gpx_open_chooser_title">GPX-Datei opmaachen</string>
+    <string name="gpx_open_chooser_message">Dës Streck an deng Tourën importéieren oder nëmmen ukucken?</string>
+    <string name="gpx_open_import">Importéieren</string>
+    <string name="gpx_open_preview">Nëmmen opmaachen</string>
+    <string name="gpx_open_cancel">Ofbriechen</string>
+    <string name="ride_import_action">Tour importéieren</string>
     <string name="ride_export_destination_title">Tourën exportéieren</string>
     <string name="ride_export_share">Deelen</string>
     <string name="ride_export_save">An Datei späicheren</string>

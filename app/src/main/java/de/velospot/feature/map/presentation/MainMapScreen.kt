@@ -75,6 +75,7 @@ import de.velospot.core.map.RideHeatmap
 import de.velospot.core.map.RideMaxSpeedPoint
 import de.velospot.core.map.RideTrackLines
 import de.velospot.feature.map.presentation.sheets.MapBottomSheets
+import de.velospot.feature.map.presentation.sheets.GpxOpenChooserDialog
 import de.velospot.feature.map.presentation.sheets.RideDetailSheet
 import de.velospot.feature.map.presentation.sheets.languageFlagForCode
 import de.velospot.feature.map.presentation.sheets.resolveCurrentLanguageCode
@@ -151,6 +152,8 @@ fun MainMapScreen(
     val rideTrackSegments    by viewModel.rideTrackSegments.collectAsStateWithLifecycle()
     val recordedRideTracks   by viewModel.recordedRideTracks.collectAsStateWithLifecycle()
     val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
+    val isPreviewRide        by viewModel.isPreviewRide.collectAsStateWithLifecycle()
+    val gpxOpenChooser       by viewModel.gpxOpenChooser.collectAsStateWithLifecycle()
     val rideViewOptions      by viewModel.rideViewOptions.collectAsStateWithLifecycle()
     val rideNamePrompt       by viewModel.rideNamePrompt.collectAsStateWithLifecycle()
     val isFollowingLocation  by viewModel.isFollowingLocation.collectAsStateWithLifecycle()
@@ -164,6 +167,7 @@ fun MainMapScreen(
     val sensorSnapshot        by viewModel.sensorSnapshot.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
+
 
 
     // Whether a follow-capable session is running (active navigation OR a live ride
@@ -1060,15 +1064,28 @@ fun MainMapScreen(
                 ride      = ride,
                 onDismiss = {
                     // Closing a ride's detail returns to the "My rides" list it was
-                    // opened from, instead of leaving the bare map.
+                    // opened from, instead of leaving the bare map. A GPX preview is
+                    // simply discarded (nothing was persisted) and stays on the map.
+                    val wasPreview = isPreviewRide
                     viewModel.dismissSelectedRide()
-                    screenUiState.openRides()
+                    if (!wasPreview) screenUiState.openRides()
                 },
                 onDelete  = { id -> viewModel.deleteRecordedRide(id) },
                 onRename  = { id, name -> viewModel.renameRecordedRide(id, name) },
                 onSetArchived = { id, archived -> viewModel.setRecordedRideArchived(id, archived) },
                 onOpenAnalysis = onOpenRideAnalysis,
-                onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) }
+                onSaveAsRoute = { r -> viewModel.saveRideAsRoute(r) },
+                isImportable = isPreviewRide,
+                onImport = { viewModel.importPreviewedRide() }
+            )
+        }
+
+        // ── "Open .gpx" chooser — import directly or just preview ────────────
+        gpxOpenChooser?.let {
+            GpxOpenChooserDialog(
+                onImport  = { viewModel.importOpenedGpx() },
+                onPreview = { viewModel.previewOpenedGpx() },
+                onDismiss = { viewModel.dismissGpxOpenChooser() }
             )
         }
 

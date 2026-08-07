@@ -112,5 +112,51 @@ class GpxRideFactoryTest {
         assertTrue("loss realistic", ride.elevationLossMeters > 6.0)
         assertTrue("gain not zero-forced on a net descent", ride.elevationGainMeters > 3.0)
     }
+
+    @Test
+    fun `toRecordedRides maps every usable track and drops the too-short ones`() {
+        // Two long tracks + one tiny one: the opened-GPX flow keeps a ride per usable
+        // <trk> and preserves order (the first drives the preview), dropping shorts.
+        val long1 = ParsedTrack(
+            name = "Leg A",
+            points = listOf(
+                ParsedTrackPoint(0.0, 0.0, null, 0L),
+                ParsedTrackPoint(0.001, 0.0, null, 10_000L)
+            )
+        )
+        val tiny = ParsedTrack(
+            name = "Tiny",
+            points = listOf(
+                ParsedTrackPoint(0.0, 0.0, null, 0L),
+                ParsedTrackPoint(0.00001, 0.0, null, 1_000L) // ~1 m -> dropped
+            )
+        )
+        val long2 = ParsedTrack(
+            name = "Leg B",
+            points = listOf(
+                ParsedTrackPoint(1.0, 0.0, null, 0L),
+                ParsedTrackPoint(1.001, 0.0, null, 10_000L)
+            )
+        )
+
+        val rides = GpxRideFactory.toRecordedRides(listOf(long1, tiny, long2))
+
+        assertEquals(2, rides.size)
+        assertEquals("Leg A", rides[0].name)
+        assertEquals("Leg B", rides[1].name)
+    }
+
+    @Test
+    fun `toRecordedRides returns an empty list when no track is usable`() {
+        val tiny = ParsedTrack(
+            name = null,
+            points = listOf(
+                ParsedTrackPoint(0.0, 0.0, null, 0L),
+                ParsedTrackPoint(0.00001, 0.0, null, 1_000L)
+            )
+        )
+        assertTrue(GpxRideFactory.toRecordedRides(listOf(tiny)).isEmpty())
+        assertTrue(GpxRideFactory.toRecordedRides(emptyList()).isEmpty())
+    }
 }
 

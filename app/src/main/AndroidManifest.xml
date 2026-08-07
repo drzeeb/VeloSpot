@@ -46,12 +46,53 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:localeConfig="@xml/locale_config"
             android:theme="@style/Theme.VeloSpot">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Open a .gpx file from outside the app (file manager, e-mail
+                 attachment, browser download, share sheet, …). GPX has no reliable
+                 MIME type, so we match generously: the common GPX/XML MIME types on
+                 both content:// and file:// schemes, plus any-MIME (*/*) files whose
+                 path ends in ".gpx". The multiple <data> tags mirror how other
+                 Android apps register a .gpx handler, catching the many providers
+                 that report inconsistent (or missing) types. -->
+            <intent-filter android:label="@string/gpx_open_filter_label">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Match by (reported) MIME type on both schemes. -->
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/gpx+xml" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="text/xml" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+
+            <!-- Fallback: match any file (or content) whose path/name ends in
+                 ".gpx" regardless of the reported MIME type. host is required for a
+                 pathPattern to apply; "*" matches every host. -->
+            <intent-filter android:label="@string/gpx_open_filter_label">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.gpx" />
+                <data android:pathPattern=".*\\..*\\.gpx" />
+                <data android:pathPattern=".*\\..*\\..*\\.gpx" />
             </intent-filter>
         </activity>
 

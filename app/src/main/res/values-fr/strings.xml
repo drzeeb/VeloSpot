@@ -512,6 +512,14 @@
     <string name="ride_export_mode_separate">Un fichier par trajet</string>
     <string name="ride_import_done">Trajets importés</string>
     <string name="ride_import_failed">Aucun trajet trouvé dans le fichier</string>
+    <!-- Open a .gpx file from outside the app (ACTION_VIEW intent) -->
+    <string name="gpx_open_filter_label">Ouvrir avec VeloSpot</string>
+    <string name="gpx_open_chooser_title">Ouvrir un fichier GPX</string>
+    <string name="gpx_open_chooser_message">Importer ce tracé dans vos trajets ou simplement l\'ouvrir pour le consulter ?</string>
+    <string name="gpx_open_import">Importer</string>
+    <string name="gpx_open_preview">Juste ouvrir</string>
+    <string name="gpx_open_cancel">Annuler</string>
+    <string name="ride_import_action">Importer le trajet</string>
     <string name="ride_export_destination_title">Exporter les trajets</string>
     <string name="ride_export_share">Partager</string>
     <string name="ride_export_save">Enregistrer dans un fichier</string>
