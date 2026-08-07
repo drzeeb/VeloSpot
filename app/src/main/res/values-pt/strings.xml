@@ -547,6 +547,22 @@
     <string name="ride_share_theme_ocean">Oceano</string>
     <string name="ride_share_theme_berry">Baga</string>
     <string name="ride_share_theme_midnight">Meia-noite</string>
+    <!-- Share overall stats as a card ("VeloSpot Wrapped - All-time") -->
+    <string name="stats_share_action">Partilhar estatísticas</string>
+    <string name="stats_share_dialog_title">Partilhe as suas estatísticas</string>
+    <string name="stats_share_dialog_subtitle">Todo o seu historial de percursos num cartão fixe — perfeito para WhatsApp, Telegram ou Instagram.</string>
+    <string name="stats_share_headline_distance">Distância total</string>
+    <!-- %1$d = número de percursos, %2$d = número de dias ativos -->
+    <string name="stats_share_subtitle">%1$d percursos · %2$d dias ativos</string>
+    <string name="stats_share_period_all_time">Desde sempre</string>
+    <!-- %1$s = mês e ano do primeiro percurso, p. ex. "JUN 2024" -->
+    <string name="stats_share_period_since">Desde %1$s</string>
+    <!-- %1$.1f = percentagem da circunferência da Terra percorrida -->
+    <string name="stats_share_badge_world">%1$.1f%% à volta do mundo</string>
+    <!-- %1$.1f = quantas vezes o desnível total equivale ao Everest -->
+    <string name="stats_share_badge_everest">%1$.1f× Everest</string>
+    <!-- %1$d = sequência mais longa em dias -->
+    <string name="stats_share_badge_streak">Sequência de %1$d dias</string>
     <string name="ride_stop_save">Parar e guardar</string>
     <string name="ride_notification_channel_name">Gravação de percurso</string>
     <string name="ride_notification_channel_description">Continua a gravar o seu percurso enquanto a aplicação está em segundo plano.</string>

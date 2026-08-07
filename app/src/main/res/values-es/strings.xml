@@ -548,6 +548,22 @@
     <string name="ride_share_theme_ocean">Océano</string>
     <string name="ride_share_theme_berry">Baya</string>
     <string name="ride_share_theme_midnight">Medianoche</string>
+    <!-- Share overall stats as a card ("VeloSpot Wrapped - All-time") -->
+    <string name="stats_share_action">Compartir estadísticas</string>
+    <string name="stats_share_dialog_title">Comparte tus estadísticas</string>
+    <string name="stats_share_dialog_subtitle">Todo tu historial de rutas en una tarjeta con estilo: perfecta para WhatsApp, Telegram o Instagram.</string>
+    <string name="stats_share_headline_distance">Distancia total</string>
+    <!-- %1$d = número de rutas, %2$d = número de días activos -->
+    <string name="stats_share_subtitle">%1$d rutas · %2$d días activos</string>
+    <string name="stats_share_period_all_time">Histórico</string>
+    <!-- %1$s = mes y año de la primera ruta, p. ej. "JUN 2024" -->
+    <string name="stats_share_period_since">Desde %1$s</string>
+    <!-- %1$.1f = porcentaje de la circunferencia de la Tierra recorrida -->
+    <string name="stats_share_badge_world">%1$.1f%% alrededor del mundo</string>
+    <!-- %1$.1f = cuántas veces el desnivel total equivale al Everest -->
+    <string name="stats_share_badge_everest">%1$.1f× Everest</string>
+    <!-- %1$d = racha más larga en días -->
+    <string name="stats_share_badge_streak">Racha de %1$d días</string>
     <string name="ride_stop_save">Detener y guardar</string>
     <string name="ride_notification_channel_name">Grabación de ruta</string>
     <string name="ride_notification_channel_description">Sigue grabando tu ruta mientras la aplicación está en segundo plano.</string>
