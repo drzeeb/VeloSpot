@@ -4,7 +4,13 @@ import android.content.Context
 import de.velospot.core.maptiles.GeoBounds
 import de.velospot.core.maptiles.OfflineMapRegions
 import de.velospot.domain.model.NoInternetConnectionException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.json.JSONObject
 import org.maplibre.android.MapLibre
 import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.offline.OfflineManager
@@ -12,6 +18,8 @@ import org.maplibre.android.offline.OfflineRegion
 import org.maplibre.android.offline.OfflineRegionError
 import org.maplibre.android.offline.OfflineRegionStatus
 import org.maplibre.android.offline.OfflineTilePyramidRegionDefinition
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -151,7 +159,7 @@ class OfflineMapTilesManager(private val context: Context) {
 
     /** Reads the `{"name":...}` metadata written at download time (null if absent). */
     private fun regionNameOf(region: OfflineRegion): String? = runCatching {
-        org.json.JSONObject(String(region.metadata, Charsets.UTF_8)).optString("name", null)
+        JSONObject(String(region.metadata, Charsets.UTF_8)).optString("name", null)
     }.getOrNull()
 
     // ── Private MapLibre bridges ──────────────────────────────────────────────
@@ -164,71 +172,119 @@ class OfflineMapTilesManager(private val context: Context) {
         regionIndex: Int,
         totalRegions: Int,
         onProgress: ProgressListener,
-    ) = suspendCancellableCoroutine { cont ->
-        val definition = OfflineTilePyramidRegionDefinition(
-            styleUrl,
-            bounds.toLatLngBounds(),
-            OfflineMapRegions.MIN_ZOOM,
-            maxZoom,
-            context.resources.displayMetrics.density,
-        )
-        val metadata = """{"name":"$regionName"}""".toByteArray(Charsets.UTF_8)
+        stallTimeoutMillis: Long = STALL_TIMEOUT_MILLIS,
+    ): Unit = coroutineScope {
+        val scope = this
+        suspendCancellableCoroutine { cont ->
+            val definition = OfflineTilePyramidRegionDefinition(
+                styleUrl,
+                bounds.toLatLngBounds(),
+                OfflineMapRegions.MIN_ZOOM,
+                maxZoom,
+                context.resources.displayMetrics.density,
+            )
+            // Build the metadata as real JSON so a region name containing quotes,
+            // backslashes or control chars can't produce an unparseable blob that
+            // regionNameOf() would silently drop (orphaning the region).
+            val metadata = JSONObject().put("name", regionName).toString().toByteArray(Charsets.UTF_8)
 
-        offlineManager.createOfflineRegion(
-            definition,
-            metadata,
-            object : OfflineManager.CreateOfflineRegionCallback {
-                override fun onCreate(offlineRegion: OfflineRegion) {
-                    var settled = false
-                    offlineRegion.setObserver(object : OfflineRegion.OfflineRegionObserver {
-                        override fun onStatusChanged(status: OfflineRegionStatus) {
-                            onProgress.onProgress(
-                                OfflineMapRegions.progressFraction(
-                                    status.completedResourceCount,
-                                    status.requiredResourceCount,
-                                ),
-                                status.completedResourceSize,
-                                regionIndex,
-                                totalRegions,
-                            )
-                            if (status.isComplete && !settled) {
-                                settled = true
+            offlineManager.createOfflineRegion(
+                definition,
+                metadata,
+                object : OfflineManager.CreateOfflineRegionCallback {
+                    override fun onCreate(offlineRegion: OfflineRegion) {
+                        // Single terminal gate shared by every callback and the
+                        // watchdog, so exactly one of them resumes the coroutine and
+                        // tears everything down. AtomicBoolean because the watchdog
+                        // may run on a different thread than the MapLibre callbacks.
+                        val settled = AtomicBoolean(false)
+                        // Timestamp (ms) of the most recent progress/status callback;
+                        // the watchdog treats a long silence as a stalled download.
+                        val lastProgressAt = AtomicLong(System.currentTimeMillis())
+                        var watchdog: Job? = null
+
+                        fun finish(action: () -> Unit) {
+                            if (settled.compareAndSet(false, true)) {
+                                watchdog?.cancel()
                                 offlineRegion.setObserver(null)
                                 offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE)
-                                cont.resume(Unit)
+                                action()
                             }
                         }
 
-                        override fun onError(error: OfflineRegionError) {
-                            if (settled) return
-                            settled = true
-                            offlineRegion.setObserver(null)
-                            offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE)
-                            // A download error mid-flight is almost always connectivity;
-                            // surface it as the shared "no internet" error like segments.
-                            cont.resumeWithException(NoInternetConnectionException(RuntimeException(error.reason)))
+                        offlineRegion.setObserver(object : OfflineRegion.OfflineRegionObserver {
+                            override fun onStatusChanged(status: OfflineRegionStatus) {
+                                // Any status callback counts as progress: reset the stall timer.
+                                lastProgressAt.set(System.currentTimeMillis())
+                                onProgress.onProgress(
+                                    OfflineMapRegions.progressFraction(
+                                        status.completedResourceCount,
+                                        status.requiredResourceCount,
+                                    ),
+                                    status.completedResourceSize,
+                                    regionIndex,
+                                    totalRegions,
+                                )
+                                if (status.isComplete) finish { cont.resume(Unit) }
+                            }
+
+                            override fun onError(error: OfflineRegionError) {
+                                lastProgressAt.set(System.currentTimeMillis())
+                                // A download error mid-flight is almost always connectivity;
+                                // surface it as the shared "no internet" error like segments.
+                                finish {
+                                    cont.resumeWithException(
+                                        NoInternetConnectionException(RuntimeException(error.reason)),
+                                    )
+                                }
+                            }
+
+                            override fun mapboxTileCountLimitExceeded(limit: Long) {
+                                finish {
+                                    cont.resumeWithException(
+                                        IllegalStateException("Offline map tile limit reached ($limit)"),
+                                    )
+                                }
+                            }
+                        })
+                        offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE)
+
+                        // Stale-progress watchdog: if no callback fires for the whole
+                        // stall window (e.g. WiFi up but no route to the tile server),
+                        // fail the download instead of hanging forever. A large but
+                        // legitimately-progressing download keeps resetting the timer,
+                        // so it is never falsely killed.
+                        watchdog = scope.launch {
+                            while (isActive && !settled.get()) {
+                                delay(WATCHDOG_POLL_MILLIS)
+                                if (settled.get()) break
+                                val silentFor = System.currentTimeMillis() - lastProgressAt.get()
+                                if (silentFor >= stallTimeoutMillis) {
+                                    finish {
+                                        cont.resumeWithException(
+                                            IllegalStateException(
+                                                "Offline tile download stalled: no progress for ${stallTimeoutMillis}ms",
+                                            ),
+                                        )
+                                    }
+                                    break
+                                }
+                            }
                         }
 
-                        override fun mapboxTileCountLimitExceeded(limit: Long) {
-                            if (settled) return
-                            settled = true
+                        cont.invokeOnCancellation {
+                            watchdog?.cancel()
                             offlineRegion.setObserver(null)
                             offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE)
-                            cont.resumeWithException(IllegalStateException("Offline map tile limit reached ($limit)"))
                         }
-                    })
-                    offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE)
-                    cont.invokeOnCancellation {
-                        offlineRegion.setObserver(null)
-                        offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE)
                     }
-                }
 
-                override fun onError(error: String) {
-                    cont.resumeWithException(NoInternetConnectionException(RuntimeException(error)))
-                }
-            },
-        )
+                    override fun onError(error: String) {
+                        cont.resumeWithException(NoInternetConnectionException(RuntimeException(error)))
+                    }
+                },
+            )
+        }
     }
 
     private suspend fun listRegions(): List<OfflineRegion> =
@@ -271,6 +327,16 @@ class OfflineMapTilesManager(private val context: Context) {
     companion object {
         /** Generous tile ceiling so a real region/country download is never truncated. */
         private const val MAX_TILE_COUNT = 1_000_000L
+
+        /**
+         * Stall window for the download watchdog: if no progress/status callback fires
+         * for this long, the download is treated as stalled and failed. Chosen high
+         * enough that a slow-but-progressing large download is never falsely killed.
+         */
+        private const val STALL_TIMEOUT_MILLIS = 60_000L
+
+        /** How often the watchdog checks the last-progress timestamp. */
+        private const val WATCHDOG_POLL_MILLIS = 5_000L
     }
 }
 
