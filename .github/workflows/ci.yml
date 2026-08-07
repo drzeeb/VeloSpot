@@ -6,6 +6,14 @@ on:
   push:
     branches: [main]
 
+# Cancel superseded runs of this workflow on the same ref. On pull requests a
+# new push cancels the still-running (or stuck/queued) previous run, which also
+# clears orphaned runs left behind by an Actions outage. Pushes to main are
+# never cancelled so coverage/OIDC upload jobs always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # Least-privilege by default: the whole workflow only needs read access to the
 # repo. The one job that comments on PRs / uploads coverage via OIDC elevates its
 # own permissions below (Token-Permissions hardening for OpenSSF Scorecard).
