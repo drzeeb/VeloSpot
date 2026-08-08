@@ -6,6 +6,7 @@ import de.velospot.feature.wrapped.data.local.WrappedReportEntity
 import de.velospot.feature.wrapped.domain.WrappedPeriod
 import de.velospot.feature.wrapped.domain.WrappedReport
 import de.velospot.feature.wrapped.domain.WrappedRepository
+import de.velospot.feature.wrapped.domain.wrappedReportId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -79,8 +80,7 @@ internal class WrappedRepositoryImpl @Inject constructor(
          * Stable, deterministic id so re-generating the same closed bucket upserts
          * over the previous row instead of creating a duplicate.
          */
-        fun idFor(period: WrappedPeriod): String =
-            "${period.type.name}-${period.startInclusive}-${period.endExclusive}"
+        fun idFor(period: WrappedPeriod): String = wrappedReportId(period)
     }
 }
 
