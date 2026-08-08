@@ -199,6 +199,10 @@ kover {
                     "*NavigationManager*",
                     "*NavigationVoiceGuide*",
                     "*RideShareCardRenderer*",
+                    // The all-time "Wrapped" stats card is likewise drawn with the
+                    // platform Canvas onto an off-screen Bitmap (needs a real graphics
+                    // surface); its plain-data inputs/themes are unit-tested instead.
+                    "*StatsShareCardRenderer*",
                     "*RideRouteMapSnapshotter*",
                     "*MapInitializer*",
                     "*RideReplayMap*",
@@ -206,6 +210,27 @@ kover {
                     // Offline map tiles download is pure MapLibre OfflineManager glue
                     // (its pure region maths is covered by OfflineMapRegionsTest).
                     "*OfflineMapTilesManager*",
+                    // Pure Compose UI on the map surface — the bottom sheets and the
+                    // in-map overlays/HUD/banners/FABs. Same category as the excluded
+                    // `*Screen*Kt` above (declarative Compose, exercised by instrumented/
+                    // UI tests, not JVM units); their `…Kt` facade + synthetic lambda
+                    // classes otherwise leak past the `annotatedBy(@Composable)` filter.
+                    // The logic they lean on lives in the tested controllers/helpers.
+                    "de.velospot.feature.map.presentation.sheets.*",
+                    "*MapOverlaysKt",
+                    "*MapOverlaysKt$*",
+                    "*MapTurnBannerKt",
+                    "*MapTurnBannerKt$*",
+                    "*MapActionsSpeedDialKt",
+                    "*MapActionsSpeedDialKt$*",
+                    "*MapUiActionComponentsKt",
+                    "*MapUiActionComponentsKt$*",
+                    "*SunAlertFabKt",
+                    "*SunAlertFabKt$*",
+                    "*TripComputerHudKt",
+                    "*TripComputerHudKt$*",
+                    "*WeatherChipKt",
+                    "*WeatherChipKt$*",
                 )
                 annotatedBy(
                     "androidx.compose.runtime.Composable",

@@ -252,7 +252,7 @@ private fun DownloadProgress(downloading: OfflineRegionsUiState.Downloading) {
 }
 
 /** Formats a byte count as a compact "12.3 MB" / "1.2 GB" string. */
-private fun formatSize(bytes: Long): String {
+internal fun formatSize(bytes: Long): String {
     val mb = bytes / (1024.0 * 1024.0)
     return if (mb >= 1024.0) "%.1f GB".format(mb / 1024.0) else "%.1f MB".format(mb)
 }

@@ -177,7 +177,7 @@ private fun SheetContent(
 
 
 
-private fun BikeParkingType.icon(): ImageVector = when (this) {
+internal fun BikeParkingType.icon(): ImageVector = when (this) {
     BikeParkingType.GARAGE    -> Icons.Default.Garage
     BikeParkingType.BIKE_RACK -> Icons.AutoMirrored.Filled.DirectionsBike
     BikeParkingType.UNKNOWN   -> Icons.Default.Place

@@ -146,7 +146,7 @@ private fun rememberParkedAgoText(parkedAt: Long): String {
 }
 
 /** Formats a metre distance as "350 m" (< 1 km) or "1.2 km". */
-private fun formatDistance(meters: Double): String =
+internal fun formatDistance(meters: Double): String =
     if (meters < 1_000) "${meters.roundToInt()} m"
     else "%.1f km".format(meters / 1_000.0)
 

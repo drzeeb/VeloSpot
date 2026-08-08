@@ -277,7 +277,7 @@ internal fun BoxScope.OfflineSetupSuccessOverlay() {
     }
 }
 
-private fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
+internal fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
 
 /**
  * Full-screen overlay for **picking an offline region on the map**: a fixed centre

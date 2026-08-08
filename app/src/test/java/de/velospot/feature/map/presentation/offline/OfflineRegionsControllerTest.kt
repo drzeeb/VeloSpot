@@ -225,5 +225,45 @@ class OfflineRegionsControllerTest {
         h.controller.selectProfile(profile)
         assertEquals(profile, h.controller.uiState.value.profile)
     }
+
+    @Test
+    fun `downloading a route corridor persists a named pack and clears progress`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val ctx = context(internet = true, wifi = true)
+        whenever(segments.requiredSegmentNamesForPoints(any())).thenReturn(listOf("E5_N45.rd5"))
+        val h = TestScopeBuilder(scope, ctx)
+
+        h.controller.downloadRouteCorridor(
+            PlannedRoute(
+                id = "r1",
+                name = "Tour",
+                waypoints = emptyList(),
+                geometry = listOf(RoutePoint(50.11, 8.68), RoutePoint(50.20, 8.80)),
+                distanceMeters = 12_000.0,
+                elevationGainMeters = 0.0,
+                elevationLossMeters = 0.0,
+                createdAt = 1L,
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals(1, h.store.list().size)
+        assertEquals("Tour", h.store.list().first().label)
+        assertNull(h.controller.uiState.value.downloading)
+    }
+
+    @Test
+    fun `addRegionAt success downloads both halves and enables offline usage`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val ctx = context(internet = true, wifi = true)
+        val h = TestScopeBuilder(scope, ctx)
+
+        h.controller.addRegionAt(50.11, 8.68)
+        advanceUntilIdle()
+
+        assertEquals(1, h.store.list().size)
+        assertEquals("Frankfurt", h.store.list().first().label)
+        assertNull(h.controller.uiState.value.downloading)
+    }
 }
 

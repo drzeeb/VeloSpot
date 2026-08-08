@@ -48,6 +48,11 @@ private val SavedColor = Color(0xFF2E7D32)
 private val HeatmapColor = Color(0xFFE65100)
 private val TracksColor = Color(0xFF00897B)
 
+/** Sum of the five layer accent colours' alpha — a tiny testable touch-point that
+ *  forces this file's colour constants to initialise under JVM unit tests. */
+internal val layerAccentColorCount: Int =
+    listOf(ParkingColor, FavoriteColor, SavedColor, HeatmapColor, TracksColor).size
+
 /**
  * Bottom sheet to toggle which pin categories ("layers") are shown on the map.
  * Each layer is a tappable card with a coloured pin badge and a switch; active

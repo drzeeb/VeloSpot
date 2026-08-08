@@ -57,7 +57,7 @@ import kotlinx.coroutines.flow.Flow
  * derive ground speed from a CSC wheel sensor. Riders can pick the tyre size that
  * matches their bike instead of measuring the rollout by hand.
  */
-private val WHEEL_PRESETS_METERS = listOf(
+internal val WHEEL_PRESETS_METERS = listOf(
     "700x25c" to 2.105,
     "700x28c" to 2.136,
     "700x32c" to 2.155,
