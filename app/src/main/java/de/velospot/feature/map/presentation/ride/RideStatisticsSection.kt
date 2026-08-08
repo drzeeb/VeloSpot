@@ -37,6 +37,7 @@ import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
+import de.velospot.core.stats.RideStatistics
 import java.text.DateFormat
 import java.util.Date
 

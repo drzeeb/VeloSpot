@@ -40,6 +40,7 @@ import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
 import de.velospot.core.share.ImageSharer
+import de.velospot.core.stats.RideStatistics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
