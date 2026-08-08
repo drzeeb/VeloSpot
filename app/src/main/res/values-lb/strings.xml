@@ -444,6 +444,23 @@
     <string name="wrapped_hl_new_climb_record">Gréissten Opstig iwwerhaapt</string>
     <string name="wrapped_hl_vs_previous_distance">Streck an dësem Zäitraum</string>
     <string name="wrapped_hl_vs_previous_rides">Faarten an dësem Zäitraum</string>
+    <!-- VeloSpot Wrapped — automatesch Zäitplang-Astellungen (Phase 5) -->
+    <string name="wrapped_schedule_settings">Zäitplang-Astellungen</string>
+    <string name="wrapped_schedule_title">Automatescht Wrapped</string>
+    <string name="wrapped_schedule_enable">Automatescht Wrapped</string>
+    <string name="wrapped_schedule_enable_summary">Erstellt automatesch no engem Zäitplang e Réckbléck op deng Faarten.</string>
+    <string name="wrapped_schedule_interval_label">Wéi dacks</string>
+    <string name="wrapped_schedule_interval_daily">Deeglech</string>
+    <string name="wrapped_schedule_interval_weekly">Wëchentlech</string>
+    <string name="wrapped_schedule_interval_monthly">Monatlech</string>
+    <string name="wrapped_schedule_day_of_week_label">Dag vun der Woch</string>
+    <string name="wrapped_schedule_day_of_month_label">Dag vum Mount</string>
+    <string name="wrapped_schedule_day_of_month_hint">A kuerze Méint um leschten Dag.</string>
+    <string name="wrapped_schedule_time_label">Auerzäit</string>
+    <string name="wrapped_schedule_time_set">Festleeën</string>
+    <string name="wrapped_schedule_next_fire">Nächst Wrapped: %1$s</string>
+    <string name="wrapped_schedule_notifications_off_hint">Notifikatioune sinn aus – Réckbléck gi trotzdem erstallt, du gëss just net informéiert.</string>
+    <string name="wrapped_schedule_footer">Eidel Zäiträim ginn iwwersprongen. D\'Zäit ass ongeféier fir Batterie ze spueren.</string>
     <string name="ride_recording">Tour gëtt opgeholl</string>
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Tour ophuelen</string>

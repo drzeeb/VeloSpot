@@ -446,6 +446,23 @@
     <string name="wrapped_hl_new_climb_record">La mayor subida hasta ahora</string>
     <string name="wrapped_hl_vs_previous_distance">Distancia en este periodo</string>
     <string name="wrapped_hl_vs_previous_rides">Rutas en este periodo</string>
+    <!-- VeloSpot Wrapped — ajustes de programación automática (Fase 5) -->
+    <string name="wrapped_schedule_settings">Ajustes de programación</string>
+    <string name="wrapped_schedule_title">Wrapped automático</string>
+    <string name="wrapped_schedule_enable">Wrapped automático</string>
+    <string name="wrapped_schedule_enable_summary">Crea un resumen de tus rutas automáticamente según un horario.</string>
+    <string name="wrapped_schedule_interval_label">Con qué frecuencia</string>
+    <string name="wrapped_schedule_interval_daily">Diario</string>
+    <string name="wrapped_schedule_interval_weekly">Semanal</string>
+    <string name="wrapped_schedule_interval_monthly">Mensual</string>
+    <string name="wrapped_schedule_day_of_week_label">Día de la semana</string>
+    <string name="wrapped_schedule_day_of_month_label">Día del mes</string>
+    <string name="wrapped_schedule_day_of_month_hint">En los meses más cortos se genera el último día.</string>
+    <string name="wrapped_schedule_time_label">Hora</string>
+    <string name="wrapped_schedule_time_set">Aceptar</string>
+    <string name="wrapped_schedule_next_fire">Próximo Wrapped: %1$s</string>
+    <string name="wrapped_schedule_notifications_off_hint">Las notificaciones están desactivadas: los resúmenes se crean igualmente, solo que no se te avisará.</string>
+    <string name="wrapped_schedule_footer">Los periodos vacíos se omiten. La hora es aproximada para ahorrar batería.</string>
     <string name="ride_recording">Grabando ruta</string>
     <string name="ride_stop">Detener</string>
     <string name="ride_start">Grabar trayecto</string>
