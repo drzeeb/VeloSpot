@@ -411,6 +411,10 @@
     <string name="bike_service_notification_text">%1$s ha raggiunto %2$d km — è ora di un controllo.</string>
     <string name="bike_service_channel_name">Promemoria di manutenzione della bici</string>
     <string name="bike_service_channel_description">Ti avvisa quando una bici necessita di manutenzione in base alla distanza percorsa.</string>
+    <string name="wrapped_notification_title">Il tuo VeloSpot Wrapped è pronto</string>
+    <string name="wrapped_notification_text">Un nuovo riepilogo delle tue uscite ti aspetta. Tocca per dare un\'occhiata.</string>
+    <string name="wrapped_channel_name">VeloSpot Wrapped</string>
+    <string name="wrapped_channel_description">Ti avvisa quando viene generato un nuovo riepilogo programmato delle uscite.</string>
     <string name="ride_recording">Registrazione percorso</string>
     <string name="ride_stop">Ferma</string>
     <string name="ride_start">Registra percorso</string>

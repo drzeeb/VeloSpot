@@ -16,6 +16,9 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Posting the recording notification (runtime-requested on Android 13+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Re-arm the "VeloSpot Wrapped" background scheduler after a device reboot,
+         since a reboot clears WorkManager's pending one-shot work. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Optional external BLE sensors (speed/cadence/power/heart-rate over the
          standard, vendor-agnostic GATT profiles). Android 12+ splits Bluetooth
@@ -138,6 +141,32 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/ride_recording_widget_info" />
         </receiver>
+
+        <!-- Re-enqueues the self-rescheduling "VeloSpot Wrapped" worker after a
+             reboot or an app update (both clear WorkManager's pending one-shot). -->
+        <receiver
+            android:name=".feature.wrapped.scheduler.WrappedBootReceiver"
+            android:exported="false"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- WorkManager on-demand initialisation: remove the default
+             WorkManagerInitializer so the app's Hilt-aware Configuration.Provider
+             (BaseApplication) supplies the HiltWorkerFactory instead. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 
 </manifest>

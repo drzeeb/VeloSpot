@@ -192,6 +192,11 @@
     <string name="bike_service_notification_text">%1$s has reached %2$d km — time for a service check.</string>
     <string name="bike_service_channel_name">Bike service reminders</string>
     <string name="bike_service_channel_description">Reminds you when a bike is due for a service based on distance ridden.</string>
+    <!-- VeloSpot Wrapped scheduled report notification -->
+    <string name="wrapped_notification_title">Your VeloSpot Wrapped is ready</string>
+    <string name="wrapped_notification_text">A fresh recap of your rides is waiting. Tap to take a look.</string>
+    <string name="wrapped_channel_name">VeloSpot Wrapped</string>
+    <string name="wrapped_channel_description">Notifies you when a new scheduled ride recap has been generated.</string>
     <string name="ride_recording">Recording ride</string>
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Start ride recording</string>
