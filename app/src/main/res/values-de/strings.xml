@@ -451,6 +451,23 @@
     <string name="wrapped_hl_new_climb_record">Größter Anstieg aller Zeiten</string>
     <string name="wrapped_hl_vs_previous_distance">Strecke in diesem Zeitraum</string>
     <string name="wrapped_hl_vs_previous_rides">Fahrten in diesem Zeitraum</string>
+    <!-- VeloSpot Wrapped — automatische Zeitplan-Einstellungen (Phase 5) -->
+    <string name="wrapped_schedule_settings">Zeitplan-Einstellungen</string>
+    <string name="wrapped_schedule_title">Automatisches Wrapped</string>
+    <string name="wrapped_schedule_enable">Automatisches Wrapped</string>
+    <string name="wrapped_schedule_enable_summary">Erstellt automatisch nach Zeitplan einen Fahrt-Rückblick.</string>
+    <string name="wrapped_schedule_interval_label">Wie oft</string>
+    <string name="wrapped_schedule_interval_daily">Täglich</string>
+    <string name="wrapped_schedule_interval_weekly">Wöchentlich</string>
+    <string name="wrapped_schedule_interval_monthly">Monatlich</string>
+    <string name="wrapped_schedule_day_of_week_label">Wochentag</string>
+    <string name="wrapped_schedule_day_of_month_label">Tag des Monats</string>
+    <string name="wrapped_schedule_day_of_month_hint">In kürzeren Monaten am letzten Tag.</string>
+    <string name="wrapped_schedule_time_label">Uhrzeit</string>
+    <string name="wrapped_schedule_time_set">Festlegen</string>
+    <string name="wrapped_schedule_next_fire">Nächstes Wrapped: %1$s</string>
+    <string name="wrapped_schedule_notifications_off_hint">Benachrichtigungen sind aus – Rückblicke werden trotzdem erstellt, du wirst nur nicht benachrichtigt.</string>
+    <string name="wrapped_schedule_footer">Leere Zeiträume werden übersprungen. Der Zeitpunkt ist zum Akkusparen ungefähr.</string>
     <string name="ride_recording">Fahrt wird aufgezeichnet</string>
     <string name="ride_stop">Stopp</string>
     <string name="ride_start">Fahrt aufzeichnen</string>

@@ -228,6 +228,23 @@
     <string name="wrapped_hl_new_climb_record">Biggest climb ever</string>
     <string name="wrapped_hl_vs_previous_distance">Distance this period</string>
     <string name="wrapped_hl_vs_previous_rides">Rides this period</string>
+    <!-- VeloSpot Wrapped — automatic schedule settings (Phase 5) -->
+    <string name="wrapped_schedule_settings">Schedule settings</string>
+    <string name="wrapped_schedule_title">Automatic Wrapped</string>
+    <string name="wrapped_schedule_enable">Automatic Wrapped</string>
+    <string name="wrapped_schedule_enable_summary">Generate a ride recap automatically on a schedule.</string>
+    <string name="wrapped_schedule_interval_label">How often</string>
+    <string name="wrapped_schedule_interval_daily">Daily</string>
+    <string name="wrapped_schedule_interval_weekly">Weekly</string>
+    <string name="wrapped_schedule_interval_monthly">Monthly</string>
+    <string name="wrapped_schedule_day_of_week_label">Day of the week</string>
+    <string name="wrapped_schedule_day_of_month_label">Day of the month</string>
+    <string name="wrapped_schedule_day_of_month_hint">In shorter months this fires on the last day.</string>
+    <string name="wrapped_schedule_time_label">Time</string>
+    <string name="wrapped_schedule_time_set">Set</string>
+    <string name="wrapped_schedule_next_fire">Next Wrapped: %1$s</string>
+    <string name="wrapped_schedule_notifications_off_hint">Notifications are off — recaps are still created, you just won\'t be alerted.</string>
+    <string name="wrapped_schedule_footer">Empty periods are skipped. Timing is approximate to save battery.</string>
     <string name="ride_recording">Recording ride</string>
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Start ride recording</string>

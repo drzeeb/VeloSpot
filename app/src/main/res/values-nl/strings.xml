@@ -444,6 +444,23 @@
     <string name="wrapped_hl_new_climb_record">Grootste klim ooit</string>
     <string name="wrapped_hl_vs_previous_distance">Afstand in deze periode</string>
     <string name="wrapped_hl_vs_previous_rides">Ritten in deze periode</string>
+    <!-- VeloSpot Wrapped — instellingen voor automatische planning (Fase 5) -->
+    <string name="wrapped_schedule_settings">Planningsinstellingen</string>
+    <string name="wrapped_schedule_title">Automatische Wrapped</string>
+    <string name="wrapped_schedule_enable">Automatische Wrapped</string>
+    <string name="wrapped_schedule_enable_summary">Maakt automatisch volgens een schema een samenvatting van je ritten.</string>
+    <string name="wrapped_schedule_interval_label">Hoe vaak</string>
+    <string name="wrapped_schedule_interval_daily">Dagelijks</string>
+    <string name="wrapped_schedule_interval_weekly">Wekelijks</string>
+    <string name="wrapped_schedule_interval_monthly">Maandelijks</string>
+    <string name="wrapped_schedule_day_of_week_label">Dag van de week</string>
+    <string name="wrapped_schedule_day_of_month_label">Dag van de maand</string>
+    <string name="wrapped_schedule_day_of_month_hint">In kortere maanden op de laatste dag.</string>
+    <string name="wrapped_schedule_time_label">Tijd</string>
+    <string name="wrapped_schedule_time_set">Instellen</string>
+    <string name="wrapped_schedule_next_fire">Volgende Wrapped: %1$s</string>
+    <string name="wrapped_schedule_notifications_off_hint">Meldingen staan uit — samenvattingen worden nog steeds gemaakt, je krijgt alleen geen melding.</string>
+    <string name="wrapped_schedule_footer">Lege periodes worden overgeslagen. De tijd is bij benadering om de batterij te sparen.</string>
     <string name="ride_recording">Rit wordt opgenomen</string>
     <string name="ride_stop">Stoppen</string>
     <string name="ride_start">Rit opnemen</string>
