@@ -36,9 +36,9 @@ internal fun currentMapLanguage(): String {
  *
  * Pure MapLibre glue — call it from every `setStyle { … }` completion (idle, dark /
  * AMOLED reload, and any navigation style reload) since re-loading a style discards
- * these overrides. Best-effort: our own `velospot-` overlay layers and icon-only
- * layers are skipped, and each layer update is guarded so one odd layer can't abort
- * the whole pass.
+ * these overrides. Best-effort: our own `velospot-` overlay layers, icon-only
+ * layers and road route-number **shields** are skipped (see [shouldLocalizeLabelLayer]),
+ * and each layer update is guarded so one odd layer can't abort the whole pass.
  *
  * @param languageTag two-letter language code (see [currentMapLanguage]).
  */
@@ -49,16 +49,48 @@ internal fun localizeMapLabels(style: Style, languageTag: String) {
         Expression.get("name")
     )
     for (layer in style.layers) {
-        // Only touch base-map symbol layers that actually render text; never our
-        // own overlay symbol layers (parking, route, pins, clusters, …).
         if (layer !is SymbolLayer) continue
-        if (layer.id.startsWith("velospot-")) continue
-        // Skip icon-only layers (no text-field expression / literal set).
-        if (layer.textField.isNull) continue
+        if (!shouldLocalizeLabelLayer(
+                layerId = layer.id,
+                hasTextField = !layer.textField.isNull,
+                hasIconImage = !layer.iconImage.isNull,
+                sourceLayer = layer.sourceLayer
+            )
+        ) {
+            continue
+        }
         runCatching {
             layer.setProperties(PropertyFactory.textField(localized))
         }
     }
+}
+
+/**
+ * Pure decision: should this base-map symbol layer have its `text-field` rewritten to
+ * the localized name? Extracted so the (otherwise MapLibre-native) filtering can be
+ * exercised by fast JVM unit tests.
+ *
+ * Rewritten layers are base-map layers that render a **translatable name**. We
+ * deliberately skip:
+ *  - our own `velospot-` overlay layers (parking, route, pins, clusters, …),
+ *  - icon-only layers with no text at all,
+ *  - road route-number **shields** — these carry the road `ref` (e.g. "B51") inside a
+ *    shield icon box, *not* a name. Overwriting their `text-field` would render the
+ *    full street name inside that little box, producing the "white box behind street
+ *    names" artefact. They are detected by a `shield` in the layer id, or by being a
+ *    `transportation_name` layer that draws an icon (only shields do so there).
+ */
+internal fun shouldLocalizeLabelLayer(
+    layerId: String,
+    hasTextField: Boolean,
+    hasIconImage: Boolean,
+    sourceLayer: String?
+): Boolean {
+    if (layerId.startsWith("velospot-")) return false
+    if (!hasTextField) return false
+    if (layerId.contains("shield", ignoreCase = true)) return false
+    if (hasIconImage && sourceLayer == "transportation_name") return false
+    return true
 }
 
 
