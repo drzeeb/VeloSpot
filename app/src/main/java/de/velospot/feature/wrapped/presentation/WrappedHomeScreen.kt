@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -64,6 +65,7 @@ internal fun WrappedHomeScreen(
     onOpenReport: (WrappedReport) -> Unit,
     onDeleteReport: (String) -> Unit,
     onGenerateRange: (fromMillis: Long, toMillisExclusive: Long) -> Unit,
+    onOpenSchedule: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -87,11 +89,20 @@ internal fun WrappedHomeScreen(
                 .navigationBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            Text(
-                text = stringResource(R.string.wrapped_home_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.wrapped_home_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onOpenSchedule) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(R.string.wrapped_schedule_settings)
+                    )
+                }
+            }
             Text(
                 text = stringResource(R.string.wrapped_home_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
@@ -274,6 +285,10 @@ internal fun WrappedHost(
     val reports by viewModel.reports.collectAsStateWithLifecycle()
     val messageRes by viewModel.messageRes.collectAsStateWithLifecycle()
 
+    // Local visibility of the schedule-settings sheet, opened from the home top bar.
+    // Kept here (not in the ViewModel) so the whole surface stays self-contained.
+    var showSchedule by remember { mutableStateOf(false) }
+
     // Resolve the one-shot message at composition scope (stringResource can't run
     // inside a LaunchedEffect), mirroring the map screen's user-message pattern.
     val messageText = messageRes?.let { stringResource(it) }
@@ -290,8 +305,13 @@ internal fun WrappedHost(
             onOpenReport = viewModel::openStory,
             onDeleteReport = viewModel::deleteReport,
             onGenerateRange = viewModel::generateForRange,
+            onOpenSchedule = { showSchedule = true },
             onDismiss = viewModel::closeHome
         )
+    }
+
+    if (showSchedule) {
+        WrappedScheduleSettingsSheet(onDismiss = { showSchedule = false })
     }
 
     openStory?.let { report ->
