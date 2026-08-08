@@ -2,7 +2,9 @@ package de.velospot.domain.repository
 
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
+import de.velospot.domain.model.RideTrackGeometry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Repository for completed, user-recorded rides (the "My rides" timeline).
@@ -24,6 +26,17 @@ interface RecordedRidesRepository {
      * tracks overlays and the cross-ride analysis context.
      */
     fun getRidesWithTracksFlow(): Flow<List<RecordedRide>>
+
+    /**
+     * Every recorded ride as a **geometry-only** [RideTrackGeometry] (lat/lon
+     * points + `isMock`), newest first — the source for the map heatmap and
+     * ridden-tracks overlays. Far lighter than [getRidesWithTracksFlow]: speeds,
+     * altitudes and every aggregate column are never parsed or held, and the flow
+     * only re-emits when the **track set** changes (a ride added/removed/replaced),
+     * not on a rename / archive / bike-reassign. Default returns an empty flow so
+     * in-memory test fakes needn't override it.
+     */
+    fun getRideTrackGeometriesFlow(): Flow<List<RideTrackGeometry>> = flowOf(emptyList())
 
     /** Loads a single ride **with** its full GPS track, or `null` if it's gone. */
     suspend fun getRide(id: String): RecordedRide?

@@ -34,6 +34,7 @@ import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.PlannedRoute
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
+import de.velospot.domain.model.RideTrackGeometry
 import de.velospot.domain.model.RecentDestination
 import de.velospot.domain.model.RouteAttempt
 import de.velospot.domain.model.RoutePoint
@@ -980,10 +981,11 @@ class MapViewModel @Inject constructor(
     val recordedRideSummaries: StateFlow<List<RecordedRideSummary>> = rideTracking.recordedRideSummaries
 
     /**
-     * Every recorded ride **with** its track, but only while a map overlay
-     * (heatmap / ridden tracks) is on — otherwise empty and nothing is parsed.
+     * Every recorded ride's **geometry** (lat/lon only) for the map overlays, but
+     * only while a map overlay (heatmap / ridden tracks) is on — otherwise empty and
+     * nothing is parsed. Speeds/altitudes are never deserialised.
      */
-    val recordedRideTracks: StateFlow<List<RecordedRide>> = rideTracking.recordedRideTracks
+    val recordedRideTracks: StateFlow<List<RideTrackGeometry>> = rideTracking.recordedRideTracks
     val selectedRide: StateFlow<RecordedRide?> = rideTracking.selectedRide
     val rideTrackPoints: StateFlow<List<RoutePoint>> = rideTracking.trackPoints
 
