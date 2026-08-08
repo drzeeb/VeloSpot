@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -72,7 +73,8 @@ internal fun RidesSheet(
     onDismiss: () -> Unit,
     onSelectRide: (RecordedRideSummary) -> Unit,
     onExportRides: (rides: List<RecordedRideSummary>, combine: Boolean, save: Boolean) -> Unit,
-    onImport: () -> Unit
+    onImport: () -> Unit,
+    onOpenWrapped: () -> Unit
 ) {
     // Always open fully expanded (no half-height peek) so the whole list shows.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -148,6 +150,24 @@ internal fun RidesSheet(
                         enabled = rides.isNotEmpty(),
                         modifier = Modifier.weight(1f)
                     ) { Text(stringResource(R.string.ride_export)) }
+                }
+                // "VeloSpot Wrapped" recap entry — opens the auto-advancing Story
+                // history / date-range generator. Unobtrusive, below Import/Export.
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = onOpenWrapped,
+                    enabled = rides.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        modifier = Modifier.width(20.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.wrapped_open_action),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
             }
 

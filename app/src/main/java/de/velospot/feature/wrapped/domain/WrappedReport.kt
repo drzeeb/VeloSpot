@@ -65,5 +65,16 @@ internal data class WrappedReport(
     val stats: RideStatistics,
     val comparison: WrappedComparison,
     val highlights: List<WrappedHighlight>
-)
+) {
+    /** The stable, deterministic storage id derived purely from the [period]. */
+    val id: String get() = wrappedReportId(period)
+}
+
+/**
+ * Stable, deterministic id for the report covering [period], so re-generating the
+ * same closed bucket upserts over the previous row instead of creating a duplicate.
+ * Shared by the persistence layer and the presentation layer (deep links / history).
+ */
+internal fun wrappedReportId(period: WrappedPeriod): String =
+    "${period.type.name}-${period.startInclusive}-${period.endExclusive}"
 

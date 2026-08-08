@@ -33,6 +33,11 @@ internal fun MapBottomSheets(
 ) {
     val context = LocalContext.current
 
+    // Shared with the map screen's other Wrapped touch-points (resolved against the
+    // same back-stack entry, so it's the same instance the deep link feeds).
+    val wrappedViewModel: de.velospot.feature.wrapped.presentation.WrappedViewModel =
+        androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
+
     val favorites            by viewModel.favorites.collectAsStateWithLifecycle()
     val favoriteSpaces       by viewModel.favoriteSpaces.collectAsStateWithLifecycle()
     val savedPlaces          by viewModel.savedPlaces.collectAsStateWithLifecycle()
@@ -198,6 +203,10 @@ internal fun MapBottomSheets(
                 gpxImportLauncher.launch(
                     arrayOf("application/gpx+xml", "application/xml", "text/xml", "*/*")
                 )
+            },
+            onOpenWrapped = {
+                screenUiState.closeRides()
+                wrappedViewModel.openHome()
             }
         )
     }
@@ -413,5 +422,17 @@ internal fun MapBottomSheets(
             onPickUp     = viewModel::pickUpBike
         )
     }
+
+    // "VeloSpot Wrapped" — history sheet, Story overlay and notification deep link.
+    // Always composed (unconditional in this always-shown host) so a deep-linked
+    // report can open its Story even from a cold start, before the user opens it.
+    de.velospot.feature.wrapped.presentation.WrappedHost(
+        viewModel = wrappedViewModel,
+        onMessage = { text ->
+            android.widget.Toast
+                .makeText(context, text, android.widget.Toast.LENGTH_SHORT)
+                .show()
+        }
+    )
 }
 

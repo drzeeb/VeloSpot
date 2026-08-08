@@ -15,6 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.velospot.MainActivity
 import de.velospot.R
 import de.velospot.feature.wrapped.domain.WrappedReport
+import de.velospot.feature.wrapped.presentation.WrappedOpenBus
 import javax.inject.Inject
 
 /**
@@ -38,9 +39,12 @@ internal class WrappedNotifier @Inject constructor(
 
         val contentIntent = PendingIntent.getActivity(
             context,
-            0,
+            // Per-report request code so each report's PendingIntent keeps its own
+            // extra (FLAG_UPDATE_CURRENT would otherwise overwrite a shared one).
+            report.period.startInclusive.hashCode(),
             Intent(context, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(WrappedOpenBus.EXTRA_OPEN_WRAPPED_REPORT_ID, report.id),
             pendingIntentFlags()
         )
 

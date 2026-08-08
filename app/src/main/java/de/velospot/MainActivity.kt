@@ -24,6 +24,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.velospot.core.gpx.GpxOpenBus
 import de.velospot.core.locale.LanguagePreferences
 import de.velospot.core.theme.DarkModePreferences
+import de.velospot.feature.wrapped.presentation.WrappedOpenBus
 import de.velospot.ui.navigation.VeloSpotNavHost
 import de.velospot.ui.theme.VeloSpotTheme
 import javax.inject.Inject
@@ -33,6 +34,9 @@ class MainActivity : AppCompatActivity() {
 
     /** Hand-off for a `.gpx` file opened from another app via an `ACTION_VIEW` intent. */
     @Inject lateinit var gpxOpenBus: GpxOpenBus
+
+    /** Hand-off for a "VeloSpot Wrapped" report opened from its ready notification. */
+    @Inject lateinit var wrappedOpenBus: WrappedOpenBus
 
 
     override fun attachBaseContext(newBase: Context) {
@@ -46,6 +50,8 @@ class MainActivity : AppCompatActivity() {
         // download, share sheet, …) into the map flow so the import-or-preview
         // chooser appears (handled for both cold start and while already running).
         handleGpxViewIntent(intent)
+        // Route a tapped "your Wrapped is ready" notification to the report's Story.
+        handleWrappedOpenIntent(intent)
         // Draw behind the system bars (Android 15+ / SDK 35+ default). We request
         // fully transparent status and navigation bars so the map and Compose UI
         // extend edge-to-edge; the bar *icon* contrast is then driven from the
@@ -95,6 +101,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleGpxViewIntent(intent)
+        handleWrappedOpenIntent(intent)
     }
 
     /**
@@ -126,6 +133,20 @@ class MainActivity : AppCompatActivity() {
             )
         }
         gpxOpenBus.post(uri)
+    }
+
+    /**
+     * Extracts the Wrapped report id from a tapped "your Wrapped is ready"
+     * notification and hands it to the [WrappedOpenBus] so the map layer's
+     * `WrappedViewModel` opens that report's Story. Posted synchronously (like the
+     * GPX hand-off) so a cold start — which may recreate this Activity once right
+     * after `onCreate` — still delivers via the retained bus once the UI exists.
+     * The extra is cleared so a rotation/recreation can't re-open it.
+     */
+    private fun handleWrappedOpenIntent(intent: Intent?) {
+        val id = intent?.getStringExtra(WrappedOpenBus.EXTRA_OPEN_WRAPPED_REPORT_ID) ?: return
+        wrappedOpenBus.post(id)
+        intent.removeExtra(WrappedOpenBus.EXTRA_OPEN_WRAPPED_REPORT_ID)
     }
 
     companion object {
