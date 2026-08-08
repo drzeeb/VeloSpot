@@ -1,0 +1,8 @@
+• New opt-in weather on the map and with your rides (Open-Meteo, no account)
+• Connect external Bluetooth sensors: speed, cadence, power, heart rate
+• Trip Computer HUD with your live ride numbers while recording
+• Export any single ride as GPX, with Strava upload help
+• Share your all-time stats as a "VeloSpot Wrapped" card
+• Open a .gpx file from outside the app to import or preview
+• Fixed live grade jumping to ±30% on flat terrain
+• Map labels now follow the app language

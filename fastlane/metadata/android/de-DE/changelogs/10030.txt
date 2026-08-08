@@ -1,0 +1,8 @@
+• Neues optionales Wetter auf der Karte und zu deinen Fahrten (Open-Meteo, ohne Konto)
+• Externe Bluetooth-Sensoren: Tempo, Trittfrequenz, Leistung, Herzfrequenz
+• Bordcomputer-HUD mit Live-Fahrtdaten beim Aufzeichnen
+• Einzelne Fahrten als GPX exportieren, mit Strava-Upload-Hilfe
+• Gesamtstatistik als "VeloSpot Wrapped"-Karte teilen
+• .gpx-Dateien von außerhalb der App öffnen und ansehen
+• Steigung springt auf flachem Gelände nicht mehr auf ±30 %
+• Kartenbeschriftungen folgen der App-Sprache
