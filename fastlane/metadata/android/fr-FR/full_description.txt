@@ -1,0 +1,47 @@
+VeloSpot aide les cyclistes à trouver des stationnements pour vélos en Allemagne, en France et au Luxembourg et à s'y rendre – et vous accompagne tout au long du trajet : enregistrement, statistiques et analyse compris. Entièrement hors ligne, sans services propriétaires et sans aucun suivi.
+
+L'application intègre plus de 100 000 stationnements vélo issus d'OpenStreetMap, regroupés dans une base de données SQLite directement dans l'application. Tous les emplacements sont visibles dès le premier lancement, sans connexion réseau.
+
+<b>Carte &amp; données</b>
+• Carte vectorielle interactive via MapLibre (style OpenFreeMap Liberty, sans clé API)
+• Plus de 100 000 stationnements vélo d'OpenStreetMap, entièrement disponibles hors ligne
+• Vue 2D/3D, mode sombre et style de carte AMOLED
+• Chargement basé sur la zone visible – seule la portion de carte affichée est interrogée
+• Résolution et recherche d'adresses automatiques via Photon (basé sur OpenStreetMap)
+
+<b>Navigation</b>
+• Calcul d'itinéraire vélo dans l'application, directement sur la carte – aucun passage par une application externe
+• Navigation hors ligne avec BRouter (profils : Trekking, Rapide, Plus court, VTT, Gravel)
+• Routage en ligne via OSRM en repli automatique
+• Navigation vocale virage par virage en direct avec vue 3D
+• Placez un point personnalisé, planifiez des boucles, téléchargez des régions hors ligne
+
+<b>Enregistrer &amp; analyser vos sorties</b>
+• Enregistrement des sorties en arrière-plan (service de premier plan, notification, tuile Réglages rapides, widget d'écran d'accueil)
+• Chronologie « Mes sorties » avec tableau de bord de statistiques
+• Analyse détaillée : relecture animée, sections au kilomètre, montées, meilleures performances, succès
+• Carte de chaleur de vos trajets parcourus
+• « VeloSpot Wrapped » – cartes partageables pour une sortie et pour vos statistiques globales
+• Import et export GPX (avec aide au téléversement vers Strava, Komoot &amp; co.)
+• Garage à vélos avec plusieurs vélos et rappels d'entretien
+
+<b>Données en temps réel</b>
+• Ordinateur de bord (HUD) avec vitesse, distance, temps, dénivelé et pente en direct
+• Météo optionnelle sur la carte et pour chaque sortie (Open-Meteo, sans compte)
+• Capteurs Bluetooth externes : vitesse, cadence, puissance, fréquence cardiaque
+
+<b>Confort</b>
+• Favoris et lieux enregistrés avec un raccourci de navigation dédié
+• Position actuelle avec recentrage de la carte
+• 8 langues avec sélecteur de langue persistant : allemand, anglais, français, italien, portugais, luxembourgeois, néerlandais, espagnol
+
+<b>Confidentialité &amp; transparence</b>
+• Aucune publicité, aucun suivi, aucune télémétrie
+• Aucun service Google propriétaire (la version F-Droid n'utilise que des bibliothèques libres)
+• Aucun compte requis
+• Toutes les données cartographiques proviennent d'OpenStreetMap (licence ODbL) ; données météo par Open-Meteo
+• Code source : https://github.com/drzeeb/VeloSpot
+
+<b>Aspects techniques</b>
+Android 8.0 (API 26) et plus · Jetpack Compose · MapLibre · Room/SQLite · BRouter · OSRM · Photon · Hilt · Retrofit · Kotlin
+
