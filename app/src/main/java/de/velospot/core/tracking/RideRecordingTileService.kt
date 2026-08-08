@@ -54,28 +54,18 @@ class RideRecordingTileService : TileService() {
 
     private fun updateTile() {
         val tile = qsTile ?: return
-        val recording = manager.isRecording
-        val paused = manager.isPaused
-        // Active (highlighted) only while actively recording; a paused ride and an
-        // idle tile both read as inactive so the highlight means "capturing now".
-        tile.state = if (recording && !paused) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        tile.label = getString(
-            when {
-                !recording -> R.string.ride_record_start
-                paused -> R.string.ride_paused
-                else -> R.string.ride_recording
-            }
-        )
+        // Derive the label/subtitle/highlight from the single source of truth (the
+        // shared manager) via the pure, unit-tested mapping so a re-render — however
+        // it was triggered (onStartListening, onClick, or the manager's
+        // requestListeningState re-invocation on every state change) — always paints
+        // the current recording/paused/idle state and never goes stale.
+        val render = tileRenderState(recording = manager.isRecording, paused = manager.isPaused)
+        tile.state = if (render.active) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+        tile.label = getString(render.labelRes)
         tile.icon = Icon.createWithResource(this, R.drawable.ic_ride_recording)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // The subtitle previews the next tap's action.
-            tile.subtitle = getString(
-                when {
-                    !recording -> R.string.ride_record_start
-                    paused -> R.string.ride_resume
-                    else -> R.string.ride_pause
-                }
-            )
+            tile.subtitle = getString(render.subtitleRes)
         }
         tile.updateTile()
     }
@@ -94,4 +84,48 @@ class RideRecordingTileService : TileService() {
         }
     }
 }
+
+/**
+ * How the Quick Settings tile should render for a given recording state — kept
+ * Android-free (string resource ids + a plain [active] flag) so the
+ * recording→label/state mapping is unit-testable without a live `TileService`.
+ */
+internal data class RideTileRenderState(
+    /** `true` → [Tile.STATE_ACTIVE] (highlighted); `false` → [Tile.STATE_INACTIVE]. */
+    val active: Boolean,
+    /** Tile label string resource. */
+    val labelRes: Int,
+    /** Subtitle string resource (previews the next tap's action; API 29+ only). */
+    val subtitleRes: Int,
+)
+
+/**
+ * Pure mapping from the recording state to the tile's rendered label/subtitle and
+ * active/inactive highlight. Extracted from [RideRecordingTileService.updateTile]
+ * so it can be exercised by a plain JVM unit test (the `TileService` glue itself is
+ * not JVM-testable).
+ *
+ * The tile is **active (highlighted) only while actively recording**; a paused ride
+ * and an idle tile both read as inactive, so the highlight always means
+ * "capturing now". The subtitle previews the next tap: start when idle, pause while
+ * recording, resume while paused.
+ */
+internal fun tileRenderState(recording: Boolean, paused: Boolean): RideTileRenderState =
+    when {
+        !recording -> RideTileRenderState(
+            active = false,
+            labelRes = R.string.ride_record_start,
+            subtitleRes = R.string.ride_record_start,
+        )
+        paused -> RideTileRenderState(
+            active = false,
+            labelRes = R.string.ride_paused,
+            subtitleRes = R.string.ride_resume,
+        )
+        else -> RideTileRenderState(
+            active = true,
+            labelRes = R.string.ride_recording,
+            subtitleRes = R.string.ride_pause,
+        )
+    }
 
