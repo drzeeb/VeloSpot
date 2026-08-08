@@ -66,7 +66,7 @@ import java.text.DateFormat
 import java.util.Date
 
 /** Green used for an improving trend (sparkline + "faster than average"). */
-private val IMPROVING_COLOR = Color(0xFF2E7D32)
+internal val IMPROVING_COLOR = Color(0xFF2E7D32)
 
 /**
  * A **non-modal** preview card for a saved route, shown while the route's line is

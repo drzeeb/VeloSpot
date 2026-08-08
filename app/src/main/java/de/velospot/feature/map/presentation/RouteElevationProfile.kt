@@ -145,7 +145,7 @@ private fun ElevationProfileChart(
 }
 
 
-private data class ElevationProfileData(
+internal data class ElevationProfileData(
     val distances: List<Double>,
     val elevations: List<Double>,
     val minElev: Double,
@@ -155,7 +155,7 @@ private data class ElevationProfileData(
 )
 
 /** One position sample with an optional elevation (terrain or GPS altitude). */
-private data class ElevSample(val latitude: Double, val longitude: Double, val elevation: Double?)
+internal data class ElevSample(val latitude: Double, val longitude: Double, val elevation: Double?)
 
 /** Exponential smoothing factor for noisy GPS altitude (matches the recorder). */
 private const val ALT_SMOOTHING_ALPHA = 0.3
@@ -165,7 +165,7 @@ private const val ALT_SMOOTHING_ALPHA = 0.3
  * an elevation. When [smooth] is set, the elevation series is low-pass filtered
  * (for noisy GPS altitude); distances always come from the raw coordinates.
  */
-private fun buildElevationProfile(
+internal fun buildElevationProfile(
     samples: List<ElevSample>,
     smooth: Boolean = false
 ): ElevationProfileData? {

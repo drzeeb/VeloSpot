@@ -295,7 +295,7 @@ private fun SensorCellsRow(sensor: SensorSnapshot?) {
  * The speed to show in the hero cell: prefer a wheel sensor's ground speed (more
  * accurate than GPS) when it is live, otherwise fall back to the GPS speed.
  */
-private fun heroSpeedMps(stats: LiveRideStats, sensor: SensorSnapshot?): Float =
+internal fun heroSpeedMps(stats: LiveRideStats, sensor: SensorSnapshot?): Float =
     sensor?.speedMps ?: stats.currentSpeedMps
 
 /**
@@ -432,11 +432,11 @@ private fun PausedIndicator() {
  * ETA as a wall-clock time (e.g. `14:37`), derived by adding the remaining
  * seconds to the current time and formatting with the device's short time style.
  */
-private fun formatEta(remainingSeconds: Double): String {
+internal fun formatEta(remainingSeconds: Double): String {
     val arrival = LocalTime.now().plusSeconds(remainingSeconds.roundToLong())
     return arrival.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
 }
 
 /** Signed road grade, e.g. `+4.2 %` (uphill) or `-3.0 %` (downhill). */
-private fun formatGrade(gradePercent: Float): String = "%+.1f %%".format(gradePercent)
+internal fun formatGrade(gradePercent: Float): String = "%+.1f %%".format(gradePercent)
 

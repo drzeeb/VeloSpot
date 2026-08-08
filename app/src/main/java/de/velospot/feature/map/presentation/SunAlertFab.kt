@@ -264,7 +264,7 @@ private fun SunAlertCountdownCard(
  * Formats a countdown [Duration] as `mm:ss` (clamped to zero). The digits are
  * computed in code so no locale-specific string resource is needed for them.
  */
-private fun formatCountdown(duration: Duration): String {
+internal fun formatCountdown(duration: Duration): String {
     val totalSeconds = duration.seconds.coerceAtLeast(0L)
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60

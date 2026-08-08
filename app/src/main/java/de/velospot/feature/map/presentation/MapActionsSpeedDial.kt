@@ -51,13 +51,13 @@ internal data class SpeedDialAction(
 )
 
 /** Vertical spacing between neighbouring actions when expanded. */
-private val ITEM_SPACING = 58.dp
+internal val ITEM_SPACING = 58.dp
 
 /** Base horizontal gap the whole stack keeps from the FAB's edge. */
-private val STACK_OFFSET = 32.dp
+internal val STACK_OFFSET = 32.dp
 
 /** How far the middle of the stack bows out (left) beyond the base offset. */
-private val STACK_BOW = 46.dp
+internal val STACK_BOW = 46.dp
 
 /** Maximum gentle tilt (degrees) applied to the outermost entries. */
 private const val MAX_TILT = 8f

@@ -149,5 +149,5 @@ private fun WeatherDetailRow(label: String, value: String) {
 }
 
 /** Formats a Celsius temperature as a whole-degree string, e.g. "12°". */
-private fun formatCelsius(celsius: Double): String = "${celsius.roundToInt()}°"
+internal fun formatCelsius(celsius: Double): String = "${celsius.roundToInt()}°"
 

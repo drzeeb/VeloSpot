@@ -99,7 +99,7 @@ internal fun BoxScope.MapTurnBanner(progress: NavigationProgress?) {
 
 /** Localised maneuver label from the signed turn angle (negative = left). */
 @StringRes
-private fun maneuverLabel(angle: Double): Int {
+internal fun maneuverLabel(angle: Double): Int {
     val left = angle < 0
     val mag = abs(angle)
     return when {
@@ -110,6 +110,6 @@ private fun maneuverLabel(angle: Double): Int {
 }
 
 /** "120 m" (rounded to 10 m) below 1 km, otherwise "1.4 km". */
-private fun formatTurnDistance(meters: Double): String =
+internal fun formatTurnDistance(meters: Double): String =
     if (meters < 1000) "${(meters / 10).roundToInt() * 10} m"
     else "%.1f km".format(meters / 1000.0)

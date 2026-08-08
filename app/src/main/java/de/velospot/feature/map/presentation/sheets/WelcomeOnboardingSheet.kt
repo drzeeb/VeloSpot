@@ -48,7 +48,7 @@ import de.velospot.feature.map.presentation.headingSemantics
 import kotlinx.coroutines.launch
 
 /** A single onboarding page's content. */
-private data class OnboardingPage(
+internal data class OnboardingPage(
     val icon: ImageVector,
     val titleRes: Int,
     val descRes: Int,

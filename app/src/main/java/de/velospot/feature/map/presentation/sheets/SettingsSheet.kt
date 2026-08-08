@@ -412,7 +412,7 @@ private fun OfflineRegionsDownloadRow(state: OfflineRegionsUiState.Downloading) 
 }
 
 /** Formats a byte count as a one-decimal megabyte string (without the unit). */
-private fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
+internal fun formatMb(bytes: Long): String = "%.1f".format(bytes / (1024.0 * 1024.0))
 
 @Composable
 private fun SettingsSectionHeader(text: String) {    Text(

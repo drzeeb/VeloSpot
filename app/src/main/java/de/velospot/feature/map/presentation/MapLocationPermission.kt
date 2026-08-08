@@ -13,14 +13,7 @@ internal fun requestLocationAccessIfNeeded(
     context: Context,
     onPermissionGranted: () -> Unit,
     requestPermissions: (Array<String>) -> Unit
-) {
-    requestLocationAccessIfNeeded(
-        hasPermission = hasLocationPermission(context),
-        onPermissionGranted = onPermissionGranted,
-        requestPermissions = requestPermissions,
-        permissions = locationPermissions()
-    )
-}
+) = requestLocationAccessIfNeeded(hasLocationPermission(context), onPermissionGranted, requestPermissions, locationPermissions())
 
 internal fun requestLocationAccessIfNeeded(
     hasPermission: Boolean,

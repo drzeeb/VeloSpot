@@ -29,7 +29,7 @@ import de.velospot.feature.map.presentation.PrimaryActionButton
 import de.velospot.feature.map.presentation.headingSemantics
 
 /** Selectable round-trip target distances (km). */
-private val ROUND_TRIP_DISTANCES_KM = listOf(5, 10, 15, 20, 30, 40, 50)
+internal val ROUND_TRIP_DISTANCES_KM = listOf(5, 10, 15, 20, 30, 40, 50)
 
 /**
  * Lets the rider generate a circular round-trip from their current position by
