@@ -8,6 +8,7 @@ import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import de.velospot.core.stats.RideStatistics
 import kotlin.math.roundToInt
 
 /**

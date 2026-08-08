@@ -1,4 +1,4 @@
-package de.velospot.feature.map.presentation.ride
+package de.velospot.core.stats
 
 import de.velospot.core.tracking.estimateRideCalories
 import de.velospot.core.tracking.estimateRideCo2SavedGrams

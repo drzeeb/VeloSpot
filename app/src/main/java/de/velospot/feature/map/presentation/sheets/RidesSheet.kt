@@ -46,8 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.domain.model.RecordedRideSummary
+import de.velospot.core.stats.computeRideStatistics
 import de.velospot.feature.map.presentation.ride.RideStatisticsSection
-import de.velospot.feature.map.presentation.ride.computeRideStatistics
 import java.text.DateFormat
 import java.util.Date
 
