@@ -532,6 +532,52 @@ class RideTrackerTest {
     }
 
     @Test
+    fun `flat track with single-fix altitude outliers still reads near zero grade`() {
+        // Reproduces the reported HUD bug: on genuinely flat terrain (~130 m constant)
+        // GPS altitude spikes +60 m on isolated single fixes. With only ~4 fixes in the
+        // ~40 m window, one such outlier used to dominate the OLS fit and pin the slope
+        // to the ±30% clamp. The median-based outlier rejection must now discard the
+        // spike and read ~0%. Spacing (10 m) keeps the window at ~4 fixes like a real
+        // ride, and a +60 m outlier lands on every third fix.
+        val track = northTrack(
+            count = 12, spacingMeters = 10.0, baseAlt = 130.0, altPerMeter = 0.0,
+            noise = { k -> if (k % 3 == 0) 60.0 else 0.0 }
+        )
+        val grade = RideTracker.computeCurrentGrade(track)
+        assertTrue("flat track with 60 m outliers must not pin to ±30% (was $grade)",
+            kotlin.math.abs(grade) < 2f)
+    }
+
+    @Test
+    fun `steady climb survives a single-fix altitude outlier`() {
+        // A genuine ~10% climb (+4 m over a 40 m window) with one +60 m spike in the
+        // window. The 12 m median-deviation filter is far above the real ~4 m spread,
+        // so the real grade is preserved while the spike is dropped.
+        val track = northTrack(
+            count = 12, spacingMeters = 10.0, baseAlt = 100.0, altPerMeter = 0.10,
+            noise = { k -> if (k == 9) 60.0 else 0.0 }
+        )
+        val grade = RideTracker.computeCurrentGrade(track)
+        assertTrue("expected ~+10% climb preserved despite a spike (was $grade)",
+            grade in 8f..12f)
+    }
+
+    @Test
+    fun `steady descent survives a single-fix altitude outlier`() {
+        // Mirror of the climb case: a genuine ~-8% descent with one +60 m spike must
+        // keep reading a plausible negative grade after outlier rejection.
+        val track = northTrack(
+            count = 12, spacingMeters = 10.0, baseAlt = 300.0, altPerMeter = -0.08,
+            noise = { k -> if (k == 9) 60.0 else 0.0 }
+        )
+        val grade = RideTracker.computeCurrentGrade(track)
+        assertTrue("expected ~-8% descent preserved despite a spike (was $grade)",
+            grade in -10f..-6f)
+    }
+
+
+
+    @Test
     fun `extreme slope is clamped to the range`() {
         // 50% slope — far beyond a real road; must clamp to +30%.
         val track = northTrack(count = 20, spacingMeters = 5.0, baseAlt = 100.0, altPerMeter = 0.50)
