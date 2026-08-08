@@ -462,6 +462,18 @@ class RideTracker {
          * spread is degenerate. The result is clamped to `±`[GRADE_CLAMP_PERCENT] to
          * reject residual spikes. The walk stops at a [TrackPoint.segmentStart]
          * boundary so a grade is never measured across a pause gap.
+         *
+         * GPS-only altitude routinely spikes 50–60 m on a *single* fix even when the
+         * horizontal accuracy is good, so a lone outlier inside the tiny ~4-point
+         * window would otherwise dominate the least-squares fit and pin the slope to
+         * the ±30% clamp on genuinely flat terrain. Before fitting, altitude samples
+         * are therefore median-filtered: any sample more than
+         * [ElevationAccumulator.MAX_ALTITUDE_STEP_METERS] from the window's median
+         * altitude is dropped as an outlier (mirroring the sibling
+         * [ElevationAccumulator] spike gate, reusing the same single source of truth).
+         * The 12 m threshold sits far above any real grade's within-window altitude
+         * spread, so genuine climbs/descents pass untouched while single-fix spikes
+         * are rejected.
          */
         internal fun computeCurrentGrade(points: List<TrackPoint>): Float {
             if (points.size < 2) return 0f
@@ -486,17 +498,14 @@ class RideTracker {
             }
             if (horizontal < GRADE_MIN_DISTANCE_METERS) return 0f
 
-            // ── 2. Least-squares fit of altitude (y) over cumulative horizontal
-            // distance (x) across the window. slope = Σ(x-x̄)(y-ȳ) / Σ(x-x̄)².
-            var n = 0
-            var sumX = 0.0
-            var sumY = 0.0
-            var sumXY = 0.0
-            var sumXX = 0.0
+            // ── 2. Collect the (cumulative-horizontal-distance, altitude) samples in
+            // the window, keeping only fixes that actually carry an altitude.
+            val xs = ArrayList<Double>()
+            val ys = ArrayList<Double>()
             var cumX = 0.0
             var prevPt = points[startIndex]
             points[startIndex].altitudeMeters?.let { alt ->
-                n++; sumX += 0.0; sumY += alt; sumXY += 0.0; sumXX += 0.0
+                xs.add(0.0); ys.add(alt)
             }
             for (j in startIndex + 1..points.lastIndex) {
                 val pt = points[j]
@@ -505,19 +514,50 @@ class RideTracker {
                 )
                 prevPt = pt
                 val alt = pt.altitudeMeters ?: continue
+                xs.add(cumX)
+                ys.add(alt)
+            }
+            if (xs.size < 2) return 0f
+
+            // ── 3. Reject single-fix altitude outliers: drop any sample whose altitude
+            // deviates from the window's MEDIAN altitude by more than the shared
+            // plausible-step threshold, then fit only the survivors. The median is
+            // robust to a single large spike, so a lone +60 m GPS glitch cannot drag
+            // the reference and is discarded rather than dominating the fit.
+            val median = medianOf(ys)
+            var n = 0
+            var sumX = 0.0
+            var sumY = 0.0
+            var sumXY = 0.0
+            var sumXX = 0.0
+            for (k in xs.indices) {
+                val y = ys[k]
+                if (abs(y - median) > ElevationAccumulator.MAX_ALTITUDE_STEP_METERS) continue
+                val x = xs[k]
                 n++
-                sumX += cumX
-                sumY += alt
-                sumXY += cumX * alt
-                sumXX += cumX * cumX
+                sumX += x
+                sumY += y
+                sumXY += x * y
+                sumXX += x * x
             }
             if (n < 2) return 0f
+
+            // Least-squares fit of altitude (y) over cumulative horizontal distance
+            // (x) across the survivors. slope = Σ(x-x̄)(y-ȳ) / Σ(x-x̄)².
             val denom = sumXX - sumX * sumX / n
             if (denom <= 0.0) return 0f
             val slope = (sumXY - sumX * sumY / n) / denom
 
             val grade = (slope * 100.0).toFloat()
             return grade.coerceIn(-GRADE_CLAMP_PERCENT, GRADE_CLAMP_PERCENT)
+        }
+
+        /** Median of a non-empty list of altitudes (used for outlier rejection). */
+        private fun medianOf(values: List<Double>): Double {
+            val sorted = values.sorted()
+            val mid = sorted.size / 2
+            return if (sorted.size % 2 == 1) sorted[mid]
+            else (sorted[mid - 1] + sorted[mid]) / 2.0
         }
     }
 }
