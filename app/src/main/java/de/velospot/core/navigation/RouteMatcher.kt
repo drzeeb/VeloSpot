@@ -1,6 +1,7 @@
 package de.velospot.core.navigation
 
 import de.velospot.domain.model.RoutePoint
+import kotlin.math.abs
 
 /**
  * Snaps raw GPS fixes onto the active BRouter polyline ("map matching") and
@@ -24,9 +25,12 @@ internal object RouteMatcher {
      *  from the route — large values indicate the user is off-route.
      * @property remainingMeters Distance from the snapped point to the
      *  destination along the route.
-     * @property turnSharpnessDegrees Largest heading change found within the
-     *  next [TURN_LOOKAHEAD_METERS]; `0` on straight stretches, up to `180` for
-     *  a U-turn. Drives the "zoom in before a turn" behaviour.
+     * @property turnSharpnessDegrees Sharpness of the sharpest maneuver whose
+     *  apex falls within the next [TURN_LOOKAHEAD_METERS], measured as the
+     *  **cumulative** heading change over the whole corner (so a rounded curve
+     *  spread over several vertices reads as one real turn, not a series of tiny
+     *  bends); `0` on straight stretches, up to `180` for a U-turn. Drives the
+     *  "zoom in before a turn" behaviour.
      */
     data class Match(
         val latitude: Double,
@@ -44,15 +48,37 @@ internal object RouteMatcher {
 
     /**
      * Next-turn detection for the turn-by-turn banner.
-     * @property distanceMeters distance from the snapped point to the turn vertex.
-     * @property angleDegrees signed heading change: negative = left, positive = right.
+     * @property distanceMeters distance from the snapped point to the turn's apex
+     *  (the vertex of maximum curvature within the corner).
+     * @property angleDegrees signed **cumulative** heading change across the whole
+     *  corner: negative = left, positive = right.
      */
     data class TurnHint(val distanceMeters: Double, val angleDegrees: Double)
 
-    /** Heading change (deg) at a single vertex that counts as a real turn. */
+    /**
+     * Cumulative heading change (deg) across a corner that counts as a real turn.
+     * A rounded 90° corner emitted by BRouter as 4–6 vertices of ~15–20° each has
+     * no single vertex above this, but its accumulated total does — so it still
+     * fires exactly one maneuver instead of being silently skipped.
+     */
     private const val TURN_MIN_ANGLE_DEG = 32.0
     /** Don't look further than this for the next turn (keeps the banner relevant). */
     private const val NEXT_TURN_MAX_DISTANCE_M = 500.0
+
+    /**
+     * Per-vertex heading change (deg) below which a vertex is treated as
+     * effectively "straight" — GPS/geometry jitter that must not open or feed a
+     * corner accumulation on its own.
+     */
+    private const val TURN_VERTEX_NOISE_DEG = 6.0
+
+    /**
+     * Once a corner accumulation is open, this much along-route distance (m) of
+     * near-straight travel closes it. Keeps the vertices of one rounded corner
+     * grouped into a single maneuver while preventing an unrelated later bend
+     * from being merged into the same turn.
+     */
+    private const val TURN_ACCUMULATE_GAP_M = 20.0
 
     /**
      * Look-ahead distance for the camera/marker heading. The route heading is
@@ -174,54 +200,76 @@ internal object RouteMatcher {
     }
 
     /**
-     * Largest heading change within [TURN_LOOKAHEAD_METERS] ahead of the snapped
-     * point, relative to the current segment heading.
+     * Sharpness of the sharpest upcoming maneuver whose apex lies within
+     * [TURN_LOOKAHEAD_METERS] of the snapped point, measured as the cumulative
+     * heading change over the whole corner (see [scanManeuvers]). `0` when the
+     * road runs straight ahead.
      */
-    private fun turnSharpness(points: List<RoutePoint>, index: Int, t: Double): Double {        if (index + 1 >= points.size - 1) return 0.0
-        val currentBearing = GeoMath.bearingDegrees(
-            points[index].latitude, points[index].longitude,
-            points[index + 1].latitude, points[index + 1].longitude
-        )
-        var distance = GeoMath.distanceMeters(
-            points[index].latitude, points[index].longitude,
-            points[index + 1].latitude, points[index + 1].longitude
-        ) * (1.0 - t)
-
-        var maxDelta = 0.0
-        var i = index + 1
-        while (i < points.size - 1 && distance < TURN_LOOKAHEAD_METERS) {
-            val segBearing = GeoMath.bearingDegrees(
-                points[i].latitude, points[i].longitude,
-                points[i + 1].latitude, points[i + 1].longitude
-            )
-            val delta = GeoMath.angularDistance(currentBearing, segBearing)
-            if (delta > maxDelta) maxDelta = delta
-            distance += GeoMath.distanceMeters(
-                points[i].latitude, points[i].longitude,
-                points[i + 1].latitude, points[i + 1].longitude
-            )
-            i++
-        }
-        return maxDelta
-    }
+    private fun turnSharpness(points: List<RoutePoint>, index: Int, t: Double): Double =
+        scanManeuvers(points, index, t, TURN_LOOKAHEAD_METERS)
+            .maxOfOrNull { abs(it.angleDegrees) } ?: 0.0
 
     /**
-     * Finds the next notable turn ahead of the snapped point (segment [index],
-     * fraction [t]) for the turn-by-turn banner: the first vertex within
-     * [NEXT_TURN_MAX_DISTANCE_M] whose heading change exceeds [TURN_MIN_ANGLE_DEG].
-     * Returns its distance and signed angle (negative = left, positive = right),
-     * or `null` when the road runs straight ahead.
+     * A detected turn: its apex distance from the snapped point and its signed
+     * cumulative heading change (negative = left, positive = right).
      */
-    fun nextTurn(points: List<RoutePoint>, index: Int, t: Double): TurnHint? {
-        if (index + 1 >= points.size - 1) return null
-        // Distance from the snapped point to the end of the current segment.
-        var distance = GeoMath.distanceMeters(
+    private data class Maneuver(val distanceMeters: Double, val angleDegrees: Double)
+
+    /**
+     * Scans the route ahead of the snapped point (segment [index], fraction [t])
+     * and returns the turns within [maxDistance], in the order they are reached.
+     *
+     * Instead of testing the heading change at a single vertex, it **accumulates**
+     * the signed per-vertex heading change across consecutive same-direction
+     * vertices, so a real corner that BRouter sampled as a rounded curve (several
+     * gentle vertices) collapses into one maneuver. An accumulation is:
+     *  - opened by the first vertex whose turn exceeds [TURN_VERTEX_NOISE_DEG];
+     *  - grown while subsequent vertices keep turning the **same** way;
+     *  - closed — and emitted if its total reaches [TURN_MIN_ANGLE_DEG] — when the
+     *    heading change **reverses** sign (so a zig-zag yields two turns, not a
+     *    cancelled one) or after [TURN_ACCUMULATE_GAP_M] of near-straight travel
+     *    (so a gentle S-bend / jitter can't drift into a false turn).
+     *
+     * Each maneuver is anchored at its apex — the vertex of maximum local
+     * curvature within the accumulated span — so the reported distance and banner
+     * point stay on the actual corner.
+     */
+    private fun scanManeuvers(
+        points: List<RoutePoint>,
+        index: Int,
+        t: Double,
+        maxDistance: Double
+    ): List<Maneuver> {
+        val result = mutableListOf<Maneuver>()
+        if (index + 1 >= points.size - 1) return result
+
+        // Distance from the snapped point to the current segment's end vertex.
+        var distToVertex = GeoMath.distanceMeters(
             points[index].latitude, points[index].longitude,
             points[index + 1].latitude, points[index + 1].longitude
         ) * (1.0 - t)
 
+        // Open accumulation state.
+        var open = false
+        var sum = 0.0
+        var sign = 0
+        var apexDistance = 0.0
+        var apexAbsAngle = 0.0
+        var straightGap = 0.0
+
+        fun closeRun() {
+            if (open && abs(sum) >= TURN_MIN_ANGLE_DEG) {
+                result.add(Maneuver(apexDistance, sum))
+            }
+            open = false
+            sum = 0.0
+            sign = 0
+            apexAbsAngle = 0.0
+            straightGap = 0.0
+        }
+
         var i = index + 1
-        while (i < points.size - 1 && distance <= NEXT_TURN_MAX_DISTANCE_M) {
+        while (i < points.size - 1 && distToVertex <= maxDistance) {
             val inBearing = GeoMath.bearingDegrees(
                 points[i - 1].latitude, points[i - 1].longitude,
                 points[i].latitude, points[i].longitude
@@ -230,17 +278,56 @@ internal object RouteMatcher {
                 points[i].latitude, points[i].longitude,
                 points[i + 1].latitude, points[i + 1].longitude
             )
-            val signed = signedAngle(inBearing, outBearing)
-            if (kotlin.math.abs(signed) >= TURN_MIN_ANGLE_DEG) {
-                return TurnHint(distanceMeters = distance, angleDegrees = signed)
+            val vertexAngle = signedAngle(inBearing, outBearing)
+            val absAngle = abs(vertexAngle)
+            val vertexSign = if (vertexAngle >= 0.0) 1 else -1
+
+            if (absAngle >= TURN_VERTEX_NOISE_DEG) {
+                // Reversal ends the current corner before this one starts.
+                if (open && vertexSign != sign) closeRun()
+                if (!open) {
+                    open = true
+                    sign = vertexSign
+                    sum = 0.0
+                    apexAbsAngle = 0.0
+                }
+                sum += vertexAngle
+                straightGap = 0.0
+                if (absAngle > apexAbsAngle) {
+                    apexAbsAngle = absAngle
+                    apexDistance = distToVertex
+                }
+            } else if (open) {
+                // Near-straight vertex: a long enough gap closes the corner.
+                straightGap += GeoMath.distanceMeters(
+                    points[i].latitude, points[i].longitude,
+                    points[i + 1].latitude, points[i + 1].longitude
+                )
+                if (straightGap > TURN_ACCUMULATE_GAP_M) closeRun()
             }
-            distance += GeoMath.distanceMeters(
+
+            distToVertex += GeoMath.distanceMeters(
                 points[i].latitude, points[i].longitude,
                 points[i + 1].latitude, points[i + 1].longitude
             )
             i++
         }
-        return null
+        closeRun()
+        return result
+    }
+
+    /**
+     * Finds the next notable turn ahead of the snapped point (segment [index],
+     * fraction [t]) for the turn-by-turn banner: the first accumulated corner
+     * within [NEXT_TURN_MAX_DISTANCE_M] whose cumulative heading change exceeds
+     * [TURN_MIN_ANGLE_DEG]. Returns its apex distance and signed angle
+     * (negative = left, positive = right), or `null` when the road runs straight
+     * ahead.
+     */
+    fun nextTurn(points: List<RoutePoint>, index: Int, t: Double): TurnHint? {
+        val turn = scanManeuvers(points, index, t, NEXT_TURN_MAX_DISTANCE_M).firstOrNull()
+            ?: return null
+        return TurnHint(distanceMeters = turn.distanceMeters, angleDegrees = turn.angleDegrees)
     }
 
     /** Signed heading change from [a] to [b], normalised to (-180, 180]. */
