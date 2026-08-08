@@ -125,6 +125,15 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Make the exported Room schemas available to instrumented tests so
+// MigrationTestHelper can create databases at historical versions and validate
+// every hand-written migration against the checked-in baselines.
+android {
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
@@ -346,6 +355,9 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.uiautomator)
+    // Room MigrationTestHelper – validates hand-written migrations against the
+    // exported schema JSONs under app/schemas/.
+    androidTestImplementation(libs.roomTesting)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
