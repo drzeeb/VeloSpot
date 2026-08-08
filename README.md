@@ -85,6 +85,12 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - **🆕 Plan, save & re-ride multi-waypoint routes** — build custom routes tap by tap, save them, and race your own **personal leaderboard** (a separate board for the forward and reversed direction), with a map preview and a per-direction digest of your best/average times
 - **🆕 Bike garage** — keep a profile per bike (name, brand, type, tyre size, weight…), see your ride history broken down per bike, and get one-time km-based **service reminders**
 - **🆕 Detailed ride analysis** — a full-screen analysis with an **animated map replay**, per-kilometre splits, categorised climbs, **best efforts** (fastest 1–100 km / furthest 1–60 min), per-ride **CO₂ saved** and earned **achievement badges**
+- **🆕 Weather on the map & with your rides (opt-in)** — an off-by-default setting adds live weather via [Open-Meteo](https://open-meteo.com/) (no account, no API key): a compact weather chip on the map plus a weather snapshot captured at each ride's start, shown in the ride detail and analysis screens
+- **🆕 External Bluetooth sensors** — pair standard Bluetooth-LE speed, cadence, power and heart-rate sensors (open GATT profiles, any brand); remembered sensors auto-connect when you start a ride and their live values appear in the trip computer
+- **🆕 Trip Computer HUD** — an optional heads-up bottom band while recording shows your live ride numbers (current/average speed, distance, time, elevation, live grade) and merges into the navigation card during turn-by-turn
+- **🆕 Export a single ride as GPX** — a dedicated "Export as GPX" button on the ride detail sheet saves the full track to a file you pick, with in-app help for uploading to Strava, Komoot, Garmin Connect & RideWithGPS
+- **🆕 Share your all-time stats** — a "VeloSpot Wrapped" all-time stats card renders your whole riding history (total distance, moving time, elevation, top/average speed, calories, CO₂ saved plus flex badges) into a shareable social tile
+- **🆕 Open `.gpx` files from outside the app** — tap a GPX in a file manager, e-mail or browser download to import it as a ride or just preview the track on the map
 - **🆕 Share any spot** as a universal OpenStreetMap link from the detail sheets
 - **🆕 Keep screen on** while navigating and recording (toggle); **accessibility** (TalkBack) improvements; legal notice (Impressum) in-app and on the website
 

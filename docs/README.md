@@ -67,6 +67,10 @@ Current website copy highlights:
 - Current-location tools and live location marker
 - Dark mode toggle in the app menu — including a bundled dark vector-tile map style
 - Toggleable map layers (parking, favorites, saved places) and saved custom places
+- Opt-in weather on the map and with your rides (Open-Meteo, no account required)
+- External Bluetooth-LE sensors (speed, cadence, power, heart rate) feeding a Trip Computer HUD
+- Export a single ride as GPX (with Strava/Komoot/Garmin upload help) and open .gpx files from outside the app
+- Share your all-time riding stats as a "VeloSpot Wrapped" card
 - Room / SQLite pre-populated asset database
 - Privacy policy page (`privacy.html`) and OpenStreetMap attribution in the footer
 
