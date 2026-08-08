@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 ### Changed
+- **Google Play publishing split into its own controllable workflow** — the tag-triggered `release.yml` no longer talks to Google Play; it now only builds the artifacts (AAB + sideload APK + SBOM) and creates the GitHub Release. Publishing is a separate, manually-triggered **"Play Publish"** workflow (`.github/workflows/play-publish.yml`) where you choose exactly **what** to push — the app **bundle** (AAB), the store **listing metadata**, the **"What's New" changelogs** and/or the **screenshots** — plus the target track and release status. The AAB is downloaded from the GitHub Release that `release.yml` already produced for the chosen tag (no rebuild, no keystore needed). The rigid fastlane `deploy` lane is replaced by a flexible `publish` lane driven by per-component skip flags. Build/CI-only change; no app code, strings or DB schema affected.
 
 ### Fixed
 

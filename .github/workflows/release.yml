@@ -2,6 +2,12 @@ name: Release
 
 # Triggered when a tag in the format vX.Y.Z is pushed,
 # or manually via "Run workflow" with any tag.
+#
+# This workflow only BUILDS the artifacts (AAB + sideload APK + SBOM) and creates
+# the GitHub Release. Publishing to Google Play is intentionally split out into
+# the separate, manually-triggered .github/workflows/play-publish.yml, where you
+# pick exactly what to push (bundle / metadata / changelogs / screenshots). The
+# AAB attached to the GitHub Release here is what play-publish.yml uploads.
 on:
   push:
     tags:
@@ -12,24 +18,6 @@ on:
         description: "Release tag (e.g. v1.0.8)"
         required: true
         default: "v1.0.0"
-      play_track:
-        description: "Google Play track to publish to"
-        required: false
-        default: "production"
-        type: choice
-        options:
-          - internal
-          - alpha
-          - beta
-          - production
-      play_status:
-        description: "Play release status (draft = review & publish in console)"
-        required: false
-        default: "draft"
-        type: choice
-        options:
-          - draft
-          - completed
 
 permissions:
   contents: write
@@ -43,15 +31,10 @@ env:
 
 jobs:
   release:
-    name: Build & Release (Google Play)
+    name: Build & Release (GitHub)
     # Do not re-run when the security-release workflow pushed the tag itself.
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    # Whether the Google Play service-account secret is configured. Used to gate
-    # the automated Play upload so the workflow still succeeds (build + GitHub
-    # Release only) when the secret is absent.
-    env:
-      PLAY_JSON_PRESENT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
 
     steps:
       # ── Checkout ──────────────────────────────────────────────────────────────
@@ -247,29 +230,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Publish to Google Play (fastlane supply) ──────────────────────────────
-      # Uploads the signed AAB plus the store listing + "What's New" changelogs
-      # from fastlane/metadata/android to the chosen track. Runs only when the
-      # PLAY_SERVICE_ACCOUNT_JSON secret is configured (otherwise the workflow
-      # still succeeds with just the GitHub Release above).
-      #
-      # Track/status default to `production` / `draft`: the release is created in
-      # the Play Console but not rolled out, so you review it and press "Publish".
-      # Manual runs can pick a different track/status via the workflow inputs.
-      - name: Set up Ruby (fastlane)
-        if: env.PLAY_JSON_PRESENT == 'true'
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.4.10"
-          bundler-cache: true
-
-      - name: Publish to Google Play
-        if: env.PLAY_JSON_PRESENT == 'true'
-        env:
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-        run: |
-          bundle exec fastlane deploy \
-            track:"${{ github.event.inputs.play_track || 'production' }}" \
-            status:"${{ github.event.inputs.play_status || 'draft' }}" \
-            aab:"app/build/outputs/bundle/release/app-release.aab"
+      # ── Publishing to Google Play is a separate, opt-in step ──────────────────
+      # Once this workflow has built the artifacts and created the GitHub Release,
+      # publish to Google Play via the dedicated "Play Publish" workflow
+      # (.github/workflows/play-publish.yml) → "Run workflow", where you choose
+      # what to push (bundle / metadata / changelogs / screenshots) and the track.
+      # The AAB attached to this GitHub Release is what that workflow uploads, so
+      # no rebuild is needed.
 

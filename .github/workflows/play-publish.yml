@@ -1,0 +1,159 @@
+name: Play Publish
+
+# Dedicated, manually-triggered Google Play publish workflow.
+#
+# This is intentionally SEPARATE from release.yml: tagging a version builds the
+# artifacts and the GitHub Release, while pushing anything to Google Play is an
+# explicit, opt-in action here where you choose exactly WHAT to publish:
+#   • the app bundle (AAB) for a given release tag,
+#   • the store listing metadata (title / descriptions),
+#   • the "What's New" changelogs (release notes),
+#   • the screenshots.
+#
+# The AAB is NOT rebuilt here — it is downloaded from the GitHub Release that
+# release.yml already produced for the chosen tag, so no keystore is needed.
+#
+# Requires the PLAY_SERVICE_ACCOUNT_JSON secret (Google Play service-account key).
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_bundle:
+        description: "Upload the app bundle (AAB) — requires a release tag below"
+        type: boolean
+        default: false
+      publish_metadata:
+        description: "Upload store listing metadata (title, descriptions)"
+        type: boolean
+        default: true
+      publish_changelogs:
+        description: "Upload 'What's New' changelogs (needs a version — from tag or build.gradle.kts)"
+        type: boolean
+        default: false
+      publish_screenshots:
+        description: "Upload screenshots (slow)"
+        type: boolean
+        default: false
+      tag:
+        description: "Release tag whose AAB to publish, e.g. v1.0.30 (required only when uploading the bundle)"
+        required: false
+        default: ""
+      track:
+        description: "Google Play track"
+        required: false
+        default: "production"
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+      status:
+        description: "Play release status (draft = review & publish in console)"
+        required: false
+        default: "draft"
+        type: choice
+        options:
+          - draft
+          - completed
+
+permissions:
+  # Needed to download the AAB asset from the GitHub Release via the GitHub CLI.
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  publish:
+    name: Publish to Google Play
+    runs-on: ubuntu-latest
+    env:
+      PLAY_JSON_PRESENT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # ── Guard rails ──────────────────────────────────────────────────────────
+      - name: Fail early if the Play secret is missing
+        if: env.PLAY_JSON_PRESENT != 'true'
+        run: |
+          echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not set under Settings -> Secrets and variables -> Actions."
+          exit 1
+
+      - name: Validate inputs
+        run: |
+          if [ "${{ inputs.publish_bundle }}" != "true" ] \
+             && [ "${{ inputs.publish_metadata }}" != "true" ] \
+             && [ "${{ inputs.publish_changelogs }}" != "true" ] \
+             && [ "${{ inputs.publish_screenshots }}" != "true" ]; then
+            echo "::error::Nothing selected. Enable at least one of bundle / metadata / changelogs / screenshots."
+            exit 1
+          fi
+          if [ "${{ inputs.publish_bundle }}" = "true" ] && [ -z "${{ inputs.tag }}" ]; then
+            echo "::error::publish_bundle is enabled but no 'tag' was given. Provide the release tag whose AAB to upload (e.g. v1.0.30)."
+            exit 1
+          fi
+
+      # ── Resolve the target version code ──────────────────────────────────────
+      # From the tag when given (vX.Y.Z -> X*10000 + Y*100 + Z), else from the
+      # checked-out app/build.gradle.kts. supply needs it to attach changelogs
+      # (release notes) when no AAB is uploaded in the same run.
+      - name: Resolve version code
+        id: ver
+        run: |
+          TAG="${{ inputs.tag }}"
+          if [ -n "$TAG" ]; then
+            VERSION="${TAG#v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3); PATCH=${PATCH:-0}
+            CODE=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))
+          else
+            CODE=$(grep -oE "versionCode = [0-9]+" app/build.gradle.kts | grep -oE "[0-9]+")
+          fi
+          echo "version_code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Target version code: $CODE"
+
+      # ── Fetch the AAB from the GitHub Release (no rebuild, no keystore) ───────
+      - name: Download AAB from the release
+        if: ${{ inputs.publish_bundle == true }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p app/build/outputs/bundle/release
+          gh release download "${{ inputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "app-release.aab" \
+            --dir app/build/outputs/bundle/release \
+            --clobber
+          ls -l app/build/outputs/bundle/release/app-release.aab
+
+      # ── fastlane ─────────────────────────────────────────────────────────────
+      - name: Set up Ruby (fastlane)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.10"
+          bundler-cache: true
+
+      - name: Publish selected components
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          ARGS=(publish)
+          ARGS+=("track:${{ inputs.track }}")
+          ARGS+=("status:${{ inputs.status }}")
+          ARGS+=("metadata:${{ inputs.publish_metadata }}")
+          ARGS+=("changelogs:${{ inputs.publish_changelogs }}")
+          ARGS+=("images:${{ inputs.publish_screenshots }}")
+          ARGS+=("version_code:${{ steps.ver.outputs.version_code }}")
+          if [ "${{ inputs.publish_bundle }}" = "true" ]; then
+            ARGS+=("aab:app/build/outputs/bundle/release/app-release.aab")
+          fi
+          echo "Running: fastlane ${ARGS[*]}"
+          bundle exec fastlane "${ARGS[@]}"
+
+

@@ -1,15 +1,21 @@
 # fastlane configuration for VeloSpot.
 #
-# The `deploy` lane uploads the already-built, signed release AAB plus the store
-# listing and "What's New" changelogs (fastlane/metadata/android) to Google Play.
-# It is invoked by .github/workflows/release.yml after the Gradle `bundleRelease`
-# build. Credentials come from the PLAY_SERVICE_ACCOUNT_JSON env var (a Google
-# Play service-account JSON key), wired up in fastlane/Appfile.
+# The `publish` lane uploads selected components — the signed release AAB and/or
+# the store listing + "What's New" changelogs (fastlane/metadata/android) — to
+# Google Play. It is invoked by .github/workflows/play-publish.yml, a dedicated,
+# manually-triggered workflow that lets you pick exactly WHAT to publish (bundle,
+# metadata, changelogs, screenshots). The tag-triggered .github/workflows/release.yml
+# only builds the artifacts + the GitHub Release; it no longer talks to Play.
+# Credentials come from the PLAY_SERVICE_ACCOUNT_JSON env var (a Google Play
+# service-account JSON key), wired up in fastlane/Appfile.
 #
-# Run manually (local):
+# Run manually (local, needs the key exported):
 #   PLAY_SERVICE_ACCOUNT_JSON="$(cat play-sa.json)" \
-#     bundle exec fastlane deploy track:internal status:completed \
-#       aab:app/build/outputs/bundle/release/app-release.aab
+#     bundle exec fastlane publish metadata:true changelogs:false track:production
+#   # or with a bundle:
+#   PLAY_SERVICE_ACCOUNT_JSON="$(cat play-sa.json)" \
+#     bundle exec fastlane publish aab:app/build/outputs/bundle/release/app-release.aab \
+#       metadata:true changelogs:true track:production status:draft
 
 default_platform(:android)
 
@@ -31,26 +37,44 @@ platform :android do
     UI.success("Play API reachable. Production track version codes: #{codes}")
   end
 
-  desc "Upload the release AAB + store metadata to Google Play"
-  lane :deploy do |options|
+  desc "Upload selected components (AAB and/or metadata/changelogs/screenshots) to Google Play"
+  lane :publish do |options|
+    # Coerce a CLI string/boolean option to a real boolean, honouring a default
+    # when the option was not passed at all (fastlane passes options as strings).
+    to_bool = ->(value, default) { value.nil? ? default : value.to_s == "true" }
+
+    aab_path        = options[:aab].to_s.empty? ? nil : options[:aab]
+    upload_aab      = !aab_path.nil?
+    with_metadata   = to_bool.call(options[:metadata], true)
+    with_changelogs = to_bool.call(options[:changelogs], false)
+    with_images     = to_bool.call(options[:images], false)
+    # Optional explicit target version code — required by supply to attach
+    # changelogs (release notes) when no AAB is uploaded in the same run.
+    version_code = options[:version_code].to_s.empty? ? nil : options[:version_code].to_i
+
+    unless upload_aab || with_metadata || with_changelogs || with_images
+      UI.user_error!("Nothing selected to publish. Pass aab:<path> and/or " \
+        "metadata:true / changelogs:true / images:true.")
+    end
+
+    # Pass BOTH the service-account key and the package name explicitly so the
+    # lane is self-contained and does not depend on the Appfile's json_key_data
+    # (which raised `undefined method` on this supply version — see Appfile).
     upload_to_play_store(
-      # Pass BOTH the service-account key and the package name explicitly so the
-      # lane is self-contained and does not depend on the Appfile. The Appfile's
-      # `json_key_data` raised `undefined method` on this supply version, which
-      # aborted Appfile evaluation before `package_name` was set — supply then
-      # failed with "No value found for 'package_name'". Mirroring the working
-      # `verify` lane avoids that entirely.
       json_key_data: ENV["PLAY_SERVICE_ACCOUNT_JSON"],
       package_name: "de.velospot",
       track: options[:track] || "production",
       release_status: options[:status] || "draft",
-      aab: options[:aab] || "app/build/outputs/bundle/release/app-release.aab",
+      aab: aab_path,
+      version_code: version_code,
       metadata_path: "fastlane/metadata/android",
       skip_upload_apk: true,
-      # Screenshots rarely change and their upload is slow/flaky; push them
-      # explicitly with `bundle exec fastlane supply` when they actually change.
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
+      skip_upload_aab: !upload_aab,
+      skip_upload_metadata: !with_metadata,
+      skip_upload_changelogs: !with_changelogs,
+      # Screenshots/images are large and slow; off unless explicitly requested.
+      skip_upload_images: !with_images,
+      skip_upload_screenshots: !with_images,
     )
   end
 end
