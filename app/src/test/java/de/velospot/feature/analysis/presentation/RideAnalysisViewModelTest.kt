@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -40,6 +41,15 @@ class RideAnalysisViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val dispatcher get() = mainDispatcherRule.dispatcher
+
+    /**
+     * The analysis dispatcher injected into every view-model. Backed by the *same*
+     * scheduler the rule installs as `Main`, so the whole VM flow (the `flowOn`
+     * upstream included) runs on one virtual clock — `advanceUntilIdle()` drains it
+     * and no real-thread continuation can leak onto a reset `Main`. Unconfined so
+     * emissions are eager and `awaitSettled()` resolves without extra advancing.
+     */
+    private val analysisDispatcher = UnconfinedTestDispatcher(dispatcher.scheduler)
 
     /** View-models built by [viewModel]; their scopes are cancelled in [tearDown]. */
     private val createdViewModels = mutableListOf<RideAnalysisViewModel>()
@@ -152,12 +162,14 @@ class RideAnalysisViewModelTest {
         repository = repo,
         mapSettings = FakeMapSettings(weatherEnabled),
         savedStateHandle = SavedStateHandle(mapOf(RideAnalysisViewModel.ARG_RIDE_ID to rideId)),
+        analysisDispatcher = analysisDispatcher,
     ).also { createdViewModels.add(it) }
 
     /**
      * Awaits the first settled (non-[RideAnalysisUiState.Loading]) state. The analysis
-     * runs on a real `Dispatchers.Default` via `flowOn`, so we can't just advance the
-     * virtual scheduler — subscribing and awaiting resumes once Default has emitted.
+     * now runs on [analysisDispatcher] — a test dispatcher backed by the rule's
+     * scheduler — so the whole flow stays on the virtual clock and this simply
+     * resumes once the (eagerly emitted) settled state is available.
      */
     private suspend fun RideAnalysisViewModel.awaitSettled(): RideAnalysisUiState =
         uiState.first { it !is RideAnalysisUiState.Loading }
@@ -203,7 +215,7 @@ class RideAnalysisViewModelTest {
         repo.flow.value = emptyList()
 
         // Await the specific NotFound state (the cached Ready lingers until the
-        // Default-dispatched re-analysis of the now-empty list completes).
+        // re-analysis of the now-empty list completes on the test dispatcher).
         assertEquals(
             RideAnalysisUiState.NotFound,
             vm.uiState.first { it is RideAnalysisUiState.NotFound },

@@ -16,6 +16,7 @@ import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.repository.MapSettingsRepository
 import de.velospot.domain.repository.RecordedRidesRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -58,11 +59,27 @@ sealed interface RideAnalysisUiState {
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class RideAnalysisViewModel @Inject constructor(
+class RideAnalysisViewModel(
     repository: RecordedRidesRepository,
     mapSettings: MapSettingsRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    /**
+     * Dispatcher the heavy analysis runs on via [flowOn]. Defaults to
+     * [Dispatchers.Default] in production; tests inject a scheduler-backed test
+     * dispatcher so the whole flow stays on the virtual clock (no leaked
+     * real-thread continuation can dispatch onto a reset test `Main`).
+     */
+    private val analysisDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+
+    // Hilt binds every parameter of this secondary constructor already; it uses
+    // it as the injection point while production keeps the real Default dispatcher.
+    @Inject
+    constructor(
+        repository: RecordedRidesRepository,
+        mapSettings: MapSettingsRepository,
+        savedStateHandle: SavedStateHandle,
+    ) : this(repository, mapSettings, savedStateHandle, Dispatchers.Default)
 
     private val rideId: String = checkNotNull(savedStateHandle[ARG_RIDE_ID]) {
         "RideAnalysisViewModel requires a '$ARG_RIDE_ID' argument"
@@ -115,7 +132,7 @@ class RideAnalysisViewModel @Inject constructor(
                     )
                 }
             }
-            .flowOn(Dispatchers.Default) // analysis can be heavy on long rides
+            .flowOn(analysisDispatcher) // analysis can be heavy on long rides
 
     val uiState: StateFlow<RideAnalysisUiState> =
         combine(
