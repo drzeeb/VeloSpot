@@ -45,11 +45,11 @@ private const val SUPPORT_URL = "https://buymeacoffee.com/velospot"
 private const val DISCORD_URL = "https://discord.velospot.app"
 
 /** Release date of the bundled Germany OSM parking dataset. */
-private const val DATA_DATE_GERMANY = "23.07.2026"
+private const val DATA_DATE_GERMANY = "08.08.2026"
 
 /** Release date of the bundled France & Luxembourg OSM parking datasets. */
-private const val DATA_DATE_FRANCE = "23.07.2026"
-private const val DATA_DATE_LUXEMBOURG = "23.07.2026"
+private const val DATA_DATE_FRANCE = "08.08.2026"
+private const val DATA_DATE_LUXEMBOURG = "08.08.2026"
 
 /**
  * "About VeloSpot" bottom sheet, reachable from the menu.
