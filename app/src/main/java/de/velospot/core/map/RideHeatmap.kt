@@ -1,6 +1,6 @@
 package de.velospot.core.map
 
-import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RideTrackGeometry
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToLong
@@ -49,7 +49,7 @@ object RideHeatmap {
      * @param saturationCount Sample count mapped to the maximum [HeatCell.intensity].
      */
     fun build(
-        rides: List<RecordedRide>,
+        rides: List<RideTrackGeometry>,
         gridDecimals: Int = GRID_DECIMALS,
         saturationCount: Int = SATURATION_COUNT
     ): List<HeatCell> {

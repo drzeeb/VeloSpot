@@ -1,6 +1,6 @@
 package de.velospot.core.map
 
-import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RideTrackGeometry
 import de.velospot.domain.model.TrackPoint
 import kotlin.math.cos
 
@@ -34,7 +34,7 @@ object RideTrackLines {
      * two points (or that collapse below two after simplification) are dropped.
      */
     fun build(
-        rides: List<RecordedRide>,
+        rides: List<RideTrackGeometry>,
         toleranceMeters: Double = SIMPLIFY_TOLERANCE_METERS
     ): List<TrackPolyline> = rides.mapNotNull { ride ->
         val points = ride.points

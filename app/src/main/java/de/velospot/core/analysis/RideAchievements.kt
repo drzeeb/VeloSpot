@@ -5,6 +5,7 @@ import de.velospot.core.format.formatRideDuration
 import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import java.util.Calendar
 
 /**
@@ -57,11 +58,15 @@ private const val NIGHT_OWL_FROM_HOUR = 21
  * [allRides] (used for the personal-record comparisons). Mock rides earn no badges
  * and are excluded from record comparisons. Returns the earned badges in display
  * order (milestones first, then personal records).
+ *
+ * The cross-ride comparison only needs each other ride's aggregate figures, so
+ * [allRides] takes the track-free [RecordedRideSummary] — the caller must never
+ * deserialise every ride's GPS track just to award a personal record.
  */
 fun evaluateAchievements(
     ride: RecordedRide,
     analysis: RideAnalysis,
-    allRides: List<RecordedRide>
+    allRides: List<RecordedRideSummary>
 ): List<Achievement> {
     if (ride.isMock) return emptyList()
     val out = ArrayList<Achievement>()

@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -826,62 +827,109 @@ fun MainMapScreen(
 
 
         // ── Search bar + Menu button – vertically centred in one Row ─────────
-        val menuState = MapMenuCardState(
-            favoritesCount     = favorites.size + savedPlaces.size,
-            isDarkTheme        = isDarkTheme,
-            currentLanguageFlag = currentLanguageFlag,
-            isExpanded         = screenUiState.isSettingsSheetVisible,
-            offlineUiState     = offlineUiState,
-            isBikeParked       = parkedBike != null,
-            voiceGuidanceEnabled = voiceGuidanceEnabled,
-            keepScreenOnEnabled = keepScreenOnEnabled,
-            hudEnabled         = hudEnabled,
-            portraitLockEnabled = portraitLockEnabled,
-            roundedBuildingsEnabled = roundedBuildingsEnabled,
-            amoledEnabled      = amoledEnabled,
-            sunAlertEnabled    = sunAlertEnabled,
-            weatherEnabled     = weatherEnabled,
-            // Debug-only GPS route simulator: always visible in debug
-            // builds, enabled once a route is available to drive along.
-            showSimulator      = de.velospot.BuildConfig.DEBUG,
-            simulatorEnabled   = activeNavigation != null,
-            isSimulating       = isSimulatingRoute
-        )
-        val menuActions = MapMenuCardActions(
-            onExpand              = screenUiState::expandMenu,
-            onDismiss             = screenUiState::dismissMenu,
-            onOpenFavorites       = screenUiState::openFavorites,
-            onOpenLanguage        = screenUiState::openLanguage,
-            onToggleDarkMode      = { onDarkThemeToggle(); screenUiState.dismissMenu() },
-            onOpenLayers          = screenUiState::openLayers,
-            onOpenNavigationView  = screenUiState::openNavigationView,
-            onOpenOfflineRegions  = viewModel::openOfflineRegions,
-            onOpenProfileSheet    = viewModel::openProfileSheet,
-            onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
-            onShowParkedBike      = viewModel::showParkedBike,
-            onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!voiceGuidanceEnabled) },
-            onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!keepScreenOnEnabled) },
-            onToggleHud           = { viewModel.setHudEnabled(!hudEnabled) },
-            onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!portraitLockEnabled) },
-            onToggleRoundedBuildings = { viewModel.setRoundedBuildingsEnabled(!roundedBuildingsEnabled) },
-            onToggleAmoled        = {
-                // Enabling AMOLED implies dark mode; turn it on if not already.
-                if (!amoledEnabled && !isDarkTheme) onDarkThemeToggle()
-                viewModel.setAmoledEnabled(!amoledEnabled)
-            },
-            onToggleSunAlert      = { viewModel.setSunAlertEnabled(!sunAlertEnabled) },
-            onToggleWeather       = { viewModel.setWeatherEnabled(!weatherEnabled) },
-            onToggleSimulation    = viewModel::toggleRouteSimulation,
-            onOpenAbout           = screenUiState::openAbout,
-            onOpenRides           = screenUiState::openRides,
-            onOpenRoundTrip       = screenUiState::openRoundTrip,
-            onStartRoutePlanning  = viewModel::startRoutePlanning,
-            onOpenPlannedRoutes   = screenUiState::openPlannedRoutes,
-            onOpenDisplaySettings = screenUiState::openDisplaySettings,
-            onOpenNavRouting      = screenUiState::openNavRouting,
-            onOpenBikeGarage      = screenUiState::openBikeGarage,
-            onOpenSensors         = screenUiState::openSensors
-        )
+        // PERF: `menuState` only depends on rarely-changing settings/toggles and never
+        // on the hot GPS-cadence flows (userLocation / navigationProgress /
+        // rideTrackingState). Memoise it on its actual inputs so a plain GPS fix does
+        // not re-allocate this large state object every recomposition (~1×/sec while
+        // simulating), which would otherwise defeat skipping in `MapMenuCard`.
+        val favoritesCount = favorites.size + savedPlaces.size
+        val isBikeParked = parkedBike != null
+        val isSettingsSheetVisible = screenUiState.isSettingsSheetVisible
+        val isNavigationRouteActive = activeNavigation != null
+        val menuState = remember(
+            favoritesCount,
+            isDarkTheme,
+            currentLanguageFlag,
+            isSettingsSheetVisible,
+            offlineUiState,
+            isBikeParked,
+            voiceGuidanceEnabled,
+            keepScreenOnEnabled,
+            hudEnabled,
+            portraitLockEnabled,
+            roundedBuildingsEnabled,
+            amoledEnabled,
+            sunAlertEnabled,
+            weatherEnabled,
+            isNavigationRouteActive,
+            isSimulatingRoute
+        ) {
+            MapMenuCardState(
+                favoritesCount     = favoritesCount,
+                isDarkTheme        = isDarkTheme,
+                currentLanguageFlag = currentLanguageFlag,
+                isExpanded         = isSettingsSheetVisible,
+                offlineUiState     = offlineUiState,
+                isBikeParked       = isBikeParked,
+                voiceGuidanceEnabled = voiceGuidanceEnabled,
+                keepScreenOnEnabled = keepScreenOnEnabled,
+                hudEnabled         = hudEnabled,
+                portraitLockEnabled = portraitLockEnabled,
+                roundedBuildingsEnabled = roundedBuildingsEnabled,
+                amoledEnabled      = amoledEnabled,
+                sunAlertEnabled    = sunAlertEnabled,
+                weatherEnabled     = weatherEnabled,
+                // Debug-only GPS route simulator: always visible in debug
+                // builds, enabled once a route is available to drive along.
+                showSimulator      = de.velospot.BuildConfig.DEBUG,
+                simulatorEnabled   = isNavigationRouteActive,
+                isSimulating       = isSimulatingRoute
+            )
+        }
+        // PERF: the ~30 action lambdas are stable — they only call ViewModel methods,
+        // navigation callbacks or (for the toggles) read the *latest* setting value via
+        // `rememberUpdatedState`. Memoising `MapMenuCardActions` with no keys reuses the
+        // same instances across recompositions so a GPS fix does not re-allocate them.
+        // The toggle handlers must NOT capture the value directly (that would go stale
+        // once the memoised instance is retained), so they read through the updated
+        // state holders below.
+        val currentVoiceGuidance = rememberUpdatedState(voiceGuidanceEnabled)
+        val currentKeepScreenOn = rememberUpdatedState(keepScreenOnEnabled)
+        val currentHud = rememberUpdatedState(hudEnabled)
+        val currentPortraitLock = rememberUpdatedState(portraitLockEnabled)
+        val currentRoundedBuildings = rememberUpdatedState(roundedBuildingsEnabled)
+        val currentAmoled = rememberUpdatedState(amoledEnabled)
+        val currentDarkTheme = rememberUpdatedState(isDarkTheme)
+        val currentSunAlert = rememberUpdatedState(sunAlertEnabled)
+        val currentWeather = rememberUpdatedState(weatherEnabled)
+        val currentDarkThemeToggle = rememberUpdatedState(onDarkThemeToggle)
+        val menuActions = remember {
+            MapMenuCardActions(
+                onExpand              = screenUiState::expandMenu,
+                onDismiss             = screenUiState::dismissMenu,
+                onOpenFavorites       = screenUiState::openFavorites,
+                onOpenLanguage        = screenUiState::openLanguage,
+                onToggleDarkMode      = { currentDarkThemeToggle.value(); screenUiState.dismissMenu() },
+                onOpenLayers          = screenUiState::openLayers,
+                onOpenNavigationView  = screenUiState::openNavigationView,
+                onOpenOfflineRegions  = viewModel::openOfflineRegions,
+                onOpenProfileSheet    = viewModel::openProfileSheet,
+                onParkBikeHere        = viewModel::parkBikeAtCurrentLocation,
+                onShowParkedBike      = viewModel::showParkedBike,
+                onToggleVoiceGuidance = { viewModel.setVoiceGuidanceEnabled(!currentVoiceGuidance.value) },
+                onToggleKeepScreenOn  = { viewModel.setKeepScreenOnEnabled(!currentKeepScreenOn.value) },
+                onToggleHud           = { viewModel.setHudEnabled(!currentHud.value) },
+                onTogglePortraitLock  = { viewModel.setPortraitLockEnabled(!currentPortraitLock.value) },
+                onToggleRoundedBuildings = { viewModel.setRoundedBuildingsEnabled(!currentRoundedBuildings.value) },
+                onToggleAmoled        = {
+                    // Enabling AMOLED implies dark mode; turn it on if not already.
+                    if (!currentAmoled.value && !currentDarkTheme.value) currentDarkThemeToggle.value()
+                    viewModel.setAmoledEnabled(!currentAmoled.value)
+                },
+                onToggleSunAlert      = { viewModel.setSunAlertEnabled(!currentSunAlert.value) },
+                onToggleWeather       = { viewModel.setWeatherEnabled(!currentWeather.value) },
+                onToggleSimulation    = viewModel::toggleRouteSimulation,
+                onOpenAbout           = screenUiState::openAbout,
+                onOpenRides           = screenUiState::openRides,
+                onOpenRoundTrip       = screenUiState::openRoundTrip,
+                onStartRoutePlanning  = viewModel::startRoutePlanning,
+                onOpenPlannedRoutes   = screenUiState::openPlannedRoutes,
+                onOpenDisplaySettings = screenUiState::openDisplaySettings,
+                onOpenNavRouting      = screenUiState::openNavRouting,
+                onOpenBikeGarage      = screenUiState::openBikeGarage,
+                onOpenSensors         = screenUiState::openSensors
+            )
+        }
         Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -974,44 +1022,65 @@ fun MainMapScreen(
         // Settings sheet only holds actual settings. Hidden during active
         // navigation, where the bottom area belongs to the navigation card.
         if (activeNavigation == null) {
-            val speedDialActions = listOf(
-                SpeedDialAction(
-                    label = stringResource(R.string.route_plan_menu),
-                    icon = Icons.Default.Route,
-                    onClick = viewModel::startRoutePlanning
-                ),
-                SpeedDialAction(
-                    label = stringResource(R.string.round_trip_menu),
-                    icon = Icons.Default.Loop,
-                    onClick = screenUiState::openRoundTrip
-                ),
-                SpeedDialAction(
-                    label = stringResource(R.string.route_my_routes_menu),
-                    icon = Icons.AutoMirrored.Filled.AltRoute,
-                    onClick = screenUiState::openPlannedRoutes
-                ),
-                SpeedDialAction(
-                    label = stringResource(R.string.menu_my_rides),
-                    icon = Icons.Default.Timeline,
-                    onClick = screenUiState::openRides
-                ),
-                SpeedDialAction(
-                    label = stringResource(
-                        if (parkedBike != null) R.string.menu_show_parked_bike
-                        else R.string.menu_park_bike_here
-                    ),
-                    icon = Icons.AutoMirrored.Filled.DirectionsBike,
-                    onClick = {
-                        if (parkedBike != null) viewModel.showParkedBike()
-                        else viewModel.parkBikeAtCurrentLocation()
-                    }
-                ),
-                SpeedDialAction(
-                    label = stringResource(R.string.favorites_title),
-                    icon = Icons.Default.Favorite,
-                    onClick = screenUiState::openFavorites
-                )
+            // PERF: resolve the labels once per recomposition instead of re-running the
+            // `stringResource` lookups inside a freshly-allocated `listOf(...)` on every
+            // GPS fix, and memoise the action list on its only real input (whether a bike
+            // is currently parked, which swaps the park ↔ show entry). `isBikeParked` is
+            // captured for the park onClick via the memo key so it never goes stale.
+            val routePlanLabel = stringResource(R.string.route_plan_menu)
+            val roundTripLabel = stringResource(R.string.round_trip_menu)
+            val myRoutesLabel = stringResource(R.string.route_my_routes_menu)
+            val myRidesLabel = stringResource(R.string.menu_my_rides)
+            val parkBikeLabel = stringResource(
+                if (isBikeParked) R.string.menu_show_parked_bike
+                else R.string.menu_park_bike_here
             )
+            val favoritesLabel = stringResource(R.string.favorites_title)
+            val speedDialActions = remember(
+                isBikeParked,
+                routePlanLabel,
+                roundTripLabel,
+                myRoutesLabel,
+                myRidesLabel,
+                parkBikeLabel,
+                favoritesLabel
+            ) {
+                listOf(
+                    SpeedDialAction(
+                        label = routePlanLabel,
+                        icon = Icons.Default.Route,
+                        onClick = viewModel::startRoutePlanning
+                    ),
+                    SpeedDialAction(
+                        label = roundTripLabel,
+                        icon = Icons.Default.Loop,
+                        onClick = screenUiState::openRoundTrip
+                    ),
+                    SpeedDialAction(
+                        label = myRoutesLabel,
+                        icon = Icons.AutoMirrored.Filled.AltRoute,
+                        onClick = screenUiState::openPlannedRoutes
+                    ),
+                    SpeedDialAction(
+                        label = myRidesLabel,
+                        icon = Icons.Default.Timeline,
+                        onClick = screenUiState::openRides
+                    ),
+                    SpeedDialAction(
+                        label = parkBikeLabel,
+                        icon = Icons.AutoMirrored.Filled.DirectionsBike,
+                        onClick = {
+                            if (isBikeParked) viewModel.showParkedBike()
+                            else viewModel.parkBikeAtCurrentLocation()
+                        }
+                    ),
+                    SpeedDialAction(
+                        label = favoritesLabel,
+                        icon = Icons.Default.Favorite,
+                        onClick = screenUiState::openFavorites
+                    )
+                )
+            }
             MapActionsSpeedDial(actions = speedDialActions)
         }
 

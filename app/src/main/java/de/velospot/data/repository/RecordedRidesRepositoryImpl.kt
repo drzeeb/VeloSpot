@@ -11,11 +11,13 @@ import de.velospot.data.local.dao.RecordedRideSummaryRow
 import de.velospot.data.local.entity.RecordedRideEntity
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
+import de.velospot.domain.model.RideTrackGeometry
 import de.velospot.domain.model.TrackPoint
 import de.velospot.domain.model.WeatherSnapshot
 import de.velospot.domain.repository.RecordedRidesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -46,6 +48,16 @@ class RecordedRidesRepositoryImpl @Inject constructor(
 
     private val weatherAdapter = moshi.adapter(WeatherSnapshot::class.java)
 
+    /**
+     * Geometry-only track adapter: parses just the `latitude`/`longitude` of each
+     * stored point (Moshi silently ignores the speed/altitude/accuracy/timestamp
+     * keys), so the overlays never pay to deserialise or hold fields they never
+     * draw.
+     */
+    private val geometryAdapter = moshi.adapter<List<LatLonPoint>>(
+        Types.newParameterizedType(List::class.java, LatLonPoint::class.java)
+    )
+
     override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> =
         recordedRideDao.getSummariesFlow().map { rows -> rows.map { it.toDomain() } }
 
@@ -56,6 +68,18 @@ class RecordedRidesRepositoryImpl @Inject constructor(
             // off the main thread so collectors (the map overlays / analysis) never
             // jank. Also never selects `pointsJson` whole (chunked reads) so a dense
             // imported track cannot blow the ~2 MB `CursorWindow` limit.
+            .flowOn(Dispatchers.Default)
+
+    override fun getRideTrackGeometriesFlow(): Flow<List<RideTrackGeometry>> =
+        recordedRideDao.getTrackKeysFlow()
+            // Gate on the track *set* alone: Room re-runs the query on any write to
+            // the table, but the key rows (id, isMock, track length) don't change on
+            // a rename / archive / bike-reassign, so `distinctUntilChanged` avoids
+            // re-deserialising the whole history while a layer is visible.
+            .distinctUntilChanged()
+            .map { keys -> keys.map { key -> RideTrackGeometry(key.isMock, readTrackGeometry(key.id)) } }
+            // Chunked reads + a lat/lon-only parse are CPU-bound; keep them off the
+            // main thread so the overlay collectors never jank.
             .flowOn(Dispatchers.Default)
 
     override suspend fun getRide(id: String): RecordedRide? =
@@ -161,6 +185,22 @@ class RecordedRidesRepositoryImpl @Inject constructor(
         }
         return builder.toString()
     }
+
+    /**
+     * Reads [id]'s track (chunked, via [readPointsJson]) and parses **only** the
+     * lat/lon of each point into bare [TrackPoint]s for the geometry-only overlay
+     * source. Speeds, altitudes, accuracies and timestamps are never parsed or
+     * retained. Returns an empty list for a ride without a track.
+     */
+    private suspend fun readTrackGeometry(id: String): List<TrackPoint> {
+        val json = readPointsJson(id)
+        if (json.isEmpty()) return emptyList()
+        val raw = runCatching { geometryAdapter.fromJson(json) }.getOrNull().orEmpty()
+        return raw.map { TrackPoint(latitude = it.latitude, longitude = it.longitude, timestamp = 0L) }
+    }
+
+    /** Minimal JSON view of a stored track point: only the drawn coordinates. */
+    private class LatLonPoint(val latitude: Double, val longitude: Double)
 
     private fun RecordedRideSummaryRow.toDomain() = RecordedRideSummary(
         id = id,
