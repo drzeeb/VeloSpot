@@ -21,7 +21,7 @@ import de.velospot.data.local.entity.BikeProfileEntity
 @Database(
     entities = [RecordedRideEntity::class, BikeProfileEntity::class],
     version = 8,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class RidesDatabase : RoomDatabase() {
 
@@ -127,13 +127,23 @@ abstract class RidesDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * The full ordered migration chain (v1 → v8). Exposed as a single source of
+         * truth so the production builder and the instrumented `MigrationTestHelper`
+         * test validate exactly the same set of migrations.
+         */
+        val ALL_MIGRATIONS: Array<Migration> = arrayOf(
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+            MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8
+        )
+
         fun getInstance(context: Context): RidesDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     RidesDatabase::class.java,
                     "velospot_rides.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build().also { instance = it }
+                ).addMigrations(*ALL_MIGRATIONS).build().also { instance = it }
             }
         }
     }

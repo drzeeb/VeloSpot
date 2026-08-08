@@ -1,6 +1,6 @@
 package de.velospot.core.map
 
-import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RideTrackGeometry
 import de.velospot.domain.model.TrackPoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -8,17 +8,8 @@ import org.junit.Test
 
 class RideTrackLinesTest {
 
-    private fun ride(vararg points: Pair<Double, Double>) = RecordedRide(
-        id = "r",
-        startedAt = 0L,
-        endedAt = 0L,
-        distanceMeters = 0.0,
-        elapsedSeconds = 0L,
-        movingSeconds = 0L,
-        avgSpeedMps = 0.0,
-        maxSpeedMps = 0.0,
-        elevationGainMeters = 0.0,
-        elevationLossMeters = 0.0,
+    private fun ride(vararg points: Pair<Double, Double>) = RideTrackGeometry(
+        isMock = false,
         points = points.map { TrackPoint(it.first, it.second, 0L) }
     )
 

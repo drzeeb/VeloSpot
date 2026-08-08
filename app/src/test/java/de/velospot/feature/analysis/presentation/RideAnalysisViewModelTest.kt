@@ -15,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -62,9 +63,17 @@ class RideAnalysisViewModelTest {
 
     private class FakeRidesRepository(rides: List<RecordedRide>) : RecordedRidesRepository {
         val flow = MutableStateFlow(rides)
+
+        /** Every ride id passed to [getRide], to prove only the target track is loaded. */
+        val loadedIds = mutableListOf<String>()
+
         override fun getRidesWithTracksFlow(): Flow<List<RecordedRide>> = flow
-        override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> = MutableStateFlow(emptyList())
-        override suspend fun getRide(id: String): RecordedRide? = flow.value.firstOrNull { it.id == id }
+        override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> =
+            flow.map { list -> list.map { it.toSummary() } }
+        override suspend fun getRide(id: String): RecordedRide? {
+            loadedIds += id
+            return flow.value.firstOrNull { it.id == id }
+        }
         override suspend fun getRides(ids: List<String>): List<RecordedRide> = emptyList()
         override suspend fun saveRide(ride: RecordedRide) = Unit
         override suspend fun updateRideName(id: String, name: String?) = Unit
@@ -72,6 +81,7 @@ class RideAnalysisViewModelTest {
         override suspend fun removeRide(id: String) = Unit
         override suspend fun clearAll() = Unit
     }
+
 
     /** Minimal [MapSettingsRepository] fake — only [weatherEnabled] matters here. */
     private class FakeMapSettings(weatherEnabled: Boolean) : MapSettingsRepository {
@@ -218,6 +228,40 @@ class RideAnalysisViewModelTest {
         assertNull(state.ride.weather)
     }
 
+    @Test
+    fun `analysis loads only the target ride's track, never other rides`() = runTest {
+        // Three rides in the history; the screen must analyse just "r" and never
+        // deserialise the other two rides' tracks (a full getRide on them).
+        val repo = FakeRidesRepository(
+            listOf(ride("other-a"), ride("r", count = 300), ride("other-b")),
+        )
+        val vm = viewModel(repo, rideId = "r")
+
+        val state = vm.awaitSettled()
+        assertTrue(state is RideAnalysisUiState.Ready)
+        assertEquals("r", (state as RideAnalysisUiState.Ready).ride.id)
+        // Only the target's full track was ever loaded.
+        assertEquals(listOf("r"), repo.loadedIds.distinct())
+    }
+
+    @Test
+    fun `personal record uses the track-free summaries of other rides`() = runTest {
+        // The target is the longest ride; the two others exist only via their
+        // summaries (their tracks are never loaded) yet still gate the PR.
+        val target = ride("r", count = 400) // ~2.2 km
+        val repo = FakeRidesRepository(listOf(target, ride("a", count = 50), ride("b", count = 80)))
+        val vm = viewModel(repo, rideId = "r")
+
+        val state = vm.awaitSettled() as RideAnalysisUiState.Ready
+        assertEquals(listOf("r"), repo.loadedIds.distinct())
+        assertTrue(
+            "target is the longest → distance PR",
+            state.achievements.any {
+                it.id == de.velospot.core.analysis.AchievementId.PR_DISTANCE && it.isPersonalRecord
+            },
+        )
+    }
+
     private fun sampleWeather() = WeatherSnapshot(
         temperatureC = 20.0,
         apparentTemperatureC = 17.0,
@@ -231,6 +275,24 @@ class RideAnalysisViewModelTest {
         longitude = 6.64,
     )
 }
+
+/** The track-free timeline view derived from a full ride, for the summaries flow. */
+private fun RecordedRide.toSummary() = RecordedRideSummary(
+    id = id,
+    startedAt = startedAt,
+    endedAt = endedAt,
+    distanceMeters = distanceMeters,
+    elapsedSeconds = elapsedSeconds,
+    movingSeconds = movingSeconds,
+    avgSpeedMps = avgSpeedMps,
+    maxSpeedMps = maxSpeedMps,
+    elevationGainMeters = elevationGainMeters,
+    elevationLossMeters = elevationLossMeters,
+    name = name,
+    isMock = isMock,
+    archivedAt = archivedAt,
+    bikeProfileId = bikeProfileId,
+)
 
 
 

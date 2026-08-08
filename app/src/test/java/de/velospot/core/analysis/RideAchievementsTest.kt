@@ -1,6 +1,7 @@
 package de.velospot.core.analysis
 
 import de.velospot.domain.model.RecordedRide
+import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.model.TrackPoint
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -45,16 +46,37 @@ class RideAchievementsTest {
 
     private fun analysisFor(r: RecordedRide) = analyzeRide(r)
 
+    /** The track-free cross-ride comparison view the evaluator now consumes. */
+    private fun RecordedRide.toSummary() = RecordedRideSummary(
+        id = id,
+        startedAt = startedAt,
+        endedAt = endedAt,
+        distanceMeters = distanceMeters,
+        elapsedSeconds = elapsedSeconds,
+        movingSeconds = movingSeconds,
+        avgSpeedMps = avgSpeedMps,
+        maxSpeedMps = maxSpeedMps,
+        elevationGainMeters = elevationGainMeters,
+        elevationLossMeters = elevationLossMeters,
+        name = name,
+        isMock = isMock,
+        archivedAt = archivedAt,
+        bikeProfileId = bikeProfileId
+    )
+
+    private fun evaluate(ride: RecordedRide, all: List<RecordedRide>) =
+        evaluateAchievements(ride, analysisFor(ride), all.map { it.toSummary() })
+
     @Test
     fun `mock rides earn no achievements`() {
         val r = ride(distanceMeters = 120_000.0, isMock = true)
-        assertTrue(evaluateAchievements(r, analysisFor(r), listOf(r)).isEmpty())
+        assertTrue(evaluate(r, listOf(r)).isEmpty())
     }
 
     @Test
     fun `a century ride earns the century badge, not the half-century`() {
         val r = ride(distanceMeters = 105_000.0)
-        val ids = evaluateAchievements(r, analysisFor(r), listOf(r)).map { it.id }
+        val ids = evaluate(r, listOf(r)).map { it.id }
         assertTrue(AchievementId.CENTURY in ids)
         assertFalse(AchievementId.HALF_CENTURY in ids)
     }
@@ -62,7 +84,7 @@ class RideAchievementsTest {
     @Test
     fun `a 60 km ride earns the half-century badge`() {
         val r = ride(distanceMeters = 60_000.0)
-        val ids = evaluateAchievements(r, analysisFor(r), listOf(r)).map { it.id }
+        val ids = evaluate(r, listOf(r)).map { it.id }
         assertTrue(AchievementId.HALF_CENTURY in ids)
         assertFalse(AchievementId.CENTURY in ids)
     }
@@ -75,7 +97,7 @@ class RideAchievementsTest {
             ride(id = "b", distanceMeters = 50_000.0)
         )
         val all = others + longRide
-        val earned = evaluateAchievements(longRide, analysisFor(longRide), all)
+        val earned = evaluate(longRide, all)
         val pr = earned.firstOrNull { it.id == AchievementId.PR_DISTANCE }
         assertTrue("expected a distance PR", pr != null)
         assertTrue("PR should be flagged", pr!!.isPersonalRecord)
@@ -85,14 +107,14 @@ class RideAchievementsTest {
     fun `not the longest ride earns no distance record`() {
         val shortRide = ride(id = "short", distanceMeters = 20_000.0)
         val all = listOf(shortRide, ride(id = "b", distanceMeters = 90_000.0))
-        val earned = evaluateAchievements(shortRide, analysisFor(shortRide), all)
+        val earned = evaluate(shortRide, all)
         assertFalse(earned.any { it.id == AchievementId.PR_DISTANCE })
     }
 
     @Test
     fun `no personal records are awarded for the very first ride`() {
         val first = ride(distanceMeters = 30_000.0)
-        val earned = evaluateAchievements(first, analysisFor(first), listOf(first))
+        val earned = evaluate(first, listOf(first))
         assertFalse(earned.any { it.isPersonalRecord })
     }
 }

@@ -20,7 +20,7 @@ import de.velospot.data.local.entity.RouteAttemptEntity
 @Database(
     entities = [PlannedRouteEntity::class, RouteAttemptEntity::class],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class PlannedRoutesDatabase : RoomDatabase() {
 
