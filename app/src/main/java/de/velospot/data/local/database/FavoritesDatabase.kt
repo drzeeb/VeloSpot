@@ -26,7 +26,7 @@ import java.io.File
 @Database(
     entities = [FavoriteSpaceEntity::class],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class FavoritesDatabase : RoomDatabase() {
 

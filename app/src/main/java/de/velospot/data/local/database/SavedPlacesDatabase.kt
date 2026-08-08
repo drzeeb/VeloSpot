@@ -18,7 +18,7 @@ import de.velospot.data.local.entity.SavedPlaceEntity
 @Database(
     entities = [SavedPlaceEntity::class],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class SavedPlacesDatabase : RoomDatabase() {
 

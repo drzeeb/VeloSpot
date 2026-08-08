@@ -1,0 +1,42 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "2c2c3eed25ed31ea72ea0d6a85818b72",
+    "entities": [
+      {
+        "tableName": "favorite_parking_spaces",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`parkingSpaceId` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, `notes` TEXT, PRIMARY KEY(`parkingSpaceId`))",
+        "fields": [
+          {
+            "fieldPath": "parkingSpaceId",
+            "columnName": "parkingSpaceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addedAt",
+            "columnName": "addedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "parkingSpaceId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2c2c3eed25ed31ea72ea0d6a85818b72')"
+    ]
+  }
+}
