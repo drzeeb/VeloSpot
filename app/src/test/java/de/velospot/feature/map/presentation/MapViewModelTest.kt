@@ -6,9 +6,11 @@ import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.map.RideViewOptions
 import de.velospot.data.brouter.BRouterSegmentManager
 import de.velospot.data.geocoding.PhotonGeocoder
+import de.velospot.domain.model.AddressSearchResult
 import de.velospot.domain.model.BikeParkingSpace
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.BikeParkingType
+import de.velospot.domain.model.PlannedRoute
 import de.velospot.domain.model.BoundingBox
 import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
@@ -108,6 +110,14 @@ class MapViewModelTest {
         whenever(sharedPrefs.edit()).thenReturn(editor)
         whenever(editor.putBoolean(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(editor)
         whenever(editor.putString(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(editor)
+
+        // Synthetic navigation destinations (parked bike / round trip / custom pin /
+        // saved place) derive their labels from string resources; a bare mock Context
+        // returns null and the non-null `getString` contract would NPE. Return a
+        // stable placeholder for both the plain and the formatted overloads.
+        whenever(mockContext.getString(org.mockito.kotlin.any())).thenReturn("label")
+        whenever(mockContext.getString(org.mockito.kotlin.any(), org.mockito.kotlin.anyVararg()))
+            .thenReturn("label")
     }
 
     @After
@@ -816,6 +826,511 @@ class MapViewModelTest {
 
         assertEquals(uri, awaitGpxChooser(viewModel))
     }
+
+    // ── Custom map pin ────────────────────────────────────────────────────────
+
+    @Test
+    fun `onMapTapped drops a custom pin and moves the camera`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.onMapTapped(49.7, 6.6)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(GeoCoordinate(49.7, 6.6), vm.customMapPin.value)
+        val target = vm.mapCameraTarget.value
+        assertTrue(target != null)
+        assertEquals(49.7, target!!.latitude, 0.0)
+        assertEquals(6.6, target.longitude, 0.0)
+    }
+
+    @Test
+    fun `onMapTapped is ignored during an active follow session`() = runTest {
+        val destination = sampleSpace(id = "target")
+        val vm = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(destination)),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.startInAppNavigation(destination)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(vm.navigationUiState.value is NavigationUiState.Active)
+
+        vm.onMapTapped(1.0, 2.0)
+
+        // A drop mid-trip would trigger reverse-geocoding + a camera jump — suppressed.
+        assertEquals(null, vm.customMapPin.value)
+    }
+
+    @Test
+    fun `dismissCustomMapPin clears the pin and its address`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.onMapTapped(49.7, 6.6)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(vm.customMapPin.value != null)
+
+        vm.dismissCustomMapPin()
+        assertEquals(null, vm.customMapPin.value)
+        assertEquals(null, vm.customMapPinAddress.value)
+    }
+
+    @Test
+    fun `saveCustomPinAsFavorite persists a named saved place and dismisses the pin`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.onMapTapped(49.7, 6.6)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.saveCustomPinAsFavorite("Home")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, vm.savedPlaces.value.size)
+        assertEquals("Home", vm.savedPlaces.value.first().name)
+        assertEquals(null, vm.customMapPin.value)
+    }
+
+    // ── Address search pins ───────────────────────────────────────────────────
+
+    @Test
+    fun `onSearchResultSelected drops a search pin and dismissSearchPin clears it`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val result = AddressSearchResult(displayName = "Main St 1, Trier", latitude = 49.75, longitude = 6.64)
+
+        vm.onSearchResultSelected(result)
+        assertEquals(result, vm.selectedSearchPin.value)
+        val target = vm.mapCameraTarget.value
+        assertTrue(target != null)
+        assertEquals(49.75, target!!.latitude, 0.0)
+
+        vm.dismissSearchPin()
+        assertEquals(null, vm.selectedSearchPin.value)
+    }
+
+    @Test
+    fun `saveSearchPinAsFavorite persists a saved place and dismisses the search pin`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val result = AddressSearchResult(displayName = "Market Square, Trier", latitude = 49.75, longitude = 6.64)
+        vm.onSearchResultSelected(result)
+
+        vm.saveSearchPinAsFavorite("Work")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, vm.savedPlaces.value.size)
+        assertEquals("Work", vm.savedPlaces.value.first().name)
+        assertEquals(null, vm.selectedSearchPin.value)
+    }
+
+    @Test
+    fun `startNavigationToAddress routes to a synthetic address destination`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        val result = AddressSearchResult(displayName = "Porta Nigra, Trier", latitude = 49.76, longitude = 6.64)
+
+        vm.startNavigationToAddress(result)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.navigationUiState.value
+        assertTrue(state is NavigationUiState.Active)
+        assertEquals(MapViewModel.ID_ADDRESS_SEARCH_PIN, (state as NavigationUiState.Active).destination.id)
+        assertEquals(null, vm.selectedSearchPin.value)
+    }
+
+    @Test
+    fun `onSearchCleared resets the query and search pin`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // A short query returns early without hitting the geocoder.
+        vm.onSearchQueryChanged("ab")
+        assertEquals("ab", vm.searchQuery.value)
+        assertTrue(vm.searchResults.value.isEmpty())
+
+        vm.onSearchResultSelected(
+            AddressSearchResult(displayName = "X", latitude = 1.0, longitude = 2.0)
+        )
+        vm.onSearchCleared()
+
+        assertEquals("", vm.searchQuery.value)
+        assertEquals(null, vm.selectedSearchPin.value)
+    }
+
+    // ── Space selection ───────────────────────────────────────────────────────
+
+    @Test
+    fun `selectSpace selects a space and centres the camera`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val space = sampleSpace(id = "s1")
+
+        vm.selectSpace(space)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(space, vm.selectedSpace.value)
+        val target = vm.mapCameraTarget.value
+        assertTrue(target != null)
+        assertEquals(space.latitude, target!!.latitude, 0.0)
+
+        vm.selectSpace(null)
+        assertEquals(null, vm.selectedSpace.value)
+    }
+
+    // ── Saved places ──────────────────────────────────────────────────────────
+
+    @Test
+    fun `selectSavedPlace opens the detail sheet and dismiss clears it`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val place = SavedPlace(
+            id = "p1", name = "Home", latitude = 49.76, longitude = 6.65,
+            address = null, addedAt = 0L
+        )
+
+        vm.selectSavedPlace(place)
+        assertEquals(place, vm.selectedSavedPlace.value)
+
+        vm.dismissSelectedSavedPlace()
+        assertEquals(null, vm.selectedSavedPlace.value)
+    }
+
+    // ── Parked bike sheet + navigation ────────────────────────────────────────
+
+    @Test
+    fun `showParkedBike opens the sheet and dismiss hides it`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.parkBikeAtCurrentLocation()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.showParkedBike()
+        assertTrue(vm.isParkedBikeSheetVisible.value)
+
+        vm.dismissParkedBikeSheet()
+        assertTrue(!vm.isParkedBikeSheetVisible.value)
+    }
+
+    @Test
+    fun `navigateToParkedBike routes to the parked-bike destination`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.parkBikeAtCurrentLocation()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.navigateToParkedBike()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.navigationUiState.value
+        assertTrue(state is NavigationUiState.Active)
+        assertEquals(MapViewModel.ID_PARKED_BIKE, (state as NavigationUiState.Active).destination.id)
+    }
+
+    // ── Follow-lock / re-centre ───────────────────────────────────────────────
+
+    @Test
+    fun `panning and re-centring do not lock the camera on the idle map`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(!vm.isFollowSessionActive)
+        vm.onMapPannedByUser()          // no session → no-op
+        assertTrue(!vm.isFollowingLocation.value)
+
+        vm.recenterOnUserLocation()     // centres but does not lock without a session
+        assertTrue(vm.mapCameraTarget.value != null)
+        assertTrue(!vm.isFollowingLocation.value)
+    }
+
+    // ── Persisted toggle flows ────────────────────────────────────────────────
+
+    @Test
+    fun `hud, amoled, sun-alert and weather toggles persist through map settings`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.setHudEnabled(true)
+        vm.setHudExpanded(true)
+        vm.setAmoledEnabled(true)
+        vm.setSunAlertEnabled(false)
+        vm.setWeatherEnabled(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(true, vm.hudEnabled.value)
+        assertEquals(true, vm.hudExpanded.value)
+        assertEquals(true, vm.amoledEnabled.value)
+        assertEquals(false, vm.sunAlertEnabled.value)
+        assertEquals(true, vm.weatherEnabled.value)
+    }
+
+    @Test
+    fun `consumeUserMessage clears the one-shot message`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(initialLocation = null)
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // No fix → parking sets a one-shot "location unavailable" message.
+        vm.parkBikeAtCurrentLocation()
+        assertEquals(de.velospot.R.string.error_location_unavailable, vm.userMessageRes.value)
+
+        vm.consumeUserMessage()
+        assertEquals(null, vm.userMessageRes.value)
+    }
+
+    @Test
+    fun `clearViewportLoadError resets the transient viewport error`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.clearViewportLoadError()
+        assertEquals(null, vm.viewportLoadError.value)
+    }
+
+    // ── Recent destinations & round trips ─────────────────────────────────────
+
+    @Test
+    fun `navigateToRecentDestination routes to a synthetic recent destination`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        val recent = de.velospot.domain.model.RecentDestination(
+            id = "r1", name = "Cinema", latitude = 49.77, longitude = 6.63,
+            address = "Filmstr 1", lastUsedAt = 0L,
+            kind = de.velospot.domain.model.DestinationKind.RECENT
+        )
+
+        vm.navigateToRecentDestination(recent)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.navigationUiState.value
+        assertTrue(state is NavigationUiState.Active)
+        assertEquals(MapViewModel.ID_ADDRESS_SEARCH_PIN, (state as NavigationUiState.Active).destination.id)
+    }
+
+    @Test
+    fun `startRoundTrip routes to a synthetic loop when a fix is available`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startRoundTrip(distanceMeters = 5_000.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.navigationUiState.value
+        assertTrue(state is NavigationUiState.Active)
+        assertEquals(MapViewModel.ID_ROUND_TRIP, (state as NavigationUiState.Active).destination.id)
+    }
+
+    @Test
+    fun `startRoundTrip is a no-op without a fix`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(initialLocation = null)
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startRoundTrip(distanceMeters = 5_000.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(NavigationUiState.Idle, vm.navigationUiState.value)
+    }
+
+    // ── Route planning ────────────────────────────────────────────────────────
+
+    @Test
+    fun `route planning drops waypoints, previews and saves a named route`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startRoutePlanning()
+        assertTrue(vm.isPlanningRoute.value)
+
+        vm.onMapTapped(49.70, 6.60)
+        vm.onMapTapped(49.71, 6.61)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, vm.planningWaypoints.value.size)
+        // Two stops → a preview polyline was computed off the fake routing repo.
+        assertTrue(vm.planningPreviewRoute.value != null)
+
+        val saved = vm.savePlannedRoute("City loop")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(saved)
+        assertEquals(1, vm.plannedRoutes.value.size)
+        assertEquals("City loop", vm.plannedRoutes.value.first().name)
+        assertTrue(!vm.isPlanningRoute.value)
+    }
+
+    @Test
+    fun `undo and cancel discard planning waypoints`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startRoutePlanning()
+        vm.onMapTapped(49.70, 6.60)
+        vm.onMapTapped(49.71, 6.61)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(2, vm.planningWaypoints.value.size)
+
+        vm.undoLastWaypoint()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, vm.planningWaypoints.value.size)
+
+        vm.cancelRoutePlanning()
+        assertTrue(!vm.isPlanningRoute.value)
+        assertTrue(vm.planningWaypoints.value.isEmpty())
+    }
+
+    @Test
+    fun `savePlannedRoute refuses a session with fewer than two waypoints`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startRoutePlanning()
+        vm.onMapTapped(49.70, 6.60)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(!vm.savePlannedRoute("Too short"))
+        assertTrue(vm.plannedRoutes.value.isEmpty())
+        // Still planning: the caller can keep dropping stops.
+        assertTrue(vm.isPlanningRoute.value)
+    }
+
+    @Test
+    fun `route leaderboard and preview open and close`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val route = samplePlannedRoute()
+
+        vm.openRouteLeaderboard(route)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(route, vm.leaderboardRoute.value)
+        vm.closeRouteLeaderboard()
+        assertEquals(null, vm.leaderboardRoute.value)
+
+        vm.showRouteOnMap(route)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(route, vm.previewedRoute.value)
+        vm.closeRoutePreview()
+        assertEquals(null, vm.previewedRoute.value)
+    }
+
+    @Test
+    fun `ridePlannedRoute navigates through the route waypoints`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.ridePlannedRoute(samplePlannedRoute(), reversed = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.navigationUiState.value
+        assertTrue(state is NavigationUiState.Active)
+        assertEquals(MapViewModel.ID_PLANNED_ROUTE, (state as NavigationUiState.Active).destination.id)
+    }
+
+    // ── Offline sheets / region picking ───────────────────────────────────────
+
+    @Test
+    fun `offline profile sheet and region picking toggle their flags`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.openProfileSheet()
+        assertTrue(vm.showProfileSheet.value)
+        vm.dismissProfileSheet()
+        assertTrue(!vm.showProfileSheet.value)
+
+        vm.startPickingOfflineRegion()
+        assertTrue(vm.isPickingOfflineRegion.value)
+        vm.cancelPickingOfflineRegion()
+        assertTrue(!vm.isPickingOfflineRegion.value)
+    }
+
+    // ── Ride-name prompt (manual stop) ────────────────────────────────────────
+
+    @Test
+    fun `requestStopRideTracking is ignored when nothing is recording`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.requestStopRideTracking()
+        // No recording → no naming prompt is raised.
+        assertEquals(null, vm.rideNamePrompt.value)
+    }
+
+    @Test
+    fun `cancelRideNamePrompt clears any open naming prompt`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.cancelRideNamePrompt()
+        assertEquals(null, vm.rideNamePrompt.value)
+    }
+
+    // ── External sensors ──────────────────────────────────────────────────────
+
+    @Test
+    fun `sensor management calls complete without error`() = runTest {
+        val vm = makeViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.rememberSensor("AA:BB:CC:DD:EE:FF")
+        vm.forgetSensor("AA:BB:CC:DD:EE:FF")
+        vm.setWheelCircumferenceMeters(2.105)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // The fake sensor repo is a no-op; reaching here means every launch completed.
+        assertTrue(vm.rememberedSensorAddresses.value.isEmpty())
+    }
+
+    private fun samplePlannedRoute() = PlannedRoute(
+        id = "route-1",
+        name = "Sample route",
+        waypoints = listOf(
+            de.velospot.domain.model.RouteWaypoint(latitude = 49.75, longitude = 6.64),
+            de.velospot.domain.model.RouteWaypoint(latitude = 49.76, longitude = 6.65)
+        ),
+        geometry = listOf(
+            RoutePoint(latitude = 49.75, longitude = 6.64),
+            RoutePoint(latitude = 49.76, longitude = 6.65)
+        ),
+        distanceMeters = 1500.0,
+        elevationGainMeters = 10.0,
+        elevationLossMeters = 8.0,
+        energyJoules = null,
+        createdAt = 0L
+    )
 
     private fun progress(remainingMeters: Double) = de.velospot.core.navigation.NavigationProgress(
         remainingMeters = remainingMeters,

@@ -63,7 +63,7 @@ private fun DurationEffort.toRow(): EffortRow = EffortRow(
 )
 
 /** Compact label for a time target: `1 min`, `20 min`, `1 h`. */
-private fun formatDurationTarget(seconds: Long): String =
+internal fun formatDurationTarget(seconds: Long): String =
     if (seconds < 3_600) "${seconds / 60} min" else "${seconds / 3_600} h"
 
 @Composable

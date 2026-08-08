@@ -40,11 +40,11 @@ import de.velospot.core.analysis.Achievement
 import de.velospot.core.analysis.AchievementId
 
 /** Visuals (icon + colour) for a badge; the title comes from a string resource. */
-private data class BadgeVisual(val icon: ImageVector, val color: Color)
+internal data class BadgeVisual(val icon: ImageVector, val color: Color)
 
-private val GOLD = Color(0xFFF6A623)
+internal val GOLD = Color(0xFFF6A623)
 
-private fun visualFor(id: AchievementId): BadgeVisual = when (id) {
+internal fun visualFor(id: AchievementId): BadgeVisual = when (id) {
     AchievementId.HALF_CENTURY, AchievementId.CENTURY ->
         BadgeVisual(Icons.Filled.Route, Color(0xFF1565C0))
     AchievementId.HILL_CLIMBER, AchievementId.SUMMIT_SEEKER ->
@@ -66,7 +66,7 @@ private fun visualFor(id: AchievementId): BadgeVisual = when (id) {
         BadgeVisual(Icons.Filled.EmojiEvents, GOLD)
 }
 
-private fun titleResFor(id: AchievementId): Int = when (id) {
+internal fun titleResFor(id: AchievementId): Int = when (id) {
     AchievementId.HALF_CENTURY -> R.string.ach_half_century
     AchievementId.CENTURY -> R.string.ach_century
     AchievementId.HILL_CLIMBER -> R.string.ach_hill_climber
