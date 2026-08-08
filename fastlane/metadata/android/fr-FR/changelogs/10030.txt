@@ -1,0 +1,9 @@
+• Météo optionnelle sur la carte et pour vos sorties (Open-Meteo, sans compte)
+• Capteurs Bluetooth : vitesse, cadence, puissance, fréquence cardiaque
+• Ordinateur de bord (HUD) en direct pendant l'enregistrement
+• Export d'une sortie en GPX, avec aide pour Strava
+• Statistiques globales en carte « VeloSpot Wrapped »
+• Ouvrez des fichiers .gpx depuis une autre application
+• La pente ne saute plus à ±30 % sur terrain plat
+• Libellés de carte selon la langue de l'application
+
