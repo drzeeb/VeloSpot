@@ -190,6 +190,15 @@ kover {
                     "de.velospot.core.tracking.RideRecordingTileService*",
                     "de.velospot.core.tracking.RideRecordingWidget*",
                     "de.velospot.core.tracking.BikeServiceNotifier*",
+                    // "VeloSpot Wrapped" scheduling glue that needs an instrumented
+                    // environment (DataStore backing file, WorkManager, notifications,
+                    // BroadcastReceiver). Their pure logic — the schedule mapping,
+                    // next-fire/initial-delay maths and the worker decision table — is
+                    // JVM-unit-tested separately (see the wrapped `scheduler` tests).
+                    "de.velospot.feature.wrapped.data.WrappedScheduleDataStore*",
+                    "de.velospot.feature.wrapped.scheduler.WrappedWorker*",
+                    "de.velospot.feature.wrapped.scheduler.WrappedNotifier*",
+                    "de.velospot.feature.wrapped.scheduler.WrappedBootReceiver*",
                     // System location provider glue (FusedLocationProvider callbacks —
                     // needs an instrumented environment / Play services).
                     "de.velospot.data.location.LocationRepositoryImpl*",
@@ -294,6 +303,12 @@ dependencies {
     implementation(libs.hiltAndroid)
     ksp(libs.hiltAndroidCompiler)
     implementation(libs.androidxHiltNavigationCompose)
+    // WorkManager + Hilt integration. The "VeloSpot Wrapped" scheduler enqueues a
+    // self-rescheduling one-shot worker; `hilt-work` lets that CoroutineWorker be
+    // constructor-injected via the app's HiltWorkerFactory (see BaseApplication).
+    implementation(libs.androidxWorkRuntime)
+    implementation(libs.androidxHiltWork)
+    ksp(libs.androidxHiltCompiler)
     // Hilt/Dagger's generated components reference @CanIgnoreReturnValue from
     // error_prone_annotations, pulled in transitively via play-services. Declare it
     // explicitly (compile-time only annotation) so the build never depends on that

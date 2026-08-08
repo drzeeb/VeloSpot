@@ -409,6 +409,10 @@
     <string name="bike_service_notification_text">%1$s huet %2$d km erreecht – Zäit fir e Service-Check.</string>
     <string name="bike_service_channel_name">Vëlos-Service-Erënnerungen</string>
     <string name="bike_service_channel_description">Erënnert dech op Basis vun der gefuerener Distanz, wéini e Vëlo e Service brauch.</string>
+    <string name="wrapped_notification_title">Däi VeloSpot Wrapped ass prett</string>
+    <string name="wrapped_notification_text">E frësche Réckbléck op deng Faarten waart op dech. Tipp fir e kucken.</string>
+    <string name="wrapped_channel_name">VeloSpot Wrapped</string>
+    <string name="wrapped_channel_description">Informéiert dech, wann en neie geplangte Faart-Réckbléck erstallt gouf.</string>
     <string name="ride_recording">Tour gëtt opgeholl</string>
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Tour ophuelen</string>

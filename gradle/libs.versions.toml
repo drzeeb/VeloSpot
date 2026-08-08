@@ -31,6 +31,7 @@ json = "20240303"
 benchmark = "1.5.0-beta01"
 profileinstaller = "1.4.1"
 androidxTestRunner = "1.7.0"
+workRuntime = "2.10.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +57,10 @@ androidxComposeIconsExtended = { group = "androidx.compose.material", name = "ma
 hiltAndroid = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hiltAndroidCompiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 androidxHiltNavigationCompose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidxHiltWork = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltNavigationCompose" }
+androidxHiltCompiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltNavigationCompose" }
+androidxWorkRuntime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntime" }
+androidxWorkTesting = { group = "androidx.work", name = "work-testing", version.ref = "workRuntime" }
 retrofitCore = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofitConverterMoshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit" }
 moshiKotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }

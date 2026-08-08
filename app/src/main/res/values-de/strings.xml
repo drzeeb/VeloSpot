@@ -416,6 +416,10 @@
     <string name="bike_service_notification_text">%1$s hat %2$d km erreicht – Zeit für einen Service-Check.</string>
     <string name="bike_service_channel_name">Fahrrad-Service-Erinnerungen</string>
     <string name="bike_service_channel_description">Erinnert dich anhand der gefahrenen Distanz, wann ein Fahrrad einen Service braucht.</string>
+    <string name="wrapped_notification_title">Dein VeloSpot Wrapped ist fertig</string>
+    <string name="wrapped_notification_text">Ein frischer Rückblick auf deine Fahrten wartet. Zum Ansehen tippen.</string>
+    <string name="wrapped_channel_name">VeloSpot Wrapped</string>
+    <string name="wrapped_channel_description">Benachrichtigt dich, wenn ein neuer geplanter Fahrtenrückblick erstellt wurde.</string>
     <string name="ride_recording">Fahrt wird aufgezeichnet</string>
     <string name="ride_stop">Stopp</string>
     <string name="ride_start">Fahrt aufzeichnen</string>

@@ -3,6 +3,8 @@ package de.velospot
 import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -14,11 +16,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltAndroidApp
-class BaseApplication : Application() {
+class BaseApplication : Application(), Configuration.Provider {
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /**
+     * Hilt-aware WorkManager factory so the "VeloSpot Wrapped" [
+     * de.velospot.feature.wrapped.scheduler.WrappedWorker] can be constructor-
+     * injected. Exposed through [workManagerConfiguration]; the default
+     * `WorkManagerInitializer` is removed in the manifest so WorkManager initialises
+     * on-demand with this configuration.
+     */
+    @Inject lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     /** Hilt entry point so the Application (which can't use field injection) can
      *  reach the singleton ride repository for one-off maintenance work. */
