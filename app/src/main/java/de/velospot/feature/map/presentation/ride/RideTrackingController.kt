@@ -7,6 +7,7 @@ import de.velospot.core.map.splitIntoSegments
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
+import de.velospot.domain.model.RideTrackGeometry
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.repository.RecordedRidesRepository
 import de.velospot.feature.map.presentation.MapCameraTarget
@@ -65,15 +66,17 @@ class RideTrackingController(
     val recordedRideSummaries: StateFlow<List<RecordedRideSummary>> = _recordedRideSummaries.asStateFlow()
 
     /**
-     * Every recorded ride **with** its full track — but only while an overlay
+     * Every recorded ride's **geometry** (lat/lon only) — but only while an overlay
      * actually needs it. Empty (and nothing deserialised) whenever the heatmap and
-     * ridden-tracks layers are both off, which is the common case.
+     * ridden-tracks layers are both off, which is the common case. Speeds/altitudes
+     * are never parsed, and a rename while a layer is visible does not re-deserialise
+     * the history (the source gates on the track set, not all metadata).
      */
-    val recordedRideTracks: StateFlow<List<RecordedRide>> =
+    val recordedRideTracks: StateFlow<List<RideTrackGeometry>> =
         overlayTracksNeeded
             .distinctUntilChanged()
             .flatMapLatest { needed ->
-                if (needed) repository.getRidesWithTracksFlow() else flowOf(emptyList())
+                if (needed) repository.getRideTrackGeometriesFlow() else flowOf(emptyList())
             }
             .stateIn(scope, SharingStarted.Eagerly, emptyList())
 

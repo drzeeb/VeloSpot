@@ -6,6 +6,7 @@ import de.velospot.core.tracking.RideTracker
 import de.velospot.data.local.dao.RecordedRideDao
 import de.velospot.data.local.dao.RecordedRideMetaRow
 import de.velospot.data.local.dao.RecordedRideSummaryRow
+import de.velospot.data.local.dao.RecordedRideTrackKeyRow
 import de.velospot.data.local.entity.RecordedRideEntity
 import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.TrackPoint
@@ -38,6 +39,12 @@ class RecordedRidesRepositoryImplTest {
 
         override fun getAllMetaFlow(): Flow<List<RecordedRideMetaRow>> =
             store.map { list -> list.sortedByDescending { it.startedAt }.map { it.toMetaRow() } }
+
+        override fun getTrackKeysFlow(): Flow<List<RecordedRideTrackKeyRow>> =
+            store.map { list ->
+                list.sortedByDescending { it.startedAt }
+                    .map { RecordedRideTrackKeyRow(it.id, it.isMock, it.pointsJson.length) }
+            }
 
         override suspend fun getMetaById(id: String): RecordedRideMetaRow? =
             store.value.firstOrNull { it.id == id }?.toMetaRow()
@@ -249,6 +256,37 @@ class RecordedRidesRepositoryImplTest {
         val rides = repo.getRidesWithTracksFlow().first()
         assertEquals(1, rides.size)
         assertEquals(2, rides.first().points.size)
+    }
+
+    @Test
+    fun `track geometries flow yields lat-lon-only points and preserves isMock`() = runTest {
+        val repo = repo()
+        repo.saveRide(ride("real"))
+        repo.saveRide(ride("mock", isMock = true))
+
+        val geometries = repo.getRideTrackGeometriesFlow().first()
+        assertEquals(2, geometries.size)
+        // Newest-first is undefined here (same startedAt); assert by lookup instead.
+        val real = geometries.single { !it.isMock }
+        val mock = geometries.single { it.isMock }
+        assertEquals(2, real.points.size)
+        assertEquals(2, mock.points.size)
+        // The coordinates round-trip …
+        assertEquals(49.75, real.points[0].latitude, 0.0)
+        assertEquals(6.64, real.points[0].longitude, 0.0)
+        // … but the geometry parse never carries the heavier per-point fields.
+        assertNull(real.points[0].speedMps)
+        assertNull(real.points[0].altitudeMeters)
+        assertNull(real.points[0].accuracyMeters)
+    }
+
+    @Test
+    fun `track geometries flow is empty for a ride without a track`() = runTest {
+        val repo = repo()
+        repo.saveRide(ride("empty").copy(points = emptyList()))
+        val geometries = repo.getRideTrackGeometriesFlow().first()
+        assertEquals(1, geometries.size)
+        assertTrue(geometries.single().points.isEmpty())
     }
 
     @Test

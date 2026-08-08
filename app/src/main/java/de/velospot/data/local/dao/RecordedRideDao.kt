@@ -61,6 +61,22 @@ data class RecordedRideMetaRow(
 )
 
 /**
+ * Geometry-**key** projection of a recorded ride: just enough to feed the map
+ * overlays' geometry-only source without touching the aggregate columns. Holds the
+ * ride [id], whether it [isMock] (mock rides are excluded from the overlays) and
+ * the character [pointsLength] of its stored `pointsJson`. The length lets the
+ * repository read the track in chunks *and* lets collectors gate re-emission on
+ * the **track set** alone: a rename / bike-reassign / archive changes other
+ * columns but never these, so `distinctUntilChanged` suppresses a needless
+ * re-deserialisation of the whole ride history while a layer is visible.
+ */
+data class RecordedRideTrackKeyRow(
+    val id: String,
+    val isMock: Boolean,
+    val pointsLength: Int
+)
+
+/**
  * Data Access Object for completed, recorded rides.
  */
 @Dao
@@ -92,6 +108,20 @@ interface RecordedRideDao {
         "FROM recorded_rides ORDER BY startedAt DESC"
     )
     fun getAllMetaFlow(): Flow<List<RecordedRideMetaRow>>
+
+    /**
+     * Geometry-key rows for **every** ride, newest first: id, `isMock` and the
+     * length of the stored track. Reactive, but selects no aggregate column and
+     * never the track itself, so it stays cheap and — combined with a
+     * `distinctUntilChanged` on the collector — only changes when a track is
+     * added/removed/replaced (not on a rename / archive / bike-reassign). Drives
+     * the map overlays' geometry-only source.
+     */
+    @Query(
+        "SELECT id, isMock, length(pointsJson) AS pointsLength " +
+        "FROM recorded_rides ORDER BY startedAt DESC"
+    )
+    fun getTrackKeysFlow(): Flow<List<RecordedRideTrackKeyRow>>
 
     /** A single ride's **track-free** full-meta row, or `null` when it no longer exists. */
     @Query(
