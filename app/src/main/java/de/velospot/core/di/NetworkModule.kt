@@ -131,6 +131,26 @@ object NetworkModule {
     }
 
     /**
+     * Dedicated client for the OSRM online routing fallback. Route calculation is
+     * interactive (the user waits behind a spinner), so this uses short timeouts —
+     * plus an overall `callTimeout` cap — so a slow or down public OSRM demo server
+     * fails fast and the routing UI can surface an error, instead of blocking the
+     * user for up to ~60s on the default 30s connect + 30s read client.
+     */
+    @Provides
+    @Singleton
+    @Named("osrm")
+    fun provideOsrmOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(8, TimeUnit.SECONDS)
+            .readTimeout(12, TimeUnit.SECONDS)
+            .writeTimeout(12, TimeUnit.SECONDS)
+            .callTimeout(18, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    /**
      * Dedicated client for BRouter segment downloads, which can be 100+ MB. Uses a
      * much longer read timeout so a slow-but-progressing download is not aborted,
      * while keeping a sane connect timeout.
@@ -159,7 +179,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("osrm")
-    fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    fun provideRetrofit(@Named("osrm") okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl(OSRM_BASE_URL)
             .client(okHttpClient)

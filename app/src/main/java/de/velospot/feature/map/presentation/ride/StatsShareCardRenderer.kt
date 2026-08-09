@@ -2,11 +2,8 @@ package de.velospot.feature.map.presentation.ride
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.LinearGradient
 import android.graphics.Paint
-import android.graphics.RadialGradient
 import android.graphics.RectF
-import android.graphics.Shader
 import android.graphics.Typeface
 import de.velospot.core.stats.RideStatistics
 import kotlin.math.roundToInt
@@ -67,67 +64,15 @@ internal fun renderStatsShareCard(
     labels: StatsShareLabels,
     periodLabel: String,
     theme: RideShareTheme = RideShareThemes.default
-): Bitmap {
-    val w = STATS_CARD_WIDTH
-    val h = STATS_CARD_HEIGHT
-    val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-
-    drawStatsBackground(canvas, w, h, theme)
-    drawStatsBrandRow(canvas, w, periodLabel, theme)
-    drawStatsHero(canvas, stats.totalDistanceMeters, labels, theme, w)
-    drawStatsGrid(canvas, labels.cells, w)
-    drawStatsBadges(canvas, labels.badges, theme, w)
-    drawStatsFooter(canvas, w, h, labels.footer)
-
-    return bitmap
-}
-
-// ── Background ──────────────────────────────────────────────────────────────
-
-private fun drawStatsBackground(canvas: Canvas, w: Int, h: Int, theme: RideShareTheme) {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        shader = LinearGradient(
-            0f, 0f, w.toFloat(), h.toFloat(),
-            intArrayOf(theme.gradientTop, theme.gradientMid, theme.gradientBottom),
-            floatArrayOf(0f, 0.55f, 1f),
-            Shader.TileMode.CLAMP
-        )
-    }
-    canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), paint)
-
-    val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        shader = RadialGradient(
-            w * 0.85f, h * 0.12f, w * 0.7f,
-            0x33FFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP
-        )
-    }
-    canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), glow)
-}
-
-// ── Brand row ───────────────────────────────────────────────────────────────
-
-private fun drawStatsBrandRow(canvas: Canvas, w: Int, periodLabel: String, theme: RideShareTheme) {
-    val y = 138f
-    val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = theme.accent }
-    canvas.drawCircle(STATS_MARGIN + 14f, y - 14f, 16f, dot)
-
-    val brand = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = STATS_WHITE
-        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        textSize = 46f
-        letterSpacing = 0.22f
-    }
-    canvas.drawText("VELOSPOT", STATS_MARGIN + 48f, y, brand)
-
-    val period = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = STATS_WHITE_70
-        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        textSize = 32f
-        letterSpacing = 0.14f
-        textAlign = Paint.Align.RIGHT
-    }
-    canvas.drawText(periodLabel, w - STATS_MARGIN, y, period)
+): Bitmap = renderShareCard(
+    theme = theme,
+    // The all-time card shows the period (e.g. "ALL-TIME") on the right of the brand row.
+    trailing = ShareCardBrandTrailing(text = periodLabel, textSize = 32f, bold = true, letterSpacing = 0.14f),
+    footer = labels.footer
+) {
+    drawStatsHero(canvas, stats.totalDistanceMeters, labels, theme, width)
+    drawStatsGrid(this, labels.cells, width)
+    drawStatsBadges(canvas, labels.badges, theme, width)
 }
 
 // ── Hero (total distance) ─────────────────────────────────────────────────────
@@ -183,9 +128,10 @@ private fun drawStatsHero(
 
 // ── 2×3 stat grid ─────────────────────────────────────────────────────────────
 
-private fun drawStatsGrid(canvas: Canvas, cells: List<StatsShareCell>, w: Int) {
+private fun drawStatsGrid(scaffold: ShareCardCanvas, cells: List<StatsShareCell>, w: Int) {
     if (cells.isEmpty()) return
 
+    val canvas = scaffold.canvas
     val columns = 2
     val gap = 24f
     val areaLeft = STATS_MARGIN
@@ -196,12 +142,6 @@ private fun drawStatsGrid(canvas: Canvas, cells: List<StatsShareCell>, w: Int) {
     val gridTop = 552f
     val radius = 36f
 
-    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x1FFFFFFF }
-    val border = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = 2f
-        color = 0x33FFFFFF
-    }
     val emojiPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.SANS_SERIF
         textSize = 50f
@@ -223,8 +163,8 @@ private fun drawStatsGrid(canvas: Canvas, cells: List<StatsShareCell>, w: Int) {
         val left = areaLeft + col * (cellWidth + gap)
         val top = gridTop + row * (cellHeight + vGap)
         val rect = RectF(left, top, left + cellWidth, top + cellHeight)
-        canvas.drawRoundRect(rect, radius, radius, fill)
-        canvas.drawRoundRect(rect, radius, radius, border)
+        // Reuse the shared "glass" panel primitive (translucent fill + hairline border).
+        scaffold.glassPanel(rect, radius)
 
         val padX = 32f
         canvas.drawText(cell.emoji, left + padX, top + 66f, emojiPaint)
@@ -260,11 +200,11 @@ private fun drawStatsBadges(
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
         textSize = 30f
     }
-    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = statsWithAlpha(theme.accent, 0x2E) }
+    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = shareCardWithAlpha(theme.accent, 0x2E) }
     val border = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 2f
-        color = statsWithAlpha(theme.accent, 0x66)
+        color = shareCardWithAlpha(theme.accent, 0x66)
     }
 
     val texts = badges.map { "${it.emoji}  ${it.text}" }
@@ -285,19 +225,6 @@ private fun drawStatsBadges(
     }
 }
 
-// ── Footer ──────────────────────────────────────────────────────────────────
-
-private fun drawStatsFooter(canvas: Canvas, w: Int, h: Int, footer: String) {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = STATS_WHITE_70
-        typeface = Typeface.SANS_SERIF
-        textSize = 30f
-        textAlign = Paint.Align.CENTER
-        letterSpacing = 0.04f
-    }
-    canvas.drawText(footer, w / 2f, h - 70f, paint)
-}
-
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Splits the total distance into a big number and its unit, e.g. `1 234.56` + `km`. */
@@ -305,14 +232,8 @@ private fun statsHeadlineDistanceParts(meters: Double): Pair<String, String> =
     if (meters < 1_000) meters.roundToInt().toString() to "m"
     else "%.2f".format(meters / 1_000.0) to "km"
 
-/** Returns [color] with its alpha channel replaced by [alpha] (0..255). */
-private fun statsWithAlpha(color: Int, alpha: Int): Int =
-    (color and 0x00FFFFFF) or (alpha shl 24)
-
-private const val STATS_CARD_WIDTH = 1080
-private const val STATS_CARD_HEIGHT = 1350
-private const val STATS_MARGIN = 80f
-
-private const val STATS_WHITE = 0xFFFFFFFF.toInt()
-private const val STATS_WHITE_70 = 0xB3FFFFFF.toInt()
+// Shared card constants live in ShareCardScaffold; aliased here for readability.
+private const val STATS_MARGIN = SHARE_CARD_MARGIN
+private const val STATS_WHITE = SHARE_CARD_WHITE
+private const val STATS_WHITE_70 = SHARE_CARD_WHITE_70
 

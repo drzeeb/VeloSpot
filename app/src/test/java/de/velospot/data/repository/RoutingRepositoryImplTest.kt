@@ -13,6 +13,7 @@ import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutePoint
+import de.velospot.domain.model.RoutingDefaults
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.RoutingSource
 import de.velospot.testsupport.fakeContextWithPrefs
@@ -84,8 +85,27 @@ class RoutingRepositoryImplTest {
         assertEquals(RoutingSource.OSRM_ONLINE, route.source)
         assertEquals(2, route.points.size)
         assertEquals(1_000.0, route.distanceMeters, 0.0)
-        assertEquals(1_000.0 / (15.0 / 3.6), route.durationSeconds, 1e-6)
+        assertEquals(
+            1_000.0 / RoutingDefaults.DEFAULT_CYCLING_SPEED_MPS,
+            route.durationSeconds,
+            1e-6
+        )
         verifyBlocking(brouterEngine, never()) { calculateRoute(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `OSRM fallback derives duration from the shared default cycling speed`() = runTest {
+        val ctx = fakeContextWithPrefs() // offline disabled → OSRM
+        // 4500 m at the shared 4.5 m/s default → 1000 s, independent of OSRM's own duration.
+        whenever(osrmApi.getBikeRoute(any())).thenReturn(osrmOk(distance = 4_500.0))
+
+        val route = repo(ctx).getBikeRoute(from, to)
+
+        assertEquals(RoutingSource.OSRM_ONLINE, route.source)
+        assertEquals(4_500.0, route.distanceMeters, 0.0)
+        assertEquals(1_000.0, route.durationSeconds, 1e-6)
+        // Sanity: the shared constant, not OSRM's own 500 s duration, drives the ETA.
+        assertEquals(4.5, RoutingDefaults.DEFAULT_CYCLING_SPEED_MPS, 0.0)
     }
 
     @Test

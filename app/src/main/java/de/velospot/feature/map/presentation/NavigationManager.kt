@@ -5,7 +5,9 @@ import android.view.Choreographer
 import de.velospot.core.navigation.GeoMath
 import de.velospot.core.navigation.NavigationCamera
 import de.velospot.core.navigation.NavigationProgress
+import de.velospot.core.navigation.OffRouteDetector
 import de.velospot.core.navigation.RouteMatcher
+import de.velospot.core.navigation.RouteEtaModel
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
 import de.velospot.feature.map.presentation.markers.NAV_PEDAL_FRAME_COUNT
@@ -56,7 +58,9 @@ import org.maplibre.geojson.Point
  *  6. **Route progress** — on every fix, reports the remaining distance + ETA via
  *     [onProgress] and greys out the already-travelled part of the polyline.
  *  7. **Off-route detection** — fires [onOffRoute] (debounced) once the rider
- *     strays beyond [OFF_ROUTE_THRESHOLD_M], so the caller can trigger a reroute.
+ *     strays beyond the accuracy-aware corridor
+ *     ([de.velospot.core.navigation.OffRouteDetector]), so the caller can
+ *     trigger a reroute.
  *
  * Lifecycle: [attach] once the [MapLibreMap] + [Style] are ready, [start] when
  * navigation becomes active, feed fixes via [onLocationUpdate], and [stop] when
@@ -76,14 +80,18 @@ class NavigationManager(private val context: Context) {
          */
         const val IDLE_PITCH_3D = 45.0
 
-        /** Perpendicular distance from the route (m) above which the rider counts as off-route. */
-        const val OFF_ROUTE_THRESHOLD_M = 30.0
-
-        /** Consecutive off-route fixes required before [onOffRoute] fires (debounce GPS noise). */
+        /**
+         * Perpendicular distance from the route (m) above which the rider counts
+         * as off-route. Delegated to [OffRouteDetector], which makes the effective
+         * corridor **accuracy-aware** (floor [OffRouteDetector.BASE_OFFROUTE_M],
+         * clamped to [OffRouteDetector.MAX_OFFROUTE_M]).
+         *
+         * Consecutive off-route fixes required before [onOffRoute] fires (debounce GPS noise).
+         */
         const val OFF_ROUTE_CONSECUTIVE = 3
 
         /** Fallback average bike speed (m/s ≈ 16 km/h) used for the ETA when the route carries none. */
-        const val DEFAULT_BIKE_SPEED_MPS = 4.5
+        const val DEFAULT_BIKE_SPEED_MPS = de.velospot.domain.model.RoutingDefaults.DEFAULT_CYCLING_SPEED_MPS
 
         /**
          * Minimum distance (m) the snapped point must travel within the same route
@@ -169,6 +177,18 @@ class NavigationManager(private val context: Context) {
     /** Total route distance / duration from BRouter, used to derive the ETA. */
     private var totalDistanceMeters = 0.0
     private var totalDurationSeconds = 0.0
+
+    /**
+     * Per-node cumulative modelled time (s) aligned 1:1 with [route], precomputed
+     * once in [start] via [RouteEtaModel.buildCumulativeTimes] (BRouter per-node
+     * times when available, else a gradient-weighted model from the route's
+     * elevation). `null` when neither is available → the flat blended fallback is
+     * used. Lets the ETA reflect the remaining *terrain* rather than a flat average.
+     */
+    private var cumulativeTimesS: DoubleArray? = null
+
+    /** Latest live ground speed (m/s) from GPS, for the flat-fallback ETA blend. */
+    private var lastGpsSpeedMps: Double? = null
 
     /** Snapped point of the most recent match — basis for the travelled/remaining split. */
     private var lastSnapLat = 0.0
@@ -407,19 +427,29 @@ class NavigationManager(private val context: Context) {
 
     /**
      * Begins navigation along [routePoints]. Pass the BRouter route's
-     * [totalDistanceMeters] / [totalDurationSeconds] (for the ETA) and the themed
+     * [totalDistanceMeters] / [totalDurationSeconds] (for the ETA), the optional
+     * per-node [cumulativeTimesSeconds] from the routing source (so the ETA can
+     * price the remaining terrain instead of a flat average) and the themed
      * [routeColor] for the remaining-route line. Camera tilts in on the first fix.
      */
     fun start(
         routePoints: List<RoutePoint>,
         totalDistanceMeters: Double,
         totalDurationSeconds: Double,
-        routeColor: Int
+        routeColor: Int,
+        cumulativeTimesSeconds: List<Double>? = null
     ) {
         route = routePoints
         this.totalDistanceMeters = totalDistanceMeters
         this.totalDurationSeconds = totalDurationSeconds
         this.routeColor = routeColor
+        lastGpsSpeedMps = null
+        // Precompute the per-node cumulative-time model once for the whole route:
+        // BRouter's per-node times when present, else a gradient-weighted model
+        // from the route elevation, else null (flat blended fallback per fix).
+        cumulativeTimesS = RouteEtaModel.buildCumulativeTimes(
+            routePoints, cumulativeTimesSeconds, totalDurationSeconds
+        )
         lastSegment = 0
         consecutiveOffRoute = 0
         offRouteFired = false
@@ -468,8 +498,15 @@ class NavigationManager(private val context: Context) {
         lastSegment = match.segmentIndex
         lastSnapLat = match.latitude
         lastSnapLon = match.longitude
+        lastGpsSpeedMps = location.speedMetersPerSecond?.toDouble()
 
-        val offRoute = match.distanceFromRouteMeters > OFF_ROUTE_THRESHOLD_M
+        // Accuracy-aware: widen the off-route corridor when the fix is imprecise
+        // (urban canyon / tunnel / tree cover) and keep it tight when GPS is good,
+        // so a noisy fix doesn't trip a false reroute (see [OffRouteDetector]).
+        val offRoute = OffRouteDetector.isOffRoute(
+            match.distanceFromRouteMeters,
+            location.accuracyMeters
+        )
 
         // While on-route, follow the snapped point (rides the road). While clearly
         // off-route, follow the *raw* GPS so the puck shows the true position until
@@ -523,7 +560,7 @@ class NavigationManager(private val context: Context) {
         onProgress?.invoke(
             NavigationProgress(
                 remainingMeters = match.remainingMeters,
-                remainingSeconds = estimateRemainingSeconds(match.remainingMeters),
+                remainingSeconds = estimateRemainingSeconds(match),
                 distanceFromRouteMeters = match.distanceFromRouteMeters,
                 isOffRoute = offRoute,
                 currentSpeedMps = location.speedMetersPerSecond,
@@ -545,14 +582,35 @@ class NavigationManager(private val context: Context) {
         }
     }
 
-    /** ETA in seconds = remaining distance ÷ the route's average speed (BRouter-consistent). */
-    private fun estimateRemainingSeconds(remainingMeters: Double): Double {
+    /**
+     * ETA in seconds for the portion of the route **still ahead**.
+     *
+     * Preferred: when a per-node cumulative-time model exists ([cumulativeTimesS] —
+     * BRouter per-node times or a gradient-weighted model), the remaining time is
+     * `total − cumulativeTimeAtCurrentPosition`, interpolated within the current
+     * segment via the match's [RouteMatcher.Match.segmentIndex] + `t`. This makes
+     * the ETA track the remaining modelled effort (a climb ahead reads slower, a
+     * descent/flat ahead reads faster) instead of a flat distance × average.
+     *
+     * Fallback: no per-segment model → remaining distance over a speed blending the
+     * route average with the live measured speed (BRouter-consistent, reacts to the
+     * rider's real pace), preserving [DEFAULT_BIKE_SPEED_MPS] when the route carries
+     * no timing at all.
+     */
+    private fun estimateRemainingSeconds(match: RouteMatcher.Match): Double {
+        cumulativeTimesS?.let { cum ->
+            return RouteEtaModel.remainingSeconds(cum, match.segmentIndex, match.t)
+        }
         val avgSpeed = if (totalDurationSeconds > 0.0 && totalDistanceMeters > 0.0) {
             totalDistanceMeters / totalDurationSeconds
         } else {
             DEFAULT_BIKE_SPEED_MPS
         }
-        return remainingMeters / avgSpeed.coerceAtLeast(0.5)
+        return RouteEtaModel.blendedFlatSeconds(
+            remainingMeters = match.remainingMeters,
+            routeAvgSpeedMps = avgSpeed,
+            liveSpeedMps = lastGpsSpeedMps
+        )
     }
 
     /**

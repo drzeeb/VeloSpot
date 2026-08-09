@@ -40,7 +40,9 @@ sealed interface RideAnalysisUiState {
         val analysis: RideAnalysis,
         val mapData: RideMapData,
         val achievements: List<Achievement>,
-        val bestEfforts: BestEfforts
+        val bestEfforts: BestEfforts,
+        /** Whether the pure-black AMOLED map style is enabled (only used while dark). */
+        val amoledEnabled: Boolean = false
     ) : RideAnalysisUiState
 }
 
@@ -138,8 +140,9 @@ class RideAnalysisViewModel(
         combine(
             heavy,
             summaries,
-            mapSettings.weatherEnabled
-        ) { heavy, summaries, weatherEnabled ->
+            mapSettings.weatherEnabled,
+            mapSettings.amoledEnabled
+        ) { heavy, summaries, weatherEnabled, amoledEnabled ->
             if (heavy == null) {
                 RideAnalysisUiState.NotFound
             } else {
@@ -159,7 +162,8 @@ class RideAnalysisViewModel(
                     analysis = heavy.analysis,
                     mapData = heavy.mapData,
                     achievements = evaluateAchievements(ride, heavy.analysis, summaries),
-                    bestEfforts = heavy.bestEfforts
+                    bestEfforts = heavy.bestEfforts,
+                    amoledEnabled = amoledEnabled
                 )
             }
         }
