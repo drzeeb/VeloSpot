@@ -5,6 +5,7 @@ import android.view.Choreographer
 import de.velospot.core.navigation.GeoMath
 import de.velospot.core.navigation.NavigationCamera
 import de.velospot.core.navigation.NavigationProgress
+import de.velospot.core.navigation.OffRouteDetector
 import de.velospot.core.navigation.RouteMatcher
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.RoutePoint
@@ -56,7 +57,9 @@ import org.maplibre.geojson.Point
  *  6. **Route progress** — on every fix, reports the remaining distance + ETA via
  *     [onProgress] and greys out the already-travelled part of the polyline.
  *  7. **Off-route detection** — fires [onOffRoute] (debounced) once the rider
- *     strays beyond [OFF_ROUTE_THRESHOLD_M], so the caller can trigger a reroute.
+ *     strays beyond the accuracy-aware corridor
+ *     ([de.velospot.core.navigation.OffRouteDetector]), so the caller can
+ *     trigger a reroute.
  *
  * Lifecycle: [attach] once the [MapLibreMap] + [Style] are ready, [start] when
  * navigation becomes active, feed fixes via [onLocationUpdate], and [stop] when
@@ -76,10 +79,14 @@ class NavigationManager(private val context: Context) {
          */
         const val IDLE_PITCH_3D = 45.0
 
-        /** Perpendicular distance from the route (m) above which the rider counts as off-route. */
-        const val OFF_ROUTE_THRESHOLD_M = 30.0
-
-        /** Consecutive off-route fixes required before [onOffRoute] fires (debounce GPS noise). */
+        /**
+         * Perpendicular distance from the route (m) above which the rider counts
+         * as off-route. Delegated to [OffRouteDetector], which makes the effective
+         * corridor **accuracy-aware** (floor [OffRouteDetector.BASE_OFFROUTE_M],
+         * clamped to [OffRouteDetector.MAX_OFFROUTE_M]).
+         *
+         * Consecutive off-route fixes required before [onOffRoute] fires (debounce GPS noise).
+         */
         const val OFF_ROUTE_CONSECUTIVE = 3
 
         /** Fallback average bike speed (m/s ≈ 16 km/h) used for the ETA when the route carries none. */
@@ -469,7 +476,13 @@ class NavigationManager(private val context: Context) {
         lastSnapLat = match.latitude
         lastSnapLon = match.longitude
 
-        val offRoute = match.distanceFromRouteMeters > OFF_ROUTE_THRESHOLD_M
+        // Accuracy-aware: widen the off-route corridor when the fix is imprecise
+        // (urban canyon / tunnel / tree cover) and keep it tight when GPS is good,
+        // so a noisy fix doesn't trip a false reroute (see [OffRouteDetector]).
+        val offRoute = OffRouteDetector.isOffRoute(
+            match.distanceFromRouteMeters,
+            location.accuracyMeters
+        )
 
         // While on-route, follow the snapped point (rides the road). While clearly
         // off-route, follow the *raw* GPS so the puck shows the true position until
