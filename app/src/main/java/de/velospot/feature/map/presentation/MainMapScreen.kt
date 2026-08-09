@@ -58,6 +58,7 @@ import de.velospot.feature.map.presentation.markers.MarkerRenderLabels
 import de.velospot.feature.map.presentation.markers.MarkerRenderState
 import de.velospot.feature.map.presentation.markers.MIN_ZOOM_PARKING_VISIBLE
 import de.velospot.feature.map.presentation.markers.ClusterRenderStyle
+import de.velospot.feature.map.presentation.markers.MarkerRenderCache
 import de.velospot.feature.map.presentation.markers.RouteRenderData
 import de.velospot.feature.map.presentation.markers.createBikeMarkerIcon
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
@@ -275,6 +276,12 @@ fun MainMapScreen(
     // use this as a key to re-run the marker rendering effect and rebuild them.
     var styleVersion by remember { mutableIntStateOf(0) }
 
+    // Retained diff-gate for the marker renderer: lets `updateMarkers` skip
+    // re-serialising a GeoJSON source whose inputs didn't change (most importantly
+    // the bulk parking collection). It self-invalidates when the style is reloaded
+    // (new `Style` identity), so a dark-mode toggle repaints everything once.
+    val markerRenderCache = remember { MarkerRenderCache() }
+
     // ── Animated launch splash ────────────────────────────────────────────────
     // Cover the map load with the branded logo. While the map loads (main thread busy
     // with the native renderer init) the splash shows a STATIC logo — nothing animates,
@@ -293,15 +300,10 @@ fun MainMapScreen(
     }
 
 
-    // Show a Toast when the user zooms out below the minimum parking marker level.
-    // Only fires on the false→true transition, not on further zoom-out.
+    // Drives the subtle inline "zoom in to see parking" hint chip (see ZoomHintChip
+    // in the UI layout below). State-driven — true only while zoomed out below the
+    // minimum parking marker level — so it fades in/out instead of firing a Toast.
     val isZoomedOutForParking = zoomBucket < MIN_ZOOM_PARKING_VISIBLE.toInt()
-    val zoomHintText = stringResource(R.string.zoom_in_for_parking)
-    LaunchedEffect(isZoomedOutForParking) {
-        if (isZoomedOutForParking) {
-            Toast.makeText(context, zoomHintText, Toast.LENGTH_SHORT).show()
-        }
-    }
 
     // ── Permission handling ───────────────────────────────────────────────────
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -476,7 +478,8 @@ fun MainMapScreen(
                     suppressRoute = activeNavigation != null,
                     // Minimal nav mode: hide all non-trip markers while navigating
                     // so only the route, destination and live position remain.
-                    minimalNavMode = activeNavigation != null
+                    minimalNavMode = activeNavigation != null,
+                    cache = markerRenderCache
                 )
         }
     }
@@ -972,6 +975,19 @@ fun MainMapScreen(
                     .padding(start = 16.dp, top = 72.dp)
             )
         }
+
+        // ── Zoom-in-for-parking hint ─────────────────────────────────────────
+        // Top-centre, tucked under the search bar so it clears the top search bar,
+        // the right-edge menu / speed-dial and the bottom record FAB / HUD. A calm,
+        // in-theme replacement for the old zoom-out Toast: fades in only while
+        // zoomed out and auto-hides (see ZoomHintChip).
+        ZoomHintChip(
+            visible = isZoomedOutForParking,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = 72.dp)
+        )
 
         // Recent destinations now live inside the search bar's initially-expanded
         // results dropdown (see AddressSearchBar), so there is no permanent on-map row.

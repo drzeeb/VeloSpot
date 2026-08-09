@@ -118,7 +118,9 @@ abstract class BikeParkingDatabase : RoomDatabase() {
          * (this is a data-only bump), so the only work here is a defensive, idempotent
          * recreation of the viewport index — which is already shipped in every bundled
          * asset, but this guarantees the post-migration `TableInfo` validation passes
-         * even for any older on-device database that predates it.
+         * even for any older on-device database that predates it. The country-data
+         * merge itself does NOT happen here (see [mergeExtraCountriesIfNeeded]); this
+         * migration only self-heals the index.
          */
         private fun dataOnlyV3ToV4Migration(): Migration =
             object : Migration(3, 4) {
@@ -126,6 +128,19 @@ abstract class BikeParkingDatabase : RoomDatabase() {
                     db.execSQL(CountryMergeSql.ENSURE_INDEX_SQL)
                 }
             }
+
+        /**
+         * Test-only accessor exposing the exact production v3 → v4 migration so an
+         * instrumented migration test can validate it against the checked-in schema
+         * baseline and assert the viewport index is present after the migration.
+         *
+         * The migration is a data-only bump that only ensures the viewport index;
+         * the country merge runs on the `onOpen` path (see
+         * [mergeExtraCountriesIfNeeded]), which tests exercise directly. Not for
+         * production use.
+         */
+        @androidx.annotation.VisibleForTesting
+        internal fun migration3To4ForTest(): Migration = dataOnlyV3ToV4Migration()
 
         /**
          * Room callback performing the one-time merge of the bundled extra-country
@@ -177,6 +192,12 @@ abstract class BikeParkingDatabase : RoomDatabase() {
             val allImported = EXTRA_COUNTRY_ASSETS
                 .map { asset -> runCatching { importCountryAsset(context, db, asset) }.isSuccess }
                 .all { it }
+            // Self-heal the viewport index so the freshly-inserted France/Luxembourg
+            // rows are covered (and repair it should a future asset ever ship without
+            // it). Idempotent and schema-neutral — the index is already part of the v4
+            // schema, so this never changes the identity hash. This is the real
+            // first-launch path the #264 self-heal was meant to guard.
+            db.execSQL(CountryMergeSql.ENSURE_INDEX_SQL)
             // Stamp the DB-resident "fully merged" sentinel only once *every* country
             // has been imported. A partial/interrupted run leaves application_id at its
             // baseline, so the next open resumes; INSERT OR IGNORE keeps it duplicate-free.
@@ -217,3 +238,4 @@ abstract class BikeParkingDatabase : RoomDatabase() {
         }
     }
 }
+
