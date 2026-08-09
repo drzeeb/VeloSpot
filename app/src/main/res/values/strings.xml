@@ -479,10 +479,16 @@
     <string name="layers_favorites_desc">Your favourited parking spots</string>
     <string name="layers_saved_title">Saved places</string>
     <string name="layers_saved_desc">Your saved custom pins</string>
+    <!-- Legacy overlay strings, kept referenced for the localization pass and reuse. -->
     <string name="layers_heatmap_title">Ride heatmap</string>
     <string name="layers_heatmap_desc">Where you ride most, from your recorded rides</string>
     <string name="layers_tracks_title">Ridden tracks</string>
     <string name="layers_tracks_desc">Every recorded ride drawn as a thin line</string>
+    <!-- Unified "My rides" layer (single toggle + lines/heatmap mode selector). -->
+    <string name="layers_ride_tracks_title">My rides</string>
+    <string name="layers_ride_tracks_desc">Everywhere you have been, from your recorded rides</string>
+    <string name="layers_ride_tracks_mode_lines">Lines</string>
+    <string name="layers_ride_tracks_mode_heatmap">Heatmap</string>
 
     <string name="language_sheet_title">Choose language</string>
 

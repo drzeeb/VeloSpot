@@ -201,6 +201,10 @@
     <string name="layers_heatmap_desc">Waar je het meest rijdt, op basis van je opgenomen ritten</string>
     <string name="layers_tracks_title">Gereden routes</string>
     <string name="layers_tracks_desc">Elke opgenomen rit als dunne lijn</string>
+    <string name="layers_ride_tracks_title">Mijn ritten</string>
+    <string name="layers_ride_tracks_desc">Overal waar je bent geweest, op basis van je opgenomen ritten</string>
+    <string name="layers_ride_tracks_mode_lines">Lijnen</string>
+    <string name="layers_ride_tracks_mode_heatmap">Heatmap</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Aangepaste locatie</string>
     <string name="custom_pin_subtitle">Tik op de kaart om de speld te verplaatsen.</string>

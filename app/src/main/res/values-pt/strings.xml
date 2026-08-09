@@ -201,6 +201,10 @@
     <string name="layers_heatmap_desc">Onde pedalas mais, a partir dos teus percursos gravados</string>
     <string name="layers_tracks_title">Percursos percorridos</string>
     <string name="layers_tracks_desc">Cada percurso gravado como uma linha fina</string>
+    <string name="layers_ride_tracks_title">Os meus percursos</string>
+    <string name="layers_ride_tracks_desc">Todos os sítios por onde passaste, a partir dos teus percursos gravados</string>
+    <string name="layers_ride_tracks_mode_lines">Linhas</string>
+    <string name="layers_ride_tracks_mode_heatmap">Mapa de calor</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Localização personalizada</string>
     <string name="custom_pin_subtitle">Toque no mapa para mover o marcador.</string>

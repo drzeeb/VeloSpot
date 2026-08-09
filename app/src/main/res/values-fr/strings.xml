@@ -202,6 +202,10 @@
     <string name="layers_heatmap_desc">Où vous roulez le plus, d’après vos trajets enregistrés</string>
     <string name="layers_tracks_title">Trajets parcourus</string>
     <string name="layers_tracks_desc">Chaque trajet enregistré tracé en fine ligne</string>
+    <string name="layers_ride_tracks_title">Mes trajets</string>
+    <string name="layers_ride_tracks_desc">Partout où vous êtes passé, d\'après vos trajets enregistrés</string>
+    <string name="layers_ride_tracks_mode_lines">Lignes</string>
+    <string name="layers_ride_tracks_mode_heatmap">Carte de chaleur</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Emplacement personnalisé</string>
     <string name="custom_pin_subtitle">Appuyez sur la carte pour déplacer le repère.</string>
