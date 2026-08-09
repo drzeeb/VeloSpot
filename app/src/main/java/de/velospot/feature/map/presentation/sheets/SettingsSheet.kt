@@ -192,15 +192,20 @@ internal fun DisplaySettingsSheet(
                 ),
                 onClick = actions.onToggleDarkMode
             )
-            // AMOLED pure-black map — a sub-option of dark mode. Toggling it on also
-            // switches the app into dark mode (handled in the action).
+            // AMOLED pure-black map — a sub-option of dark mode. It only has an
+            // effect while dark mode is on, so the toggle is greyed out (with a
+            // hint) in light mode to avoid an affordance that appears to do nothing.
             SettingsRow(
                 icon = Icons.Default.Contrast,
                 title = stringResource(R.string.menu_amoled_mode),
+                subtitle = if (state.isDarkTheme) null
+                           else stringResource(R.string.menu_amoled_mode_hint),
+                enabled = state.isDarkTheme,
                 onClick = actions.onToggleAmoled,
                 trailing = {
                     Switch(
                         checked = state.amoledEnabled,
+                        enabled = state.isDarkTheme,
                         onCheckedChange = { actions.onToggleAmoled() }
                     )
                 }

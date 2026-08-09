@@ -291,6 +291,7 @@
     <string name="menu_keep_screen_on">Display anlassen während der Fahrt</string>
     <string name="menu_portrait_lock">Hochformat sperren</string>
     <string name="menu_amoled_mode">AMOLED-Schwarz-Karte</string>
+    <string name="menu_amoled_mode_hint">Gilt im dunklen Modus</string>
     <string name="recent_destination_fallback">Ziel</string>
     <string name="search_recent_title">Zuletzt</string>
     <string name="offline_download_route">Für offline herunterladen</string>

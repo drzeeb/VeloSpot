@@ -105,6 +105,7 @@ fun RideReplayMap(
     mapData: RideMapData,
     maxSpeedMps: Double,
     isDarkTheme: Boolean,
+    amoledEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -188,10 +189,10 @@ fun RideReplayMap(
     }
 
     // One-off map setup once the style is ready.
-    LaunchedEffect(mapView, isDarkTheme) {
+    LaunchedEffect(mapView, isDarkTheme, amoledEnabled) {
         val mv = mapView ?: return@LaunchedEffect
         mv.getMapAsync { map ->
-            map.setStyle(mapStyleUrl(isDarkTheme)) { loaded ->
+            map.setStyle(mapStyleUrl(isDarkTheme, amoledEnabled)) { loaded ->
                 val speedColoured = segments.any { it.speedMps > 0.0 } && maxSpeedMps > 0.0
                 if (speedColoured) {
                     updateTrackSpeedLayer(loaded, segments, maxSpeedMps, visible = true)

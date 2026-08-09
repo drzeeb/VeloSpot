@@ -177,6 +177,7 @@
     <string name="menu_keep_screen_on">Garder l’écran allumé pendant le trajet</string>
     <string name="menu_portrait_lock">Verrouiller en mode portrait</string>
     <string name="menu_amoled_mode">Carte noir AMOLED</string>
+    <string name="menu_amoled_mode_hint">S\'applique en mode sombre</string>
     <string name="recent_destination_fallback">Destination</string>
     <string name="search_recent_title">Récents</string>
     <string name="offline_download_route">Télécharger pour usage hors ligne</string>

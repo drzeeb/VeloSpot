@@ -12,6 +12,7 @@
     <string name="menu_keep_screen_on">Keep screen on while riding</string>
     <string name="menu_portrait_lock">Lock to portrait orientation</string>
     <string name="menu_amoled_mode">AMOLED pure-black map</string>
+    <string name="menu_amoled_mode_hint">Applies in dark mode</string>
     <!-- Golden hour / sunrise-sunset alert -->
     <string name="sun_alert_settings_title">Golden hour alert</string>
     <string name="sun_alert_sunrise">Sunrise</string>

@@ -283,6 +283,7 @@
     <string name="menu_navigation_view">Vista del mapa (2D/3D)</string>
     <string name="menu_portrait_lock">Bloquear en orientación vertical</string>
     <string name="menu_amoled_mode">Mapa negro AMOLED</string>
+    <string name="menu_amoled_mode_hint">Se aplica en modo oscuro</string>
     <string name="recent_destination_fallback">Destino</string>
     <string name="search_recent_title">Recientes</string>
     <string name="offline_download_route">Descargar para uso sin conexión</string>
