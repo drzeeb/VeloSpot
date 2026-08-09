@@ -11,6 +11,7 @@ import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.model.AddressSearchResult
 import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.LineString
@@ -66,6 +67,55 @@ internal data class ClusterRenderStyle(
     val textColor: Int
 )
 
+// ── Render cache (diff-gate) ──────────────────────────────────────────────────
+
+/**
+ * Retained per-map holder that lets [updateMarkers] skip re-serialising a GeoJSON
+ * source whose feature-determining inputs didn't change since the last render.
+ *
+ * [updateMarkers] fires on many unrelated state changes (selecting a spot, toggling
+ * a layer, a search / custom pin appearing, entering/leaving minimal-nav mode, …).
+ * Previously each call rebuilt **and** `setGeoJson`'d every source — most expensively
+ * the bulk parking [FeatureCollection] of potentially thousands of spots. This cache
+ * stores a cheap identity key per source and only rebuilds the ones whose key moved.
+ *
+ * A style reload recreates every source empty, so the cache keys off the [Style]
+ * identity: the first [onStyle] with a fresh style clears all keys, forcing every
+ * source to be re-serialised exactly once so the reloaded style is fully repainted.
+ *
+ * Instances are `remember`ed in `MainMapScreen` and passed into [updateMarkers]; the
+ * default per-call instance (see [updateMarkers]) simply disables the cache, keeping
+ * the old always-rebuild behaviour for any other caller.
+ */
+internal class MarkerRenderCache {
+    private var lastStyle: Style? = null
+    private val keys = HashMap<String, String>()
+
+    /** Call once per render; drops all keys when [style] is a freshly reloaded one. */
+    fun onStyle(style: Style) {
+        if (style !== lastStyle) {
+            keys.clear()
+            lastStyle = style
+        }
+    }
+
+    /**
+     * Returns `true` (and remembers [key]) when [sourceId]'s inputs changed since the
+     * last render, i.e. when its GeoJSON must be rebuilt; `false` to skip it.
+     */
+    fun changed(sourceId: String, key: String): Boolean {
+        if (keys[sourceId] == key) return false
+        keys[sourceId] = key
+        return true
+    }
+
+    /** Forget everything (new style detection + all keys). Mainly for tests. */
+    fun reset() {
+        keys.clear()
+        lastStyle = null
+    }
+}
+
 // ── Main update function ──────────────────────────────────────────────────────
 
 /**
@@ -101,112 +151,162 @@ internal fun updateMarkers(
      * isn't part of the trip (all other parking spots, saved places, search pins)
      * so the map shows just the route, the destination and the live position.
      */
-    minimalNavMode: Boolean = false
+    minimalNavMode: Boolean = false,
+    /**
+     * Diff-gate cache that skips re-serialising a source whose inputs didn't change.
+     * Defaults to a throw-away instance (no caching → always rebuild), so callers that
+     * don't retain one keep the original always-rebuild behaviour.
+     */
+    cache: MarkerRenderCache = MarkerRenderCache()
 ) {
     val style = map.style ?: return
+
+    // Drop all cached keys when the style was reloaded (its sources were recreated
+    // empty), forcing every source below to be re-serialised exactly once.
+    cache.onStyle(style)
 
     registerIcons(style, icons)
 
     // Route polyline — skipped while NavigationManager renders the travelled /
     // remaining split.
     if (!suppressRoute) {
-        val routeGeoJson = if (route.points.size > 1) {
-            FeatureCollection.fromFeature(
-                Feature.fromGeometry(
-                    LineString.fromLngLats(route.points.map { Point.fromLngLat(it.longitude, it.latitude) })
-                )
-            )
+        val routeKey = if (route.points.size > 1) {
+            route.points.joinToString(";") { "${it.latitude},${it.longitude}" }
         } else {
-            FeatureCollection.fromFeatures(emptyList())
+            ""
         }
-        upsertSource(style, SOURCE_ROUTE, routeGeoJson)
+        if (cache.changed(SOURCE_ROUTE, routeKey)) {
+            val routeGeoJson = if (route.points.size > 1) {
+                FeatureCollection.fromFeature(
+                    Feature.fromGeometry(
+                        LineString.fromLngLats(route.points.map { Point.fromLngLat(it.longitude, it.latitude) })
+                    )
+                )
+            } else {
+                FeatureCollection.fromFeatures(emptyList())
+            }
+            upsertSource(style, SOURCE_ROUTE, routeGeoJson)
+        }
         ensureRouteLayer(style, route.color)
     }
 
     // Parking markers — bulk spots are clustered natively; the highlighted spot
     // (selection / active navigation destination) is rendered un-clustered on top.
-    val (bulkFeatures, highlightFeatures) = buildParkingFeatures(spaces, state, layerVisibility, parkedBike, minimalNavMode)
-    upsertParkingSource(style, FeatureCollection.fromFeatures(bulkFeatures))
+    //
+    // The two sources are gated independently: the (heavy) bulk source is keyed on
+    // the spot set / visibility / nav flags — deliberately NOT on the selection — so
+    // selecting a spot leaves the bulk untouched and only refreshes the (cheap)
+    // highlight overlay, which keys on the selection and must update immediately.
+    val bulkKey = parkingBulkKey(
+        spaces, state.favoriteIds, state.activeNavigationSpaceId,
+        layerVisibility, minimalNavMode, parkedBike
+    )
+    if (cache.changed(SOURCE_PARKING, bulkKey)) {
+        val bulkFeatures = buildBulkParkingFeatures(
+            spaces, state.favoriteIds, state.activeNavigationSpaceId,
+            layerVisibility, minimalNavMode, parkedBike
+        )
+        upsertParkingSource(style, FeatureCollection.fromFeatures(bulkFeatures))
+    }
     ensureParkingLayer(style)
     ensureParkingClusterLayers(style, clusterStyle.circleColor, clusterStyle.textColor)
-    upsertSource(style, SOURCE_PARKING_HIGHLIGHT, FeatureCollection.fromFeatures(highlightFeatures))
+    val highlightKey = parkingHighlightKey(spaces, state, parkedBike)
+    if (cache.changed(SOURCE_PARKING_HIGHLIGHT, highlightKey)) {
+        val highlightFeatures = buildHighlightParkingFeatures(spaces, state, parkedBike)
+        upsertSource(style, SOURCE_PARKING_HIGHLIGHT, FeatureCollection.fromFeatures(highlightFeatures))
+    }
     ensureParkingHighlightLayer(style)
 
     // Location dot — skipped while NavigationManager animates the heading arrow.
     if (!suppressLocationDot) {
-        val locFeature = state.userLocation?.let { loc ->
-            Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude)).also {
-                it.addStringProperty(PROP_ICON, IMG_LOCATION)
+        val locKey = state.userLocation?.let { "${it.latitude},${it.longitude}" } ?: ""
+        if (cache.changed(SOURCE_LOCATION, locKey)) {
+            val locFeature = state.userLocation?.let { loc ->
+                Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude)).also {
+                    it.addStringProperty(PROP_ICON, IMG_LOCATION)
+                }
             }
+            upsertSource(
+                style, SOURCE_LOCATION,
+                if (locFeature != null) FeatureCollection.fromFeature(locFeature)
+                else FeatureCollection.fromFeatures(emptyList())
+            )
         }
-        upsertSource(
-            style, SOURCE_LOCATION,
-            if (locFeature != null) FeatureCollection.fromFeature(locFeature)
-            else FeatureCollection.fromFeatures(emptyList())
-        )
         ensureLocationLayer(style)
     }
 
     // Search pin (address result)
-    val searchPinGeoJson = if (searchPin != null) {
-        FeatureCollection.fromFeature(
-            Feature.fromGeometry(Point.fromLngLat(searchPin.longitude, searchPin.latitude))
-        )
-    } else {
-        FeatureCollection.fromFeatures(emptyList())
-    }
     if (style.getImage(IMG_SEARCH_PIN) == null) {
         style.addImage(IMG_SEARCH_PIN, drawableToBitmap(createSearchPinIcon()))
     }
-    upsertSource(style, SOURCE_SEARCH_PIN, searchPinGeoJson)
+    val searchKey = searchPin?.let { "${it.latitude},${it.longitude}" } ?: ""
+    if (cache.changed(SOURCE_SEARCH_PIN, searchKey)) {
+        val searchPinGeoJson = if (searchPin != null) {
+            FeatureCollection.fromFeature(
+                Feature.fromGeometry(Point.fromLngLat(searchPin.longitude, searchPin.latitude))
+            )
+        } else {
+            FeatureCollection.fromFeatures(emptyList())
+        }
+        upsertSource(style, SOURCE_SEARCH_PIN, searchPinGeoJson)
+    }
     ensureSearchPinLayer(style)
 
     // Custom map pin (tapped by user on empty map area)
-    val customPinGeoJson = if (customMapPin != null) {
-        FeatureCollection.fromFeature(
-            Feature.fromGeometry(Point.fromLngLat(customMapPin.longitude, customMapPin.latitude))
-        )
-    } else {
-        FeatureCollection.fromFeatures(emptyList())
-    }
     if (style.getImage(IMG_CUSTOM_PIN) == null) {
         style.addImage(IMG_CUSTOM_PIN, drawableToBitmap(createCustomPinIcon()))
     }
-    upsertSource(style, SOURCE_CUSTOM_PIN, customPinGeoJson)
+    val customKey = customMapPin?.let { "${it.latitude},${it.longitude}" } ?: ""
+    if (cache.changed(SOURCE_CUSTOM_PIN, customKey)) {
+        val customPinGeoJson = if (customMapPin != null) {
+            FeatureCollection.fromFeature(
+                Feature.fromGeometry(Point.fromLngLat(customMapPin.longitude, customMapPin.latitude))
+            )
+        } else {
+            FeatureCollection.fromFeatures(emptyList())
+        }
+        upsertSource(style, SOURCE_CUSTOM_PIN, customPinGeoJson)
+    }
     ensureCustomPinLayer(style)
 
     // Saved places (custom pins saved as named favourites) — persistent markers
-    val savedGeoJson = if (layerVisibility.showSavedPlaces) {
-        FeatureCollection.fromFeatures(
-            savedPlaces.map { place ->
-                Feature.fromGeometry(Point.fromLngLat(place.longitude, place.latitude)).also {
-                    it.addStringProperty(PROP_SAVED_ID, place.id)
-                }
-            }
-        )
-    } else {
-        FeatureCollection.fromFeatures(emptyList())
-    }
     if (style.getImage(IMG_SAVED_PIN) == null) {
         style.addImage(IMG_SAVED_PIN, drawableToBitmap(createSavedPlaceIcon()))
     }
-    upsertSource(style, SOURCE_SAVED_PIN, savedGeoJson)
+    val savedKey = savedPlacesKey(savedPlaces, layerVisibility.showSavedPlaces)
+    if (cache.changed(SOURCE_SAVED_PIN, savedKey)) {
+        val savedGeoJson = if (layerVisibility.showSavedPlaces) {
+            FeatureCollection.fromFeatures(
+                savedPlaces.map { place ->
+                    Feature.fromGeometry(Point.fromLngLat(place.longitude, place.latitude)).also {
+                        it.addStringProperty(PROP_SAVED_ID, place.id)
+                    }
+                }
+            )
+        } else {
+            FeatureCollection.fromFeatures(emptyList())
+        }
+        upsertSource(style, SOURCE_SAVED_PIN, savedGeoJson)
+    }
     ensureSavedPinLayer(style)
 
     // Parked bike — a single persistent amber marker until the user picks it up.
-    val parkedBikeGeoJson = if (parkedBike != null) {
-        FeatureCollection.fromFeature(
-            Feature.fromGeometry(Point.fromLngLat(parkedBike.longitude, parkedBike.latitude)).also {
-                it.addStringProperty(PROP_PARKED_BIKE_ID, PARKED_BIKE_FEATURE_ID)
-            }
-        )
-    } else {
-        FeatureCollection.fromFeatures(emptyList())
-    }
     if (style.getImage(IMG_PARKED_BIKE) == null) {
         style.addImage(IMG_PARKED_BIKE, drawableToBitmap(createParkedBikeIcon(display.context)))
     }
-    upsertSource(style, SOURCE_PARKED_BIKE, parkedBikeGeoJson)
+    val parkedKey = parkedBike?.let { "${it.latitude},${it.longitude}" } ?: ""
+    if (cache.changed(SOURCE_PARKED_BIKE, parkedKey)) {
+        val parkedBikeGeoJson = if (parkedBike != null) {
+            FeatureCollection.fromFeature(
+                Feature.fromGeometry(Point.fromLngLat(parkedBike.longitude, parkedBike.latitude)).also {
+                    it.addStringProperty(PROP_PARKED_BIKE_ID, PARKED_BIKE_FEATURE_ID)
+                }
+            )
+        } else {
+            FeatureCollection.fromFeatures(emptyList())
+        }
+        upsertSource(style, SOURCE_PARKED_BIKE, parkedBikeGeoJson)
+    }
     ensureParkedBikeLayer(style)
 }
 
@@ -251,41 +351,160 @@ internal fun updateLocationDot(
 
 // ── Feature building ──────────────────────────────────────────────────────────
 
-private fun buildParkingFeatures(
+/**
+ * Whether a spot is shown in the **bulk** (clustered) parking source, driven purely
+ * by category visibility — deliberately independent of the current selection, which
+ * is drawn by the separate highlight overlay. Returns `false` for every spot in
+ * minimal-nav mode (only the trip destination survives, via the highlight source)
+ * and for the spot the bike is parked at (the amber parked-bike pin stands in).
+ */
+private fun isBulkVisible(
+    space: BikeParkingSpace,
+    favoriteIds: List<String>,
+    layerVisibility: LayerVisibility,
+    minimalNavMode: Boolean,
+    parkedBike: ParkedBike?
+): Boolean {
+    if (minimalNavMode) return false
+    if (parkedBike != null && isParkedAt(space, parkedBike)) return false
+    return if (favoriteIds.contains(space.id)) layerVisibility.showFavorites
+           else layerVisibility.showParking
+}
+
+/**
+ * Bulk (clustered) parking features. Selection is intentionally not consulted here:
+ * the selected spot keeps its base icon in the bulk source and the highlight overlay
+ * paints the selected pin on top, so selecting/deselecting never re-serialises this
+ * (potentially huge) collection. See [buildHighlightParkingFeatures].
+ */
+private fun buildBulkParkingFeatures(
+    spaces: List<BikeParkingSpace>,
+    favoriteIds: List<String>,
+    activeNavigationSpaceId: String?,
+    layerVisibility: LayerVisibility,
+    minimalNavMode: Boolean,
+    parkedBike: ParkedBike?
+): List<Feature> {
+    if (minimalNavMode) return emptyList()
+    val out = ArrayList<Feature>(spaces.size)
+    spaces.forEach { space ->
+        if (!isBulkVisible(space, favoriteIds, layerVisibility, minimalNavMode, parkedBike)) return@forEach
+        out += Feature.fromGeometry(Point.fromLngLat(space.longitude, space.latitude)).also {
+            it.addStringProperty(PROP_SPACE_ID, space.id)
+            it.addStringProperty(PROP_ICON, bulkIconKey(space, favoriteIds, activeNavigationSpaceId))
+        }
+    }
+    return out
+}
+
+/**
+ * Highlight (un-clustered, on-top) features for the selected spot and the active
+ * navigation destination, so they never vanish into a cluster bubble. This is the
+ * cheap source that must refresh immediately on a selection change.
+ */
+private fun buildHighlightParkingFeatures(
     spaces: List<BikeParkingSpace>,
     state: MarkerRenderState,
-    layerVisibility: LayerVisibility,
-    parkedBike: ParkedBike?,
-    minimalNavMode: Boolean
-): Pair<List<Feature>, List<Feature>> {
-    // The selected spot and the active navigation destination are always kept
-    // visible (un-clustered, on top) so they don't vanish into a cluster bubble.
+    parkedBike: ParkedBike?
+): List<Feature> {
     val highlightIds = setOfNotNull(state.selectedSpaceId, state.activeNavigationSpaceId)
-    // Filter by layer visibility, but always keep the highlighted spots.
-    val visibleSpaces = spaces.filter { space ->
-        // Hide the spot the bike is parked at: the amber parked-bike pin stands in
-        // for it (single, unambiguous marker — no overlap), and reappears once the
-        // bike is picked up.
-        if (parkedBike != null && isParkedAt(space, parkedBike)) return@filter false
-        val isFavorite  = state.favoriteIds.contains(space.id)
-        val alwaysShow  = space.id in highlightIds
-        // Minimal navigation mode hides every non-trip spot (only the destination
-        // highlight survives via [alwaysShow]).
-        val categoryShow = if (minimalNavMode) false
-                           else if (isFavorite) layerVisibility.showFavorites
-                           else layerVisibility.showParking
-        alwaysShow || categoryShow
-    }
-    val bulk = ArrayList<Feature>(visibleSpaces.size)
-    val highlight = ArrayList<Feature>(highlightIds.size)
-    visibleSpaces.forEach { space ->
-        val feature = Feature.fromGeometry(Point.fromLngLat(space.longitude, space.latitude)).also {
+    if (highlightIds.isEmpty()) return emptyList()
+    val out = ArrayList<Feature>(highlightIds.size)
+    spaces.forEach { space ->
+        if (space.id !in highlightIds) return@forEach
+        // Yield to the amber parked-bike pin, exactly like the bulk source.
+        if (parkedBike != null && isParkedAt(space, parkedBike)) return@forEach
+        out += Feature.fromGeometry(Point.fromLngLat(space.longitude, space.latitude)).also {
             it.addStringProperty(PROP_SPACE_ID, space.id)
             it.addStringProperty(PROP_ICON, resolveIconKey(space, state))
         }
-        if (space.id in highlightIds) highlight.add(feature) else bulk.add(feature)
     }
-    return bulk to highlight
+    return out
+}
+
+// ── Diff-gate keys (pure, unit-tested) ────────────────────────────────────────
+
+/**
+ * Cheap identity key for the **bulk** parking source. Equal inputs → equal key;
+ * a changed spot set / position, favourite state, layer visibility, minimal-nav
+ * mode, active-navigation destination or parked-bike location produces a different
+ * key. It is intentionally *insensitive to the selection*, so selecting a spot does
+ * not invalidate (and re-serialise) the bulk source.
+ */
+internal fun parkingBulkKey(
+    spaces: List<BikeParkingSpace>,
+    favoriteIds: List<String>,
+    activeNavigationSpaceId: String?,
+    layerVisibility: LayerVisibility,
+    minimalNavMode: Boolean,
+    parkedBike: ParkedBike?
+): String {
+    if (minimalNavMode) return "minimal"
+    return buildString {
+        spaces.forEach { space ->
+            if (!isBulkVisible(space, favoriteIds, layerVisibility, minimalNavMode, parkedBike)) return@forEach
+            append(space.id).append('|')
+                .append(bulkIconKey(space, favoriteIds, activeNavigationSpaceId)).append('|')
+                .append(space.latitude).append(',').append(space.longitude).append(';')
+        }
+    }
+}
+
+/**
+ * Cheap identity key for the parking **highlight** overlay. Keyed on the selection
+ * and active-navigation destination (and their resolved icons / positions), so it
+ * refreshes the instant the selection changes — its whole purpose.
+ */
+internal fun parkingHighlightKey(
+    spaces: List<BikeParkingSpace>,
+    state: MarkerRenderState,
+    parkedBike: ParkedBike?
+): String {
+    val highlightIds = setOfNotNull(state.selectedSpaceId, state.activeNavigationSpaceId)
+    if (highlightIds.isEmpty()) return ""
+    return buildString {
+        spaces.forEach { space ->
+            if (space.id !in highlightIds) return@forEach
+            if (parkedBike != null && isParkedAt(space, parkedBike)) return@forEach
+            append(space.id).append('|')
+                .append(resolveIconKey(space, state)).append('|')
+                .append(space.latitude).append(',').append(space.longitude).append(';')
+        }
+    }
+}
+
+/** Cheap identity key for the saved-places source (ids + positions + visibility). */
+internal fun savedPlacesKey(savedPlaces: List<SavedPlace>, visible: Boolean): String {
+    if (!visible) return ""
+    return buildString {
+        savedPlaces.forEach { place ->
+            append(place.id).append('|')
+                .append(place.latitude).append(',').append(place.longitude).append(';')
+        }
+    }
+}
+
+/**
+ * Icon key used for a spot in the **bulk** source. Mirrors [resolveIconKey] for
+ * non-selected spots but never reports the *selected* variants, so the bulk icon —
+ * and therefore [parkingBulkKey] — is independent of the current selection (the
+ * selected pin is painted by the highlight overlay on top).
+ */
+private fun bulkIconKey(
+    space: BikeParkingSpace,
+    favoriteIds: List<String>,
+    activeNavigationSpaceId: String?
+): String {
+    val isNavDest  = space.id == activeNavigationSpaceId
+    val showMuted  = activeNavigationSpaceId != null && !isNavDest
+    val isFavorite = favoriteIds.contains(space.id)
+    return when {
+        isNavDest               -> IMG_SELECTED
+        showMuted && isFavorite -> IMG_MUTED_FAVORITE
+        showMuted               -> IMG_MUTED_NORMAL
+        isFavorite              -> IMG_FAVORITE
+        else                    -> IMG_NORMAL
+    }
 }
 
 /** Distance (m) within which a parking spot counts as "the spot the bike is parked at". */

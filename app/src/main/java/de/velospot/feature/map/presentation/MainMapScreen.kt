@@ -58,6 +58,7 @@ import de.velospot.feature.map.presentation.markers.MarkerRenderLabels
 import de.velospot.feature.map.presentation.markers.MarkerRenderState
 import de.velospot.feature.map.presentation.markers.MIN_ZOOM_PARKING_VISIBLE
 import de.velospot.feature.map.presentation.markers.ClusterRenderStyle
+import de.velospot.feature.map.presentation.markers.MarkerRenderCache
 import de.velospot.feature.map.presentation.markers.RouteRenderData
 import de.velospot.feature.map.presentation.markers.createBikeMarkerIcon
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
@@ -275,6 +276,12 @@ fun MainMapScreen(
     // use this as a key to re-run the marker rendering effect and rebuild them.
     var styleVersion by remember { mutableIntStateOf(0) }
 
+    // Retained diff-gate for the marker renderer: lets `updateMarkers` skip
+    // re-serialising a GeoJSON source whose inputs didn't change (most importantly
+    // the bulk parking collection). It self-invalidates when the style is reloaded
+    // (new `Style` identity), so a dark-mode toggle repaints everything once.
+    val markerRenderCache = remember { MarkerRenderCache() }
+
     // ── Animated launch splash ────────────────────────────────────────────────
     // Cover the map load with the branded logo. While the map loads (main thread busy
     // with the native renderer init) the splash shows a STATIC logo — nothing animates,
@@ -476,7 +483,8 @@ fun MainMapScreen(
                     suppressRoute = activeNavigation != null,
                     // Minimal nav mode: hide all non-trip markers while navigating
                     // so only the route, destination and live position remain.
-                    minimalNavMode = activeNavigation != null
+                    minimalNavMode = activeNavigation != null,
+                    cache = markerRenderCache
                 )
         }
     }
