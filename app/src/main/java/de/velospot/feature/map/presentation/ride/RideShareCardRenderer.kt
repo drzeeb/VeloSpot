@@ -92,80 +92,32 @@ internal fun renderRideShareCard(
     labels: RideShareLabels,
     theme: RideShareTheme = RideShareThemes.default,
     mapLayer: RideMapLayer? = null
-): Bitmap {
-    val w = CARD_WIDTH
-    val h = CARD_HEIGHT
-    val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-
+): Bitmap = renderShareCard(
+    theme = theme,
+    // The per-ride card shows the ride date on the right of the brand row.
+    trailing = ShareCardBrandTrailing(text = dateLabel, textSize = 34f, bold = false, letterSpacing = 0f),
+    footer = labels.footer
+) {
     // Plain rectangular tile — no rounded corners. Social apps crop/round the
     // shared image themselves, so baking in rounded (transparent) corners only
     // looked odd (visible transparent notches on some backgrounds).
-    drawBackground(canvas, w, h, theme)
-    drawBrandRow(canvas, w, dateLabel, theme)
-    drawRouteCard(canvas, ride, theme, mapLayer)
+    drawRouteCard(this, ride, theme, mapLayer)
     // The headline distance carries the optional weather symbol + temperature just
     // to its right; drawn only when a weather label was supplied, so the layout is
     // unchanged when it's absent.
     drawHeadlineDistance(canvas, ride, labels.headline, labels.weather, theme)
-    drawStatsRow(canvas, ride, w, labels)
-    drawFooter(canvas, w, h, labels.footer)
-
-    return bitmap
+    drawStatsRow(canvas, ride, width, labels)
 }
-
-// ── Background ──────────────────────────────────────────────────────────────
-
-private fun drawBackground(canvas: Canvas, w: Int, h: Int, theme: RideShareTheme) {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        shader = LinearGradient(
-            0f, 0f, w.toFloat(), h.toFloat(),
-            intArrayOf(theme.gradientTop, theme.gradientMid, theme.gradientBottom),
-            floatArrayOf(0f, 0.55f, 1f),
-            Shader.TileMode.CLAMP
-        )
-    }
-    canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), paint)
-
-    // Soft vignette glow in the upper-right for a bit of depth.
-    val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        shader = android.graphics.RadialGradient(
-            w * 0.85f, h * 0.12f, w * 0.7f,
-            0x33FFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP
-        )
-    }
-    canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), glow)
-}
-
-// ── Brand row ───────────────────────────────────────────────────────────────
-
-private fun drawBrandRow(canvas: Canvas, w: Int, dateLabel: String, theme: RideShareTheme) {
-    val y = 138f
-    // Accent dot.
-    val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = theme.accent }
-    canvas.drawCircle(MARGIN + 14f, y - 14f, 16f, dot)
-
-    val brand = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = WHITE
-        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        textSize = 46f
-        letterSpacing = 0.22f
-    }
-    canvas.drawText("VELOSPOT", MARGIN + 48f, y, brand)
-
-    val date = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = WHITE_70
-        typeface = Typeface.SANS_SERIF
-        textSize = 34f
-        textAlign = Paint.Align.RIGHT
-    }
-    canvas.drawText(dateLabel, w - MARGIN, y, date)
-}
-
 
 // ── Route snippet ───────────────────────────────────────────────────────────
 
-private fun drawRouteCard(canvas: Canvas, ride: RecordedRide, theme: RideShareTheme, mapLayer: RideMapLayer?) {
+private fun drawRouteCard(
+    scaffold: ShareCardCanvas,
+    ride: RecordedRide,
+    theme: RideShareTheme,
+    mapLayer: RideMapLayer?
+) {
+    val canvas = scaffold.canvas
     val left = PANEL_LEFT
     val right = PANEL_RIGHT
     val top = PANEL_TOP
@@ -186,7 +138,7 @@ private fun drawRouteCard(canvas: Canvas, ride: RecordedRide, theme: RideShareTh
         val scrim = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             shader = LinearGradient(
                 left, top, left, bottom,
-                intArrayOf(withAlpha(theme.gradientTop, 0x70), withAlpha(theme.gradientBottom, 0xA6)),
+                intArrayOf(shareCardWithAlpha(theme.gradientTop, 0x70), shareCardWithAlpha(theme.gradientBottom, 0xA6)),
                 null, Shader.TileMode.CLAMP
             )
         }
@@ -194,16 +146,11 @@ private fun drawRouteCard(canvas: Canvas, ride: RecordedRide, theme: RideShareTh
         // A subtle overall darken unifies the map's contrast with the route halo.
         canvas.drawColor(0x1A0B1020)
         canvas.restore()
+        // The map replaces the glass fill, but the same hairline frame still sits on top.
+        scaffold.glassPanelBorder(rect, radius)
     } else {
-        val panel = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x1FFFFFFF }
-        canvas.drawRoundRect(rect, radius, radius, panel)
+        scaffold.glassPanel(rect, radius)
     }
-    val border = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = 2f
-        color = 0x33FFFFFF
-    }
-    canvas.drawRoundRect(rect, radius, radius, border)
 
     val points = ride.points
     if (points.size < 2) return
@@ -270,7 +217,7 @@ private fun drawRouteCard(canvas: Canvas, ride: RecordedRide, theme: RideShareTh
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
-        color = withAlpha(theme.routeColor, 0x73)
+        color = shareCardWithAlpha(theme.routeColor, 0x73)
         strokeWidth = 24f
     }
     canvas.drawPath(path, glow)
@@ -436,19 +383,6 @@ private fun drawStatsRow(canvas: Canvas, ride: RecordedRide, w: Int, labels: Rid
     }
 }
 
-// ── Footer ──────────────────────────────────────────────────────────────────
-
-private fun drawFooter(canvas: Canvas, w: Int, h: Int, footer: String) {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = WHITE_70
-        typeface = Typeface.SANS_SERIF
-        textSize = 30f
-        textAlign = Paint.Align.CENTER
-        letterSpacing = 0.04f
-    }
-    canvas.drawText(footer, w / 2f, h - 70f, paint)
-}
-
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Splits the headline distance into a big number and its unit, e.g. `12.34` + `km`. */
@@ -456,22 +390,18 @@ private fun headlineDistanceParts(meters: Double): Pair<String, String> =
     if (meters < 1_000) meters.roundToInt().toString() to "m"
     else "%.2f".format(meters / 1_000.0) to "km"
 
-/** Returns [color] with its alpha channel replaced by [alpha] (0..255). */
-private fun withAlpha(color: Int, alpha: Int): Int =
-    (color and 0x00FFFFFF) or (alpha shl 24)
-
-private const val CARD_WIDTH = 1080
-private const val CARD_HEIGHT = 1350
-private const val MARGIN = 80f
+// Shared card constants live in ShareCardScaffold; aliased here so the ride-specific
+// panel geometry stays readable while keeping a single source of truth.
+private const val MARGIN = SHARE_CARD_MARGIN
+private const val WHITE = SHARE_CARD_WHITE
+private const val WHITE_70 = SHARE_CARD_WHITE_70
 
 // Route/map panel rectangle on the card.
 private const val PANEL_LEFT = MARGIN
 private const val PANEL_TOP = 210f
-private const val PANEL_RIGHT = CARD_WIDTH - MARGIN
+private const val PANEL_RIGHT = SHARE_CARD_WIDTH - MARGIN
 private const val PANEL_BOTTOM = 820f
 
-private const val WHITE = 0xFFFFFFFF.toInt()
-private const val WHITE_70 = 0xB3FFFFFF.toInt()
 
 
 

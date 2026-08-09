@@ -221,6 +221,12 @@ kover {
                     // platform Canvas onto an off-screen Bitmap (needs a real graphics
                     // surface); its plain-data inputs/themes are unit-tested instead.
                     "*StatsShareCardRenderer*",
+                    // Shared share-card frame (background gradient, brand row, glass
+                    // panels, footer) extracted from the two renderers above — same
+                    // platform-Canvas drawing that needs a real graphics surface; its
+                    // pure contract (dimensions, alpha helper, brand-trailing model) is
+                    // unit-tested in ShareCardScaffoldTest instead.
+                    "*ShareCardScaffold*",
                     "*RideRouteMapSnapshotter*",
                     "*MapInitializer*",
                     "*RideReplayMap*",
