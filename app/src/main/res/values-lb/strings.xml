@@ -176,6 +176,7 @@
     <string name="menu_keep_screen_on">Écran un loossen wärend der Fahrt</string>
     <string name="menu_portrait_lock">Am Héichformat spären</string>
     <string name="menu_amoled_mode">AMOLED-Schwaarz-Kaart</string>
+    <string name="menu_amoled_mode_hint">Gëlt am donkele Modus</string>
     <string name="recent_destination_fallback">Zil</string>
     <string name="search_recent_title">Lescht</string>
     <string name="offline_download_route">Fir offline eroflueden</string>

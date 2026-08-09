@@ -176,6 +176,7 @@
     <string name="menu_keep_screen_on">Scherm aan houden tijdens het rijden</string>
     <string name="menu_portrait_lock">Vergrendel in portretstand</string>
     <string name="menu_amoled_mode">AMOLED-zwarte kaart</string>
+    <string name="menu_amoled_mode_hint">Van toepassing in donkere modus</string>
     <string name="recent_destination_fallback">Bestemming</string>
     <string name="search_recent_title">Recent</string>
     <string name="offline_download_route">Downloaden voor offline gebruik</string>

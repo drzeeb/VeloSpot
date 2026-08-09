@@ -169,6 +169,7 @@
     <string name="menu_keep_screen_on">Mantieni lo schermo acceso durante il percorso</string>
     <string name="menu_portrait_lock">Blocca in orientamento verticale</string>
     <string name="menu_amoled_mode">Mappa nera AMOLED</string>
+    <string name="menu_amoled_mode_hint">Si applica in modalità scura</string>
     <string name="recent_destination_fallback">Destinazione</string>
     <string name="search_recent_title">Recenti</string>
     <string name="offline_download_route">Scarica per uso offline</string>

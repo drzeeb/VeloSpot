@@ -131,6 +131,7 @@ fun RideAnalysisScreen(
                 achievements = s.achievements,
                 bestEfforts = s.bestEfforts,
                 isDarkTheme = isDarkTheme,
+                amoledEnabled = s.amoledEnabled,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
@@ -148,6 +149,7 @@ private fun RideAnalysisContent(
     achievements: List<Achievement>,
     bestEfforts: BestEfforts,
     isDarkTheme: Boolean,
+    amoledEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -178,6 +180,7 @@ private fun RideAnalysisContent(
                 mapData = mapData,
                 maxSpeedMps = analysis.maxSpeedMps,
                 isDarkTheme = isDarkTheme,
+                amoledEnabled = amoledEnabled,
                 modifier = Modifier.fillMaxWidth()
             )
         }
