@@ -11,6 +11,7 @@ import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutePoint
+import de.velospot.domain.model.RoutingDefaults
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.RoutingSource
 import de.velospot.domain.repository.RoutingRepository
@@ -164,9 +165,6 @@ class RoutingRepositoryImpl @Inject constructor(
 
 // ── OSRM online fallback ──────────────────────────────────────────────────────
 
-/** Realistic average cycling speed used to recalculate OSRM duration (15 km/h). */
-private const val OSRM_CYCLING_SPEED_MS = 15.0 / 3.6
-
 /**
  * Relative OSRM bicycle-routing path. Resolved by Retrofit against the OSRM base
  * URL configured once in `NetworkModule`, so the host is defined in a single place
@@ -197,11 +195,11 @@ internal suspend fun osrmFallbackRoute(
     }
     if (points.isEmpty()) throw EmptyRouteGeometryException()
     // OSRM's bicycle duration can be calibrated for road speeds rather than
-    // real cycling pace. Recalculate from distance at 15 km/h average.
+    // real cycling pace. Recalculate from distance at the app's shared default cycling speed.
     return BikeRoute(
         points          = points,
         distanceMeters  = bestRoute.distance,
-        durationSeconds = bestRoute.distance / OSRM_CYCLING_SPEED_MS,
+        durationSeconds = bestRoute.distance / RoutingDefaults.DEFAULT_CYCLING_SPEED_MPS,
         source          = RoutingSource.OSRM_ONLINE
     )
 }

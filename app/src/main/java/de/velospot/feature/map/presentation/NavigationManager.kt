@@ -91,7 +91,7 @@ class NavigationManager(private val context: Context) {
         const val OFF_ROUTE_CONSECUTIVE = 3
 
         /** Fallback average bike speed (m/s ≈ 16 km/h) used for the ETA when the route carries none. */
-        const val DEFAULT_BIKE_SPEED_MPS = 4.5
+        const val DEFAULT_BIKE_SPEED_MPS = de.velospot.domain.model.RoutingDefaults.DEFAULT_CYCLING_SPEED_MPS
 
         /**
          * Minimum distance (m) the snapped point must travel within the same route
