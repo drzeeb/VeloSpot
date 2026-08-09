@@ -1,6 +1,7 @@
 package de.velospot.data.brouter
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -39,6 +40,23 @@ class BRouterProfileTest {
         assertEquals(14.0, BRouterProfile.TREKKING.typicalSpeedKmh, 0.0)
         assertEquals(20.0, BRouterProfile.FASTBIKE.typicalSpeedKmh, 0.0)
         assertEquals("trekking", BRouterProfile.TREKKING.fileName)
+    }
+
+    @Test
+    fun `SHORTEST is hidden from the user-selectable list but kept in the enum`() {
+        // Plumbing must stay in place so the profile can be re-enabled trivially…
+        assertTrue(BRouterProfile.entries.contains(BRouterProfile.SHORTEST))
+        assertFalse(BRouterProfile.SHORTEST.userSelectable)
+        // …but it must never be offered to the user (product decision #23).
+        assertFalse(BRouterProfile.selectableEntries.contains(BRouterProfile.SHORTEST))
+    }
+
+    @Test
+    fun `every selectable profile is bike-appropriate and the default is selectable`() {
+        assertTrue(BRouterProfile.selectableEntries.isNotEmpty())
+        assertTrue(BRouterProfile.selectableEntries.all { it.userSelectable })
+        assertTrue(BRouterProfile.DEFAULT.userSelectable)
+        assertEquals(BRouterProfile.TREKKING, BRouterProfile.DEFAULT)
     }
 }
 
