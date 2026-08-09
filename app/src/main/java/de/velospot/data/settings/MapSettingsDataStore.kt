@@ -6,9 +6,12 @@ import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
+import de.velospot.core.map.RideTracksLayerState
+import de.velospot.core.map.RideTracksMode
 import de.velospot.core.map.RideViewOptions
 import de.velospot.domain.repository.MapSettingsRepository
 import kotlinx.coroutines.flow.Flow
@@ -45,12 +48,24 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
     private val data: Flow<Preferences> get() = context.settingsDataStore.data
 
     override val layerVisibility: Flow<LayerVisibility> = data.map { prefs ->
+        // The two legacy overlays (heatmap / ridden tracks) were merged into one
+        // unified "My rides" layer with a display mode. Resolve the unified state
+        // from the new keys, seeding from the legacy booleans so existing users
+        // keep their choice (see RideTracksLayerState for the exact precedence).
+        val (showRideTracks, rideTracksMode) = RideTracksLayerState.resolve(
+            newVisible    = prefs[KEY_LAYER_RIDE_TRACKS],
+            newMode       = prefs[KEY_RIDE_TRACKS_MODE]?.let { name ->
+                runCatching { RideTracksMode.valueOf(name) }.getOrNull()
+            },
+            legacyHeatmap = prefs[KEY_LAYER_HEATMAP] ?: false,
+            legacyTracks  = prefs[KEY_LAYER_TRACKS] ?: false
+        )
         LayerVisibility(
             showParking     = prefs[KEY_LAYER_PARKING] ?: true,
             showFavorites   = prefs[KEY_LAYER_FAVORITES] ?: true,
             showSavedPlaces = prefs[KEY_LAYER_SAVED] ?: true,
-            showHeatmap     = prefs[KEY_LAYER_HEATMAP] ?: false,
-            showTracks      = prefs[KEY_LAYER_TRACKS] ?: false
+            showRideTracks  = showRideTracks,
+            rideTracksMode  = rideTracksMode
         )
     }
 
@@ -99,10 +114,13 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
             MapLayerCategory.PARKING      -> KEY_LAYER_PARKING
             MapLayerCategory.FAVORITES    -> KEY_LAYER_FAVORITES
             MapLayerCategory.SAVED_PLACES -> KEY_LAYER_SAVED
-            MapLayerCategory.HEATMAP      -> KEY_LAYER_HEATMAP
-            MapLayerCategory.TRACKS       -> KEY_LAYER_TRACKS
+            MapLayerCategory.RIDE_TRACKS  -> KEY_LAYER_RIDE_TRACKS
         }
         context.settingsDataStore.edit { it[key] = visible }
+    }
+
+    override suspend fun setRideTracksMode(mode: RideTracksMode) {
+        context.settingsDataStore.edit { it[KEY_RIDE_TRACKS_MODE] = mode.name }
     }
 
     override suspend fun set3DNavigation(enabled: Boolean) =
@@ -153,8 +171,13 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
         val KEY_LAYER_PARKING    = booleanPreferencesKey("layer_parking_visible")
         val KEY_LAYER_FAVORITES  = booleanPreferencesKey("layer_favorites_visible")
         val KEY_LAYER_SAVED      = booleanPreferencesKey("layer_saved_visible")
+        // Legacy keys of the two separate overlays, kept read-only as the migration
+        // seed for the unified ride-tracks layer (see RideTracksLayerState).
         val KEY_LAYER_HEATMAP    = booleanPreferencesKey("layer_heatmap_visible")
         val KEY_LAYER_TRACKS     = booleanPreferencesKey("layer_tracks_visible")
+        // Unified "My rides" layer: one visibility boolean + a display-mode enum.
+        val KEY_LAYER_RIDE_TRACKS = booleanPreferencesKey("layer_ride_tracks_visible")
+        val KEY_RIDE_TRACKS_MODE  = stringPreferencesKey("ride_tracks_mode")
         val KEY_NAV_3D           = booleanPreferencesKey("navigation_3d_enabled")
         val KEY_VOICE_GUIDANCE   = booleanPreferencesKey("navigation_tts_enabled")
         val KEY_KEEP_SCREEN_ON   = booleanPreferencesKey("keep_screen_on_enabled")

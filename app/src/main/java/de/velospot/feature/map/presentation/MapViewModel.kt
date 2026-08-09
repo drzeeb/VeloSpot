@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.velospot.core.location.LocationController
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
+import de.velospot.core.map.RideTracksMode
 import de.velospot.core.map.RideViewOptions
 import de.velospot.core.routing.OfflineRoutingPreferences
 import de.velospot.core.sensors.DiscoveredSensor
@@ -487,6 +488,11 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { mapSettings.setLayerVisible(category, visible) }
     }
 
+    /** Switches the unified ride-tracks overlay between lines/heatmap and persists it. */
+    fun setRideTracksMode(mode: RideTracksMode) {
+        viewModelScope.launch { mapSettings.setRideTracksMode(mode) }
+    }
+
     /**
      * Whether navigation uses the tilted 3D camera (`true`) or the flat 2D
      * heading-up view (`false`). Persisted across sessions and applied live to
@@ -961,10 +967,11 @@ class MapViewModel @Inject constructor(
         onUserMessage = { res -> _userMessageRes.value = res },
         clearOtherSelections = { clearPlaceSelections() },
         moveCamera = { target -> _mapCameraTarget.value = target },
-        // Full ride tracks are only loaded while the heatmap or ridden-tracks
-        // overlay is actually visible; otherwise no track is ever deserialised.
+        // Full ride tracks are only loaded while the unified "My rides" overlay
+        // (lines or heatmap) is actually visible; otherwise no track is ever
+        // deserialised.
         overlayTracksNeeded = layerVisibility
-            .map { it.showHeatmap || it.showTracks }
+            .map { it.showRideTracks }
             .distinctUntilChanged(),
         // Turn a finished ride of a planned route into a leaderboard attempt, and
         // tag the ride with the route it was ridden along so the detail screen can
@@ -982,8 +989,8 @@ class MapViewModel @Inject constructor(
 
     /**
      * Every recorded ride's **geometry** (lat/lon only) for the map overlays, but
-     * only while a map overlay (heatmap / ridden tracks) is on — otherwise empty and
-     * nothing is parsed. Speeds/altitudes are never deserialised.
+     * only while the unified "My rides" overlay (lines / heatmap) is on — otherwise
+     * empty and nothing is parsed. Speeds/altitudes are never deserialised.
      */
     val recordedRideTracks: StateFlow<List<RideTrackGeometry>> = rideTracking.recordedRideTracks
     val selectedRide: StateFlow<RecordedRide?> = rideTracking.selectedRide

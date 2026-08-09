@@ -25,6 +25,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -40,18 +43,17 @@ import androidx.compose.ui.unit.dp
 import de.velospot.R
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
-import de.velospot.feature.map.presentation.headingSemantics
+import de.velospot.core.map.RideTracksMode
 
 private val ParkingColor = Color(0xFF1565C0)
 private val FavoriteColor = Color(0xFFD32F2F)
 private val SavedColor = Color(0xFF2E7D32)
-private val HeatmapColor = Color(0xFFE65100)
-private val TracksColor = Color(0xFF00897B)
+private val RideTracksColor = Color(0xFF00897B)
 
-/** Sum of the five layer accent colours' alpha — a tiny testable touch-point that
+/** Sum of the four layer accent colours' alpha — a tiny testable touch-point that
  *  forces this file's colour constants to initialise under JVM unit tests. */
 internal val layerAccentColorCount: Int =
-    listOf(ParkingColor, FavoriteColor, SavedColor, HeatmapColor, TracksColor).size
+    listOf(ParkingColor, FavoriteColor, SavedColor, RideTracksColor).size
 
 /**
  * Bottom sheet to toggle which pin categories ("layers") are shown on the map.
@@ -63,6 +65,7 @@ internal val layerAccentColorCount: Int =
 internal fun LayersSheet(
     visibility: LayerVisibility,
     onToggle: (MapLayerCategory, Boolean) -> Unit,
+    onRideTracksModeChange: (RideTracksMode) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -117,22 +120,48 @@ internal fun LayersSheet(
             )
             Spacer(modifier = Modifier.height(12.dp))
             LayerToggleCard(
-                icon = Icons.Default.LocalFireDepartment,
-                accent = HeatmapColor,
-                title = stringResource(id = R.string.layers_heatmap_title),
-                description = stringResource(id = R.string.layers_heatmap_desc),
-                checked = visibility.showHeatmap,
-                onCheckedChange = { onToggle(MapLayerCategory.HEATMAP, it) }
+                icon = Icons.AutoMirrored.Filled.DirectionsBike,
+                accent = RideTracksColor,
+                title = stringResource(id = R.string.layers_ride_tracks_title),
+                description = stringResource(id = R.string.layers_ride_tracks_desc),
+                checked = visibility.showRideTracks,
+                onCheckedChange = { onToggle(MapLayerCategory.RIDE_TRACKS, it) }
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            LayerToggleCard(
-                icon = Icons.Default.Route,
-                accent = TracksColor,
-                title = stringResource(id = R.string.layers_tracks_title),
-                description = stringResource(id = R.string.layers_tracks_desc),
-                checked = visibility.showTracks,
-                onCheckedChange = { onToggle(MapLayerCategory.TRACKS, it) }
-            )
+            // Display-mode selector — only shown while the unified layer is on.
+            if (visibility.showRideTracks) {
+                Spacer(modifier = Modifier.height(8.dp))
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    val modes = RideTracksMode.entries
+                    modes.forEachIndexed { index, mode ->
+                        SegmentedButton(
+                            selected = visibility.rideTracksMode == mode,
+                            onClick = { onRideTracksModeChange(mode) },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
+                            icon = {
+                                SegmentedButtonDefaults.Icon(active = visibility.rideTracksMode == mode) {
+                                    Icon(
+                                        imageVector = when (mode) {
+                                            RideTracksMode.LINES   -> Icons.Default.Route
+                                            RideTracksMode.HEATMAP -> Icons.Default.LocalFireDepartment
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
+                                    )
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = stringResource(
+                                    id = when (mode) {
+                                        RideTracksMode.LINES   -> R.string.layers_ride_tracks_mode_lines
+                                        RideTracksMode.HEATMAP -> R.string.layers_ride_tracks_mode_heatmap
+                                    }
+                                )
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
         }

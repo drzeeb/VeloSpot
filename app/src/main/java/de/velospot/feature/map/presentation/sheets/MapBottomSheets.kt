@@ -125,6 +125,7 @@ internal fun MapBottomSheets(
         LayersSheet(
             visibility = layerVisibility,
             onToggle   = viewModel::setLayerVisible,
+            onRideTracksModeChange = viewModel::setRideTracksMode,
             onDismiss  = screenUiState::closeLayers
         )
     }
