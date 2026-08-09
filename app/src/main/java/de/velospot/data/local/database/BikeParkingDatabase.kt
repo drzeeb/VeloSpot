@@ -60,6 +60,38 @@ abstract class BikeParkingDatabase : RoomDatabase() {
             "id,name,latitude,longitude,address,capacity,isCovered,imageUrl,operator,type,sourceLayer,lastUpdated"
 
         /**
+         * Name of the composite B-tree index backing the viewport bounding-box
+         * query in [de.velospot.data.local.dao.BikeParkingSpaceDao.getSpacesInBoundingBox].
+         * It must match the index declared on
+         * [de.velospot.data.local.entity.BikeParkingSpaceEntity]; if the two ever
+         * diverge Room's schema validation would trigger a destructive rebuild.
+         */
+        internal const val LAT_LON_INDEX_NAME = "idx_parking_lat_lon"
+
+        /**
+         * Idempotent DDL that (re)creates the viewport index.
+         *
+         * Investigation of performance finding #7: this app runs on the *platform*
+         * SQLite (no bundled requery/SQLCipher, no custom open-helper factory), so a
+         * real spatial index (`CREATE VIRTUAL TABLE … USING rtree`) is not a safe
+         * option — the R*Tree module is not guaranteed to be compiled into every
+         * device's SQLite and would abort DB open (and destructively wipe the seeded
+         * parking data) on devices without it. A composite `(latitude, longitude)`
+         * B-tree is therefore the correct tool here: for typical map viewports the
+         * latitude band is highly selective, so SQLite range-scans latitude via this
+         * index and filters longitude in-index before touching the row.
+         *
+         * The index physically lives in the bundled asset DBs. This `IF NOT EXISTS`
+         * statement is a self-healing guarantee: it runs at the end of the country
+         * merge so the newly inserted France/Luxembourg rows are indexed, and it
+         * repairs the index should a future asset rebuild ever ship without it —
+         * preventing a silent, catastrophic destructive rebuild of user data.
+         */
+        private const val CREATE_LAT_LON_INDEX =
+            "CREATE INDEX IF NOT EXISTS `$LAT_LON_INDEX_NAME` " +
+                "ON `bike_parking_spaces` (`latitude`, `longitude`)"
+
+        /**
          * Get singleton instance of the database.
          * Thread-safe initialization using double-checked locking.
          *
@@ -110,8 +142,25 @@ abstract class BikeParkingDatabase : RoomDatabase() {
             object : Migration(3, 4) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     EXTRA_COUNTRY_ASSETS.forEach { asset -> importCountryAsset(context, db, asset) }
+                    // Guarantee the viewport index covers the freshly merged rows and
+                    // self-heal it if a future asset ever ships without it. Idempotent,
+                    // schema-neutral (the index is already part of the v4 schema, so no
+                    // version bump / identity-hash change is required) and safe inside
+                    // Room's migration transaction (CREATE INDEX, unlike ATTACH, is
+                    // permitted within a transaction).
+                    db.execSQL(CREATE_LAT_LON_INDEX)
                 }
             }
+
+        /**
+         * Test-only accessor exposing the exact production v3 → v4 migration so an
+         * instrumented migration test can validate it against the checked-in schema
+         * baseline and assert the viewport index is present after the country merge.
+         * Not for production use.
+         */
+        @androidx.annotation.VisibleForTesting
+        internal fun migration3To4ForTest(context: Context): Migration =
+            extraCountriesMigration(context)
 
         /**
          * Copies one bundled country DB out of `assets/` into a temp file, opens it
