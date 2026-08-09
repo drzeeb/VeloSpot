@@ -30,8 +30,13 @@ object OfflineRoutingPreferences {
         prefs(context).edit { putBoolean(KEY_ON_DEMAND, enabled) }
 
     fun getSelectedProfile(context: Context): BRouterProfile {
-        val name = prefs(context).getString(KEY_PROFILE, BRouterProfile.TREKKING.fileName)
-        return BRouterProfile.entries.firstOrNull { it.fileName == name } ?: BRouterProfile.TREKKING
+        val name = prefs(context).getString(KEY_PROFILE, BRouterProfile.DEFAULT.fileName)
+        val profile = BRouterProfile.entries.firstOrNull { it.fileName == name }
+        // Fall back to the default bike profile for unknown names and for any
+        // profile that is no longer user-selectable (e.g. a legacy persisted
+        // "shortest", hidden by product decision #23) so no rider stays stuck on
+        // an option that is not offered any more.
+        return profile?.takeIf { it.userSelectable } ?: BRouterProfile.DEFAULT
     }
 
     fun setSelectedProfile(context: Context, profile: BRouterProfile) =
