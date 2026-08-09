@@ -88,8 +88,24 @@ class RoutingRepositoryImpl @Inject constructor(
         var duration = 0.0
         var energy: Double? = null
         var source = RoutingSource.OSRM_ONLINE
+        // Per-node cumulative times, offset so the joined series stays monotonic
+        // across legs. Null the moment any leg lacks per-node timing (mixed
+        // BRouter/OSRM legs) so the ETA falls back cleanly for the whole route.
+        var cumulativeTimes: MutableList<Double>? = mutableListOf()
         for (i in 0 until waypoints.size - 1) {
             val leg = getBikeRoute(waypoints[i], waypoints[i + 1])
+            val offset = duration   // total modelled time before this leg
+            val legTimes = leg.cumulativeTimesSeconds
+            if (cumulativeTimes != null && legTimes != null && legTimes.size == leg.points.size) {
+                if (points.isEmpty()) {
+                    cumulativeTimes += legTimes.map { it + offset }
+                } else {
+                    // Drop the first node — it duplicates the shared waypoint.
+                    cumulativeTimes += legTimes.drop(1).map { it + offset }
+                }
+            } else {
+                cumulativeTimes = null
+            }
             if (points.isEmpty()) {
                 points += leg.points
             } else {
@@ -107,7 +123,8 @@ class RoutingRepositoryImpl @Inject constructor(
             distanceMeters = distance,
             durationSeconds = duration,
             source = source,
-            energyJoules = energy
+            energyJoules = energy,
+            cumulativeTimesSeconds = cumulativeTimes
         )
     }
 
