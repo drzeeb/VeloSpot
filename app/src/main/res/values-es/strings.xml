@@ -310,6 +310,10 @@
     <string name="layers_heatmap_desc">Por dónde circulas más, según tus rutas grabadas</string>
     <string name="layers_tracks_title">Rutas recorridas</string>
     <string name="layers_tracks_desc">Cada ruta grabada como una línea fina</string>
+    <string name="layers_ride_tracks_title">Mis rutas</string>
+    <string name="layers_ride_tracks_desc">Todos los lugares por donde has pasado, según tus rutas grabadas</string>
+    <string name="layers_ride_tracks_mode_lines">Líneas</string>
+    <string name="layers_ride_tracks_mode_heatmap">Mapa de calor</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Ubicación personalizada</string>
     <string name="custom_pin_subtitle">Toca el mapa para mover el marcador.</string>

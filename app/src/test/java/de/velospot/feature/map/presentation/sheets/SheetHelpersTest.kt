@@ -108,7 +108,7 @@ class SheetHelpersTest {
     fun `constant tables are populated`() {
         assertEquals(4, WHEEL_PRESETS_METERS.size)
         assertEquals(listOf(5, 10, 15, 20, 30, 40, 50), ROUND_TRIP_DISTANCES_KM)
-        assertEquals(5, layerAccentColorCount)
+        assertEquals(4, layerAccentColorCount)
         assertNotNull(IMPROVING_COLOR)
     }
 }
