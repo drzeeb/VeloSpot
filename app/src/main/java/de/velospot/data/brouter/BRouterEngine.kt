@@ -516,6 +516,16 @@ class BRouterEngine(
                 elevationMeters = accessor.elevMetersOrNull(node)
             )
         }
+        // BRouter attaches a cumulative kinematic travel time to each node
+        // (`OsmPathElement.getTime()`), so live navigation can price the *remaining*
+        // portion of the route by its real modelled effort (climb profile included)
+        // instead of a flat distance × average. Keep the per-node series only when
+        // it is present and monotonic through to a positive total; otherwise leave
+        // it null so the ETA degrades gracefully.
+        val cumulativeTimes: List<Double>? = accessor.getTime?.let {
+            val times = nodes.map { node -> accessor.timeSecondsOrNull(node) ?: return@let null }
+            if (times.size == points.size && times.last() > 0.0) times else null
+        }
         // `energy` and `getTotalSeconds()` are public on OsmTrack — read directly
         // (no reflection). They are only meaningful when the profile drives BRouter's
         // kinematic model (all bundled `.brf`s set totalMass/bikerPower/maxSpeed), so
@@ -523,7 +533,8 @@ class BRouterEngine(
         return DecodedTrack(
             points = points,
             totalSeconds = track.getTotalSeconds(),
-            energyJoules = track.energy.toDouble()
+            energyJoules = track.energy.toDouble(),
+            cumulativeTimesSeconds = cumulativeTimes
         )
     }
 
@@ -536,7 +547,12 @@ class BRouterEngine(
         /** BRouter's physics-based total travel time in seconds (0 when unavailable). */
         val totalSeconds: Int,
         /** Mechanical work for the whole route in Joules (0 when unavailable). */
-        val energyJoules: Double
+        val energyJoules: Double,
+        /**
+         * Cumulative per-node travel time (s) from BRouter's kinematic model,
+         * aligned 1:1 with [points]; `null` when BRouter attached none.
+         */
+        val cumulativeTimesSeconds: List<Double>? = null
     )
 
     /** Absolute path to a profile's `.brf` file in internal storage. */
@@ -562,7 +578,8 @@ class BRouterEngine(
             distanceMeters  = distanceMeters,
             durationSeconds = durationSeconds,
             source          = RoutingSource.BROUTER_OFFLINE,
-            energyJoules    = decoded.energyJoules.takeIf { it > 0.0 }
+            energyJoules    = decoded.energyJoules.takeIf { it > 0.0 },
+            cumulativeTimesSeconds = decoded.cumulativeTimesSeconds
         )
     }
 
@@ -654,6 +671,7 @@ class BRouterEngine(
                 ilat = declaredFieldInHierarchy(node.javaClass, "ilat"),
                 ilon = declaredFieldInHierarchy(node.javaClass, "ilon"),
                 getElev = runCatching { node.javaClass.getMethod("getElev") }.getOrNull(),
+                getTime = runCatching { node.javaClass.getMethod("getTime") }.getOrNull(),
             )
         }
 
@@ -662,13 +680,15 @@ class BRouterEngine(
      *
      * BRouter declares the integer coordinate fields (`ilat`/`ilon`) as private in
      * a concrete `OsmPathElement` subclass with no public getter, and exposes
-     * elevation via `OsmPos.getElev()` (which returns `selev / 4.0`). Reflection
-     * keeps the engine decoupled from the exact `btools` class hierarchy.
+     * elevation via `OsmPos.getElev()` (which returns `selev / 4.0`) and the
+     * cumulative kinematic travel time via `OsmPathElement.getTime()` (seconds).
+     * Reflection keeps the engine decoupled from the exact `btools` class hierarchy.
      */
     private class NodeAccessor(
         val ilat: Field,
         val ilon: Field,
         val getElev: Method?,
+        val getTime: Method?,
     ) {
         /**
          * Terrain elevation (m) of [node], or `null` when unavailable (BRouter uses
@@ -679,6 +699,20 @@ class BRouterEngine(
             return try {
                 val v = (m.invoke(node) as? Number)?.toDouble() ?: return null
                 if (v < -1_000.0 || v > 9_000.0) null else v
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+        /**
+         * Cumulative travel time (s) at [node] from BRouter's kinematic model, or
+         * `null` when BRouter attached no per-node time (the node's `message` is
+         * absent). The first node legitimately reports `0`.
+         */
+        fun timeSecondsOrNull(node: Any): Double? {
+            val m = getTime ?: return null
+            return try {
+                (m.invoke(node) as? Number)?.toDouble()
             } catch (_: Exception) {
                 null
             }
