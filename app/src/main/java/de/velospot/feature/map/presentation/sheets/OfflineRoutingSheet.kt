@@ -61,7 +61,7 @@ fun RoutingProfileSheet(
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
 
-            BRouterProfile.entries.forEach { profile ->
+            BRouterProfile.selectableEntries.forEach { profile ->
                 val isSelected = profile == currentProfile
                 Row(
                     modifier = Modifier
