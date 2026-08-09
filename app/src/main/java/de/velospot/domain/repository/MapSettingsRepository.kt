@@ -2,6 +2,7 @@ package de.velospot.domain.repository
 
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
+import de.velospot.core.map.RideTracksMode
 import de.velospot.core.map.RideViewOptions
 import kotlinx.coroutines.flow.Flow
 
@@ -88,6 +89,10 @@ interface MapSettingsRepository {
     val onboardingCompleted: Flow<Boolean>
 
     suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean)
+
+    /** Sets the display mode (lines / heatmap) of the unified ride-tracks layer. */
+    suspend fun setRideTracksMode(mode: RideTracksMode)
+
     suspend fun set3DNavigation(enabled: Boolean)
     suspend fun setVoiceGuidance(enabled: Boolean)
     suspend fun setKeepScreenOn(enabled: Boolean)

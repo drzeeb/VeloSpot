@@ -1533,6 +1533,10 @@ private class FakeMapSettingsRepository : MapSettingsRepository {
         _layerVisibility.value = _layerVisibility.value.withVisibility(category, visible)
     }
 
+    override suspend fun setRideTracksMode(mode: de.velospot.core.map.RideTracksMode) {
+        _layerVisibility.value = _layerVisibility.value.copy(rideTracksMode = mode)
+    }
+
     override suspend fun set3DNavigation(enabled: Boolean) { _is3DNavigation.value = enabled }
     override suspend fun setVoiceGuidance(enabled: Boolean) { _voiceGuidance.value = enabled }
     override suspend fun setKeepScreenOn(enabled: Boolean) { _keepScreenOn.value = enabled }

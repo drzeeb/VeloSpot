@@ -109,6 +109,7 @@ class RideAnalysisViewModelTest {
         override val rideViewOptions: Flow<RideViewOptions> = MutableStateFlow(RideViewOptions())
         override val onboardingCompleted: Flow<Boolean> = MutableStateFlow(true)
         override suspend fun setLayerVisible(category: MapLayerCategory, visible: Boolean) = Unit
+        override suspend fun setRideTracksMode(mode: de.velospot.core.map.RideTracksMode) = Unit
         override suspend fun set3DNavigation(enabled: Boolean) = Unit
         override suspend fun setVoiceGuidance(enabled: Boolean) = Unit
         override suspend fun setKeepScreenOn(enabled: Boolean) = Unit

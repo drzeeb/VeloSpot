@@ -75,6 +75,7 @@ import de.velospot.feature.map.presentation.markers.createWaypointPinIcon
 import de.velospot.core.map.RideHeatmap
 import de.velospot.core.map.RideMaxSpeedPoint
 import de.velospot.core.map.RideTrackLines
+import de.velospot.core.map.RideTracksMode
 import de.velospot.feature.map.presentation.sheets.MapBottomSheets
 import de.velospot.feature.map.presentation.sheets.GpxOpenChooserDialog
 import de.velospot.feature.map.presentation.sheets.RideDetailSheet
@@ -485,38 +486,42 @@ fun MainMapScreen(
     // write SOURCE_LOCATION (start renders the puck, stop clears it), so the dot must
     // get the final say when idle. See the effect after `DisposableEffect(navigationManager)`.
 
-    // ── Recorded-ride heatmap overlay ─────────────────────────────────────────
-    // Aggregate all recorded tracks into weighted cells (off the main thread) and
-    // (re)draw the heatmap layer whenever the rides change, the layer is toggled,
-    // or the style reloads. Hidden (and skipped) while the layer is off.
-    LaunchedEffect(maplibreMap, styleVersion, recordedRideTracks, layerVisibility.showHeatmap) {
+    // ── Recorded-ride "My rides" overlay (lines ↔ heatmap) ────────────────────
+    // One unified layer driven by a single visibility flag + a display mode.
+    // Exactly one of the two renderers (thin per-ride lines / aggregated heatmap)
+    // is active when the layer is on, and neither when off. Switching mode swaps
+    // cleanly: the inactive renderer is always hidden and its source emptied, so no
+    // orphaned heatmap remains when showing lines and vice-versa. Both aggregations
+    // run off the main thread. (Re)built whenever the rides change, the layer is
+    // toggled, the mode changes, or the style reloads.
+    LaunchedEffect(
+        maplibreMap, styleVersion, recordedRideTracks,
+        layerVisibility.showRideTracks, layerVisibility.rideTracksMode
+    ) {
         val style = maplibreMap?.style ?: return@LaunchedEffect
-        if (!layerVisibility.showHeatmap) {
+        if (!layerVisibility.showRideTracks) {
+            // Layer off: clear/hide both renderers.
             updateHeatmapLayer(style, emptyList(), visible = false)
-            return@LaunchedEffect
-        }
-        val cells = withContext(Dispatchers.Default) {
-            RideHeatmap.build(recordedRideTracks.filterNot { it.isMock })
-                .map { Triple(it.latitude, it.longitude, it.intensity) }
-        }
-        updateHeatmapLayer(style, cells, visible = true)
-    }
-
-    // ── Recorded-ride "ridden tracks" overlay ─────────────────────────────────
-    // Draw every recorded ride as its own thin, translucent line (simplified off
-    // the main thread). Overlapping passes accumulate, so often-ridden streets
-    // read stronger. (Re)built whenever the rides change, the layer is toggled or
-    // the style reloads; hidden (and skipped) while the layer is off.
-    LaunchedEffect(maplibreMap, styleVersion, recordedRideTracks, layerVisibility.showTracks) {
-        val style = maplibreMap?.style ?: return@LaunchedEffect
-        if (!layerVisibility.showTracks) {
             updateTracksHistoryLayer(style, emptyList(), markerStyleConfig.routeColor, visible = false)
             return@LaunchedEffect
         }
-        val polylines = withContext(Dispatchers.Default) {
-            RideTrackLines.build(recordedRideTracks.filterNot { it.isMock })
+        val rides = recordedRideTracks.filterNot { it.isMock }
+        when (layerVisibility.rideTracksMode) {
+            RideTracksMode.HEATMAP -> {
+                // Hide the lines renderer, then (re)build the heatmap.
+                updateTracksHistoryLayer(style, emptyList(), markerStyleConfig.routeColor, visible = false)
+                val cells = withContext(Dispatchers.Default) {
+                    RideHeatmap.build(rides).map { Triple(it.latitude, it.longitude, it.intensity) }
+                }
+                updateHeatmapLayer(style, cells, visible = true)
+            }
+            RideTracksMode.LINES -> {
+                // Hide the heatmap renderer, then (re)build the thin per-ride lines.
+                updateHeatmapLayer(style, emptyList(), visible = false)
+                val polylines = withContext(Dispatchers.Default) { RideTrackLines.build(rides) }
+                updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
+            }
         }
-        updateTracksHistoryLayer(style, polylines, markerStyleConfig.routeColor, visible = true)
     }
 
     // ── Route-planning waypoint pins ──────────────────────────────────────────

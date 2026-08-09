@@ -201,6 +201,10 @@
     <string name="layers_heatmap_desc">Wou s du am meeschte fiers – aus dengen opgeholl Touren</string>
     <string name="layers_tracks_title">Gefuere Strecken</string>
     <string name="layers_tracks_desc">All opgeholl Tour als dënn Linn</string>
+    <string name="layers_ride_tracks_title">Meng Touren</string>
+    <string name="layers_ride_tracks_desc">Iwwerall, wou s du wars — aus dengen opgeholl Touren</string>
+    <string name="layers_ride_tracks_mode_lines">Linnen</string>
+    <string name="layers_ride_tracks_mode_heatmap">Heatmap</string>
     <!-- Custom map pin -->
     <string name="custom_pin_title">Markéierten Uert</string>
     <string name="custom_pin_subtitle">Tipp op d\'Kaart, fir de Pin ze réckelen.</string>
