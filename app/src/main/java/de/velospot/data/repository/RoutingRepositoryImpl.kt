@@ -11,6 +11,7 @@ import de.velospot.domain.model.EmptyRouteGeometryException
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.NoRouteFoundException
 import de.velospot.domain.model.RoutePoint
+import de.velospot.domain.model.RoutingDefaults
 import de.velospot.domain.model.RoutingFailedException
 import de.velospot.domain.model.RoutingSource
 import de.velospot.domain.repository.RoutingRepository
@@ -88,8 +89,24 @@ class RoutingRepositoryImpl @Inject constructor(
         var duration = 0.0
         var energy: Double? = null
         var source = RoutingSource.OSRM_ONLINE
+        // Per-node cumulative times, offset so the joined series stays monotonic
+        // across legs. Null the moment any leg lacks per-node timing (mixed
+        // BRouter/OSRM legs) so the ETA falls back cleanly for the whole route.
+        var cumulativeTimes: MutableList<Double>? = mutableListOf()
         for (i in 0 until waypoints.size - 1) {
             val leg = getBikeRoute(waypoints[i], waypoints[i + 1])
+            val offset = duration   // total modelled time before this leg
+            val legTimes = leg.cumulativeTimesSeconds
+            if (cumulativeTimes != null && legTimes != null && legTimes.size == leg.points.size) {
+                if (points.isEmpty()) {
+                    cumulativeTimes += legTimes.map { it + offset }
+                } else {
+                    // Drop the first node — it duplicates the shared waypoint.
+                    cumulativeTimes += legTimes.drop(1).map { it + offset }
+                }
+            } else {
+                cumulativeTimes = null
+            }
             if (points.isEmpty()) {
                 points += leg.points
             } else {
@@ -107,7 +124,8 @@ class RoutingRepositoryImpl @Inject constructor(
             distanceMeters = distance,
             durationSeconds = duration,
             source = source,
-            energyJoules = energy
+            energyJoules = energy,
+            cumulativeTimesSeconds = cumulativeTimes
         )
     }
 
@@ -147,9 +165,6 @@ class RoutingRepositoryImpl @Inject constructor(
 
 // ── OSRM online fallback ──────────────────────────────────────────────────────
 
-/** Realistic average cycling speed used to recalculate OSRM duration (15 km/h). */
-private const val OSRM_CYCLING_SPEED_MS = 15.0 / 3.6
-
 /**
  * Relative OSRM bicycle-routing path. Resolved by Retrofit against the OSRM base
  * URL configured once in `NetworkModule`, so the host is defined in a single place
@@ -180,11 +195,11 @@ internal suspend fun osrmFallbackRoute(
     }
     if (points.isEmpty()) throw EmptyRouteGeometryException()
     // OSRM's bicycle duration can be calibrated for road speeds rather than
-    // real cycling pace. Recalculate from distance at 15 km/h average.
+    // real cycling pace. Recalculate from distance at the app's shared default cycling speed.
     return BikeRoute(
         points          = points,
         distanceMeters  = bestRoute.distance,
-        durationSeconds = bestRoute.distance / OSRM_CYCLING_SPEED_MS,
+        durationSeconds = bestRoute.distance / RoutingDefaults.DEFAULT_CYCLING_SPEED_MPS,
         source          = RoutingSource.OSRM_ONLINE
     )
 }

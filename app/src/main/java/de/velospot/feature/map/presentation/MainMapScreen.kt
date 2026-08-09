@@ -559,7 +559,8 @@ fun MainMapScreen(
                 routePoints          = route.points,
                 totalDistanceMeters  = route.distanceMeters,
                 totalDurationSeconds = route.durationSeconds,
-                routeColor           = markerStyleConfig.routeColor
+                routeColor           = markerStyleConfig.routeColor,
+                cumulativeTimesSeconds = route.cumulativeTimesSeconds
             )
             // Immediately feed the last known fix so the camera tilts straight in.
             userLocation?.let(navigationManager::onLocationUpdate)

@@ -24,7 +24,16 @@ data class BikeRoute(
      * resistance and the elevation profile. `null` for sources that don't model
      * it (the OSRM online fallback). See [estimatedKcal].
      */
-    val energyJoules: Double? = null
+    val energyJoules: Double? = null,
+    /**
+     * Cumulative modelled travel time (seconds) at each route node, aligned 1:1
+     * with [points] (`[0] == 0`, `last ≈ durationSeconds`). BRouter emits a
+     * per-node time from its kinematic model (so the climb profile is baked in);
+     * live navigation uses this to compute the remaining time of the portion
+     * still ahead instead of a flat `distance ÷ averageSpeed`. `null` for sources
+     * without per-node timing (the OSRM online fallback).
+     */
+    val cumulativeTimesSeconds: List<Double>? = null
 ) {
     /**
      * Rough calorie estimate (kcal) for riding this route. BRouter's
