@@ -293,15 +293,10 @@ fun MainMapScreen(
     }
 
 
-    // Show a Toast when the user zooms out below the minimum parking marker level.
-    // Only fires on the false→true transition, not on further zoom-out.
+    // Drives the subtle inline "zoom in to see parking" hint chip (see ZoomHintChip
+    // in the UI layout below). State-driven — true only while zoomed out below the
+    // minimum parking marker level — so it fades in/out instead of firing a Toast.
     val isZoomedOutForParking = zoomBucket < MIN_ZOOM_PARKING_VISIBLE.toInt()
-    val zoomHintText = stringResource(R.string.zoom_in_for_parking)
-    LaunchedEffect(isZoomedOutForParking) {
-        if (isZoomedOutForParking) {
-            Toast.makeText(context, zoomHintText, Toast.LENGTH_SHORT).show()
-        }
-    }
 
     // ── Permission handling ───────────────────────────────────────────────────
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -971,6 +966,19 @@ fun MainMapScreen(
                     .padding(start = 16.dp, top = 72.dp)
             )
         }
+
+        // ── Zoom-in-for-parking hint ─────────────────────────────────────────
+        // Top-centre, tucked under the search bar so it clears the top search bar,
+        // the right-edge menu / speed-dial and the bottom record FAB / HUD. A calm,
+        // in-theme replacement for the old zoom-out Toast: fades in only while
+        // zoomed out and auto-hides (see ZoomHintChip).
+        ZoomHintChip(
+            visible = isZoomedOutForParking,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = 72.dp)
+        )
 
         // Recent destinations now live inside the search bar's initially-expanded
         // results dropdown (see AddressSearchBar), so there is no permanent on-map row.
