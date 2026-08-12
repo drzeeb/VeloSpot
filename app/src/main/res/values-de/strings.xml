@@ -256,7 +256,8 @@
     <string name="about_country_france">Frankreich</string>
     <string name="about_country_luxembourg">Luxemburg</string>
     <string name="about_privacy">Datenschutz</string>
-    <string name="about_support">Spendier mir einen Kaffee</string>
+
+
     <string name="about_open_link">Link öffnen</string>
     <string name="about_imprint">Impressum</string>
     <string name="about_replay_onboarding">App-Tour</string>

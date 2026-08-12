@@ -1,0 +1,6 @@
+• Removed the in-app "Buy me a coffee" donation link (Google Play Payments policy); donations remain on the GitHub project page
+• Turn cues no longer skipped on rounded corners
+• Faster first parking load and smoother map rendering
+• More accurate live ETA and smarter off-route rerouting
+• Quick-Settings tile reliably reflects the recording state
+• Various performance and reliability improvements

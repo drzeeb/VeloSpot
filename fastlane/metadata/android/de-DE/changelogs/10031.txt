@@ -1,0 +1,6 @@
+• "Buy me a coffee"-Spendenlink in der App entfernt (Google-Play-Zahlungsrichtlinie); Spenden weiterhin auf GitHub möglich
+• Abbiegehinweise werden in Kurven nicht mehr übersprungen
+• Schnelleres Laden der Parkplätze und flüssigere Karte
+• Genauere Live-Ankunftszeit und cleverere Neuberechnung
+• Schnelleinstellungen-Kachel zeigt den Aufnahmestatus zuverlässig
+• Diverse Performance- und Zuverlässigkeitsverbesserungen
