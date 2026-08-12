@@ -205,17 +205,30 @@ class RoutePlanningControllerTest {
         val c = controller(scope, repo)
         val planned = plannedRoute("r1")
 
-        // Fewer than two waypoints → null.
-        assertNull(c.beginRide(planned.copy(waypoints = planned.waypoints.take(1)), RideDirection.FORWARD))
+        // Fewer than two geometry points → null.
+        assertNull(c.beginRide(planned.copy(geometry = planned.geometry.take(1)), RideDirection.FORWARD))
 
-        val coords = c.beginRide(planned, RideDirection.REVERSE)
-        assertEquals(2, coords!!.size)
+        // The ridable route follows the stored geometry, reversed for a backwards ride.
+        val ridable = c.beginRide(planned, RideDirection.REVERSE)
+        assertEquals(planned.geometry.reversed(), ridable!!.points)
+        assertEquals(planned.distanceMeters, ridable.distanceMeters, 0.0)
+        assertNull(ridable.cumulativeTimesSeconds)
 
         val routeId = c.onRideFinished(sampleRide())
         advanceUntilIdle()
         assertEquals("r1", routeId)
         assertEquals(1, repo.attempts.value.size)
         assertTrue(repo.attempts.value.first().reversed)
+    }
+
+    @Test
+    fun `beginRide forward follows the stored geometry in order`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val c = controller(scope)
+        val planned = plannedRoute("r1")
+
+        val ridable = c.beginRide(planned, RideDirection.FORWARD)
+        assertEquals(planned.geometry, ridable!!.points)
     }
 
     @Test
