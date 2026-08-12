@@ -293,7 +293,8 @@
     <string name="about_country_france">França</string>
     <string name="about_country_luxembourg">Luxemburgo</string>
     <string name="about_privacy">Privacidade</string>
-    <string name="about_support">Paga-me um café</string>
+
+
     <string name="about_open_link">Abrir ligação</string>
     <string name="about_imprint">Informação legal</string>
     <string name="about_replay_onboarding">Tour da app</string>
