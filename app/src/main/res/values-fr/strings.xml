@@ -295,7 +295,8 @@
     <string name="about_country_france">France</string>
     <string name="about_country_luxembourg">Luxembourg</string>
     <string name="about_privacy">Confidentialité</string>
-    <string name="about_support">Offrez-moi un café</string>
+
+
     <string name="about_open_link">Ouvrir le lien</string>
     <string name="about_imprint">Mentions légales</string>
     <string name="about_replay_onboarding">Visite de l\'appli</string>
