@@ -41,7 +41,6 @@ import de.velospot.feature.map.presentation.headingSemantics
 
 private const val APP_URL = "https://velospot.app"
 private const val PRIVACY_URL = "https://velospot.app/privacy"
-private const val SUPPORT_URL = "https://buymeacoffee.com/velospot"
 private const val DISCORD_URL = "https://discord.velospot.app"
 
 /** Release date of the bundled Germany OSM parking dataset. */
@@ -156,15 +155,6 @@ internal fun AboutSheet(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-            // Support / donation link (opens externally in the browser)
-            AboutLinkRow(
-                icon = Icons.Default.Coffee,
-                title = stringResource(id = R.string.about_support),
-                subtitle = "buymeacoffee.com/velospot",
-                onClick = { openUrl(SUPPORT_URL) }
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
             // Imprint / legal notice (§ 5 DDG) — shown inline so it stays
             // permanently and offline-accessible from within the app.
