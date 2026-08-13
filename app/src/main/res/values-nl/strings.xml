@@ -300,6 +300,25 @@
     <string name="about_replay_onboarding">App-rondleiding</string>
     <string name="about_replay_onboarding_subtitle">Introductie opnieuw tonen</string>
 
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Back-up en herstel</string>
+    <string name="backup_create_action">Back-up maken</string>
+    <string name="backup_create_subtitle">Al je gegevens naar een bestand opslaan</string>
+    <string name="restore_action">Back-up herstellen</string>
+    <string name="restore_subtitle">Gegevens importeren uit een back-upbestand</string>
+    <string name="backup_create_success">Back-up opgeslagen</string>
+    <string name="backup_working">Bezig… houd de app open</string>
+    <string name="ride_loading">Rit laden…</string>
+    <string name="backup_create_failed">Kan de back-up niet maken</string>
+    <string name="restore_success">Back-up hersteld</string>
+    <string name="restore_failed">Kan de back-up niet herstellen</string>
+    <string name="restore_too_new">Deze back-up is gemaakt met een nieuwere versie van VeloSpot. Werk de app eerst bij.</string>
+    <string name="restore_corrupt">Dit bestand is geen geldige VeloSpot-back-up</string>
+    <string name="restore_confirm_title">Back-up herstellen?</string>
+    <string name="restore_confirm_message">Hiermee worden alle huidige gegevens op dit apparaat (ritten, opgeslagen plaatsen, favorieten, routes, instellingen) vervangen door de inhoud van de back-up. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="restore_confirm_button">Herstellen</string>
+
+
     <!-- Welkom bij eerste start -->
     <string name="onboarding_skip">Overslaan</string>
     <string name="onboarding_next">Volgende</string>

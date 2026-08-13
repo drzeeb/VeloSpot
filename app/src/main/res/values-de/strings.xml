@@ -263,6 +263,25 @@
     <string name="about_replay_onboarding">App-Tour</string>
     <string name="about_replay_onboarding_subtitle">Einführung erneut anzeigen</string>
 
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Datensicherung</string>
+    <string name="backup_create_action">Sicherung erstellen</string>
+    <string name="backup_create_subtitle">Alle Daten in eine Datei speichern</string>
+    <string name="restore_action">Sicherung wiederherstellen</string>
+    <string name="restore_subtitle">Daten aus einer Sicherungsdatei importieren</string>
+    <string name="backup_create_success">Sicherung gespeichert</string>
+    <string name="backup_working">Bitte warten… App geöffnet lassen</string>
+    <string name="ride_loading">Strecke wird geladen…</string>
+    <string name="backup_create_failed">Sicherung konnte nicht erstellt werden</string>
+    <string name="restore_success">Sicherung wiederhergestellt</string>
+    <string name="restore_failed">Sicherung konnte nicht wiederhergestellt werden</string>
+    <string name="restore_too_new">Diese Sicherung wurde mit einer neueren Version von VeloSpot erstellt. Bitte aktualisiere zuerst die App.</string>
+    <string name="restore_corrupt">Diese Datei ist keine gültige VeloSpot-Sicherung</string>
+    <string name="restore_confirm_title">Sicherung wiederherstellen?</string>
+    <string name="restore_confirm_message">Dadurch werden alle aktuellen Daten auf diesem Gerät (Fahrten, gespeicherte Orte, Favoriten, Routen, Einstellungen) durch den Inhalt der Sicherung ersetzt. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="restore_confirm_button">Wiederherstellen</string>
+
+
     <!-- Einführung beim ersten Start -->
     <string name="onboarding_skip">Überspringen</string>
     <string name="onboarding_next">Weiter</string>

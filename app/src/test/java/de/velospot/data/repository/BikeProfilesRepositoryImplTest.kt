@@ -61,6 +61,8 @@ class BikeProfilesRepositoryImplTest {
         override suspend fun updateServiceNotified(id: String, milestoneKm: Int) {
             store.value = store.value.map { if (it.id == id) it.copy(lastServiceNotifiedKm = milestoneKm) else it }
         }
+        override suspend fun getAll(): List<BikeProfileEntity> = store.value
+        override suspend fun deleteAll() { store.value = emptyList() }
     }
 
     private fun newContext(): Context = mock<Context>().also {

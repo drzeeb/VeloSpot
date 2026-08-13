@@ -132,6 +132,7 @@ class MapViewModel @Inject constructor(
     private val mapSettings: MapSettingsRepository,
     private val sensorRepository: SensorRepository,
     private val weatherRepository: WeatherRepository,
+    private val backupManager: de.velospot.data.backup.BackupManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -994,6 +995,9 @@ class MapViewModel @Inject constructor(
      */
     val recordedRideTracks: StateFlow<List<RideTrackGeometry>> = rideTracking.recordedRideTracks
     val selectedRide: StateFlow<RecordedRide?> = rideTracking.selectedRide
+
+    /** `true` while a tapped ride's full GPS track loads, before its detail sheet appears. */
+    val isLoadingRide: StateFlow<Boolean> = rideTracking.isLoadingRide
     val rideTrackPoints: StateFlow<List<RoutePoint>> = rideTracking.trackPoints
 
     /**
@@ -1219,6 +1223,66 @@ class MapViewModel @Inject constructor(
 
     /** Clears the staged single-ride GPX save once the SAF picker has been handled (or cancelled). */
     fun consumePendingRideGpxSave() { _pendingRideGpxSave.value = null }
+
+    // ── Local Backup & Restore (all app data → one .vsbackup file via SAF) ─────
+
+    /** `true` while a backup is being written or a restore applied (drives a progress UI). */
+    private val _backupInProgress = MutableStateFlow(false)
+    val backupInProgress: StateFlow<Boolean> = _backupInProgress.asStateFlow()
+
+    /** A timestamped default file name for the SAF "create document" picker. */
+    fun suggestedBackupFileName(): String {
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+            .format(java.util.Date())
+        return "velospot-backup-$stamp.${de.velospot.core.backup.BackupSchema.FILE_EXTENSION}"
+    }
+
+    /**
+     * Exports every user store + settings to the SAF-picked [uri] as one local
+     * `.vsbackup` file (a ZIP). Fully offline — nothing leaves the device. Reports
+     * the outcome via the one-shot user message.
+     */
+    fun createBackup(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _backupInProgress.value = true
+            val outcome = backupManager.createBackup(uri)
+            _backupInProgress.value = false
+            _userMessageRes.value = when (outcome) {
+                de.velospot.data.backup.BackupManager.BackupOutcome.Success ->
+                    de.velospot.R.string.backup_create_success
+                de.velospot.data.backup.BackupManager.BackupOutcome.Failure ->
+                    de.velospot.R.string.backup_create_failed
+            }
+        }
+    }
+
+    /**
+     * REPLACE-restores every store from the SAF-picked backup [uri]. The caller
+     * confirms the overwrite first. A newer-version or corrupt/foreign file is
+     * refused with a friendly message instead of crashing.
+     */
+    fun restoreBackup(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _backupInProgress.value = true
+            val outcome = try {
+                backupManager.restoreBackup(uri)
+            } finally {
+                // Always clear the progress flag so the blocking overlay can never
+                // trap the app, even if the manager throws before returning.
+                _backupInProgress.value = false
+            }
+            _userMessageRes.value = when (outcome) {
+                de.velospot.data.backup.BackupManager.RestoreOutcome.Success ->
+                    de.velospot.R.string.restore_success
+                de.velospot.data.backup.BackupManager.RestoreOutcome.TooNew ->
+                    de.velospot.R.string.restore_too_new
+                de.velospot.data.backup.BackupManager.RestoreOutcome.Corrupt ->
+                    de.velospot.R.string.restore_corrupt
+                de.velospot.data.backup.BackupManager.RestoreOutcome.Failure ->
+                    de.velospot.R.string.restore_failed
+            }
+        }
+    }
 
     /**
      * GPX documents built and validated for the selected rides, awaiting a Storage
