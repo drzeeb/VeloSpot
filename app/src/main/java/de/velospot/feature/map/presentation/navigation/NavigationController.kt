@@ -249,6 +249,40 @@ class NavigationController(
         }
     }
 
+
+    /**
+     * Debug "Mock" tool: **moves the cyclist** from the rider's current position
+     * towards [destination] by driving the GPS mock simulator along a computed
+     * polyline — **without starting navigation** (no route card, no turn-by-turn,
+     * no arrival/auto-park). The route is only computed to have a line to follow;
+     * the simulated fixes flow through [onSimulatedFix] so an active recording
+     * simply gets movement. A `null` current location or a failed route is a no-op.
+     */
+    fun simulateTo(destination: GeoCoordinate) {
+        if (_isSimulating.value) return
+        val location = currentLocation() ?: return
+        scope.launch {
+            val route = runCatching {
+                routingRepository.getBikeRoute(from = location, to = destination)
+            }.getOrNull() ?: return@launch
+            beginSimulation(route.points)
+        }
+    }
+
+    /**
+     * Starts navigation along an **already-computed** [route] to [destination]
+     * without re-routing. Used to ride a saved planned route exactly along its
+     * stored polyline (so leaderboard attempts stay comparable) instead of routing
+     * afresh from the current position. [destination] is a synthetic space placed
+     * at the route's final point; its id must be in [syntheticDestinationIds] so
+     * arrival just confirms (no auto-park). All reset/arrival invariants of
+     * [beginRouting] apply, including the round-trip arming for loops whose start
+     * and end coincide.
+     */
+    fun startAlong(destination: BikeParkingSpace, route: BikeRoute) {
+        beginRouting(destination) { route }
+    }
+
     /**
      * Starts a generated **round-trip** loop of roughly [targetDistanceMeters],
      * beginning and ending at the rider's current position. [destination] is a
@@ -387,18 +421,27 @@ class NavigationController(
             return
         }
         val route = activeRoute ?: return
-        if (route.points.size < 2) return
+        beginSimulation(route.points)
+    }
 
-        // Resume from the paused position only when still on the same route instance;
-        // a fresh/rerouted route restarts from the beginning.
-        val resumeFrom = if (route.points === simulationRouteRef) routeSimulator.travelledMeters else 0.0
-        simulationRouteRef = route.points
+    /**
+     * Starts the GPS mock simulator driving along [points], feeding synthetic fixes
+     * (with bearing + speed) through [onSimulatedFix] exactly like real GPS. Shared
+     * by the navigation play/pause toggle ([toggleSimulation]) and the navigation-free
+     * "Mock" tool ([simulateTo]). Resumes from the paused position only when still on
+     * the same points instance; a fresh route restarts from the beginning.
+     */
+    private fun beginSimulation(points: List<RoutePoint>) {
+        if (points.size < 2) return
+
+        val resumeFrom = if (points === simulationRouteRef) routeSimulator.travelledMeters else 0.0
+        simulationRouteRef = points
 
         _isSimulating.value = true
         onSimulationStarted()
         routeSimulator.start(
             scope = scope,
-            route = route.points,
+            route = points,
             // Brisk couch-test pace (~50 km/h), emitting twice a second so the
             // motion stays smooth despite the higher speed.
             speedMps = 13.9,

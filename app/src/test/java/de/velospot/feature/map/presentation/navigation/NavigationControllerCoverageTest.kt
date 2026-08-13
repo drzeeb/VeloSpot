@@ -96,12 +96,90 @@ class NavigationControllerCoverageTest {
     }
 
     @Test
+    fun `start does not auto-start the GPS mock simulator`() = runTest {
+        // The plain start path leaves autoSimulate at its default (false): a route
+        // becomes active but the debug simulator must stay off.
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val c = controller(scope)
+
+        c.start(space("rack"))
+        advanceUntilIdle()
+
+        assertTrue(c.uiState.value is NavigationUiState.Active)
+        assertEquals(false, c.isSimulating.value)
+    }
+
+    @Test
+    fun `simulateTo moves the cyclist without starting navigation`() = runTest {
+        // The "Mock" tool starts a mock during a ride recording with no active
+        // navigation: it must drive the GPS simulator towards the fixed point but
+        // MUST NOT start navigation (uiState stays Idle, no onNavigationStarted).
+        val cb = Callbacks()
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val c = controller(scope, cb = cb)
+
+        c.simulateTo(GeoCoordinate(49.76, 6.65))
+        // Do NOT advance virtual time here: the UnconfinedTestDispatcher already runs
+        // the route computation eagerly and starts the simulator, which emits its first
+        // fix and parks at its delay. Advancing time would let the simulator drive the
+        // whole route to completion and flip isSimulating back off.
+
+        assertTrue(c.uiState.value is NavigationUiState.Idle)
+        assertEquals(0, cb.started)
+        assertEquals(true, c.isSimulating.value)
+    }
+
+    @Test
+    fun `simulateTo without a location is a no-op`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val c = controller(scope, location = null)
+
+        c.simulateTo(GeoCoordinate(49.76, 6.65))
+        advanceUntilIdle()
+
+        assertTrue(c.uiState.value is NavigationUiState.Idle)
+        assertEquals(false, c.isSimulating.value)
+    }
+
+    @Test
+    fun `simulateTo with a failed route does not simulate`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val c = controller(scope, routeError = RoutingFailedException("no route"))
+
+        c.simulateTo(GeoCoordinate(49.76, 6.65))
+        advanceUntilIdle()
+
+        assertTrue(c.uiState.value is NavigationUiState.Idle)
+        assertEquals(false, c.isSimulating.value)
+    }
+
+    @Test
     fun `startVia routes through the waypoints`() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
         val c = controller(scope)
         c.startVia(space("saved"), listOf(GeoCoordinate(49.755, 6.645), GeoCoordinate(49.76, 6.65)))
         advanceUntilIdle()
         assertTrue(c.uiState.value is NavigationUiState.Active)
+    }
+
+    @Test
+    fun `startAlong rides the given route without re-routing`() = runTest {
+        val cb = Callbacks()
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        // A distinct precomputed route the controller must use verbatim (the fake
+        // routing repository would return a different `route`, so any re-routing
+        // would surface here).
+        val precomputed = BikeRoute(
+            points = listOf(RoutePoint(49.70, 6.60), RoutePoint(49.71, 6.61), RoutePoint(49.72, 6.62)),
+            distanceMeters = 2_345.0,
+            durationSeconds = 500.0
+        )
+        val c = controller(scope, cb = cb)
+        c.startAlong(space("saved"), precomputed)
+        advanceUntilIdle()
+        assertTrue(c.uiState.value is NavigationUiState.Active)
+        assertEquals(precomputed, c.activeRoute)
+        assertEquals(1, cb.started)
     }
 
     @Test
