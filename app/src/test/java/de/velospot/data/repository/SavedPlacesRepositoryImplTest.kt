@@ -32,6 +32,10 @@ class SavedPlacesRepositoryImplTest {
             deletedIds += id
             store.value = store.value.filterNot { it.id == id }
         }
+
+        override suspend fun getAll(): List<SavedPlaceEntity> = store.value
+
+        override suspend fun deleteAll() { store.value = emptyList() }
     }
 
     private fun place(id: String = "p1") = SavedPlace(

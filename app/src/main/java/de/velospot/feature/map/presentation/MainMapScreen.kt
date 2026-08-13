@@ -7,12 +7,14 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -37,6 +39,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -157,6 +160,7 @@ fun MainMapScreen(
     val rideTrackSegments    by viewModel.rideTrackSegments.collectAsStateWithLifecycle()
     val recordedRideTracks   by viewModel.recordedRideTracks.collectAsStateWithLifecycle()
     val selectedRide         by viewModel.selectedRide.collectAsStateWithLifecycle()
+    val isLoadingRide        by viewModel.isLoadingRide.collectAsStateWithLifecycle()
     val isPreviewRide        by viewModel.isPreviewRide.collectAsStateWithLifecycle()
     val gpxOpenChooser       by viewModel.gpxOpenChooser.collectAsStateWithLifecycle()
     val rideViewOptions      by viewModel.rideViewOptions.collectAsStateWithLifecycle()
@@ -170,6 +174,7 @@ fun MainMapScreen(
     val previewedRouteSummary by viewModel.previewedRouteSummary.collectAsStateWithLifecycle()
     val recentDestinations    by viewModel.recentDestinations.collectAsStateWithLifecycle()
     val sensorSnapshot        by viewModel.sensorSnapshot.collectAsStateWithLifecycle()
+    val backupInProgress      by viewModel.backupInProgress.collectAsStateWithLifecycle()
 
     val activeNavigation = navigationUiState as? NavigationUiState.Active
 
@@ -1217,6 +1222,37 @@ fun MainMapScreen(
             )
         }
 
+        // ── Opening a recorded ride — lightweight loading spinner ─────────────
+        // While a tapped ride's full GPS track loads (dense tracks take a moment),
+        // show a calm, non-blocking centred spinner so the tap has visible feedback
+        // before its detail sheet appears. Hidden the instant the sheet is up.
+        if (isLoadingRide && selectedRide == null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                    tonalElevation = 3.dp,
+                    shadowElevation = 6.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator()
+                        Spacer(Modifier.height(12.dp))
+                        androidx.compose.material3.Text(
+                            text = stringResource(R.string.ride_loading),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
         // ── "Open .gpx" chooser — import directly or just preview ────────────
         gpxOpenChooser?.let {
             GpxOpenChooserDialog(
@@ -1298,6 +1334,42 @@ fun MainMapScreen(
         // Sits above the map and all controls while the style/tiles load, then
         // fades + scales away once the map is ready.
         VeloSpotSplash(visible = showSplash, mapReady = mapReady)
+
+        // ── Backup / restore blocking progress overlay ───────────────────────
+        // Shown while `backupInProgress` is true, covering BOTH export (create)
+        // and import (restore). Lives at the top level — independent of the About
+        // sheet, which is dismissed before a restore runs — so a large restore
+        // never looks like a freeze. Blocks interaction so a second op can't be
+        // triggered, and disappears the instant the flag flips back to false.
+        if (backupInProgress) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.material3.MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
+                    .pointerInput(Unit) { /* consume all touches to block interaction */ },
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator()
+                        Spacer(Modifier.height(16.dp))
+                        androidx.compose.material3.Text(
+                            text = stringResource(R.string.backup_working),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
     }
 
     // ── First-launch welcome onboarding ───────────────────────────────────────

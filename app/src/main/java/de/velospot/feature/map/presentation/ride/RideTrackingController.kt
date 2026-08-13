@@ -94,6 +94,14 @@ class RideTrackingController(
     val isPreviewRide: StateFlow<Boolean> = _isPreviewRide.asStateFlow()
 
     /**
+     * `true` while a tapped ride's full GPS track is being loaded off-main in
+     * [selectRide], before its detail sheet can be shown. Drives a lightweight
+     * loading indicator so opening a dense ride never looks like a no-op.
+     */
+    private val _isLoadingRide = MutableStateFlow(false)
+    val isLoadingRide: StateFlow<Boolean> = _isLoadingRide.asStateFlow()
+
+    /**
      * The full set of rides parsed from the previewed GPX (a multi-`<trk>` file
      * yields several). The first is shown in the sheet; importing the preview
      * persists them all. Empty when no preview is open.
@@ -243,8 +251,13 @@ class RideTrackingController(
         // Optimistically clear other selections; load the full track (off-main in
         // the repository) before drawing, since the timeline summary has none.
         scope.launch {
-            val ride = repository.getRide(summary.id) ?: return@launch
-            showRide(ride)
+            _isLoadingRide.value = true
+            try {
+                val ride = repository.getRide(summary.id) ?: return@launch
+                showRide(ride)
+            } finally {
+                _isLoadingRide.value = false
+            }
         }
     }
 
