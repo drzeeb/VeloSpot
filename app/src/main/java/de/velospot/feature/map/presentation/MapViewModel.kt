@@ -1747,13 +1747,16 @@ class MapViewModel @Inject constructor(
 
     /**
      * Rides a saved [route] forward or backwards: arms the leaderboard-attempt
-     * context, then starts turn-by-turn navigation through the route's stops (from
-     * the rider's current position). Reverse rides land on their own leaderboard.
+     * context, then starts turn-by-turn navigation along the route's **stored
+     * geometry** (reversed for a backwards ride) — exactly the polyline computed
+     * when the route was planned, not a fresh route from the current position. This
+     * keeps every attempt on the identical line so leaderboard times stay
+     * comparable. Reverse rides land on their own leaderboard.
      */
     fun ridePlannedRoute(route: PlannedRoute, reversed: Boolean) {
         val direction = if (reversed) RideDirection.REVERSE else RideDirection.FORWARD
-        val waypoints = routePlanningController.beginRide(route, direction) ?: return
-        val last = waypoints.last()
+        val bikeRoute = routePlanningController.beginRide(route, direction) ?: return
+        val last = bikeRoute.points.last()
         val label = if (reversed) {
             context.getString(de.velospot.R.string.route_ride_reverse_name, route.name)
         } else {
@@ -1769,7 +1772,7 @@ class MapViewModel @Inject constructor(
         )
         closeRouteLeaderboard()
         closeRoutePreview()
-        navigationController.startVia(destination, waypoints)
+        navigationController.startAlong(destination, bikeRoute)
     }
 
     // ── Offline usage (map tiles + routing, combined per region) ───────────────

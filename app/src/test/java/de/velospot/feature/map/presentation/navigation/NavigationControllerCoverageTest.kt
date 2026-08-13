@@ -163,6 +163,26 @@ class NavigationControllerCoverageTest {
     }
 
     @Test
+    fun `startAlong rides the given route without re-routing`() = runTest {
+        val cb = Callbacks()
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        // A distinct precomputed route the controller must use verbatim (the fake
+        // routing repository would return a different `route`, so any re-routing
+        // would surface here).
+        val precomputed = BikeRoute(
+            points = listOf(RoutePoint(49.70, 6.60), RoutePoint(49.71, 6.61), RoutePoint(49.72, 6.62)),
+            distanceMeters = 2_345.0,
+            durationSeconds = 500.0
+        )
+        val c = controller(scope, cb = cb)
+        c.startAlong(space("saved"), precomputed)
+        advanceUntilIdle()
+        assertTrue(c.uiState.value is NavigationUiState.Active)
+        assertEquals(precomputed, c.activeRoute)
+        assertEquals(1, cb.started)
+    }
+
+    @Test
     fun `start maps a routing failure to an error state`() = runTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
         val c = controller(scope, routeError = RoutingFailedException("nope"))

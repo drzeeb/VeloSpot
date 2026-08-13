@@ -270,6 +270,20 @@ class NavigationController(
     }
 
     /**
+     * Starts navigation along an **already-computed** [route] to [destination]
+     * without re-routing. Used to ride a saved planned route exactly along its
+     * stored polyline (so leaderboard attempts stay comparable) instead of routing
+     * afresh from the current position. [destination] is a synthetic space placed
+     * at the route's final point; its id must be in [syntheticDestinationIds] so
+     * arrival just confirms (no auto-park). All reset/arrival invariants of
+     * [beginRouting] apply, including the round-trip arming for loops whose start
+     * and end coincide.
+     */
+    fun startAlong(destination: BikeParkingSpace, route: BikeRoute) {
+        beginRouting(destination) { route }
+    }
+
+    /**
      * Starts a generated **round-trip** loop of roughly [targetDistanceMeters],
      * beginning and ending at the rider's current position. [destination] is a
      * synthetic space placed at the start (its id must be in
