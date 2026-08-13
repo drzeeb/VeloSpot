@@ -866,6 +866,7 @@ fun MainMapScreen(
             sunAlertEnabled,
             weatherEnabled,
             isNavigationRouteActive,
+            isRecordingRide,
             isSimulatingRoute
         ) {
             MapMenuCardState(
@@ -884,9 +885,11 @@ fun MainMapScreen(
                 sunAlertEnabled    = sunAlertEnabled,
                 weatherEnabled     = weatherEnabled,
                 // Debug-only GPS route simulator: always visible in debug
-                // builds, enabled once a route is available to drive along.
+                // builds, enabled once a route is available to drive along — or,
+                // for the "Mock" tool, whenever a ride is being recorded (it then
+                // auto-drives to the Porta Nigra).
                 showSimulator      = de.velospot.BuildConfig.DEBUG,
-                simulatorEnabled   = isNavigationRouteActive,
+                simulatorEnabled   = isNavigationRouteActive || isRecordingRide,
                 isSimulating       = isSimulatingRoute
             )
         }

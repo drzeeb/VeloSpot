@@ -151,6 +151,14 @@ class MapViewModel @Inject constructor(
         /** ID used for the synthetic BikeParkingSpace at the end of a planned multi-waypoint route. */
         const val ID_PLANNED_ROUTE = "planned_route"
 
+        /**
+         * Fixed point the debug "Mock" tool moves the cyclist towards when a mock is
+         * started during an active recording: the **Porta Nigra** in Trier. No
+         * navigation is started — the simulator just drives a line to here.
+         */
+        private const val PORTA_NIGRA_LAT = 49.75972
+        private const val PORTA_NIGRA_LON = 6.64417
+
         /** How many recent destinations are kept for the search bar's expanded dropdown. */
         private const val MAX_RECENT_CHIPS = 6
 
@@ -391,8 +399,26 @@ class MapViewModel @Inject constructor(
      * Starts/stops the GPS mock simulator along the active navigation route, so the
      * whole live-navigation pipeline (matching, camera, progress, off-route) can be
      * tested on the couch. Real GPS updates are ignored while simulating.
+     *
+     * Convenience for the recording pipeline: when a mock is started while a ride
+     * is being **recorded** but there is **no active navigation**, this simply
+     * **moves the cyclist** towards a fixed point (the **Porta Nigra** in Trier) by
+     * driving the simulator along a computed line — WITHOUT starting any navigation
+     * (no route card, no turn-by-turn). So a recording can be exercised end-to-end
+     * from the couch just by watching the cyclist move.
      */
-    fun toggleRouteSimulation() = navigationController.toggleSimulation()
+    fun toggleRouteSimulation() {
+        // Already simulating, or a navigation route is active → plain play/pause.
+        if (isSimulatingRoute.value || navigationController.isActive) {
+            navigationController.toggleSimulation()
+            return
+        }
+        // No navigation, but a recording is running: just move the cyclist towards
+        // the Porta Nigra (no navigation is started).
+        if (rideTracking.isRecording) {
+            navigationController.simulateTo(GeoCoordinate(PORTA_NIGRA_LAT, PORTA_NIGRA_LON))
+        }
+    }
 
 
     /**
@@ -1785,13 +1811,16 @@ class MapViewModel @Inject constructor(
 
     /**
      * Rides a saved [route] forward or backwards: arms the leaderboard-attempt
-     * context, then starts turn-by-turn navigation through the route's stops (from
-     * the rider's current position). Reverse rides land on their own leaderboard.
+     * context, then starts turn-by-turn navigation along the route's **stored
+     * geometry** (reversed for a backwards ride) — exactly the polyline computed
+     * when the route was planned, not a fresh route from the current position. This
+     * keeps every attempt on the identical line so leaderboard times stay
+     * comparable. Reverse rides land on their own leaderboard.
      */
     fun ridePlannedRoute(route: PlannedRoute, reversed: Boolean) {
         val direction = if (reversed) RideDirection.REVERSE else RideDirection.FORWARD
-        val waypoints = routePlanningController.beginRide(route, direction) ?: return
-        val last = waypoints.last()
+        val bikeRoute = routePlanningController.beginRide(route, direction) ?: return
+        val last = bikeRoute.points.last()
         val label = if (reversed) {
             context.getString(de.velospot.R.string.route_ride_reverse_name, route.name)
         } else {
@@ -1807,7 +1836,7 @@ class MapViewModel @Inject constructor(
         )
         closeRouteLeaderboard()
         closeRoutePreview()
-        navigationController.startVia(destination, waypoints)
+        navigationController.startAlong(destination, bikeRoute)
     }
 
     // ── Offline usage (map tiles + routing, combined per region) ───────────────

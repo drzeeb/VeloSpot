@@ -1,0 +1,6 @@
+• Lien de don « Buy me a coffee » retiré de l'app (politique de paiement Google Play) ; dons possibles sur GitHub
+• Indications de virage plus ignorées dans les courbes
+• Chargement des stationnements plus rapide, carte plus fluide
+• Estimation d'arrivée plus précise et recalcul plus malin
+• La tuile des réglages rapides reflète l'état d'enregistrement
+• Diverses améliorations de performance et de fiabilité
