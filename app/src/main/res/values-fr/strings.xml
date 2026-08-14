@@ -693,4 +693,59 @@
     <string name="route_leaderboard_forward">Aller (%1$d)</string>
     <string name="route_leaderboard_reverse">Retour (%1$d)</string>
     <string name="route_leaderboard_empty">Aucune tentative. Roulez cet itinéraire pour établir un temps.</string>
+
+    <!-- Badges d'information du stationnement (uniquement quand le fait OSM est connu et positif) -->
+    <string name="parking_badge_covered">Couvert</string>
+    <string name="parking_badge_lit">Éclairé</string>
+    <string name="parking_badge_surveillance">Vidéosurveillance</string>
+    <string name="parking_badge_supervised">Gardienné</string>
+    <string name="parking_badge_free">Gratuit</string>
+    <string name="parking_badge_paid">Payant</string>
+    <string name="parking_badge_charging">Recharge vélo électrique</string>
+    <string name="parking_badge_cargo">Vélo cargo</string>
+    <string name="parking_badge_accessible">Accessible</string>
+    <string name="parking_badge_capacity">Capacité : %1$d</string>
+    <string name="parking_badge_type_garage">Garage à vélos</string>
+    <string name="parking_badge_type_rack">Support à vélos</string>
+    <string name="parking_badge_type_wall_loops">Fixation de roue</string>
+    <string name="parking_badge_type_generic">Stationnement</string>
+
+    <!-- Lignes du détail du stationnement -->
+    <string name="detail_subtype">Type</string>
+    <string name="detail_indoor">Intérieur</string>
+    <string name="detail_surveillance">Surveillance</string>
+    <string name="detail_lit">Éclairage</string>
+    <string name="detail_supervised">Gardienné</string>
+    <string name="detail_access">Accès</string>
+    <string name="detail_fee">Tarif</string>
+    <string name="detail_fee_free">Gratuit</string>
+    <string name="detail_fee_paid">Payant</string>
+    <string name="detail_opening_hours">Horaires d\'ouverture</string>
+    <string name="detail_maxstay">Durée max.</string>
+    <string name="detail_capacity_cargo">Places vélo cargo</string>
+    <string name="detail_capacity_disabled">Places accessibles (PMR)</string>
+    <string name="detail_capacity_charging">Bornes de recharge vélo électrique</string>
+    <string name="detail_network">Réseau</string>
+    <string name="detail_brand">Marque</string>
+    <string name="detail_reference">Référence</string>
+    <string name="detail_last_checked">Vérifié le %1$s</string>
+    <string name="detail_website">Site web</string>
+    <string name="detail_open_website">Ouvrir le site web</string>
+
+    <!-- Valeurs d\'accès -->
+    <string name="access_public">Public</string>
+    <string name="access_customers">Clients uniquement</string>
+    <string name="access_private">Privé</string>
+    <string name="access_no">Accès interdit</string>
+
+    <!-- Sous-types de stationnement -->
+    <string name="subtype_lockers">Box à vélos</string>
+    <string name="subtype_stands">Arceaux</string>
+    <string name="subtype_shed">Abri</string>
+    <string name="subtype_two_tier">Râtelier à deux niveaux</string>
+    <string name="subtype_wall_loops">Fixations murales</string>
+    <string name="subtype_building">Bâtiment</string>
+    <string name="subtype_anchors">Ancrages au sol</string>
+    <string name="subtype_informal">Informel</string>
+    <string name="subtype_lean_to">Abri ouvert</string>
 </resources>

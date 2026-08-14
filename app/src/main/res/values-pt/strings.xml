@@ -692,4 +692,59 @@
     <string name="route_leaderboard_forward">Ida (%1$d)</string>
     <string name="route_leaderboard_reverse">Volta (%1$d)</string>
     <string name="route_leaderboard_empty">Ainda sem tentativas. Pedale esta rota para marcar um tempo.</string>
+
+    <!-- Selos informativos do estacionamento (apenas quando o dado OSM é conhecido e positivo) -->
+    <string name="parking_badge_covered">Coberto</string>
+    <string name="parking_badge_lit">Iluminado</string>
+    <string name="parking_badge_surveillance">Videovigilância</string>
+    <string name="parking_badge_supervised">Guardado</string>
+    <string name="parking_badge_free">Gratuito</string>
+    <string name="parking_badge_paid">Pago</string>
+    <string name="parking_badge_charging">Carregamento e-bike</string>
+    <string name="parking_badge_cargo">Bicicleta de carga</string>
+    <string name="parking_badge_accessible">Acessível</string>
+    <string name="parking_badge_capacity">Capacidade: %1$d</string>
+    <string name="parking_badge_type_garage">Garagem para bicicletas</string>
+    <string name="parking_badge_type_rack">Suporte para bicicletas</string>
+    <string name="parking_badge_type_wall_loops">Suporte de roda</string>
+    <string name="parking_badge_type_generic">Estacionamento</string>
+
+    <!-- Linhas do detalhe do estacionamento -->
+    <string name="detail_subtype">Tipo</string>
+    <string name="detail_indoor">Interior</string>
+    <string name="detail_surveillance">Vigilância</string>
+    <string name="detail_lit">Iluminação</string>
+    <string name="detail_supervised">Guardado</string>
+    <string name="detail_access">Acesso</string>
+    <string name="detail_fee">Tarifa</string>
+    <string name="detail_fee_free">Gratuito</string>
+    <string name="detail_fee_paid">Pago</string>
+    <string name="detail_opening_hours">Horário de funcionamento</string>
+    <string name="detail_maxstay">Permanência máx.</string>
+    <string name="detail_capacity_cargo">Lugares para bicicletas de carga</string>
+    <string name="detail_capacity_disabled">Lugares acessíveis</string>
+    <string name="detail_capacity_charging">Pontos de carregamento de e-bike</string>
+    <string name="detail_network">Rede</string>
+    <string name="detail_brand">Marca</string>
+    <string name="detail_reference">Referência</string>
+    <string name="detail_last_checked">Última verificação %1$s</string>
+    <string name="detail_website">Site</string>
+    <string name="detail_open_website">Abrir site</string>
+
+    <!-- Valores de acesso -->
+    <string name="access_public">Público</string>
+    <string name="access_customers">Apenas clientes</string>
+    <string name="access_private">Privado</string>
+    <string name="access_no">Sem acesso</string>
+
+    <!-- Subtipos de estacionamento -->
+    <string name="subtype_lockers">Cacifos para bicicletas</string>
+    <string name="subtype_stands">Suportes</string>
+    <string name="subtype_shed">Abrigo</string>
+    <string name="subtype_two_tier">Suporte de dois níveis</string>
+    <string name="subtype_wall_loops">Suportes de parede</string>
+    <string name="subtype_building">Edifício</string>
+    <string name="subtype_anchors">Âncoras de solo</string>
+    <string name="subtype_informal">Informal</string>
+    <string name="subtype_lean_to">Alpendre</string>
 </resources>

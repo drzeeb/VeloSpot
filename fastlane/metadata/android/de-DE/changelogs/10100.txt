@@ -1,6 +1,5 @@
-• Neu: vollständig lokale Datensicherung & Wiederherstellung — sichere alle deine Daten (Fahrten, Routen, Favoriten, Orte, Fahrräder, Einstellungen) in eine Datei und importiere sie auf jedem Gerät. Ohne Cloud, nichts verlässt dein Handy
-• Fix: die Navigationsroute bleibt nach dem Beenden der Navigation nicht mehr eingezeichnet
-• Fix: eine gespeicherte Route folgt jetzt exakt ihrer gespeicherten Linie, damit Bestenlisten-Zeiten vergleichbar sind
-• Flüssigere Karte nach dem Wiederherstellen eines Backups (aufwändige Marker-Arbeit vom Haupt-Thread ausgelagert)
-• MapLibre-Karten-Engine und Abhängigkeiten für mehr Stabilität aktualisiert
-
+• Neu: vollständig lokale Datensicherung & Wiederherstellung — sichere alle Daten (Fahrten, Routen, Favoriten, Orte, Fahrräder, Einstellungen) in eine Datei und importiere sie auf jedem Gerät. Ohne Cloud
+• Fix: Navigationslinie bleibt nach dem Beenden nicht mehr eingezeichnet
+• Fix: gespeicherte Route folgt exakt ihrer Linie — vergleichbare Bestenlisten-Zeiten
+• Flüssigere Karte nach dem Wiederherstellen eines Backups
+• MapLibre-Engine und Abhängigkeiten aktualisiert

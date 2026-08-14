@@ -25,6 +25,26 @@ data class BikeParkingSpaceEntity(
     val operator: String?,
     val type: String,  // Stored as string, converted from BikeParkingType enum
     val sourceLayer: String,
-    val lastUpdated: Long = System.currentTimeMillis()
+    val lastUpdated: Long = System.currentTimeMillis(),
+    // --- Enriched OSM attributes (v5). All nullable so sparsely-tagged OSM nodes
+    // degrade gracefully; "unknown" (null) must never be interpreted as "bad".
+    val access: String? = null,
+    val fee: Boolean? = null,
+    val lit: Boolean? = null,
+    val surveillance: Boolean? = null,
+    val supervised: Boolean? = null,
+    val cargoBike: Boolean? = null,
+    val cargoBikeCapacity: Int? = null,
+    val disabledCapacity: Int? = null,
+    val chargingCapacity: Int? = null,
+    val indoor: Boolean? = null,
+    val maxstay: String? = null,
+    val openingHours: String? = null,
+    val website: String? = null,
+    val network: String? = null,
+    val brand: String? = null,
+    val ref: String? = null,
+    val checkDate: String? = null,
+    val parkingSubtype: String? = null
 )
 

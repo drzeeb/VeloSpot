@@ -4,7 +4,7 @@ extract_osm_parking.py
 ======================
 Extracts bicycle_parking data from OpenStreetMap PBF files and writes one
 pre-populated SQLite database per country that exactly matches the VeloSpot
-Room schema v3.
+Room schema v5.
 
 By default the script processes **Germany, France and Luxembourg**: it
 downloads the latest Geofabrik extract for each country, filters the
@@ -32,11 +32,16 @@ Usage
 If a country's PBF is not present locally, it is downloaded automatically from
 Geofabrik. Downloaded PBFs are removed afterwards unless --keep-pbf is given.
 
-Room schema (v3)
+Room schema (v5)
 ----------------
-Identity hash: d724c4ab0656349cd4e8038b29e95603
+Identity hash: 62d1d0c3e84b843753aa01c19e54f7e7
 Tables:
-  bike_parking_spaces   – pre-populated with OSM data (read-only in app)
+  bike_parking_spaces   – pre-populated with OSM data (read-only in app);
+                          v5 adds enriched, nullable OSM attribute columns
+                          (access, fee, lit, surveillance, supervised, cargoBike,
+                          cargoBikeCapacity, disabledCapacity, chargingCapacity,
+                          indoor, maxstay, openingHours, website, network, brand,
+                          ref, checkDate, parkingSubtype)
   favorite_parking_spaces – user data, stays empty in asset
   room_master_table     – Room internal validation table
 """
@@ -147,6 +152,9 @@ def _is_covered(tags) -> Optional[int]:
     bp = tags.get("bicycle_parking", "")
     if bp in {"shed", "lockers", "building", "garage", "two-tier", "multi-storey"}:
         return 1
+    # Fold `shelter=yes` into "covered" when `covered` itself is absent.
+    if tags.get("shelter", "") == "yes":
+        return 1
     return None
 
 
@@ -156,6 +164,74 @@ def _parse_capacity(tags) -> Optional[int]:
         return int(raw)
     except (ValueError, TypeError):
         return None
+
+
+def _parse_bool(tags, key: str) -> Optional[int]:
+    """Return 1/0/None for a yes/no OSM tag (Room stores booleans as INTEGER)."""
+    val = tags.get(key, "")
+    if val == "yes":
+        return 1
+    if val == "no":
+        return 0
+    return None
+
+
+def _parse_int_tag(tags, key: str) -> Optional[int]:
+    """Parse an integer-valued OSM tag; return None if absent/non-numeric."""
+    try:
+        return int(tags.get(key, ""))
+    except (ValueError, TypeError):
+        return None
+
+
+def _surveillance(tags) -> Optional[int]:
+    """OSM `surveillance`: present & not "no" → 1, "no" → 0, absent → None."""
+    val = tags.get("surveillance")
+    if val is None:
+        return None
+    return 0 if val == "no" else 1
+
+
+def _cargo_bike(tags) -> Optional[int]:
+    """
+    OSM `cargo_bike` (designated/yes → 1, no → 0) OR presence of a positive
+    `capacity:cargo_bike` → 1. Absent/unknown → None.
+    """
+    val = tags.get("cargo_bike", "")
+    if val in {"designated", "yes"}:
+        return 1
+    if val == "no":
+        return 0
+    cargo_cap = _parse_int_tag(tags, "capacity:cargo_bike")
+    if cargo_cap is not None and cargo_cap > 0:
+        return 1
+    return None
+
+
+def _indoor(tags) -> Optional[int]:
+    """OSM `indoor` (yes/no); implied true for building/multi-storey/garage."""
+    val = _parse_bool(tags, "indoor")
+    if val is not None:
+        return val
+    if tags.get("bicycle_parking", "") in {"building", "multi-storey", "garage"}:
+        return 1
+    return None
+
+
+def _website(tags) -> Optional[str]:
+    """Prefer `website`, fall back to `contact:website`."""
+    return tags.get("website") or tags.get("contact:website") or None
+
+
+def _check_date(tags) -> Optional[str]:
+    """Prefer `check_date`, fall back to `survey:date` (raw ISO-ish string)."""
+    return tags.get("check_date") or tags.get("survey:date") or None
+
+
+def _parking_subtype(tags) -> Optional[str]:
+    """Raw `bicycle_parking` subtype (e.g. lockers, stands, shed, two-tier)."""
+    return tags.get("bicycle_parking") or None
+
 
 
 def _build_address(tags) -> Optional[str]:
@@ -168,6 +244,47 @@ def _build_address(tags) -> Optional[str]:
     if city:
         parts.append(city)
     return ", ".join(parts) if parts else None
+
+
+def _build_row(tags, node_id, lat, lon, source_layer: str, now_ms: int) -> tuple:
+    """
+    Build one INSERT tuple for `bike_parking_spaces`, in the exact column order of
+    Room entity `BikeParkingSpaceEntity` / `_INSERT_SQL`. Shared by the fast
+    (FileProcessor) and slow (SimpleHandler) parse paths so the two never drift.
+    """
+    return (
+        f"osm_n_{node_id}",
+        tags.get("name") or None,
+        lat,
+        lon,
+        _build_address(tags),
+        _parse_capacity(tags),
+        _is_covered(tags),
+        None,                       # imageUrl (not sourced from OSM)
+        tags.get("operator") or None,
+        _map_type(tags),
+        source_layer,
+        now_ms,
+        # --- Enriched OSM attributes (v5) ---
+        tags.get("access") or None,
+        _parse_bool(tags, "fee"),
+        _parse_bool(tags, "lit"),
+        _surveillance(tags),
+        _parse_bool(tags, "supervised"),
+        _cargo_bike(tags),
+        _parse_int_tag(tags, "capacity:cargo_bike"),
+        _parse_int_tag(tags, "capacity:disabled"),
+        _parse_int_tag(tags, "capacity:charging"),
+        _indoor(tags),
+        tags.get("maxstay") or None,
+        tags.get("opening_hours") or None,
+        _website(tags),
+        tags.get("network") or None,
+        tags.get("brand") or None,
+        tags.get("ref") or None,
+        _check_date(tags),
+        _parking_subtype(tags),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -270,19 +387,8 @@ def parse_fast(pbf_path: str, source_layer: str) -> list[tuple]:
     )
 
     for obj in fp:
-        rows.append((
-            f"osm_n_{obj.id}",
-            obj.tags.get("name") or None,
-            obj.location.lat,
-            obj.location.lon,
-            _build_address(obj.tags),
-            _parse_capacity(obj.tags),
-            _is_covered(obj.tags),
-            None,
-            obj.tags.get("operator") or None,
-            _map_type(obj.tags),
-            source_layer,
-            now_ms,
+        rows.append(_build_row(
+            obj.tags, obj.id, obj.location.lat, obj.location.lon, source_layer, now_ms
         ))
 
     return rows
@@ -322,19 +428,9 @@ class BikeParkingHandler(osmium.SimpleHandler):
             )
 
         if n.tags.get("amenity") == "bicycle_parking":
-            self.rows.append((
-                f"osm_n_{n.id}",
-                n.tags.get("name") or None,
-                n.location.lat,
-                n.location.lon,
-                _build_address(n.tags),
-                _parse_capacity(n.tags),
-                _is_covered(n.tags),
-                None,
-                n.tags.get("operator") or None,
-                _map_type(n.tags),
-                self._source_layer,
-                self._now_ms,
+            self.rows.append(_build_row(
+                n.tags, n.id, n.location.lat, n.location.lon,
+                self._source_layer, self._now_ms
             ))
 
 
@@ -354,7 +450,7 @@ def parse_slow(pbf_path: str, source_layer: str) -> list[tuple]:
 # Database creation
 # ---------------------------------------------------------------------------
 
-# Exact CREATE TABLE SQL as generated by Room v2.8.4 for BikeParkingDatabase v3.
+# Exact CREATE TABLE SQL as generated by Room v2.8.4 for BikeParkingDatabase v5.
 # The ${TABLE_NAME} placeholder is replaced by the literal table name.
 _SQL_BIKE_PARKING = """
 CREATE TABLE IF NOT EXISTS `bike_parking_spaces` (
@@ -370,6 +466,24 @@ CREATE TABLE IF NOT EXISTS `bike_parking_spaces` (
     `type` TEXT NOT NULL,
     `sourceLayer` TEXT NOT NULL,
     `lastUpdated` INTEGER NOT NULL,
+    `access` TEXT,
+    `fee` INTEGER,
+    `lit` INTEGER,
+    `surveillance` INTEGER,
+    `supervised` INTEGER,
+    `cargoBike` INTEGER,
+    `cargoBikeCapacity` INTEGER,
+    `disabledCapacity` INTEGER,
+    `chargingCapacity` INTEGER,
+    `indoor` INTEGER,
+    `maxstay` TEXT,
+    `openingHours` TEXT,
+    `website` TEXT,
+    `network` TEXT,
+    `brand` TEXT,
+    `ref` TEXT,
+    `checkDate` TEXT,
+    `parkingSubtype` TEXT,
     PRIMARY KEY(`id`)
 )
 """.strip()
@@ -391,8 +505,8 @@ _SQL_SPATIAL_INDEX = (
     "ON bike_parking_spaces (latitude, longitude)"
 )
 
-# Room master table (identity hash from schema v3 JSON export)
-_IDENTITY_HASH = "d724c4ab0656349cd4e8038b29e95603"
+# Room master table (identity hash from schema v5 JSON export)
+_IDENTITY_HASH = "62d1d0c3e84b843753aa01c19e54f7e7"
 _SQL_ROOM_MASTER = (
     "CREATE TABLE IF NOT EXISTS room_master_table "
     "(id INTEGER PRIMARY KEY, identity_hash TEXT)"
@@ -405,8 +519,12 @@ _SQL_ROOM_MASTER_INSERT = (
 _INSERT_SQL = """
 INSERT OR REPLACE INTO bike_parking_spaces
     (id, name, latitude, longitude, address, capacity, isCovered,
-     imageUrl, operator, type, sourceLayer, lastUpdated)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     imageUrl, operator, type, sourceLayer, lastUpdated,
+     access, fee, lit, surveillance, supervised, cargoBike, cargoBikeCapacity,
+     disabledCapacity, chargingCapacity, indoor, maxstay, openingHours, website,
+     network, brand, ref, checkDate, parkingSubtype)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 _BATCH_SIZE = 10_000
@@ -421,7 +539,7 @@ def create_database(output_path: str, rows: list[tuple]) -> None:
     cur = conn.cursor()
 
     # Room expects user_version = <database version>
-    cur.execute("PRAGMA user_version = 3")
+    cur.execute("PRAGMA user_version = 5")
     cur.execute("PRAGMA journal_mode = WAL")
     cur.execute("PRAGMA foreign_keys = OFF")  # speed up bulk insert
 

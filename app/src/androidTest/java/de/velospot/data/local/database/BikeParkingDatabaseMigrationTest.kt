@@ -150,6 +150,56 @@ class BikeParkingDatabaseMigrationTest {
         db.close()
     }
 
+    @Test
+    fun migrate4To5_addsEnrichmentColumns_andPreservesRows() {
+        // Create the v4 database from the checked-in 4.json baseline (pre-enrichment)
+        // and seed a couple of rows that predate the new columns.
+        helper.createDatabase(TEST_DB, 4).use { db ->
+            db.execSQL(insertSpace("de-1", 49.75, 6.64))
+            db.execSQL(insertSpace("de-2", 52.52, 13.40))
+        }
+
+        // Run the real production v4 → v5 migration (adds the nullable enrichment
+        // columns) and validate the resulting schema against the exported 5.json.
+        val db = helper.runMigrationsAndValidate(
+            TEST_DB,
+            5,
+            true,
+            BikeParkingDatabase.migration4To5ForTest()
+        )
+
+        // 1) Every new v5 column must exist after the migration.
+        val columns = tableColumns(db)
+        NEW_V5_COLUMNS.forEach { col ->
+            assertTrue("v5 column '$col' must exist after migration", columns.contains(col))
+        }
+
+        // 2) Old rows must survive the non-destructive ALTER, with the new columns NULL.
+        db.query(
+            "SELECT access, fee, indoor, checkDate, parkingSubtype " +
+                "FROM bike_parking_spaces WHERE id = 'de-1'"
+        ).use { c ->
+            assertTrue("seeded row must survive the migration", c.moveToFirst())
+            for (i in 0 until c.columnCount) {
+                assertTrue("new column #$i must be NULL for a pre-v5 row", c.isNull(i))
+            }
+        }
+
+        // 3) No rows were lost.
+        assertEquals("both seeded rows survive", 2, countRows(db))
+
+        db.close()
+    }
+
+    private fun tableColumns(db: SupportSQLiteDatabase): Set<String> {
+        val names = mutableSetOf<String>()
+        db.query("PRAGMA table_info(`bike_parking_spaces`)").use { c ->
+            val nameCol = c.getColumnIndexOrThrow("name")
+            while (c.moveToNext()) names.add(c.getString(nameCol))
+        }
+        return names
+    }
+
     private fun countRows(db: SupportSQLiteDatabase): Int =
         db.query("SELECT COUNT(*) FROM bike_parking_spaces").use { c ->
             assertTrue(c.moveToFirst())
@@ -182,6 +232,14 @@ class BikeParkingDatabaseMigrationTest {
     companion object {
         private const val TEST_DB = "migration-test-bike-parking.db"
         private const val INDEX_NAME = "idx_parking_lat_lon"
+
+        /** The nullable enrichment columns introduced by the v4 → v5 migration. */
+        private val NEW_V5_COLUMNS = listOf(
+            "access", "fee", "lit", "surveillance", "supervised", "cargoBike",
+            "cargoBikeCapacity", "disabledCapacity", "chargingCapacity", "indoor",
+            "maxstay", "openingHours", "website", "network", "brand", "ref",
+            "checkDate", "parkingSubtype"
+        )
     }
 }
 

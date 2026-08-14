@@ -698,4 +698,59 @@
     <string name="route_leaderboard_forward">Vorwärts (%1$d)</string>
     <string name="route_leaderboard_reverse">Rückwärts (%1$d)</string>
     <string name="route_leaderboard_empty">Noch keine Versuche. Fahre diese Route, um eine Zeit zu setzen.</string>
+
+    <!-- Parkplatz-Merkmal-Badges (nur bei bekanntem, positivem OSM-Fakt sichtbar) -->
+    <string name="parking_badge_covered">Überdacht</string>
+    <string name="parking_badge_lit">Beleuchtet</string>
+    <string name="parking_badge_surveillance">Videoüberwacht</string>
+    <string name="parking_badge_supervised">Bewacht</string>
+    <string name="parking_badge_free">Kostenlos</string>
+    <string name="parking_badge_paid">Kostenpflichtig</string>
+    <string name="parking_badge_charging">E-Bike-Laden</string>
+    <string name="parking_badge_cargo">Lastenrad</string>
+    <string name="parking_badge_accessible">Barrierefrei</string>
+    <string name="parking_badge_capacity">Kapazität: %1$d</string>
+    <string name="parking_badge_type_garage">Fahrradgarage</string>
+    <string name="parking_badge_type_rack">Fahrradständer</string>
+    <string name="parking_badge_type_wall_loops">Felgenhalter</string>
+    <string name="parking_badge_type_generic">Abstellplatz</string>
+
+    <!-- Parkplatz-Detailzeilen -->
+    <string name="detail_subtype">Typ</string>
+    <string name="detail_indoor">Innenbereich</string>
+    <string name="detail_surveillance">Überwachung</string>
+    <string name="detail_lit">Beleuchtung</string>
+    <string name="detail_supervised">Bewacht</string>
+    <string name="detail_access">Zugang</string>
+    <string name="detail_fee">Gebühr</string>
+    <string name="detail_fee_free">Kostenlos</string>
+    <string name="detail_fee_paid">Kostenpflichtig</string>
+    <string name="detail_opening_hours">Öffnungszeiten</string>
+    <string name="detail_maxstay">Max. Parkdauer</string>
+    <string name="detail_capacity_cargo">Lastenrad-Plätze</string>
+    <string name="detail_capacity_disabled">Behinderten-Plätze</string>
+    <string name="detail_capacity_charging">E-Bike-Ladeplätze</string>
+    <string name="detail_network">Netzwerk</string>
+    <string name="detail_brand">Marke</string>
+    <string name="detail_reference">Referenz</string>
+    <string name="detail_last_checked">Zuletzt geprüft %1$s</string>
+    <string name="detail_website">Webseite</string>
+    <string name="detail_open_website">Webseite öffnen</string>
+
+    <!-- Zugangswerte -->
+    <string name="access_public">Öffentlich</string>
+    <string name="access_customers">Nur Kunden</string>
+    <string name="access_private">Privat</string>
+    <string name="access_no">Kein Zugang</string>
+
+    <!-- Parkplatz-Untertypen -->
+    <string name="subtype_lockers">Fahrradboxen</string>
+    <string name="subtype_stands">Anlehnbügel</string>
+    <string name="subtype_shed">Fahrradhaus</string>
+    <string name="subtype_two_tier">Doppelstockparker</string>
+    <string name="subtype_wall_loops">Wandhalterung</string>
+    <string name="subtype_building">Gebäude</string>
+    <string name="subtype_anchors">Bodenanker</string>
+    <string name="subtype_informal">Informell</string>
+    <string name="subtype_lean_to">Überdachung</string>
 </resources>

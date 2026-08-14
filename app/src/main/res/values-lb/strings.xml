@@ -692,4 +692,59 @@
     <string name="route_leaderboard_forward">Viraus (%1$d)</string>
     <string name="route_leaderboard_reverse">Réckwäerts (%1$d)</string>
     <string name="route_leaderboard_empty">Nach keng Versich. Fuer dës Route, fir eng Zäit ze setzen.</string>
+
+    <!-- Informatiouns-Badge vun der Parkanlag (nëmme wann de OSM-Fakt bekannt a positiv ass) -->
+    <string name="parking_badge_covered">Iwwerdaacht</string>
+    <string name="parking_badge_lit">Beliicht</string>
+    <string name="parking_badge_surveillance">Videoiwwerwaacht</string>
+    <string name="parking_badge_supervised">Bewaacht</string>
+    <string name="parking_badge_free">Gratis</string>
+    <string name="parking_badge_paid">Kaschtepflichteg</string>
+    <string name="parking_badge_charging">E-Bike lueden</string>
+    <string name="parking_badge_cargo">Laaschtvelo</string>
+    <string name="parking_badge_accessible">Barrièrefräi</string>
+    <string name="parking_badge_capacity">Kapazitéit: %1$d</string>
+    <string name="parking_badge_type_garage">Velosgarage</string>
+    <string name="parking_badge_type_rack">Velosstänner</string>
+    <string name="parking_badge_type_wall_loops">Felgenhalter</string>
+    <string name="parking_badge_type_generic">Parkplaz</string>
+
+    <!-- Detailzeilen vun der Parkanlag -->
+    <string name="detail_subtype">Typ</string>
+    <string name="detail_indoor">Bannen</string>
+    <string name="detail_surveillance">Iwwerwaachung</string>
+    <string name="detail_lit">Beliichtung</string>
+    <string name="detail_supervised">Bewaacht</string>
+    <string name="detail_access">Zougang</string>
+    <string name="detail_fee">Gebür</string>
+    <string name="detail_fee_free">Gratis</string>
+    <string name="detail_fee_paid">Kaschtepflichteg</string>
+    <string name="detail_opening_hours">Ëffnungszäiten</string>
+    <string name="detail_maxstay">Max. Parkdauer</string>
+    <string name="detail_capacity_cargo">Plazë fir Laaschtveloen</string>
+    <string name="detail_capacity_disabled">Accessibel Plazen</string>
+    <string name="detail_capacity_charging">E-Bike-Luedplazen</string>
+    <string name="detail_network">Netzwierk</string>
+    <string name="detail_brand">Mark</string>
+    <string name="detail_reference">Referenz</string>
+    <string name="detail_last_checked">Fir d\'lescht gepréift %1$s</string>
+    <string name="detail_website">Websäit</string>
+    <string name="detail_open_website">Websäit opmaachen</string>
+
+    <!-- Zougangswäerter -->
+    <string name="access_public">Ëffentlech</string>
+    <string name="access_customers">Nëmme Clienten</string>
+    <string name="access_private">Privat</string>
+    <string name="access_no">Kee Zougang</string>
+
+    <!-- Ënnertypen vun der Parkanlag -->
+    <string name="subtype_lockers">Velosboxen</string>
+    <string name="subtype_stands">Unluenbügel</string>
+    <string name="subtype_shed">Veloshaus</string>
+    <string name="subtype_two_tier">Duebelstäckparker</string>
+    <string name="subtype_wall_loops">Wandhalterung</string>
+    <string name="subtype_building">Gebai</string>
+    <string name="subtype_anchors">Buedemanker</string>
+    <string name="subtype_informal">Informell</string>
+    <string name="subtype_lean_to">Iwwerdaachung</string>
 </resources>

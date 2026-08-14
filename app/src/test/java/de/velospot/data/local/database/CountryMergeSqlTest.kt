@@ -16,9 +16,31 @@ class CountryMergeSqlTest {
         // The column list must line up 1:1 with the INSERT … SELECT projection.
         assertEquals(
             "id,name,latitude,longitude,address,capacity,isCovered," +
-                "imageUrl,operator,type,sourceLayer,lastUpdated",
+                "imageUrl,operator,type,sourceLayer,lastUpdated," +
+                "access,fee,lit,surveillance,supervised,cargoBike,cargoBikeCapacity,disabledCapacity," +
+                "chargingCapacity,indoor,maxstay,openingHours,website,network,brand,ref,checkDate,parkingSubtype",
             CountryMergeSql.SPACE_COLUMNS
         )
+    }
+
+    @Test
+    fun addEnrichmentColumns_addsEveryNewV5ColumnOnce() {
+        val sql = CountryMergeSql.ADD_ENRICHMENT_COLUMNS_SQL
+        val newColumns = listOf(
+            "access", "fee", "lit", "surveillance", "supervised", "cargoBike",
+            "cargoBikeCapacity", "disabledCapacity", "chargingCapacity", "indoor",
+            "maxstay", "openingHours", "website", "network", "brand", "ref",
+            "checkDate", "parkingSubtype"
+        )
+        assertEquals(newColumns.size, sql.size)
+        newColumns.forEach { col ->
+            assertTrue(
+                "must ADD COLUMN `$col`",
+                sql.any { it.contains("ADD COLUMN `$col`") }
+            )
+        }
+        // Every statement must be a non-destructive ALTER on the parking table.
+        assertTrue(sql.all { it.startsWith("ALTER TABLE `bike_parking_spaces` ADD COLUMN") })
     }
 
     @Test
