@@ -1,6 +1,7 @@
 package de.velospot.feature.wrapped.engine
 
 import de.velospot.feature.wrapped.domain.WrappedInterval
+import de.velospot.feature.wrapped.domain.WrappedPeriodMode
 import de.velospot.feature.wrapped.domain.WrappedSchedule
 import java.text.DateFormat
 import java.util.Date
@@ -39,6 +40,14 @@ internal object WrappedScheduleEdits {
     /** Sets the fire time, clamped to a valid `00:00..23:59` wall clock. */
     fun withTime(schedule: WrappedSchedule, hour: Int, minute: Int): WrappedSchedule =
         schedule.copy(hour = hour.coerceIn(0, 23), minute = minute.coerceIn(0, 59))
+
+    /** Sets the summarised window relative to the fire instant (see [WrappedPeriodMode]). */
+    fun withPeriodMode(schedule: WrappedSchedule, mode: WrappedPeriodMode): WrappedSchedule =
+        schedule.copy(periodMode = mode)
+
+    /** Enables or disables the "report generated" notification. */
+    fun withNotifyOnGenerate(schedule: WrappedSchedule, enabled: Boolean): WrappedSchedule =
+        schedule.copy(notifyOnGenerate = enabled)
 }
 
 /**

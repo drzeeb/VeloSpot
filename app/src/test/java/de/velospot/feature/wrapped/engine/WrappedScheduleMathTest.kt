@@ -1,6 +1,7 @@
 package de.velospot.feature.wrapped.engine
 
 import de.velospot.feature.wrapped.domain.WrappedInterval
+import de.velospot.feature.wrapped.domain.WrappedPeriodMode
 import de.velospot.feature.wrapped.domain.WrappedPeriodType
 import de.velospot.feature.wrapped.domain.WrappedSchedule
 import org.junit.Assert.assertEquals
@@ -116,8 +117,47 @@ class WrappedScheduleMathTest {
     // ── periodForFire ───────────────────────────────────────────────────────────
 
     @Test
-    fun `daily period is the previous full day`() {
+    fun `daily period is the current running day`() {
         val schedule = WrappedSchedule(enabled = true, interval = WrappedInterval.DAILY, hour = 20)
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 12, 20, 0))
+        assertEquals(WrappedPeriodType.DAY, period.type)
+        assertEquals(at(2024, 6, 12), period.startInclusive)
+        assertEquals(at(2024, 6, 13), period.endExclusive)
+    }
+
+    @Test
+    fun `weekly period is the current running Monday-Sunday week`() {
+        val schedule = WrappedSchedule(
+            enabled = true, interval = WrappedInterval.WEEKLY, dayOfWeek = Calendar.SUNDAY, hour = 20
+        )
+        // Fire on Sunday 2024-06-16 → current full week is Mon 06-10 .. Mon 06-17.
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 16, 20, 0))
+        assertEquals(WrappedPeriodType.WEEK, period.type)
+        assertEquals(at(2024, 6, 10), period.startInclusive)
+        assertEquals(at(2024, 6, 17), period.endExclusive)
+    }
+
+    @Test
+    fun `monthly period is the current running calendar month`() {
+        val schedule = WrappedSchedule(
+            enabled = true, interval = WrappedInterval.MONTHLY, dayOfMonth = 15, hour = 20
+        )
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 15, 20, 0))
+        assertEquals(WrappedPeriodType.MONTH, period.type)
+        assertEquals(at(2024, 6, 1), period.startInclusive)
+        assertEquals(at(2024, 7, 1), period.endExclusive)
+    }
+
+    // ── periodForFire · period mode ─────────────────────────────────────────────
+
+    @Test
+    fun `daily yesterday mode covers the previous calendar day`() {
+        val schedule = WrappedSchedule(
+            enabled = true,
+            interval = WrappedInterval.DAILY,
+            hour = 20,
+            periodMode = WrappedPeriodMode.CALENDAR_PREVIOUS
+        )
         val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 12, 20, 0))
         assertEquals(WrappedPeriodType.DAY, period.type)
         assertEquals(at(2024, 6, 11), period.startInclusive)
@@ -125,21 +165,83 @@ class WrappedScheduleMathTest {
     }
 
     @Test
-    fun `weekly period is the previous full Monday-Sunday week`() {
+    fun `daily today mode covers the current calendar day`() {
         val schedule = WrappedSchedule(
-            enabled = true, interval = WrappedInterval.WEEKLY, dayOfWeek = Calendar.SUNDAY, hour = 20
+            enabled = true,
+            interval = WrappedInterval.DAILY,
+            hour = 20,
+            periodMode = WrappedPeriodMode.CALENDAR_CURRENT
         )
-        // Fire on Sunday 2024-06-16 → previous full week is Mon 06-03 .. Mon 06-10.
-        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 16, 20, 0))
-        assertEquals(WrappedPeriodType.WEEK, period.type)
-        assertEquals(at(2024, 6, 3), period.startInclusive)
-        assertEquals(at(2024, 6, 10), period.endExclusive)
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 12, 20, 0))
+        assertEquals(at(2024, 6, 12), period.startInclusive)
+        assertEquals(at(2024, 6, 13), period.endExclusive)
     }
 
     @Test
-    fun `monthly period is the previous full calendar month`() {
+    fun `weekly rolling mode covers the last 7 days ending today`() {
         val schedule = WrappedSchedule(
-            enabled = true, interval = WrappedInterval.MONTHLY, dayOfMonth = 15, hour = 20
+            enabled = true,
+            interval = WrappedInterval.WEEKLY,
+            hour = 20,
+            periodMode = WrappedPeriodMode.ROLLING
+        )
+        // Fire on Sunday 2024-06-16 → rolling 7 days = Mon 06-10 .. Mon 06-17.
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 16, 20, 0))
+        assertEquals(WrappedPeriodType.CUSTOM, period.type)
+        assertEquals(at(2024, 6, 10), period.startInclusive)
+        assertEquals(at(2024, 6, 17), period.endExclusive)
+    }
+
+    @Test
+    fun `weekly rolling window is exactly seven whole days from a midweek fire`() {
+        val schedule = WrappedSchedule(
+            enabled = true,
+            interval = WrappedInterval.WEEKLY,
+            hour = 20,
+            periodMode = WrappedPeriodMode.ROLLING
+        )
+        // Fire on Wednesday 2024-06-12 → last 7 days = Thu 06-06 .. Thu 06-13.
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 12, 20, 0))
+        assertEquals(at(2024, 6, 6), period.startInclusive)
+        assertEquals(at(2024, 6, 13), period.endExclusive)
+    }
+
+    @Test
+    fun `monthly rolling mode covers the fire month's length in days`() {
+        val schedule = WrappedSchedule(
+            enabled = true,
+            interval = WrappedInterval.MONTHLY,
+            hour = 20,
+            periodMode = WrappedPeriodMode.ROLLING
+        )
+        // June has 30 days → rolling window = May 18 .. Jun 17 (30 whole days).
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 16, 20, 0))
+        assertEquals(WrappedPeriodType.CUSTOM, period.type)
+        assertEquals(at(2024, 5, 18), period.startInclusive)
+        assertEquals(at(2024, 6, 17), period.endExclusive)
+    }
+
+    @Test
+    fun `monthly rolling window shrinks to a short month`() {
+        val schedule = WrappedSchedule(
+            enabled = true,
+            interval = WrappedInterval.MONTHLY,
+            hour = 20,
+            periodMode = WrappedPeriodMode.ROLLING
+        )
+        // February 2024 has 29 days → rolling window = Jan 31 .. Feb 29 (29 whole days).
+        val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 2, 28, 20, 0))
+        assertEquals(at(2024, 1, 31), period.startInclusive)
+        assertEquals(at(2024, 2, 29), period.endExclusive)
+    }
+
+    @Test
+    fun `monthly previous mode covers the last full calendar month`() {
+        val schedule = WrappedSchedule(
+            enabled = true,
+            interval = WrappedInterval.MONTHLY,
+            hour = 20,
+            periodMode = WrappedPeriodMode.CALENDAR_PREVIOUS
         )
         val period = WrappedScheduleMath.periodForFire(schedule, at(2024, 6, 15, 20, 0))
         assertEquals(WrappedPeriodType.MONTH, period.type)

@@ -2,6 +2,7 @@ package de.velospot.feature.wrapped.engine
 
 import de.velospot.feature.wrapped.domain.WrappedInterval
 import de.velospot.feature.wrapped.domain.WrappedPeriod
+import de.velospot.feature.wrapped.domain.WrappedPeriodMode
 import de.velospot.feature.wrapped.domain.WrappedSchedule
 import java.util.Calendar
 
@@ -84,19 +85,42 @@ internal object WrappedScheduleMath {
     }
 
     /**
-     * The last **fully closed** calendar bucket ending at/just before [fireTime].
+     * The [WrappedPeriod] a fire at [fireTime] summarises, resolved from both the
+     * schedule's [WrappedInterval] and its [WrappedPeriodMode].
      *
-     * We deliberately report the previous *complete* bucket rather than the partial
-     * "so far" one, so the story is always over a finished, unambiguous window:
-     * * DAILY — the previous full day (yesterday 00:00 → today 00:00).
-     * * WEEKLY — the previous full Monday–Sunday week.
-     * * MONTHLY — the previous full calendar month.
+     * * DAILY
+     *   * [WrappedPeriodMode.CALENDAR_CURRENT] — today (default).
+     *   * [WrappedPeriodMode.CALENDAR_PREVIOUS] — yesterday.
+     *   * [WrappedPeriodMode.ROLLING] — today (a rolling day equals the current day).
+     * * WEEKLY
+     *   * [WrappedPeriodMode.CALENDAR_CURRENT] — the current Monday–Sunday week (default).
+     *   * [WrappedPeriodMode.CALENDAR_PREVIOUS] — last full calendar week.
+     *   * [WrappedPeriodMode.ROLLING] — the rolling last 7 days ending today.
+     * * MONTHLY
+     *   * [WrappedPeriodMode.CALENDAR_CURRENT] — the current calendar month (default).
+     *   * [WrappedPeriodMode.CALENDAR_PREVIOUS] — last full calendar month.
+     *   * [WrappedPeriodMode.ROLLING] — the rolling last 28/29/30/31 days (the fire
+     *     month's length) ending today.
+     *
+     * The default [WrappedPeriodMode.CALENDAR_CURRENT] reproduces the historical
+     * "current running bucket" behaviour, so existing users are unaffected.
      */
     fun periodForFire(schedule: WrappedSchedule, fireTime: Long): WrappedPeriod =
         when (schedule.interval) {
-            WrappedInterval.DAILY -> WrappedPeriod.previous(WrappedPeriod.day(fireTime))
-            WrappedInterval.WEEKLY -> WrappedPeriod.previous(WrappedPeriod.week(fireTime))
-            WrappedInterval.MONTHLY -> WrappedPeriod.previous(WrappedPeriod.month(fireTime))
+            WrappedInterval.DAILY -> when (schedule.periodMode) {
+                WrappedPeriodMode.CALENDAR_PREVIOUS -> WrappedPeriod.previous(WrappedPeriod.day(fireTime))
+                else -> WrappedPeriod.day(fireTime)
+            }
+            WrappedInterval.WEEKLY -> when (schedule.periodMode) {
+                WrappedPeriodMode.ROLLING -> WrappedPeriod.rollingDays(fireTime, 7)
+                WrappedPeriodMode.CALENDAR_PREVIOUS -> WrappedPeriod.previous(WrappedPeriod.week(fireTime))
+                else -> WrappedPeriod.week(fireTime)
+            }
+            WrappedInterval.MONTHLY -> when (schedule.periodMode) {
+                WrappedPeriodMode.ROLLING -> WrappedPeriod.rollingMonth(fireTime)
+                WrappedPeriodMode.CALENDAR_PREVIOUS -> WrappedPeriod.previous(WrappedPeriod.month(fireTime))
+                else -> WrappedPeriod.month(fireTime)
+            }
         }
 }
 
