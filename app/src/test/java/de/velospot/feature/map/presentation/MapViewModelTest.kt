@@ -351,24 +351,20 @@ class MapViewModelTest {
     }
 
     @Test
-    fun `findNearestParkingAndNavigate starts navigation to the closest space`() = runTest {
-        // Fix at (49.75, 6.64). "far" is ~1.5 km north; "near" is only metres away, so
-        // it must be chosen even though the fake repository returns both for the bbox.
-        val far = sampleSpace(id = "far").copy(latitude = 49.763, longitude = 6.64)
-        val near = sampleSpace(id = "near").copy(latitude = 49.7501, longitude = 6.6401)
+    fun `findNearestParkingAndNavigate picks the shortest bike route not the crow-flies nearest`() = runTest {
+        // Fix at (49.75, 6.64). Spot A is crow-flies-closer, but its real bike route
+        // is much longer (e.g. it's across railway tracks). Spot B is slightly farther
+        // in a straight line but a much shorter route, so navigation must go to B.
+        val fix = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+        val spotA = sampleSpace(id = "A").copy(latitude = 49.7505, longitude = 6.6405)
+        val spotB = sampleSpace(id = "B").copy(latitude = 49.7515, longitude = 6.6415)
         val viewModel = makeViewModel(
-            bikeParkingRepository = FakeBikeParkingRepository(listOf(far, near)),
-            locationRepository = FakeLocationRepository(
-                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
-            ),
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(spotA, spotB)),
+            locationRepository = FakeLocationRepository(initialLocation = fix),
             routingRepository = FakeRoutingRepository(
-                route = BikeRoute(
-                    points = listOf(
-                        RoutePoint(latitude = 49.75, longitude = 6.64),
-                        RoutePoint(latitude = 49.7501, longitude = 6.6401)
-                    ),
-                    distanceMeters = 20.0,
-                    durationSeconds = 10.0
+                distanceByDestination = mapOf(
+                    GeoCoordinate(spotA.latitude, spotA.longitude) to 3_000.0,
+                    GeoCoordinate(spotB.latitude, spotB.longitude) to 800.0
                 )
             )
         )
@@ -379,7 +375,30 @@ class MapViewModelTest {
 
         val state = viewModel.navigationUiState.value
         assertTrue(state is NavigationUiState.Active)
-        assertEquals(near, (state as NavigationUiState.Active).destination)
+        assertEquals(spotB, (state as NavigationUiState.Active).destination)
+    }
+
+    @Test
+    fun `findNearestParkingAndNavigate falls back to crow-flies nearest when routing fails`() = runTest {
+        // Routing fails for every candidate ⇒ fall back to the crow-flies nearest (A).
+        // With no routes to rank, navigation is (re-)attempted to A: assert it is the
+        // last destination the routing repository was asked to route to.
+        val fix = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+        val near = sampleSpace(id = "A").copy(latitude = 49.7502, longitude = 6.6402)
+        val far = sampleSpace(id = "B").copy(latitude = 49.7515, longitude = 6.6415)
+        val routing = FakeRoutingRepository(error = RuntimeException("no route"))
+        val viewModel = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(far, near)),
+            locationRepository = FakeLocationRepository(initialLocation = fix),
+            routingRepository = routing
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.findNearestParkingAndNavigate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // The final routing attempt is the fallback navigation to the crow-flies nearest.
+        assertEquals(GeoCoordinate(near.latitude, near.longitude), routing.lastTo)
     }
 
     @Test
@@ -428,6 +447,36 @@ class MapViewModelTest {
         val picked = nearestSpace(fixLat, fixLon, listOf(far, near))
         assertEquals(near, picked)
         assertEquals(null, nearestSpace(fixLat, fixLon, emptyList()))
+    }
+
+    @Test
+    fun `nearestSpaces returns the k nearest sorted nearest-first`() {
+        val fixLat = 49.75
+        val fixLon = 6.64
+        val a = sampleSpace(id = "a").copy(latitude = 49.7501, longitude = 6.6401)
+        val b = sampleSpace(id = "b").copy(latitude = 49.7510, longitude = 6.6410)
+        val c = sampleSpace(id = "c").copy(latitude = 49.8000, longitude = 6.7000)
+        val picked = nearestSpaces(fixLat, fixLon, listOf(c, b, a), k = 2)
+        assertEquals(listOf(a, b), picked)
+    }
+
+    @Test
+    fun `shortestRoutedSpace picks the smallest non-null distance`() {
+        val a = sampleSpace(id = "a")
+        val b = sampleSpace(id = "b")
+        val c = sampleSpace(id = "c")
+        val picked = shortestRoutedSpace(
+            listOf(a to 3_000.0, b to 800.0, c to null)
+        )
+        assertEquals(b, picked)
+    }
+
+    @Test
+    fun `shortestRoutedSpace returns null when all distances are null`() {
+        val a = sampleSpace(id = "a")
+        val b = sampleSpace(id = "b")
+        assertEquals(null, shortestRoutedSpace(listOf(a to null, b to null)))
+        assertEquals(null, shortestRoutedSpace(emptyList()))
     }
 
     @Test
@@ -1800,7 +1849,14 @@ private class FakeRoutingRepository(
         distanceMeters = 1000.0,
         durationSeconds = 360.0
     ),
-    private val error: Throwable? = null
+    private val error: Throwable? = null,
+    /**
+     * Optional per-destination route distance (metres), keyed by the destination
+     * coordinate. Lets tests give each candidate its own real bike-route distance
+     * so the "shortest route" ranking can be exercised. Falls back to [route] when
+     * a destination isn't listed.
+     */
+    private val distanceByDestination: Map<GeoCoordinate, Double> = emptyMap()
 ) : RoutingRepository {
     var lastFrom: GeoCoordinate? = null
         private set
@@ -1811,7 +1867,8 @@ private class FakeRoutingRepository(
         lastFrom = from
         lastTo = to
         error?.let { throw it }
-        return route
+        val distance = distanceByDestination[to]
+        return if (distance != null) route.copy(distanceMeters = distance) else route
     }
 
     override suspend fun getBikeRouteVia(waypoints: List<GeoCoordinate>): BikeRoute {

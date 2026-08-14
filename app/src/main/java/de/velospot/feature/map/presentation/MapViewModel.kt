@@ -86,6 +86,14 @@ private const val VIEWPORT_DEBOUNCE_MS  = 300L
  */
 private val PARK_SEARCH_RADII_KM = listOf(1.0, 3.0, 8.0, 25.0)
 
+/**
+ * How many crow-flies-nearest parking spots "Find a VeloSpot" routes for real
+ * before picking the shortest actual bike route. Bounds the number of routing
+ * calls (each hits the shared BRouter engine) while still catching the common
+ * case where the straight-line-nearest spot is far by road.
+ */
+private const val PARK_ROUTE_CANDIDATES = 5
+
 /** Approximate metres per degree of latitude (constant everywhere on the globe). */
 private const val METERS_PER_DEG_LAT = 111_000.0
 
@@ -117,6 +125,31 @@ internal fun nearestSpace(
     spaces: List<BikeParkingSpace>
 ): BikeParkingSpace? =
     spaces.minByOrNull { GeoMath.distanceMeters(lat, lon, it.latitude, it.longitude) }
+
+/**
+ * Returns the [k] [BikeParkingSpace]s in [spaces] closest to ([lat], [lon]) by
+ * great-circle distance, sorted nearest-first. Bounds the set of routing
+ * candidates so "Find a VeloSpot" computes only a handful of real bike routes.
+ * Pure & unit-testable.
+ */
+internal fun nearestSpaces(
+    lat: Double,
+    lon: Double,
+    spaces: List<BikeParkingSpace>,
+    k: Int
+): List<BikeParkingSpace> =
+    spaces.sortedBy { GeoMath.distanceMeters(lat, lon, it.latitude, it.longitude) }.take(k)
+
+/**
+ * Picks the [BikeParkingSpace] with the smallest routed distance from [routed]
+ * (a candidate paired with its bike-route `distanceMeters`, or `null` when the
+ * route couldn't be computed). Null distances are ignored; returns `null` when
+ * none of the candidates could be routed. Pure & unit-testable.
+ */
+internal fun shortestRoutedSpace(
+    routed: List<Pair<BikeParkingSpace, Double?>>
+): BikeParkingSpace? =
+    routed.filter { it.second != null }.minByOrNull { it.second!! }?.first
 
 
 /** Minimum move (metres) from the last fetched point before weather is refreshed. */
@@ -888,15 +921,22 @@ class MapViewModel @Inject constructor(
     fun parkBikeAtCurrentLocation() = parkedBikeController.parkAtCurrentLocation()
 
     /**
-     * Finds the bike-parking spot nearest to the rider's current position and
-     * starts turn-by-turn navigation to it. Backs the "Find a VeloSpot" option of
-     * the park-bike chooser sheet.
+     * Finds the bike-parking spot with the shortest *actual bike route* from the
+     * rider's current position and starts turn-by-turn navigation to it. Backs the
+     * "Find a VeloSpot" option of the park-bike chooser sheet.
      *
      * The nearest search runs off the main thread: the parking repository is queried
      * for progressively larger bounding boxes around the fix ([PARK_SEARCH_RADII_KM])
-     * until at least one spot is returned, then the closest by great-circle distance
-     * is picked. A missing GPS fix surfaces the same location-unavailable error as
-     * the other navigate-* entry points; an empty result surfaces a friendly message.
+     * until at least one spot is returned. Crow-flies distance is used only to bound
+     * the candidate set — the [PARK_ROUTE_CANDIDATES] nearest by straight line are
+     * routed for real (sequentially, since the routing engine isn't concurrency-safe)
+     * and the one with the shortest bike-route distance wins. This avoids picking a
+     * spot that is close as the crow flies but far by road (e.g. across railway
+     * tracks). If routing is unavailable for every candidate (e.g. fully offline with
+     * no segments) it falls back to the crow-flies nearest.
+     *
+     * A missing GPS fix surfaces the same location-unavailable error as the other
+     * navigate-* entry points; an empty result surfaces a friendly message.
      */
     fun findNearestParkingAndNavigate() {
         val fix = _userLocation.value ?: run {
@@ -915,12 +955,31 @@ class MapViewModel @Inject constructor(
                     .getOrDefault(emptyList())
                 if (found.isNotEmpty()) break
             }
-            val nearest = nearestSpace(fix.latitude, fix.longitude, found)
-            if (nearest == null) {
+            if (found.isEmpty()) {
                 _userMessageRes.value = de.velospot.R.string.park_find_none
-            } else {
-                startInAppNavigation(nearest)
+                return@launch
             }
+            // Bound the candidate set to the few crow-flies-nearest spots, then rank
+            // them by real bike-route distance.
+            val candidates =
+                nearestSpaces(fix.latitude, fix.longitude, found, PARK_ROUTE_CANDIDATES)
+            val from = GeoCoordinate(fix.latitude, fix.longitude)
+            // Route candidates SEQUENTIALLY: the routing repository is backed by a
+            // single shared BRouter engine that isn't guaranteed concurrency-safe.
+            // A failed/absent route for one candidate must not abort the rest.
+            val routed: List<Pair<BikeParkingSpace, Double?>> = candidates.map { space ->
+                val distance = runCatching {
+                    routingRepository.getBikeRoute(
+                        from,
+                        GeoCoordinate(space.latitude, space.longitude)
+                    ).distanceMeters
+                }.getOrNull()
+                space to distance
+            }
+            // Shortest real route wins; if every route failed, fall back to the
+            // crow-flies nearest (candidates are sorted nearest-first).
+            val best = shortestRoutedSpace(routed) ?: candidates.first()
+            startInAppNavigation(best)
         }
     }
 
