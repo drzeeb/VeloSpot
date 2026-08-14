@@ -295,11 +295,31 @@
     <string name="about_country_france">France</string>
     <string name="about_country_luxembourg">Luxembourg</string>
     <string name="about_privacy">Confidentialité</string>
-    <string name="about_support">Offrez-moi un café</string>
+
+
     <string name="about_open_link">Ouvrir le lien</string>
     <string name="about_imprint">Mentions légales</string>
     <string name="about_replay_onboarding">Visite de l\'appli</string>
     <string name="about_replay_onboarding_subtitle">Revoir l\'introduction</string>
+
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Sauvegarde</string>
+    <string name="backup_create_action">Créer une sauvegarde</string>
+    <string name="backup_create_subtitle">Enregistrer toutes vos données dans un fichier</string>
+    <string name="restore_action">Restaurer une sauvegarde</string>
+    <string name="restore_subtitle">Importer des données depuis un fichier de sauvegarde</string>
+    <string name="backup_create_success">Sauvegarde enregistrée</string>
+    <string name="backup_working">Traitement… gardez l’appli ouverte</string>
+    <string name="ride_loading">Chargement du trajet…</string>
+    <string name="backup_create_failed">Impossible de créer la sauvegarde</string>
+    <string name="restore_success">Sauvegarde restaurée</string>
+    <string name="restore_failed">Impossible de restaurer la sauvegarde</string>
+    <string name="restore_too_new">Cette sauvegarde a été créée avec une version plus récente de VeloSpot. Veuillez d\'abord mettre à jour l\'application.</string>
+    <string name="restore_corrupt">Ce fichier n\'est pas une sauvegarde VeloSpot valide</string>
+    <string name="restore_confirm_title">Restaurer la sauvegarde ?</string>
+    <string name="restore_confirm_message">Cela remplace toutes les données actuelles de cet appareil (trajets, lieux enregistrés, favoris, itinéraires, réglages) par le contenu de la sauvegarde. Cette action est irréversible.</string>
+    <string name="restore_confirm_button">Restaurer</string>
+
 
     <!-- Accueil au premier lancement -->
     <string name="onboarding_skip">Passer</string>

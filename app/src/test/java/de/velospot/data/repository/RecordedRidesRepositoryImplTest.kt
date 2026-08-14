@@ -68,6 +68,9 @@ class RecordedRidesRepositoryImplTest {
             store.value = store.value.filterNot { it.id == ride.id } + ride
         }
 
+        override suspend fun getAllIds(): List<String> =
+            store.value.sortedByDescending { it.startedAt }.map { it.id }
+
         override suspend fun updateName(id: String, name: String?) = mutate(id) { it.copy(name = name) }
         override suspend fun updateArchivedAt(id: String, archivedAt: Long?) = mutate(id) { it.copy(archivedAt = archivedAt) }
         override suspend fun updateElevation(id: String, gain: Double, loss: Double) =

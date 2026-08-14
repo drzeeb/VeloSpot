@@ -31,6 +31,8 @@ class FavoritesRepositoryImplTest {
         override suspend fun removeFavorite(parkingSpaceId: String) {
             store.value = store.value.filterNot { it.parkingSpaceId == parkingSpaceId }
         }
+        override suspend fun getAll(): List<FavoriteSpaceEntity> = store.value
+        override suspend fun deleteAll() { store.value = emptyList() }
     }
 
     private fun repo(dao: FavoriteSpaceDao = FakeFavoriteSpaceDao()) = FavoritesRepositoryImpl(dao)

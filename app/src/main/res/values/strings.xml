@@ -443,11 +443,28 @@
     <string name="about_country_france">France</string>
     <string name="about_country_luxembourg">Luxembourg</string>
     <string name="about_privacy">Privacy Policy</string>
-    <string name="about_support">Buy me a coffee</string>
     <string name="about_open_link">Open link</string>
     <string name="about_imprint">Imprint</string>
     <string name="about_replay_onboarding">App tour</string>
     <string name="about_replay_onboarding_subtitle">Show the intro again</string>
+
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Backup &amp; Restore</string>
+    <string name="backup_create_action">Create backup</string>
+    <string name="backup_create_subtitle">Save all your data to a file</string>
+    <string name="restore_action">Restore backup</string>
+    <string name="restore_subtitle">Import data from a backup file</string>
+    <string name="backup_create_success">Backup saved</string>
+    <string name="backup_working">Working… please keep the app open</string>
+    <string name="ride_loading">Loading ride…</string>
+    <string name="backup_create_failed">Could not create the backup</string>
+    <string name="restore_success">Backup restored</string>
+    <string name="restore_failed">Could not restore the backup</string>
+    <string name="restore_too_new">This backup was made with a newer version of VeloSpot. Please update the app first.</string>
+    <string name="restore_corrupt">This file is not a valid VeloSpot backup</string>
+    <string name="restore_confirm_title">Restore backup?</string>
+    <string name="restore_confirm_message">This replaces all current data on this device (rides, saved places, favourites, routes, settings) with the contents of the backup. This cannot be undone.</string>
+    <string name="restore_confirm_button">Restore</string>
 
     <!-- First-launch welcome onboarding -->
     <string name="onboarding_skip">Skip</string>

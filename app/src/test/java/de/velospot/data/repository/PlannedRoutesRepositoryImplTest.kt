@@ -38,6 +38,8 @@ class PlannedRoutesRepositoryImplTest {
             store.value = store.value.map { if (it.id == id) it.copy(name = name) else it }
         }
         override suspend fun delete(id: String) { store.value = store.value.filterNot { it.id == id } }
+        override suspend fun getAll(): List<PlannedRouteEntity> = store.value
+        override suspend fun deleteAll() { store.value = emptyList() }
     }
 
     private class FakeRouteAttemptDao : RouteAttemptDao {
@@ -51,6 +53,8 @@ class PlannedRoutesRepositoryImplTest {
         override suspend fun deleteForRoute(routeId: String) {
             store.value = store.value.filterNot { it.routeId == routeId }
         }
+        override suspend fun getAll(): List<RouteAttemptEntity> = store.value
+        override suspend fun deleteAll() { store.value = emptyList() }
     }
 
     private fun route(id: String, name: String = "Tour $id", createdAt: Long = 1_000L) = PlannedRoute(

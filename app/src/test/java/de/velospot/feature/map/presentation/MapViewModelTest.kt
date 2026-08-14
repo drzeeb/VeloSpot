@@ -227,6 +227,7 @@ class MapViewModelTest {
             mapSettings           = FakeMapSettingsRepository(),
             sensorRepository      = FakeSensorRepository(),
             weatherRepository     = FakeWeatherRepository(),
+            backupManager         = org.mockito.kotlin.mock(),
             context               = mockContext
         ).also { createdViewModels.add(it) }
     }

@@ -41,6 +41,14 @@ interface BikeProfileDao {
     @Query("UPDATE bike_profiles SET lastServiceNotifiedKm = :milestoneKm WHERE id = :id")
     suspend fun updateServiceNotified(id: String, milestoneKm: Int)
 
+    /** Every bike profile (for the local backup export). */
+    @Query("SELECT * FROM bike_profiles")
+    suspend fun getAll(): List<BikeProfileEntity>
+
+    /** Clears the whole table (a REPLACE-all restore wipes then re-inserts). */
+    @Query("DELETE FROM bike_profiles")
+    suspend fun deleteAll()
+
     /**
      * Makes [id] the one and only default bike in a single transaction so there is
      * never a window with two defaults (or none) visible to a concurrent reader.
@@ -51,4 +59,3 @@ interface BikeProfileDao {
         markDefault(id)
     }
 }
-

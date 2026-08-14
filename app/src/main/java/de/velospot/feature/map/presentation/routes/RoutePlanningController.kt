@@ -4,6 +4,7 @@ import de.velospot.core.analysis.RouteGeometryStats
 import de.velospot.core.analysis.RouteLeaderboard
 import de.velospot.core.analysis.RouteLeaderboardSummary
 import de.velospot.core.analysis.RideRouteFactory
+import de.velospot.core.analysis.PlannedRideRouteFactory
 import de.velospot.domain.model.BikeRoute
 import de.velospot.domain.model.GeoCoordinate
 import de.velospot.domain.model.PlannedRoute
@@ -293,14 +294,17 @@ class RoutePlanningController(
     /**
      * Prepares to ride [route] in [direction]: arms the pending-attempt context so
      * the auto-recorded ride becomes a leaderboard entry on finish, and returns the
-     * ordered stop coordinates the host should navigate through (reversed for a
-     * backwards ride). Returns `null` if the route has fewer than two stops.
+     * exact [BikeRoute] to follow — built 1:1 from the route's **stored geometry**
+     * (reversed for a backwards ride), *not* re-routed from the current position.
+     * This keeps every attempt of a route on the identical polyline so leaderboard
+     * times stay comparable. Returns `null` if the stored geometry has fewer than
+     * two points (nothing to follow).
      */
-    fun beginRide(route: PlannedRoute, direction: RideDirection): List<GeoCoordinate>? {
-        if (route.waypoints.size < 2) return null
-        val ordered = if (direction == RideDirection.REVERSE) route.waypoints.reversed() else route.waypoints
-        pending = PendingAttempt(routeId = route.id, reversed = direction == RideDirection.REVERSE)
-        return ordered.map { GeoCoordinate(it.latitude, it.longitude) }
+    fun beginRide(route: PlannedRoute, direction: RideDirection): BikeRoute? {
+        val reversed = direction == RideDirection.REVERSE
+        val ridable = PlannedRideRouteFactory.build(route, reversed) ?: return null
+        pending = PendingAttempt(routeId = route.id, reversed = reversed)
+        return ridable
     }
 
     /** Clears an armed pending-ride context without recording an attempt. */

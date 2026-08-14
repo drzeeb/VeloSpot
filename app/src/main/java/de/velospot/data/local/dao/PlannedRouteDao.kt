@@ -26,5 +26,12 @@ interface PlannedRouteDao {
 
     @Query("DELETE FROM planned_routes WHERE id = :id")
     suspend fun delete(id: String)
-}
 
+    /** Every planned route (for the local backup export). */
+    @Query("SELECT * FROM planned_routes")
+    suspend fun getAll(): List<PlannedRouteEntity>
+
+    /** Clears the whole table (a REPLACE-all restore wipes then re-inserts). */
+    @Query("DELETE FROM planned_routes")
+    suspend fun deleteAll()
+}

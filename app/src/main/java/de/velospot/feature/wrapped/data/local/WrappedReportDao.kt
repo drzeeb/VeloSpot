@@ -19,6 +19,10 @@ interface WrappedReportDao {
     @Query("SELECT * FROM wrapped_reports WHERE id = :id")
     suspend fun getById(id: String): WrappedReportEntity?
 
+    /** Every stored report (for the local backup export). */
+    @Query("SELECT * FROM wrapped_reports")
+    suspend fun getAll(): List<WrappedReportEntity>
+
     /**
      * The report already stored for the exact `[type, periodStart, periodEnd)`
      * bucket, or `null`. Lets a scheduled run skip regenerating a duplicate report
@@ -43,4 +47,3 @@ interface WrappedReportDao {
     @Query("SELECT COUNT(*) FROM wrapped_reports")
     suspend fun count(): Int
 }
-
