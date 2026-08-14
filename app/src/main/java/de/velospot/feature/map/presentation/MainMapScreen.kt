@@ -305,6 +305,11 @@ fun MainMapScreen(
         }
     }
 
+    // Controls the small "Park bike" chooser sheet opened from the speed-dial. Kept
+    // as local UI state (like the splash flag) rather than in the screen ui-state
+    // holder — it's a transient, self-contained overlay with no ViewModel coupling.
+    var showParkChooser by remember { mutableStateOf(false) }
+
 
     // Drives the subtle inline "zoom in to see parking" hint chip (see ZoomHintChip
     // in the UI layout below). State-driven — true only while zoomed out below the
@@ -1109,7 +1114,7 @@ fun MainMapScreen(
                         icon = Icons.AutoMirrored.Filled.DirectionsBike,
                         onClick = {
                             if (isBikeParked) viewModel.showParkedBike()
-                            else viewModel.parkBikeAtCurrentLocation()
+                            else showParkChooser = true
                         }
                     ),
                     SpeedDialAction(
@@ -1120,6 +1125,16 @@ fun MainMapScreen(
                 )
             }
             MapActionsSpeedDial(actions = speedDialActions)
+        }
+
+        // Park-bike chooser — opened from the speed-dial while no bike is parked.
+        // Lets the rider save their current spot or navigate to the nearest VeloSpot.
+        if (showParkChooser) {
+            de.velospot.feature.map.presentation.sheets.ParkBikeChooserSheet(
+                onParkHere    = viewModel::parkBikeAtCurrentLocation,
+                onFindNearest = viewModel::findNearestParkingAndNavigate,
+                onDismiss     = { showParkChooser = false }
+            )
         }
 
         // ── Ride-inspection overlay toggles (right edge, below the menu) ──────

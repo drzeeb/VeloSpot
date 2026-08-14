@@ -242,6 +242,15 @@ class NavigationController(
     }
 
     /**
+     * Surfaces the "location unavailable" error without attempting to route — used
+     * by callers (e.g. the nearest-parking search) that need a GPS fix *before*
+     * they can build a destination, so they can report the same error as [start].
+     */
+    fun reportLocationUnavailable() {
+        _uiState.value = NavigationUiState.Error(MapError.LocationUnavailable)
+    }
+
+    /**
      * Starts navigation along a **planned multi-waypoint route**. Routes from the
      * rider's current position through every coordinate in [waypoints] in order
      * (reverse the list before calling to ride the route backwards). [destination]

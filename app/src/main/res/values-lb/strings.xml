@@ -214,8 +214,15 @@
     <string name="custom_pin_share">Standuert deelen</string>
     <string name="share_location_chooser_title">Standuert deelen iwwer</string>
     <!-- Parked bike (remember where you left your bike) -->
-    <string name="menu_park_bike_here">Velo hei parken</string>
+    <string name="menu_park_bike_here">Velo parken</string>
     <string name="menu_show_parked_bike">Mäi gepaarkte Velo</string>
+    <!-- Park-bike chooser sheet (opened from the speed-dial "Park bike" action). -->
+    <string name="park_chooser_title">Velo parken</string>
+    <string name="park_chooser_here">Hei parken</string>
+    <string name="park_chooser_here_sub">Deng aktuell Positioun späicheren</string>
+    <string name="park_chooser_find">E VeloSpot sichen</string>
+    <string name="park_chooser_find_sub">Zum nächste Veloparkplaz navigéieren</string>
+    <string name="park_find_none">Kee Veloparkplaz an der Noperschaft fonnt</string>
     <string name="menu_about">Iwwer</string>
     <string name="settings_title">Astellungen</string>
     <string name="settings_section_quick_actions">Séier Aktiounen</string>
