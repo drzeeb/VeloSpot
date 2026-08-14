@@ -93,6 +93,7 @@ VeloSpot ships with pre-bundled OpenStreetMap extracts covering **Germany 🇩�
 - **🆕 Open `.gpx` files from outside the app** — tap a GPX in a file manager, e-mail or browser download to import it as a ride or just preview the track on the map
 - **🆕 Share any spot** as a universal OpenStreetMap link from the detail sheets
 - **🆕 Keep screen on** while navigating and recording (toggle); **accessibility** (TalkBack) improvements; legal notice (Impressum) in-app and on the website
+- **🆕 Fully local Backup & Restore** — export **all** your data (rides with GPS tracks, planned routes & leaderboards, favourites, saved places, bike garage, "VeloSpot Wrapped" reports and app settings) into one `.vsbackup` file and import it on any device. Everything stays **on your phone** — no cloud, nothing ever touches the network
 
 ## 🌟 Features
 

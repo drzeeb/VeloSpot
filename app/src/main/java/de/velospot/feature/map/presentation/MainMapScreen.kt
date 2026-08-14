@@ -211,7 +211,7 @@ fun MainMapScreen(
             android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
         onDispose {
-            previousOrientation?.let { activity?.requestedOrientation = it }
+            previousOrientation?.let { activity.requestedOrientation = it }
         }
     }
 
