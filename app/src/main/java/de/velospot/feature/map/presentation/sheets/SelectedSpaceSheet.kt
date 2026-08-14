@@ -105,13 +105,7 @@ private fun SheetContent(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-
-        // --- VeloScore badge ---------------------------------------------------
-        VeloScoreBadge(space = space)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- Enriched, grouped detail rows (each shown only when known) --------
+        // --- Enriched detail badges + info rows (each shown only when known) ---
         space.address?.let {
             DetailRow(label = stringResource(id = R.string.detail_address), value = it)
             Spacer(modifier = Modifier.height(8.dp))

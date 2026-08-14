@@ -695,37 +695,24 @@
     <string name="route_leaderboard_reverse">Ritorno (%1$d)</string>
     <string name="route_leaderboard_empty">Nessun tentativo. Percorri questa rotta per segnare un tempo.</string>
 
-    <!-- VeloScore: punteggio di qualità del parcheggio -->
-    <string name="velo_score_label">VeloScore</string>
-    <string name="velo_score_value_format">%1$d/100</string>
-    <string name="velo_score_why">Perché è sicuro</string>
-    <string name="parking_tier_basic">Base</string>
-    <string name="parking_tier_decent">Discreto</string>
-    <string name="parking_tier_good">Buono</string>
-    <string name="parking_tier_secure">Sicuro</string>
-    <string name="parking_tier_premium">Premium</string>
-    <string name="score_factor_theft_protection">Con serratura</string>
-    <string name="score_factor_weather_protection">Coperto</string>
-    <string name="score_factor_surveillance">Sorvegliato</string>
-    <string name="score_factor_lighting">Illuminato</string>
-    <string name="score_factor_public_access">Accesso pubblico</string>
-    <string name="score_factor_free">Gratuito</string>
-    <string name="score_factor_opening_hours">Orari</string>
-    <string name="score_factor_capacity">Capienza</string>
-    <string name="score_factor_cargo_bike">Cargo bike</string>
-    <string name="score_factor_charging">Ricarica e-bike</string>
-    <string name="score_factor_supervised">Custodito</string>
-    <string name="score_factor_data_fresh">Verificato di recente</string>
-
-    <!-- Sezioni del dettaglio parcheggio -->
-    <string name="parking_section_security">Sicurezza</string>
-    <string name="parking_section_access">Accesso</string>
-    <string name="parking_section_capacity">Capienza</string>
-    <string name="parking_section_context">Contesto</string>
+    <!-- Badge informativi del parcheggio (solo quando il dato OSM è noto e positivo) -->
+    <string name="parking_badge_covered">Coperto</string>
+    <string name="parking_badge_lit">Illuminato</string>
+    <string name="parking_badge_surveillance">Videosorveglianza</string>
+    <string name="parking_badge_supervised">Custodito</string>
+    <string name="parking_badge_free">Gratuito</string>
+    <string name="parking_badge_paid">A pagamento</string>
+    <string name="parking_badge_charging">Ricarica e-bike</string>
+    <string name="parking_badge_cargo">Cargo bike</string>
+    <string name="parking_badge_accessible">Accessibile</string>
+    <string name="parking_badge_capacity">Capienza: %1$d</string>
+    <string name="parking_badge_type_garage">Garage per bici</string>
+    <string name="parking_badge_type_rack">Rastrelliera</string>
+    <string name="parking_badge_type_wall_loops">Reggiruota</string>
+    <string name="parking_badge_type_generic">Parcheggio</string>
 
     <!-- Righe del dettaglio parcheggio -->
     <string name="detail_subtype">Tipo</string>
-    <string name="detail_lockable">Con serratura</string>
     <string name="detail_indoor">Interno</string>
     <string name="detail_surveillance">Sorveglianza</string>
     <string name="detail_lit">Illuminazione</string>

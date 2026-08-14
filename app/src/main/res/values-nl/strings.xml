@@ -693,37 +693,24 @@
     <string name="route_leaderboard_reverse">Terug (%1$d)</string>
     <string name="route_leaderboard_empty">Nog geen pogingen. Rijd deze route om een tijd neer te zetten.</string>
 
-    <!-- VeloScore: kwaliteitsscore van de stalling -->
-    <string name="velo_score_label">VeloScore</string>
-    <string name="velo_score_value_format">%1$d/100</string>
-    <string name="velo_score_why">Waarom veilig</string>
-    <string name="parking_tier_basic">Basis</string>
-    <string name="parking_tier_decent">Redelijk</string>
-    <string name="parking_tier_good">Goed</string>
-    <string name="parking_tier_secure">Veilig</string>
-    <string name="parking_tier_premium">Premium</string>
-    <string name="score_factor_theft_protection">Afsluitbaar</string>
-    <string name="score_factor_weather_protection">Overdekt</string>
-    <string name="score_factor_surveillance">Cameratoezicht</string>
-    <string name="score_factor_lighting">Verlicht</string>
-    <string name="score_factor_public_access">Openbaar</string>
-    <string name="score_factor_free">Gratis</string>
-    <string name="score_factor_opening_hours">Openingstijden</string>
-    <string name="score_factor_capacity">Capaciteit</string>
-    <string name="score_factor_cargo_bike">Bakfiets</string>
-    <string name="score_factor_charging">E-bike opladen</string>
-    <string name="score_factor_supervised">Bemand</string>
-    <string name="score_factor_data_fresh">Recent gecontroleerd</string>
-
-    <!-- Secties van de stallingsdetails -->
-    <string name="parking_section_security">Beveiliging</string>
-    <string name="parking_section_access">Toegang</string>
-    <string name="parking_section_capacity">Capaciteit</string>
-    <string name="parking_section_context">Context</string>
+    <!-- Informatiebadges van de stalling (alleen als het OSM-feit bekend en positief is) -->
+    <string name="parking_badge_covered">Overdekt</string>
+    <string name="parking_badge_lit">Verlicht</string>
+    <string name="parking_badge_surveillance">Cameratoezicht</string>
+    <string name="parking_badge_supervised">Bemand</string>
+    <string name="parking_badge_free">Gratis</string>
+    <string name="parking_badge_paid">Betaald</string>
+    <string name="parking_badge_charging">E-bike opladen</string>
+    <string name="parking_badge_cargo">Bakfiets</string>
+    <string name="parking_badge_accessible">Toegankelijk</string>
+    <string name="parking_badge_capacity">Capaciteit: %1$d</string>
+    <string name="parking_badge_type_garage">Fietsenstalling</string>
+    <string name="parking_badge_type_rack">Fietsenrek</string>
+    <string name="parking_badge_type_wall_loops">Wielhouder</string>
+    <string name="parking_badge_type_generic">Stalling</string>
 
     <!-- Regels van de stallingsdetails -->
     <string name="detail_subtype">Type</string>
-    <string name="detail_lockable">Afsluitbaar</string>
     <string name="detail_indoor">Binnen</string>
     <string name="detail_surveillance">Toezicht</string>
     <string name="detail_lit">Verlichting</string>

@@ -735,37 +735,24 @@
     <string name="route_leaderboard_reverse">Reverse (%1$d)</string>
     <string name="route_leaderboard_empty">No attempts yet. Ride this route to set a time.</string>
 
-    <!-- VeloScore parking quality score -->
-    <string name="velo_score_label">VeloScore</string>
-    <string name="velo_score_value_format">%1$d/100</string>
-    <string name="velo_score_why">Why secure</string>
-    <string name="parking_tier_basic">Basic</string>
-    <string name="parking_tier_decent">Decent</string>
-    <string name="parking_tier_good">Good</string>
-    <string name="parking_tier_secure">Secure</string>
-    <string name="parking_tier_premium">Premium</string>
-    <string name="score_factor_theft_protection">Lockable</string>
-    <string name="score_factor_weather_protection">Covered</string>
-    <string name="score_factor_surveillance">Surveilled</string>
-    <string name="score_factor_lighting">Lit</string>
-    <string name="score_factor_public_access">Public access</string>
-    <string name="score_factor_free">Free</string>
-    <string name="score_factor_opening_hours">Opening hours</string>
-    <string name="score_factor_capacity">Capacity</string>
-    <string name="score_factor_cargo_bike">Cargo bike</string>
-    <string name="score_factor_charging">E-bike charging</string>
-    <string name="score_factor_supervised">Supervised</string>
-    <string name="score_factor_data_fresh">Recently checked</string>
-
-    <!-- Parking detail sections -->
-    <string name="parking_section_security">Security</string>
-    <string name="parking_section_access">Access</string>
-    <string name="parking_section_capacity">Capacity</string>
-    <string name="parking_section_context">Context</string>
+    <!-- Parking feature badges (only shown when the OSM fact is known and positive) -->
+    <string name="parking_badge_covered">Covered</string>
+    <string name="parking_badge_lit">Lit</string>
+    <string name="parking_badge_surveillance">CCTV</string>
+    <string name="parking_badge_supervised">Attended</string>
+    <string name="parking_badge_free">Free</string>
+    <string name="parking_badge_paid">Paid</string>
+    <string name="parking_badge_charging">E-bike charging</string>
+    <string name="parking_badge_cargo">Cargo bike</string>
+    <string name="parking_badge_accessible">Accessible</string>
+    <string name="parking_badge_capacity">Capacity: %1$d</string>
+    <string name="parking_badge_type_garage">Bike garage</string>
+    <string name="parking_badge_type_rack">Bike rack</string>
+    <string name="parking_badge_type_wall_loops">Wheel holder</string>
+    <string name="parking_badge_type_generic">Parking</string>
 
     <!-- Parking detail rows -->
     <string name="detail_subtype">Type</string>
-    <string name="detail_lockable">Lockable</string>
     <string name="detail_indoor">Indoor</string>
     <string name="detail_surveillance">Surveillance</string>
     <string name="detail_lit">Lighting</string>
