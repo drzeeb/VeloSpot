@@ -69,9 +69,11 @@ In a normal PR to `main`, do all three:
    the workflow greps them to verify they match the tag).
 2. **Promote the changelog**: rename the `## [Unreleased]` section to
    `## [vX.Y.Z] — YYYY-MM-DD` and insert a fresh, empty `## [Unreleased]` above it.
-3. **Add the Play "What''s New" files** (uploaded as the Play release notes):
-   `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt` and
-   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+3. **Add the Play "What''s New" files** (uploaded as the Play release notes), one per
+   supported store language:
+   `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt`,
+   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` and
+   `fastlane/metadata/android/fr-FR/changelogs/<versionCode>.txt`.
 Get the PR reviewed, green and **merged** into `main`.
 ### Step 2 — Tag the merge commit and push
 ```bash

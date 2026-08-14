@@ -25,7 +25,7 @@ import org.maplibre.geojson.Point
  * `MarkerIconFactory.kt`, the source/layer/ID plumbing in `MapStyleLayers.kt`.
  *
  * Click handling is NOT managed here – a single [MapLibreMap.addOnMapClickListener]
- * in [MainMapScreen] queries [LAYER_PARKING] / [LAYER_SAVED_PIN] for hit-testing.
+ * in `MainMapScreen` queries [LAYER_PARKING] / [LAYER_SAVED_PIN] for hit-testing.
  */
 
 // ── Public data classes ───────────────────────────────────────────────────────
