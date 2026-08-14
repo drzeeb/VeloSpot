@@ -177,8 +177,15 @@
     <string name="favorites_saved_places_header">Gespeicherte Orte</string>
 
     <!-- Parked bike (remember where you left your bike) -->
-    <string name="menu_park_bike_here">Fahrrad hier parken</string>
+    <string name="menu_park_bike_here">Fahrrad parken</string>
     <string name="menu_show_parked_bike">Mein geparktes Fahrrad</string>
+    <!-- Park-bike chooser sheet (opened from the speed-dial "Park bike" action). -->
+    <string name="park_chooser_title">Fahrrad parken</string>
+    <string name="park_chooser_here">Hier parken</string>
+    <string name="park_chooser_here_sub">Deine aktuelle Position als Parkplatz speichern</string>
+    <string name="park_chooser_find">VeloSpot suchen</string>
+    <string name="park_chooser_find_sub">Zum nächsten Abstellplatz navigieren</string>
+    <string name="park_find_none">In der Nähe wurde kein Abstellplatz gefunden</string>
     <string name="menu_about">Über</string>
     <string name="settings_title">Einstellungen</string>
     <string name="settings_section_quick_actions">Schnellaktionen</string>

@@ -351,6 +351,104 @@ class MapViewModelTest {
     }
 
     @Test
+    fun `findNearestParkingAndNavigate starts navigation to the closest space`() = runTest {
+        // Fix at (49.75, 6.64). "far" is ~1.5 km north; "near" is only metres away, so
+        // it must be chosen even though the fake repository returns both for the bbox.
+        val far = sampleSpace(id = "far").copy(latitude = 49.763, longitude = 6.64)
+        val near = sampleSpace(id = "near").copy(latitude = 49.7501, longitude = 6.6401)
+        val viewModel = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(listOf(far, near)),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            ),
+            routingRepository = FakeRoutingRepository(
+                route = BikeRoute(
+                    points = listOf(
+                        RoutePoint(latitude = 49.75, longitude = 6.64),
+                        RoutePoint(latitude = 49.7501, longitude = 6.6401)
+                    ),
+                    distanceMeters = 20.0,
+                    durationSeconds = 10.0
+                )
+            )
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.findNearestParkingAndNavigate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.navigationUiState.value
+        assertTrue(state is NavigationUiState.Active)
+        assertEquals(near, (state as NavigationUiState.Active).destination)
+    }
+
+    @Test
+    fun `findNearestParkingAndNavigate with no spaces sets message and does not navigate`() = runTest {
+        val viewModel = makeViewModel(
+            bikeParkingRepository = FakeBikeParkingRepository(emptyList()),
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.findNearestParkingAndNavigate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(de.velospot.R.string.park_find_none, viewModel.userMessageRes.value)
+        assertTrue(viewModel.navigationUiState.value is NavigationUiState.Idle)
+    }
+
+    @Test
+    fun `findNearestParkingAndNavigate without a fix surfaces location unavailable`() = runTest {
+        val repository = FakeBikeParkingRepository(listOf(sampleSpace(id = "s")))
+        val viewModel = makeViewModel(
+            bikeParkingRepository = repository,
+            locationRepository = FakeLocationRepository(initialLocation = null)
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        val queriesBefore = repository.boundingBoxQueryCount
+        viewModel.findNearestParkingAndNavigate()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.navigationUiState.value
+        assertTrue(state is NavigationUiState.Error)
+        assertEquals(MapError.LocationUnavailable, (state as NavigationUiState.Error).error)
+        // No fix ⇒ no nearest search was attempted.
+        assertEquals(queriesBefore, repository.boundingBoxQueryCount)
+    }
+
+    @Test
+    fun `nearestSpace picks the closest by distance`() {
+        val fixLat = 49.75
+        val fixLon = 6.64
+        val far = sampleSpace(id = "far").copy(latitude = 49.80, longitude = 6.70)
+        val near = sampleSpace(id = "near").copy(latitude = 49.7502, longitude = 6.6402)
+        val picked = nearestSpace(fixLat, fixLon, listOf(far, near))
+        assertEquals(near, picked)
+        assertEquals(null, nearestSpace(fixLat, fixLon, emptyList()))
+    }
+
+    @Test
+    fun `boundingBoxAround contains the point and grows with radius`() {
+        val lat = 49.75
+        val lon = 6.64
+        val small = boundingBoxAround(lat, lon, 1.0)
+        val large = boundingBoxAround(lat, lon, 8.0)
+
+        // The centre point lies inside both boxes.
+        assertTrue(lat in small.minLat..small.maxLat)
+        assertTrue(lon in small.minLon..small.maxLon)
+
+        // A larger radius yields a strictly larger box.
+        assertTrue(large.maxLat > small.maxLat)
+        assertTrue(large.minLat < small.minLat)
+        assertTrue(large.maxLon > small.maxLon)
+        assertTrue(large.minLon < small.minLon)
+    }
+
+    @Test
     fun `loadParkingSpaces maps database failures to Unknown error`() = runTest {
         val viewModel = makeViewModel(
             bikeParkingRepository = FakeBikeParkingRepository(error = RuntimeException("DB read failed"))
@@ -1443,8 +1541,13 @@ private class FakeBikeParkingRepository(
     private val error: Throwable? = null
 ) : BikeParkingRepository {
 
+    /** Number of bounding-box queries made — lets tests assert the search ran (or not). */
+    var boundingBoxQueryCount: Int = 0
+        private set
+
     /** Simulates a data-load error (e.g. DB corruption) — only on the primary query. */
     override suspend fun getSpacesInBoundingBox(bbox: BoundingBox): List<BikeParkingSpace> {
+        boundingBoxQueryCount++
         error?.let { throw it }
         return spaces
     }

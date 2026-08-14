@@ -172,8 +172,15 @@
     <string name="favorites_saved_places_header">Lugares guardados</string>
 
     <!-- Parked bike (remember where you left your bike) -->
-    <string name="menu_park_bike_here">Aparcar la bici aquí</string>
+    <string name="menu_park_bike_here">Aparcar la bici</string>
     <string name="menu_show_parked_bike">Mi bici aparcada</string>
+    <!-- Park-bike chooser sheet (opened from the speed-dial "Park bike" action). -->
+    <string name="park_chooser_title">Aparcar la bici</string>
+    <string name="park_chooser_here">Aparcar aquí</string>
+    <string name="park_chooser_here_sub">Guarda tu ubicación actual</string>
+    <string name="park_chooser_find">Buscar un VeloSpot</string>
+    <string name="park_chooser_find_sub">Navegar al aparcamiento de bicis más cercano</string>
+    <string name="park_find_none">No se encontró ningún aparcamiento cerca</string>
     <string name="menu_about">Acerca de</string>
     <string name="settings_title">Ajustes</string>
     <string name="settings_section_quick_actions">Acciones rápidas</string>

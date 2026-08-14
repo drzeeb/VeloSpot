@@ -216,8 +216,15 @@
     <string name="share_location_chooser_title">Partager le lieu via</string>
 
     <!-- Parked bike (remember where you left your bike) -->
-    <string name="menu_park_bike_here">Garer le vélo ici</string>
+    <string name="menu_park_bike_here">Garer le vélo</string>
     <string name="menu_show_parked_bike">Mon vélo garé</string>
+    <!-- Park-bike chooser sheet (opened from the speed-dial "Park bike" action). -->
+    <string name="park_chooser_title">Garer le vélo</string>
+    <string name="park_chooser_here">Garer ici</string>
+    <string name="park_chooser_here_sub">Enregistrer votre position actuelle</string>
+    <string name="park_chooser_find">Trouver un VeloSpot</string>
+    <string name="park_chooser_find_sub">Naviguer vers le stationnement vélo le plus proche</string>
+    <string name="park_find_none">Aucun stationnement vélo trouvé à proximité</string>
     <string name="menu_about">À propos</string>
     <string name="settings_title">Paramètres</string>
     <string name="settings_section_quick_actions">Actions rapides</string>

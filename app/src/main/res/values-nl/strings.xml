@@ -214,8 +214,15 @@
     <string name="custom_pin_share">Locatie delen</string>
     <string name="share_location_chooser_title">Locatie delen via</string>
     <!-- Parked bike (remember where you left your bike) -->
-    <string name="menu_park_bike_here">Fiets hier parkeren</string>
+    <string name="menu_park_bike_here">Fiets parkeren</string>
     <string name="menu_show_parked_bike">Mijn geparkeerde fiets</string>
+    <!-- Park-bike chooser sheet (opened from the speed-dial "Park bike" action). -->
+    <string name="park_chooser_title">Fiets parkeren</string>
+    <string name="park_chooser_here">Hier parkeren</string>
+    <string name="park_chooser_here_sub">Je huidige locatie opslaan</string>
+    <string name="park_chooser_find">Een VeloSpot zoeken</string>
+    <string name="park_chooser_find_sub">Navigeer naar de dichtstbijzijnde fietsenstalling</string>
+    <string name="park_find_none">Geen fietsenstalling in de buurt gevonden</string>
     <string name="menu_about">Over</string>
     <string name="settings_title">Instellingen</string>
     <string name="settings_section_quick_actions">Snelle acties</string>

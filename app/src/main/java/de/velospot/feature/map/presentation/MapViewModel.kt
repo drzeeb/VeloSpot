@@ -80,6 +80,45 @@ import javax.inject.Inject
 private const val MAX_VIEWPORT_SPAN_DEG = 1.5
 private const val VIEWPORT_DEBOUNCE_MS  = 300L
 
+/**
+ * Search radii (km) tried in order when hunting for the nearest bike-parking spot
+ * from the park-bike chooser: start tight, then widen if nothing turns up.
+ */
+private val PARK_SEARCH_RADII_KM = listOf(1.0, 3.0, 8.0, 25.0)
+
+/** Approximate metres per degree of latitude (constant everywhere on the globe). */
+private const val METERS_PER_DEG_LAT = 111_000.0
+
+/**
+ * Builds an axis-aligned [BoundingBox] of half-extent [radiusKm] around
+ * ([lat], [lon]). Latitude spans `radiusKm / 111` degrees; longitude is widened by
+ * `1 / cos(lat)` so the box stays roughly square in metres as latitude increases.
+ * Pure & side-effect free so it can be unit-tested directly.
+ */
+internal fun boundingBoxAround(lat: Double, lon: Double, radiusKm: Double): BoundingBox {
+    val latDelta = radiusKm / 111.0
+    val cosLat = kotlin.math.cos(Math.toRadians(lat)).coerceAtLeast(1e-6)
+    val lonDelta = radiusKm / (111.0 * cosLat)
+    return BoundingBox(
+        minLat = lat - latDelta,
+        minLon = lon - lonDelta,
+        maxLat = lat + latDelta,
+        maxLon = lon + lonDelta
+    )
+}
+
+/**
+ * Returns the [BikeParkingSpace] in [spaces] closest to ([lat], [lon]) by
+ * great-circle distance, or `null` when [spaces] is empty. Pure & unit-testable.
+ */
+internal fun nearestSpace(
+    lat: Double,
+    lon: Double,
+    spaces: List<BikeParkingSpace>
+): BikeParkingSpace? =
+    spaces.minByOrNull { GeoMath.distanceMeters(lat, lon, it.latitude, it.longitude) }
+
+
 /** Minimum move (metres) from the last fetched point before weather is refreshed. */
 private const val WEATHER_MIN_MOVE_M = 5_000.0
 /** Maximum age (ms) of the cached weather snapshot before a refresh is allowed. */
@@ -847,6 +886,43 @@ class MapViewModel @Inject constructor(
     // ── Parked bike (where the user left their bike) ───────────────────────────
 
     fun parkBikeAtCurrentLocation() = parkedBikeController.parkAtCurrentLocation()
+
+    /**
+     * Finds the bike-parking spot nearest to the rider's current position and
+     * starts turn-by-turn navigation to it. Backs the "Find a VeloSpot" option of
+     * the park-bike chooser sheet.
+     *
+     * The nearest search runs off the main thread: the parking repository is queried
+     * for progressively larger bounding boxes around the fix ([PARK_SEARCH_RADII_KM])
+     * until at least one spot is returned, then the closest by great-circle distance
+     * is picked. A missing GPS fix surfaces the same location-unavailable error as
+     * the other navigate-* entry points; an empty result surfaces a friendly message.
+     */
+    fun findNearestParkingAndNavigate() {
+        val fix = _userLocation.value ?: run {
+            navigationController.reportLocationUnavailable()
+            return
+        }
+        // The repository query is a suspend function (it does its own IO off the main
+        // thread) and picking the nearest is a cheap O(n) scan, so this never blocks
+        // the caller — no explicit dispatcher hop is needed (and keeping it on the
+        // viewModelScope dispatcher keeps it deterministically testable).
+        viewModelScope.launch {
+            var found: List<BikeParkingSpace> = emptyList()
+            for (radiusKm in PARK_SEARCH_RADII_KM) {
+                val bbox = boundingBoxAround(fix.latitude, fix.longitude, radiusKm)
+                found = runCatching { bikeParkingRepository.getSpacesInBoundingBox(bbox) }
+                    .getOrDefault(emptyList())
+                if (found.isNotEmpty()) break
+            }
+            val nearest = nearestSpace(fix.latitude, fix.longitude, found)
+            if (nearest == null) {
+                _userMessageRes.value = de.velospot.R.string.park_find_none
+            } else {
+                startInAppNavigation(nearest)
+            }
+        }
+    }
 
     fun parkBikeAt(latitude: Double, longitude: Double) =
         parkedBikeController.parkAt(latitude, longitude)

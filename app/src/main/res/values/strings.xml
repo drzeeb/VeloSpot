@@ -50,8 +50,15 @@
     <string name="search_recent_title">Recent</string>
     <string name="offline_download_route">Download for offline use</string>
     <string name="menu_rounded_buildings">Rounded 3D buildings</string>
-    <string name="menu_park_bike_here">Park bike here</string>
+    <string name="menu_park_bike_here">Park bike</string>
     <string name="menu_show_parked_bike">My parked bike</string>
+    <!-- Park-bike chooser sheet (opened from the speed-dial "Park bike" action). -->
+    <string name="park_chooser_title">Park bike</string>
+    <string name="park_chooser_here">Park here</string>
+    <string name="park_chooser_here_sub">Save your current spot</string>
+    <string name="park_chooser_find">Find a VeloSpot</string>
+    <string name="park_chooser_find_sub">Navigate to the nearest bike parking</string>
+    <string name="park_find_none">No bike parking found nearby</string>
     <string name="menu_simulate_route_start">▶ Simulate route (GPS mock)</string>
     <string name="menu_simulate_route_stop">⏹ Stop route simulation</string>
     <string name="menu_simulate_route_hint">▶ Simulate route (start navigation first)</string>
