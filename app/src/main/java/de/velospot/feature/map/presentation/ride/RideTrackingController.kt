@@ -138,6 +138,9 @@ class RideTrackingController(
 
     val isRecording: Boolean get() = manager.isRecording
 
+    /** Whether the active recording is currently paused. */
+    val isPaused: Boolean get() = manager.isPaused
+
     /** Whether the current recording was auto-started by navigation (vs. the FAB). */
     val isAutoStartedByNavigation: Boolean get() = manager.isAutoStartedByNavigation
 

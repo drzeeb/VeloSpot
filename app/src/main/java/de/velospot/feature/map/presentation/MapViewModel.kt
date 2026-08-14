@@ -1100,12 +1100,14 @@ class MapViewModel @Inject constructor(
         }
     }
     fun stopRideTracking() {
+        stopEngagedRecordingOnlyMock()
         rideTracking.stop()
         // Release the external sensors once the ride ends.
         sensorRepository.disconnectAll()
         updateFollowSession()
     }
     fun discardRideTracking() {
+        stopEngagedRecordingOnlyMock()
         rideTracking.discard()
         sensorRepository.disconnectAll()
         updateFollowSession()
@@ -1115,8 +1117,33 @@ class MapViewModel @Inject constructor(
      * Pauses/resumes the active recording — the commuter's "on the train/ferry now"
      * control. While paused, distance/time and the track freeze; resuming continues
      * the ride as a new segment so the paused leg is stored and drawn as a gap.
+     *
+     * For a **recording-only** debug mock (the GPS simulator driving the avatar with
+     * no active navigation) the pause/resume is mirrored onto the simulator so the
+     * avatar actually stops/continues with the recording — otherwise the mock keeps
+     * ticking and feels un-pausable. A normal (non-mock) recording is untouched.
      */
-    fun togglePauseRideTracking() = rideTracking.togglePause()
+    fun togglePauseRideTracking() {
+        rideTracking.togglePause()
+        if (isRecordingOnlyMockEngaged()) {
+            if (rideTracking.isPaused) navigationController.pauseSimulationKeepingPosition()
+            else navigationController.resumeSimulation()
+        }
+    }
+
+    /**
+     * `true` when a debug GPS mock is engaged **without** active navigation — i.e. a
+     * recording-only mock whose lifecycle the ride controls own. Guards the mock
+     * coupling so normal recordings (no braking fix injected) and navigation mocks
+     * (owned by [NavigationController.stop]) are left completely unaffected.
+     */
+    private fun isRecordingOnlyMockEngaged(): Boolean =
+        !navigationController.isActive && navigationController.isSimulationEngaged
+
+    /** Stops an engaged recording-only mock so the avatar halts with the recording. */
+    private fun stopEngagedRecordingOnlyMock() {
+        if (isRecordingOnlyMockEngaged()) navigationController.stopSimulation()
+    }
 
     // ── Name-on-stop prompt (manual recordings) ───────────────────────────────
 
@@ -1138,6 +1165,9 @@ class MapViewModel @Inject constructor(
      */
     fun requestStopRideTracking() {
         if (!rideTracking.isRecording) return
+        // Halt an engaged recording-only mock immediately so the avatar stops while
+        // the naming prompt is up (the recording keeps running until confirmed).
+        stopEngagedRecordingOnlyMock()
         _rideNamePrompt.value = RideNamePromptUiState(suggestion = null)
         val location = _userLocation.value
         viewModelScope.launch {

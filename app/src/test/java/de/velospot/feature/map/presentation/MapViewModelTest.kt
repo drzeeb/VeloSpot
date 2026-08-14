@@ -1299,6 +1299,89 @@ class MapViewModelTest {
         assertEquals(null, vm.rideNamePrompt.value)
     }
 
+    // ── Recording-only debug mock coupling ────────────────────────────────────
+    // The GPS "Mock" that drives the cyclist to the Porta Nigra during a
+    // recording-only session (no navigation) must be paused / resumed / stopped by
+    // the visible recording controls, so it never feels un-pausable / un-stoppable.
+
+    @Test
+    fun `recording-only mock is paused, resumed and stopped by the ride controls`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Record, then drive the debug mock towards the Porta Nigra (no navigation).
+        vm.startRideTracking()
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.toggleRouteSimulation()
+        // Advance just enough to compute the line and start the ticker — NOT to the
+        // end of the route (that would finish the mock on its own).
+        testDispatcher.scheduler.advanceTimeBy(50)
+        assertTrue(vm.isSimulatingRoute.value)
+        assertTrue(vm.navigationUiState.value is NavigationUiState.Idle)
+
+        // Pausing the recording pauses the mock (the avatar stops driving).
+        vm.togglePauseRideTracking()
+        assertEquals(false, vm.isSimulatingRoute.value)
+
+        // Resuming the recording resumes the mock.
+        vm.togglePauseRideTracking()
+        assertTrue(vm.isSimulatingRoute.value)
+
+        // Requesting stop (opens the naming prompt) immediately halts the mock.
+        vm.requestStopRideTracking()
+        assertEquals(false, vm.isSimulatingRoute.value)
+    }
+
+    @Test
+    fun `discardRideTracking stops an engaged recording-only mock`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startRideTracking()
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.toggleRouteSimulation()
+        testDispatcher.scheduler.advanceTimeBy(50)
+        assertTrue(vm.isSimulatingRoute.value)
+
+        vm.discardRideTracking()
+        assertEquals(false, vm.isSimulatingRoute.value)
+    }
+
+    @Test
+    fun `a normal recording without a mock never touches the simulator`() = runTest {
+        val vm = makeViewModel(
+            locationRepository = FakeLocationRepository(
+                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // A plain recording, no debug mock engaged.
+        vm.startRideTracking()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val locationBefore = vm.userLocation.value
+        assertEquals(false, vm.isSimulatingRoute.value)
+
+        // Pausing / requesting stop must not engage or brake a (non-existent) mock —
+        // in particular no synthetic braking fix is injected into the location flow.
+        vm.togglePauseRideTracking()
+        assertEquals(false, vm.isSimulatingRoute.value)
+        assertEquals(locationBefore, vm.userLocation.value)
+
+        vm.togglePauseRideTracking()
+        vm.requestStopRideTracking()
+        assertEquals(false, vm.isSimulatingRoute.value)
+        assertEquals(locationBefore, vm.userLocation.value)
+    }
+
     // ── External sensors ──────────────────────────────────────────────────────
 
     @Test

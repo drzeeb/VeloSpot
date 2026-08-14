@@ -70,6 +70,15 @@ class NavigationController(
     val isSimulating: StateFlow<Boolean> = _isSimulating.asStateFlow()
 
     /**
+     * `true` while a mock run is **engaged** — either actively ticking or paused —
+     * so it can still be resumed or stopped. Becomes `false` only once the mock is
+     * fully stopped ([stopSimulation]) or finishes on its own. Lets the ride
+     * controls couple to a recording-only mock (pause/resume/stop it alongside the
+     * ride) without touching a normal, non-mock recording.
+     */
+    val isSimulationEngaged: Boolean get() = simulationRouteRef != null
+
+    /**
      * The route the simulator's paused [RouteSimulator.travelledMeters] belongs to.
      * Resume only continues from the saved position while this is still the active
      * route instance; a new/rerouted route restarts the simulation from the start.
@@ -465,6 +474,22 @@ class NavigationController(
         routeSimulator.stop()
         _isSimulating.value = false
         brakePuck()
+    }
+
+    /**
+     * Public entry point for the ride controls to pause a **recording-only** mock
+     * when the rider pauses the recording, keeping the position so it can resume.
+     */
+    fun pauseSimulationKeepingPosition() = pauseSimulation()
+
+    /**
+     * Resumes a paused mock from where it left off — continuing along the saved
+     * route from [RouteSimulator.travelledMeters] (same route instance) rather than
+     * restarting. No-op when already ticking or when no mock is engaged.
+     */
+    fun resumeSimulation() {
+        if (_isSimulating.value) return
+        simulationRouteRef?.let { beginSimulation(it) }
     }
 
     /**
