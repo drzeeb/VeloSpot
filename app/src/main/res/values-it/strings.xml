@@ -295,11 +295,31 @@
     <string name="about_country_france">Francia</string>
     <string name="about_country_luxembourg">Lussemburgo</string>
     <string name="about_privacy">Privacy</string>
-    <string name="about_support">Offrimi un caffè</string>
+
+
     <string name="about_open_link">Apri link</string>
     <string name="about_imprint">Note legali</string>
     <string name="about_replay_onboarding">Tour dell\'app</string>
     <string name="about_replay_onboarding_subtitle">Mostra di nuovo l\'introduzione</string>
+
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Backup e ripristino</string>
+    <string name="backup_create_action">Crea backup</string>
+    <string name="backup_create_subtitle">Salva tutti i tuoi dati in un file</string>
+    <string name="restore_action">Ripristina backup</string>
+    <string name="restore_subtitle">Importa i dati da un file di backup</string>
+    <string name="backup_create_success">Backup salvato</string>
+    <string name="backup_working">Elaborazione… tieni l’app aperta</string>
+    <string name="ride_loading">Caricamento percorso…</string>
+    <string name="backup_create_failed">Impossibile creare il backup</string>
+    <string name="restore_success">Backup ripristinato</string>
+    <string name="restore_failed">Impossibile ripristinare il backup</string>
+    <string name="restore_too_new">Questo backup è stato creato con una versione più recente di VeloSpot. Aggiorna prima l\'app.</string>
+    <string name="restore_corrupt">Questo file non è un backup VeloSpot valido</string>
+    <string name="restore_confirm_title">Ripristinare il backup?</string>
+    <string name="restore_confirm_message">Questa operazione sostituisce tutti i dati attuali su questo dispositivo (percorsi, luoghi salvati, preferiti, itinerari, impostazioni) con il contenuto del backup. L\'operazione non può essere annullata.</string>
+    <string name="restore_confirm_button">Ripristina</string>
+
 
     <!-- Introduzione al primo avvio -->
     <string name="onboarding_skip">Salta</string>

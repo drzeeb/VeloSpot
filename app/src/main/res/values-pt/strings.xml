@@ -293,11 +293,31 @@
     <string name="about_country_france">França</string>
     <string name="about_country_luxembourg">Luxemburgo</string>
     <string name="about_privacy">Privacidade</string>
-    <string name="about_support">Paga-me um café</string>
+
+
     <string name="about_open_link">Abrir ligação</string>
     <string name="about_imprint">Informação legal</string>
     <string name="about_replay_onboarding">Tour da app</string>
     <string name="about_replay_onboarding_subtitle">Mostrar a introdução novamente</string>
+
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Cópia de segurança</string>
+    <string name="backup_create_action">Criar cópia de segurança</string>
+    <string name="backup_create_subtitle">Guardar todos os seus dados num ficheiro</string>
+    <string name="restore_action">Restaurar cópia de segurança</string>
+    <string name="restore_subtitle">Importar dados de um ficheiro de cópia de segurança</string>
+    <string name="backup_create_success">Cópia de segurança guardada</string>
+    <string name="backup_working">A processar… mantenha a app aberta</string>
+    <string name="ride_loading">A carregar percurso…</string>
+    <string name="backup_create_failed">Não foi possível criar a cópia de segurança</string>
+    <string name="restore_success">Cópia de segurança restaurada</string>
+    <string name="restore_failed">Não foi possível restaurar a cópia de segurança</string>
+    <string name="restore_too_new">Esta cópia de segurança foi criada com uma versão mais recente do VeloSpot. Atualize primeiro a aplicação.</string>
+    <string name="restore_corrupt">Este ficheiro não é uma cópia de segurança válida do VeloSpot</string>
+    <string name="restore_confirm_title">Restaurar cópia de segurança?</string>
+    <string name="restore_confirm_message">Isto substitui todos os dados atuais neste dispositivo (percursos, locais guardados, favoritos, rotas, definições) pelo conteúdo da cópia de segurança. Esta ação não pode ser anulada.</string>
+    <string name="restore_confirm_button">Restaurar</string>
+
 
     <!-- Boas-vindas no primeiro arranque -->
     <string name="onboarding_skip">Ignorar</string>

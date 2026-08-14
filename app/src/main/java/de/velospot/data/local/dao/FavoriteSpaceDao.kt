@@ -28,6 +28,14 @@ interface FavoriteSpaceDao {
     @Query("DELETE FROM favorite_parking_spaces WHERE parkingSpaceId = :parkingSpaceId")
     suspend fun removeFavorite(parkingSpaceId: String)
 
+    /** Every favourite (for the local backup export). */
+    @Query("SELECT * FROM favorite_parking_spaces")
+    suspend fun getAll(): List<FavoriteSpaceEntity>
+
+    /** Clears the whole table (a REPLACE-all restore wipes then re-inserts). */
+    @Query("DELETE FROM favorite_parking_spaces")
+    suspend fun deleteAll()
+
     /**
      * Atomically flips a space's favourite state in a single transaction: removes
      * it when present, otherwise adds it. Replaces the previous read-then-write in
@@ -43,4 +51,3 @@ interface FavoriteSpaceDao {
         }
     }
 }
-

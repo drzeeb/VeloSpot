@@ -34,6 +34,8 @@ class WrappedRepositoryImplTest {
 
         override suspend fun getById(id: String): WrappedReportEntity? = rows.value[id]
 
+        override suspend fun getAll(): List<WrappedReportEntity> = rows.value.values.toList()
+
         override suspend fun getByPeriod(
             type: String,
             periodStart: Long,

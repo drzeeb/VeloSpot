@@ -26,5 +26,12 @@ interface RouteAttemptDao {
     /** Removes every attempt of a route (called when the route itself is deleted). */
     @Query("DELETE FROM route_attempts WHERE routeId = :routeId")
     suspend fun deleteForRoute(routeId: String)
-}
 
+    /** Every leaderboard attempt (for the local backup export). */
+    @Query("SELECT * FROM route_attempts")
+    suspend fun getAll(): List<RouteAttemptEntity>
+
+    /** Clears the whole table (a REPLACE-all restore wipes then re-inserts). */
+    @Query("DELETE FROM route_attempts")
+    suspend fun deleteAll()
+}

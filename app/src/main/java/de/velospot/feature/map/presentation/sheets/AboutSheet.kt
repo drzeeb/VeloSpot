@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Gavel
@@ -22,6 +23,8 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,7 +44,6 @@ import de.velospot.feature.map.presentation.headingSemantics
 
 private const val APP_URL = "https://velospot.app"
 private const val PRIVACY_URL = "https://velospot.app/privacy"
-private const val SUPPORT_URL = "https://buymeacoffee.com/velospot"
 private const val DISCORD_URL = "https://discord.velospot.app"
 
 /** Release date of the bundled Germany OSM parking dataset. */
@@ -61,7 +63,9 @@ private const val DATA_DATE_LUXEMBOURG = "08.08.2026"
 @Composable
 internal fun AboutSheet(
     onDismiss: () -> Unit,
-    onReplayOnboarding: () -> Unit = {}
+    onReplayOnboarding: () -> Unit = {},
+    onCreateBackup: () -> Unit = {},
+    onRestoreBackup: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
@@ -156,15 +160,35 @@ internal fun AboutSheet(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-            // Support / donation link (opens externally in the browser)
-            AboutLinkRow(
-                icon = Icons.Default.Coffee,
-                title = stringResource(id = R.string.about_support),
-                subtitle = "buymeacoffee.com/velospot",
-                onClick = { openUrl(SUPPORT_URL) }
+            // Local Backup & Restore — everything stays on the device (no cloud).
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Backup,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.size(16.dp))
+                Text(
+                    text = stringResource(id = R.string.backup_section_title),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            AboutActionRow(
+                icon = Icons.Default.SaveAlt,
+                title = stringResource(id = R.string.backup_create_action),
+                subtitle = stringResource(id = R.string.backup_create_subtitle),
+                onClick = onCreateBackup
+            )
+            AboutActionRow(
+                icon = Icons.Default.Restore,
+                title = stringResource(id = R.string.restore_action),
+                subtitle = stringResource(id = R.string.restore_subtitle),
+                onClick = onRestoreBackup
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
 
             // Imprint / legal notice (§ 5 DDG) — shown inline so it stays
             // permanently and offline-accessible from within the app.
@@ -250,6 +274,43 @@ private fun DatasetStatusRow(country: String, date: String) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+/**
+ * A tappable settings-style row that fires an in-app action (no external link),
+ * used for the local Backup & Restore entries.
+ */
+@Composable
+private fun AboutActionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.size(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 

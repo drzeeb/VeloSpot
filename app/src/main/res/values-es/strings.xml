@@ -251,11 +251,31 @@
     <string name="about_country_france">Francia</string>
     <string name="about_country_luxembourg">Luxemburgo</string>
     <string name="about_privacy">Privacidad</string>
-    <string name="about_support">Invítame a un café</string>
+
+
     <string name="about_open_link">Abrir enlace</string>
     <string name="about_imprint">Aviso legal</string>
     <string name="about_replay_onboarding">Tour de la app</string>
     <string name="about_replay_onboarding_subtitle">Mostrar la introducción de nuevo</string>
+
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Copia de seguridad</string>
+    <string name="backup_create_action">Crear copia de seguridad</string>
+    <string name="backup_create_subtitle">Guarda todos tus datos en un archivo</string>
+    <string name="restore_action">Restaurar copia de seguridad</string>
+    <string name="restore_subtitle">Importar datos desde un archivo de copia</string>
+    <string name="backup_create_success">Copia de seguridad guardada</string>
+    <string name="backup_working">Procesando… mantén la app abierta</string>
+    <string name="ride_loading">Cargando ruta…</string>
+    <string name="backup_create_failed">No se pudo crear la copia de seguridad</string>
+    <string name="restore_success">Copia de seguridad restaurada</string>
+    <string name="restore_failed">No se pudo restaurar la copia de seguridad</string>
+    <string name="restore_too_new">Esta copia se creó con una versión más reciente de VeloSpot. Actualiza la aplicación primero.</string>
+    <string name="restore_corrupt">Este archivo no es una copia de seguridad válida de VeloSpot</string>
+    <string name="restore_confirm_title">¿Restaurar la copia de seguridad?</string>
+    <string name="restore_confirm_message">Esto reemplaza todos los datos actuales de este dispositivo (rutas, lugares guardados, favoritos, itinerarios, ajustes) por el contenido de la copia. Esto no se puede deshacer.</string>
+    <string name="restore_confirm_button">Restaurar</string>
+
 
     <!-- Bienvenida en el primer inicio -->
     <string name="onboarding_skip">Omitir</string>

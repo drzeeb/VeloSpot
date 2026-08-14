@@ -158,6 +158,15 @@ interface RecordedRideDao {
     @Query("SELECT substr(pointsJson, :start, :count) FROM recorded_rides WHERE id = :id")
     suspend fun getPointsJsonChunk(id: String, start: Int, count: Int): String?
 
+    /**
+     * Every recorded ride's id, newest first. Used by the local backup export to
+     * iterate rides one at a time and read each track separately in chunks (via
+     * [getPointsJsonLength] / [getPointsJsonChunk]) so a dense multi-MB track never
+     * has to be squeezed into the `CursorWindow` in a `SELECT *`.
+     */
+    @Query("SELECT id FROM recorded_rides ORDER BY startedAt DESC")
+    suspend fun getAllIds(): List<String>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(ride: RecordedRideEntity)
 
