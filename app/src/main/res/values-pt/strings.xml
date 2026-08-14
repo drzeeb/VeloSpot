@@ -327,6 +327,7 @@
 
     <!-- Backups encriptados: pedidos de palavra-passe -->
     <string name="backup_passphrase_title">Definir uma palavra-passe</string>
+    <string name="backup_passphrase_hint">Precisas desta palavra-passe para restaurar a cópia de segurança. Não pode ser recuperada — guarda-a em segurança.</string>
     <string name="backup_passphrase_field">Palavra-passe</string>
     <string name="backup_passphrase_confirm">Confirmar palavra-passe</string>
     <string name="backup_passphrase_mismatch">As palavras-passe não coincidem</string>
