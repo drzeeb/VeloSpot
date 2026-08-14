@@ -692,4 +692,72 @@
     <string name="route_leaderboard_forward">Ida (%1$d)</string>
     <string name="route_leaderboard_reverse">Volta (%1$d)</string>
     <string name="route_leaderboard_empty">Ainda sem tentativas. Pedale esta rota para marcar um tempo.</string>
+
+    <!-- VeloScore: pontuação de qualidade do estacionamento -->
+    <string name="velo_score_label">VeloScore</string>
+    <string name="velo_score_value_format">%1$d/100</string>
+    <string name="velo_score_why">Porque é seguro</string>
+    <string name="parking_tier_basic">Básico</string>
+    <string name="parking_tier_decent">Razoável</string>
+    <string name="parking_tier_good">Bom</string>
+    <string name="parking_tier_secure">Seguro</string>
+    <string name="parking_tier_premium">Premium</string>
+    <string name="score_factor_theft_protection">Trancável</string>
+    <string name="score_factor_weather_protection">Coberto</string>
+    <string name="score_factor_surveillance">Vigiado</string>
+    <string name="score_factor_lighting">Iluminado</string>
+    <string name="score_factor_public_access">Acesso público</string>
+    <string name="score_factor_free">Gratuito</string>
+    <string name="score_factor_opening_hours">Horário</string>
+    <string name="score_factor_capacity">Capacidade</string>
+    <string name="score_factor_cargo_bike">Bicicleta de carga</string>
+    <string name="score_factor_charging">Carregamento de e-bike</string>
+    <string name="score_factor_supervised">Guardado</string>
+    <string name="score_factor_data_fresh">Verificado recentemente</string>
+
+    <!-- Secções do detalhe do estacionamento -->
+    <string name="parking_section_security">Segurança</string>
+    <string name="parking_section_access">Acesso</string>
+    <string name="parking_section_capacity">Capacidade</string>
+    <string name="parking_section_context">Contexto</string>
+
+    <!-- Linhas do detalhe do estacionamento -->
+    <string name="detail_subtype">Tipo</string>
+    <string name="detail_lockable">Trancável</string>
+    <string name="detail_indoor">Interior</string>
+    <string name="detail_surveillance">Vigilância</string>
+    <string name="detail_lit">Iluminação</string>
+    <string name="detail_supervised">Guardado</string>
+    <string name="detail_access">Acesso</string>
+    <string name="detail_fee">Tarifa</string>
+    <string name="detail_fee_free">Gratuito</string>
+    <string name="detail_fee_paid">Pago</string>
+    <string name="detail_opening_hours">Horário de funcionamento</string>
+    <string name="detail_maxstay">Permanência máx.</string>
+    <string name="detail_capacity_cargo">Lugares para bicicletas de carga</string>
+    <string name="detail_capacity_disabled">Lugares acessíveis</string>
+    <string name="detail_capacity_charging">Pontos de carregamento de e-bike</string>
+    <string name="detail_network">Rede</string>
+    <string name="detail_brand">Marca</string>
+    <string name="detail_reference">Referência</string>
+    <string name="detail_last_checked">Última verificação %1$s</string>
+    <string name="detail_website">Site</string>
+    <string name="detail_open_website">Abrir site</string>
+
+    <!-- Valores de acesso -->
+    <string name="access_public">Público</string>
+    <string name="access_customers">Apenas clientes</string>
+    <string name="access_private">Privado</string>
+    <string name="access_no">Sem acesso</string>
+
+    <!-- Subtipos de estacionamento -->
+    <string name="subtype_lockers">Cacifos para bicicletas</string>
+    <string name="subtype_stands">Suportes</string>
+    <string name="subtype_shed">Abrigo</string>
+    <string name="subtype_two_tier">Suporte de dois níveis</string>
+    <string name="subtype_wall_loops">Suportes de parede</string>
+    <string name="subtype_building">Edifício</string>
+    <string name="subtype_anchors">Âncoras de solo</string>
+    <string name="subtype_informal">Informal</string>
+    <string name="subtype_lean_to">Alpendre</string>
 </resources>

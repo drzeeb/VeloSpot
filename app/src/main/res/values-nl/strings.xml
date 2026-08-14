@@ -692,4 +692,72 @@
     <string name="route_leaderboard_forward">Heen (%1$d)</string>
     <string name="route_leaderboard_reverse">Terug (%1$d)</string>
     <string name="route_leaderboard_empty">Nog geen pogingen. Rijd deze route om een tijd neer te zetten.</string>
+
+    <!-- VeloScore: kwaliteitsscore van de stalling -->
+    <string name="velo_score_label">VeloScore</string>
+    <string name="velo_score_value_format">%1$d/100</string>
+    <string name="velo_score_why">Waarom veilig</string>
+    <string name="parking_tier_basic">Basis</string>
+    <string name="parking_tier_decent">Redelijk</string>
+    <string name="parking_tier_good">Goed</string>
+    <string name="parking_tier_secure">Veilig</string>
+    <string name="parking_tier_premium">Premium</string>
+    <string name="score_factor_theft_protection">Afsluitbaar</string>
+    <string name="score_factor_weather_protection">Overdekt</string>
+    <string name="score_factor_surveillance">Cameratoezicht</string>
+    <string name="score_factor_lighting">Verlicht</string>
+    <string name="score_factor_public_access">Openbaar</string>
+    <string name="score_factor_free">Gratis</string>
+    <string name="score_factor_opening_hours">Openingstijden</string>
+    <string name="score_factor_capacity">Capaciteit</string>
+    <string name="score_factor_cargo_bike">Bakfiets</string>
+    <string name="score_factor_charging">E-bike opladen</string>
+    <string name="score_factor_supervised">Bemand</string>
+    <string name="score_factor_data_fresh">Recent gecontroleerd</string>
+
+    <!-- Secties van de stallingsdetails -->
+    <string name="parking_section_security">Beveiliging</string>
+    <string name="parking_section_access">Toegang</string>
+    <string name="parking_section_capacity">Capaciteit</string>
+    <string name="parking_section_context">Context</string>
+
+    <!-- Regels van de stallingsdetails -->
+    <string name="detail_subtype">Type</string>
+    <string name="detail_lockable">Afsluitbaar</string>
+    <string name="detail_indoor">Binnen</string>
+    <string name="detail_surveillance">Toezicht</string>
+    <string name="detail_lit">Verlichting</string>
+    <string name="detail_supervised">Bemand</string>
+    <string name="detail_access">Toegang</string>
+    <string name="detail_fee">Tarief</string>
+    <string name="detail_fee_free">Gratis</string>
+    <string name="detail_fee_paid">Betaald</string>
+    <string name="detail_opening_hours">Openingstijden</string>
+    <string name="detail_maxstay">Max. verblijf</string>
+    <string name="detail_capacity_cargo">Plaatsen voor bakfietsen</string>
+    <string name="detail_capacity_disabled">Toegankelijke plaatsen</string>
+    <string name="detail_capacity_charging">E-bike-oplaadpunten</string>
+    <string name="detail_network">Netwerk</string>
+    <string name="detail_brand">Merk</string>
+    <string name="detail_reference">Referentie</string>
+    <string name="detail_last_checked">Laatst gecontroleerd %1$s</string>
+    <string name="detail_website">Website</string>
+    <string name="detail_open_website">Website openen</string>
+
+    <!-- Toegangswaarden -->
+    <string name="access_public">Openbaar</string>
+    <string name="access_customers">Alleen klanten</string>
+    <string name="access_private">Privé</string>
+    <string name="access_no">Geen toegang</string>
+
+    <!-- Subtypes van stalling -->
+    <string name="subtype_lockers">Fietskluizen</string>
+    <string name="subtype_stands">Fietsbeugels</string>
+    <string name="subtype_shed">Fietsenberging</string>
+    <string name="subtype_two_tier">Etagerek</string>
+    <string name="subtype_wall_loops">Wandbeugels</string>
+    <string name="subtype_building">Gebouw</string>
+    <string name="subtype_anchors">Grondankers</string>
+    <string name="subtype_informal">Informeel</string>
+    <string name="subtype_lean_to">Overkapping</string>
 </resources>

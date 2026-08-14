@@ -2,8 +2,6 @@ package de.velospot.feature.map.presentation.sheets
 
 import de.velospot.feature.map.presentation.*
 
-import android.content.Context
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -108,20 +106,17 @@ private fun SheetContent(
         HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
 
-        // --- Detail rows -------------------------------------------------------
-        space.address?.let { DetailRow(label = stringResource(id = R.string.detail_address), value = it) }
-        space.capacity?.let { DetailRow(label = stringResource(id = R.string.detail_capacity), value = it.toString()) }
-        space.operator?.let { DetailRow(label = stringResource(id = R.string.detail_operator), value = it) }
+        // --- VeloScore badge ---------------------------------------------------
+        VeloScoreBadge(space = space)
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // --- Chip row ----------------------------------------------------------
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            space.capacity?.let {
-                MetaInfoChip(label = stringResource(id = R.string.favorites_spaces_format, it))
-            }
-            MetaInfoChip(label = space.sourceLayer)
+        // --- Enriched, grouped detail rows (each shown only when known) --------
+        space.address?.let {
+            DetailRow(label = stringResource(id = R.string.detail_address), value = it)
+            Spacer(modifier = Modifier.height(8.dp))
         }
+        ParkingDetailSections(space = space)
 
         Spacer(modifier = Modifier.height(20.dp))
 

@@ -23,7 +23,62 @@ fun BikeParkingSpaceEntity.toDomainModel(): BikeParkingSpace {
         imageUrl = imageUrl,
         operator = operator,
         type = BikeParkingType.valueOf(type),
-        sourceLayer = sourceLayer
+        sourceLayer = sourceLayer,
+        access = access,
+        fee = fee,
+        lit = lit,
+        surveillance = surveillance,
+        supervised = supervised,
+        cargoBike = cargoBike,
+        cargoBikeCapacity = cargoBikeCapacity,
+        disabledCapacity = disabledCapacity,
+        chargingCapacity = chargingCapacity,
+        indoor = indoor,
+        maxstay = maxstay,
+        openingHours = openingHours,
+        website = website,
+        network = network,
+        brand = brand,
+        ref = ref,
+        checkDate = checkDate,
+        parkingSubtype = parkingSubtype
+    )
+}
+
+/**
+ * Convert a BikeParkingSpace (domain model) to a BikeParkingSpaceEntity (database).
+ */
+fun BikeParkingSpace.toEntity(): BikeParkingSpaceEntity {
+    return BikeParkingSpaceEntity(
+        id = id,
+        name = name,
+        latitude = latitude,
+        longitude = longitude,
+        address = address,
+        capacity = capacity,
+        isCovered = isCovered,
+        imageUrl = imageUrl,
+        operator = operator,
+        type = type.name,
+        sourceLayer = sourceLayer,
+        access = access,
+        fee = fee,
+        lit = lit,
+        surveillance = surveillance,
+        supervised = supervised,
+        cargoBike = cargoBike,
+        cargoBikeCapacity = cargoBikeCapacity,
+        disabledCapacity = disabledCapacity,
+        chargingCapacity = chargingCapacity,
+        indoor = indoor,
+        maxstay = maxstay,
+        openingHours = openingHours,
+        website = website,
+        network = network,
+        brand = brand,
+        ref = ref,
+        checkDate = checkDate,
+        parkingSubtype = parkingSubtype
     )
 }
 

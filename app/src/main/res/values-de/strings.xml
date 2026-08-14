@@ -698,4 +698,72 @@
     <string name="route_leaderboard_forward">Vorwärts (%1$d)</string>
     <string name="route_leaderboard_reverse">Rückwärts (%1$d)</string>
     <string name="route_leaderboard_empty">Noch keine Versuche. Fahre diese Route, um eine Zeit zu setzen.</string>
+
+    <!-- VeloScore Parkplatz-Bewertung -->
+    <string name="velo_score_label">VeloScore</string>
+    <string name="velo_score_value_format">%1$d/100</string>
+    <string name="velo_score_why">Warum sicher</string>
+    <string name="parking_tier_basic">Einfach</string>
+    <string name="parking_tier_decent">Solide</string>
+    <string name="parking_tier_good">Gut</string>
+    <string name="parking_tier_secure">Sicher</string>
+    <string name="parking_tier_premium">Premium</string>
+    <string name="score_factor_theft_protection">Abschließbar</string>
+    <string name="score_factor_weather_protection">Überdacht</string>
+    <string name="score_factor_surveillance">Überwacht</string>
+    <string name="score_factor_lighting">Beleuchtet</string>
+    <string name="score_factor_public_access">Öffentlich</string>
+    <string name="score_factor_free">Kostenlos</string>
+    <string name="score_factor_opening_hours">Öffnungszeiten</string>
+    <string name="score_factor_capacity">Kapazität</string>
+    <string name="score_factor_cargo_bike">Lastenrad</string>
+    <string name="score_factor_charging">E-Bike-Laden</string>
+    <string name="score_factor_supervised">Bewacht</string>
+    <string name="score_factor_data_fresh">Kürzlich geprüft</string>
+
+    <!-- Parkplatz-Detailbereiche -->
+    <string name="parking_section_security">Sicherheit</string>
+    <string name="parking_section_access">Zugang</string>
+    <string name="parking_section_capacity">Kapazität</string>
+    <string name="parking_section_context">Kontext</string>
+
+    <!-- Parkplatz-Detailzeilen -->
+    <string name="detail_subtype">Typ</string>
+    <string name="detail_lockable">Abschließbar</string>
+    <string name="detail_indoor">Innenbereich</string>
+    <string name="detail_surveillance">Überwachung</string>
+    <string name="detail_lit">Beleuchtung</string>
+    <string name="detail_supervised">Bewacht</string>
+    <string name="detail_access">Zugang</string>
+    <string name="detail_fee">Gebühr</string>
+    <string name="detail_fee_free">Kostenlos</string>
+    <string name="detail_fee_paid">Kostenpflichtig</string>
+    <string name="detail_opening_hours">Öffnungszeiten</string>
+    <string name="detail_maxstay">Max. Parkdauer</string>
+    <string name="detail_capacity_cargo">Lastenrad-Plätze</string>
+    <string name="detail_capacity_disabled">Behinderten-Plätze</string>
+    <string name="detail_capacity_charging">E-Bike-Ladeplätze</string>
+    <string name="detail_network">Netzwerk</string>
+    <string name="detail_brand">Marke</string>
+    <string name="detail_reference">Referenz</string>
+    <string name="detail_last_checked">Zuletzt geprüft %1$s</string>
+    <string name="detail_website">Webseite</string>
+    <string name="detail_open_website">Webseite öffnen</string>
+
+    <!-- Zugangswerte -->
+    <string name="access_public">Öffentlich</string>
+    <string name="access_customers">Nur Kunden</string>
+    <string name="access_private">Privat</string>
+    <string name="access_no">Kein Zugang</string>
+
+    <!-- Parkplatz-Untertypen -->
+    <string name="subtype_lockers">Fahrradboxen</string>
+    <string name="subtype_stands">Anlehnbügel</string>
+    <string name="subtype_shed">Fahrradhaus</string>
+    <string name="subtype_two_tier">Doppelstockparker</string>
+    <string name="subtype_wall_loops">Wandhalterung</string>
+    <string name="subtype_building">Gebäude</string>
+    <string name="subtype_anchors">Bodenanker</string>
+    <string name="subtype_informal">Informell</string>
+    <string name="subtype_lean_to">Überdachung</string>
 </resources>

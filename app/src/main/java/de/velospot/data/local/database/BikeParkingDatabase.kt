@@ -24,7 +24,7 @@ import java.io.File
  */
 @Database(
     entities = [BikeParkingSpaceEntity::class, FavoriteParkingSpaceEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class BikeParkingDatabase : RoomDatabase() {
@@ -107,7 +107,7 @@ abstract class BikeParkingDatabase : RoomDatabase() {
                 // [mergeExtraCountriesIfNeeded] from the non-transactional `onOpen`
                 // callback, where a single fast `ATTACH … INSERT OR IGNORE … SELECT` per
                 // country replaces thousands of Kotlin↔SQLite round-trips.
-                .addMigrations(dataOnlyV3ToV4Migration())
+                .addMigrations(dataOnlyV3ToV4Migration(), enrichColumnsV4ToV5Migration())
                 .addCallback(mergeCallback(appContext))
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
@@ -141,6 +141,31 @@ abstract class BikeParkingDatabase : RoomDatabase() {
          */
         @androidx.annotation.VisibleForTesting
         internal fun migration3To4ForTest(): Migration = dataOnlyV3ToV4Migration()
+
+        /**
+         * v4 → v5 migration. This is a real, non-destructive schema change that adds
+         * the enriched OSM attribute columns to `bike_parking_spaces`. Every new
+         * column is nullable with no default, so pre-existing rows (favorites, saved
+         * places, recorded rides all reference these ids) survive untouched with NULL
+         * values — "unknown", which the future quality/security ranking treats as
+         * neutral rather than "bad". Adding columns via `ALTER TABLE … ADD COLUMN`
+         * keeps all user data intact.
+         */
+        private fun enrichColumnsV4ToV5Migration(): Migration =
+            object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    CountryMergeSql.ADD_ENRICHMENT_COLUMNS_SQL.forEach(db::execSQL)
+                }
+            }
+
+        /**
+         * Test-only accessor exposing the exact production v4 → v5 migration so an
+         * instrumented migration test can validate it against the checked-in schema
+         * baseline and assert the new columns exist while old rows survive. Not for
+         * production use.
+         */
+        @androidx.annotation.VisibleForTesting
+        internal fun migration4To5ForTest(): Migration = enrichColumnsV4ToV5Migration()
 
         /**
          * Room callback performing the one-time merge of the bundled extra-country

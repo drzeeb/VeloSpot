@@ -692,4 +692,72 @@
     <string name="route_leaderboard_forward">Viraus (%1$d)</string>
     <string name="route_leaderboard_reverse">Réckwäerts (%1$d)</string>
     <string name="route_leaderboard_empty">Nach keng Versich. Fuer dës Route, fir eng Zäit ze setzen.</string>
+
+    <!-- VeloScore: Bewäertung vun der Parkméiglechkeet -->
+    <string name="velo_score_label">VeloScore</string>
+    <string name="velo_score_value_format">%1$d/100</string>
+    <string name="velo_score_why">Firwat sécher</string>
+    <string name="parking_tier_basic">Einfach</string>
+    <string name="parking_tier_decent">Solide</string>
+    <string name="parking_tier_good">Gutt</string>
+    <string name="parking_tier_secure">Sécher</string>
+    <string name="parking_tier_premium">Premium</string>
+    <string name="score_factor_theft_protection">Ofschléissbar</string>
+    <string name="score_factor_weather_protection">Iwwerdaacht</string>
+    <string name="score_factor_surveillance">Iwwerwaacht</string>
+    <string name="score_factor_lighting">Beliicht</string>
+    <string name="score_factor_public_access">Ëffentlech</string>
+    <string name="score_factor_free">Gratis</string>
+    <string name="score_factor_opening_hours">Ëffnungszäiten</string>
+    <string name="score_factor_capacity">Kapazitéit</string>
+    <string name="score_factor_cargo_bike">Laaschtvelo</string>
+    <string name="score_factor_charging">E-Bike lueden</string>
+    <string name="score_factor_supervised">Bewaacht</string>
+    <string name="score_factor_data_fresh">Viru kuerzem gepréift</string>
+
+    <!-- Detailberäicher vun der Parkanlag -->
+    <string name="parking_section_security">Sécherheet</string>
+    <string name="parking_section_access">Zougang</string>
+    <string name="parking_section_capacity">Kapazitéit</string>
+    <string name="parking_section_context">Kontext</string>
+
+    <!-- Detailzeilen vun der Parkanlag -->
+    <string name="detail_subtype">Typ</string>
+    <string name="detail_lockable">Ofschléissbar</string>
+    <string name="detail_indoor">Bannen</string>
+    <string name="detail_surveillance">Iwwerwaachung</string>
+    <string name="detail_lit">Beliichtung</string>
+    <string name="detail_supervised">Bewaacht</string>
+    <string name="detail_access">Zougang</string>
+    <string name="detail_fee">Gebür</string>
+    <string name="detail_fee_free">Gratis</string>
+    <string name="detail_fee_paid">Kaschtepflichteg</string>
+    <string name="detail_opening_hours">Ëffnungszäiten</string>
+    <string name="detail_maxstay">Max. Parkdauer</string>
+    <string name="detail_capacity_cargo">Plazë fir Laaschtveloen</string>
+    <string name="detail_capacity_disabled">Accessibel Plazen</string>
+    <string name="detail_capacity_charging">E-Bike-Luedplazen</string>
+    <string name="detail_network">Netzwierk</string>
+    <string name="detail_brand">Mark</string>
+    <string name="detail_reference">Referenz</string>
+    <string name="detail_last_checked">Fir d\'lescht gepréift %1$s</string>
+    <string name="detail_website">Websäit</string>
+    <string name="detail_open_website">Websäit opmaachen</string>
+
+    <!-- Zougangswäerter -->
+    <string name="access_public">Ëffentlech</string>
+    <string name="access_customers">Nëmme Clienten</string>
+    <string name="access_private">Privat</string>
+    <string name="access_no">Kee Zougang</string>
+
+    <!-- Ënnertypen vun der Parkanlag -->
+    <string name="subtype_lockers">Velosboxen</string>
+    <string name="subtype_stands">Unluenbügel</string>
+    <string name="subtype_shed">Veloshaus</string>
+    <string name="subtype_two_tier">Duebelstäckparker</string>
+    <string name="subtype_wall_loops">Wandhalterung</string>
+    <string name="subtype_building">Gebai</string>
+    <string name="subtype_anchors">Buedemanker</string>
+    <string name="subtype_informal">Informell</string>
+    <string name="subtype_lean_to">Iwwerdaachung</string>
 </resources>

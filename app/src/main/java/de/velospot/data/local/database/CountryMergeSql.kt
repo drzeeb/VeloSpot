@@ -18,7 +18,37 @@ internal object CountryMergeSql {
      * `INSERT (…) SELECT …` lines up column-for-column.
      */
     const val SPACE_COLUMNS: String =
-        "id,name,latitude,longitude,address,capacity,isCovered,imageUrl,operator,type,sourceLayer,lastUpdated"
+        "id,name,latitude,longitude,address,capacity,isCovered,imageUrl,operator,type,sourceLayer,lastUpdated," +
+            "access,fee,lit,surveillance,supervised,cargoBike,cargoBikeCapacity,disabledCapacity," +
+            "chargingCapacity,indoor,maxstay,openingHours,website,network,brand,ref,checkDate,parkingSubtype"
+
+    /**
+     * `ALTER TABLE … ADD COLUMN` statements adding the enriched OSM attribute
+     * columns for the v4 → v5 migration. Every column is nullable with no default,
+     * so existing rows keep all their data and simply gain NULL ("unknown") values.
+     * The column order matches [de.velospot.data.local.entity.BikeParkingSpaceEntity]
+     * and the tail of [SPACE_COLUMNS].
+     */
+    val ADD_ENRICHMENT_COLUMNS_SQL: List<String> = listOf(
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `access` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `fee` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `lit` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `surveillance` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `supervised` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `cargoBike` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `cargoBikeCapacity` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `disabledCapacity` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `chargingCapacity` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `indoor` INTEGER",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `maxstay` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `openingHours` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `website` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `network` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `brand` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `ref` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `checkDate` TEXT",
+        "ALTER TABLE `bike_parking_spaces` ADD COLUMN `parkingSubtype` TEXT"
+    )
 
     /** Idempotent recreation of the viewport-query index (also present in the assets). */
     const val ENSURE_INDEX_SQL: String =
