@@ -82,12 +82,24 @@ object ParkingScorer {
 
     private fun theftPoints(space: BikeParkingSpace, factors: MutableList<ScoreFactor>): Int {
         val subtype = space.parkingSubtype?.trim()?.lowercase()
+        val hasKnownSubtype = subtype in setOf(
+            "lockers", "shed", "building", "garage", "two-tier",
+            "stands", "anchors", "wall_loops", "bollard", "ground_slots",
+            "lean_to", "informal",
+        )
         var points = when {
             space.type == BikeParkingType.GARAGE ||
                 subtype in setOf("lockers", "shed", "building", "garage") -> 40
             subtype == "two-tier" -> 28
             subtype in setOf("stands", "anchors", "wall_loops", "bollard", "ground_slots") -> 24
             subtype in setOf("lean_to", "informal") -> 8
+            // Fallback: no usable subtype tag — derive a baseline from the coarse
+            // BikeParkingType so a normal lockable stand no longer collapses to 0.
+            !hasKnownSubtype -> when (space.type) {
+                BikeParkingType.GARAGE -> 40
+                BikeParkingType.BIKE_RACK -> 24
+                BikeParkingType.UNKNOWN -> 12
+            }
             else -> 0
         }
         if (points > 0) {

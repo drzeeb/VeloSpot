@@ -67,12 +67,13 @@ class ParkingScorerTest {
 
     @Test
     fun sparseUnknownSpot_scoresLowButNonNegative_tierBasic_andNoFactorSubtracts() {
-        // A totally untagged node: only the "access defaults to public" credit fires.
+        // A totally untagged node: the UNKNOWN theft baseline (12) plus the
+        // "access defaults to public" credit (8) fire, nothing subtracts.
         val result = ParkingScorer.compute(space(), year)
 
         // Low but never negative, and never punished for missing data.
         assertTrue("score must be >= 0", result.value >= 0)
-        assertEquals("only the default public-access credit applies", 8, result.value)
+        assertEquals("UNKNOWN theft baseline (12) + default public-access credit (8)", 20, result.value)
         assertEquals(ParkingTier.BASIC, result.tier)
         // A null attribute must never produce a subtracting factor.
         assertTrue(
@@ -80,6 +81,39 @@ class ParkingScorerTest {
             result.factors.none { it.points < 0 || !it.positive }
         )
     }
+
+    // ── Theft fallback to BikeParkingType (null/unknown subtype) ─────────────────
+
+    @Test
+    fun theftFallback_bikeRackType_nullSubtype_grants24_tierDecent() {
+        // A bare lockable stand: BIKE_RACK + null subtype → theft baseline 24.
+        // Total = theft 24 + default public access 8 = 32, tier DECENT.
+        val result = ParkingScorer.compute(space(type = BikeParkingType.BIKE_RACK), year)
+        assertEquals(32, result.value)
+        assertEquals(ParkingTier.DECENT, result.tier)
+        assertEquals(24, categoryPoints(result, ScoreFactorKey.THEFT_PROTECTION))
+        assertTrue(
+            "the fallback baseline still emits a positive THEFT factor",
+            result.factors.any { it.key == ScoreFactorKey.THEFT_PROTECTION && it.points == 24 && it.positive }
+        )
+    }
+
+    @Test
+    fun theftFallback_unknownType_nullSubtype_grants12() {
+        assertEquals(12, theftFactor(space(type = BikeParkingType.UNKNOWN)))
+    }
+
+    @Test
+    fun theftFallback_garageType_nullSubtype_grants40() {
+        assertEquals(40, theftFactor(space(type = BikeParkingType.GARAGE)))
+    }
+
+    @Test
+    fun theftFallback_bikeRackType_withStandsSubtype_stillGrants24() {
+        // Known subtype path is unchanged even when a fallback type is present.
+        assertEquals(24, theftFactor(space(type = BikeParkingType.BIKE_RACK, parkingSubtype = "stands")))
+    }
+
 
     // ── Maximal / clamped ───────────────────────────────────────────────────────
 
@@ -165,7 +199,9 @@ class ParkingScorerTest {
     @Test
     fun accessNo_floorsAccessCategoryAtZero_scoreNeverNegative() {
         val result = ParkingScorer.compute(space(access = "no"), year)
-        assertEquals("the 'no' penalty floors the access category, not the overall score", 0, result.value)
+        // The 'no' penalty floors the *access* category at 0; the overall score is
+        // still the UNKNOWN theft baseline (12), never negative.
+        assertEquals("the 'no' penalty floors the access category, not the overall score", 12, result.value)
         assertTrue(result.value >= 0)
         assertEquals(ParkingTier.BASIC, result.tier)
     }
@@ -176,7 +212,8 @@ class ParkingScorerTest {
     fun checkDate_withinTwoYears_grantsDataFresh() {
         for (fresh in listOf("2025", "2024-06-01", "2023-01-01")) {
             val result = ParkingScorer.compute(space(access = "private", checkDate = fresh), year)
-            assertEquals("checkDate '$fresh' is fresh → 2 extra points", 2, result.value)
+            // UNKNOWN theft baseline (12) + DATA_FRESH (2).
+            assertEquals("checkDate '$fresh' is fresh → 2 extra points", 14, result.value)
             assertTrue(result.factors.any { it.key == ScoreFactorKey.DATA_FRESH })
         }
     }
@@ -185,7 +222,8 @@ class ParkingScorerTest {
     fun checkDate_olderThanTwoYearsOrUnparseableOrFuture_grantsNothing() {
         for (stale in listOf("2022-12-31", "2010", "not-a-date", "2030")) {
             val result = ParkingScorer.compute(space(access = "private", checkDate = stale), year)
-            assertEquals("checkDate '$stale' is not fresh → 0 points", 0, result.value)
+            // Only the UNKNOWN theft baseline (12) remains; no DATA_FRESH credit.
+            assertEquals("checkDate '$stale' is not fresh → 0 points", 12, result.value)
             assertFalse(result.factors.any { it.key == ScoreFactorKey.DATA_FRESH })
         }
     }
