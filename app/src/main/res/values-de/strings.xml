@@ -288,6 +288,33 @@
     <string name="restore_confirm_message">Dadurch werden alle aktuellen Daten auf diesem Gerät (Fahrten, gespeicherte Orte, Favoriten, Routen, Einstellungen) durch den Inhalt der Sicherung ersetzt. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="restore_confirm_button">Wiederherstellen</string>
 
+    <!-- Verschlüsselte Sicherungen: Passphrase-Abfragen (manuell erstellen + wiederherstellen) -->
+    <string name="backup_passphrase_title">Passphrase festlegen</string>
+    <string name="backup_passphrase_hint">Du benötigst diese Passphrase, um die Sicherung wiederherzustellen. Sie kann nicht wiederhergestellt werden — bewahre sie sicher auf.</string>
+    <string name="backup_passphrase_field">Passphrase</string>
+    <string name="backup_passphrase_confirm">Passphrase bestätigen</string>
+    <string name="backup_passphrase_mismatch">Die Passphrasen stimmen nicht überein</string>
+    <string name="backup_passphrase_required">Passphrase eingeben</string>
+    <string name="restore_passphrase_title">Passphrase eingeben</string>
+    <string name="restore_wrong_password">Falsche Passphrase. Bitte versuche es erneut.</string>
+
+    <!-- Automatische (geplante) Sicherungen -->
+    <string name="backup_schedule_action">Automatische Sicherung</string>
+    <string name="backup_schedule_subtitle">Zeitgesteuert sichern, verschlüsselt</string>
+    <string name="backup_schedule_enable">Automatische Sicherung</string>
+    <string name="backup_schedule_interval_label">Wie oft</string>
+    <string name="backup_schedule_interval_daily">Täglich</string>
+    <string name="backup_schedule_interval_weekly">Wöchentlich</string>
+    <string name="backup_schedule_interval_monthly">Monatlich</string>
+    <string name="backup_schedule_time">Uhrzeit</string>
+    <string name="backup_schedule_folder">Sicherungsordner</string>
+    <string name="backup_schedule_folder_none">Ordner auswählen</string>
+    <string name="backup_schedule_passphrase">Passphrase</string>
+    <string name="backup_schedule_passphrase_set">Eine Passphrase ist festgelegt</string>
+    <string name="backup_schedule_overwrite_note">Überschreibt jedes Mal dieselbe Datei — eine vollständige, verschlüsselte Sicherung im gewählten Ordner.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Wähle einen Ordner und lege eine Passphrase fest, um dies zu aktivieren.</string>
+    <string name="backup_schedule_next_run">Nächste Sicherung: %1$s</string>
+
 
     <!-- Einführung beim ersten Start -->
     <string name="onboarding_skip">Überspringen</string>

@@ -1429,14 +1429,24 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * Exports every user store + settings to the SAF-picked [uri] as one local
-     * `.vsbackup` file (a ZIP). Fully offline — nothing leaves the device. Reports
-     * the outcome via the one-shot user message.
+     * When non-null, the UI shows a passphrase prompt to unlock the picked,
+     * **encrypted** backup [android.net.Uri] before restoring it. Set by
+     * [beginRestore] when the file is encrypted, and kept set on a wrong-password
+     * attempt so the user can re-enter without re-picking the file.
      */
-    fun createBackup(uri: android.net.Uri) {
+    private val _restorePasswordPrompt = MutableStateFlow<android.net.Uri?>(null)
+    val restorePasswordPrompt: StateFlow<android.net.Uri?> = _restorePasswordPrompt.asStateFlow()
+
+    /**
+     * Exports every user store + settings to the SAF-picked [uri] as one local,
+     * **passphrase-encrypted** `.vsbackup` file (a ZIP). Fully offline — nothing
+     * leaves the device. The [passphrase] is required to restore and cannot be
+     * recovered. Reports the outcome via the one-shot user message.
+     */
+    fun createBackup(uri: android.net.Uri, passphrase: String) {
         viewModelScope.launch {
             _backupInProgress.value = true
-            val outcome = backupManager.createBackup(uri)
+            val outcome = backupManager.createBackup(uri, passphrase)
             _backupInProgress.value = false
             _userMessageRes.value = when (outcome) {
                 de.velospot.data.backup.BackupManager.BackupOutcome.Success ->
@@ -1448,30 +1458,64 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * REPLACE-restores every store from the SAF-picked backup [uri]. The caller
-     * confirms the overwrite first. A newer-version or corrupt/foreign file is
-     * refused with a friendly message instead of crashing.
+     * Starts a restore of the SAF-picked backup [uri] (after the caller confirmed
+     * the overwrite). Checks whether the file is encrypted: an encrypted file opens
+     * the [restorePasswordPrompt] so the UI can ask for the passphrase; a legacy,
+     * unencrypted file is restored straight away.
      */
-    fun restoreBackup(uri: android.net.Uri) {
+    fun beginRestore(uri: android.net.Uri) {
         viewModelScope.launch {
-            _backupInProgress.value = true
-            val outcome = try {
-                backupManager.restoreBackup(uri)
-            } finally {
-                // Always clear the progress flag so the blocking overlay can never
-                // trap the app, even if the manager throws before returning.
-                _backupInProgress.value = false
+            val encrypted = runCatching { backupManager.isBackupEncrypted(uri) }.getOrDefault(false)
+            if (encrypted) {
+                _restorePasswordPrompt.value = uri
+            } else {
+                doRestore(uri, passphrase = null)
             }
-            _userMessageRes.value = when (outcome) {
-                de.velospot.data.backup.BackupManager.RestoreOutcome.Success ->
-                    de.velospot.R.string.restore_success
-                de.velospot.data.backup.BackupManager.RestoreOutcome.TooNew ->
-                    de.velospot.R.string.restore_too_new
-                de.velospot.data.backup.BackupManager.RestoreOutcome.Corrupt ->
-                    de.velospot.R.string.restore_corrupt
-                de.velospot.data.backup.BackupManager.RestoreOutcome.Failure ->
-                    de.velospot.R.string.restore_failed
-            }
+        }
+    }
+
+    /** Restores the (encrypted) backup [uri] with the user-entered [passphrase]. */
+    fun restoreBackup(uri: android.net.Uri, passphrase: String) {
+        viewModelScope.launch { doRestore(uri, passphrase) }
+    }
+
+    /** Dismisses the restore passphrase prompt without restoring. */
+    fun cancelRestorePrompt() { _restorePasswordPrompt.value = null }
+
+    /**
+     * REPLACE-restores every store from the backup [uri] using [passphrase] (null
+     * for a legacy unencrypted file). A wrong/missing passphrase keeps the file
+     * "pending" in [restorePasswordPrompt] so the user can retry without re-picking;
+     * a newer-version or corrupt/foreign file is refused with a friendly message
+     * instead of crashing.
+     */
+    private suspend fun doRestore(uri: android.net.Uri, passphrase: String?) {
+        _backupInProgress.value = true
+        val outcome = try {
+            backupManager.restoreBackup(uri, passphrase)
+        } finally {
+            // Always clear the progress flag so the blocking overlay can never
+            // trap the app, even if the manager throws before returning.
+            _backupInProgress.value = false
+        }
+        if (outcome == de.velospot.data.backup.BackupManager.RestoreOutcome.WrongPassword) {
+            // Keep the file pending so the user can re-enter the passphrase.
+            _restorePasswordPrompt.value = uri
+            _userMessageRes.value = de.velospot.R.string.restore_wrong_password
+            return
+        }
+        _restorePasswordPrompt.value = null
+        _userMessageRes.value = when (outcome) {
+            de.velospot.data.backup.BackupManager.RestoreOutcome.Success ->
+                de.velospot.R.string.restore_success
+            de.velospot.data.backup.BackupManager.RestoreOutcome.TooNew ->
+                de.velospot.R.string.restore_too_new
+            de.velospot.data.backup.BackupManager.RestoreOutcome.Corrupt ->
+                de.velospot.R.string.restore_corrupt
+            de.velospot.data.backup.BackupManager.RestoreOutcome.WrongPassword ->
+                de.velospot.R.string.restore_wrong_password // handled above; exhaustive
+            de.velospot.data.backup.BackupManager.RestoreOutcome.Failure ->
+                de.velospot.R.string.restore_failed
         }
     }
 

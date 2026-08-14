@@ -325,6 +325,34 @@
     <string name="restore_confirm_message">Dëst ersetzt all aktuell Donnéeën op dësem Apparat (Fahrten, gespäichert Plazen, Favoritten, Routen, Astellungen) duerch den Inhalt vun der Sécherung. Dëst kann net réckgängeg gemaach ginn.</string>
     <string name="restore_confirm_button">Zréckspillen</string>
 
+    <!-- Verschlësselt Sécherungen: Passphrase-Offroen -->
+    <string name="backup_passphrase_title">Eng Passphrase festleeën</string>
+    <string name="backup_passphrase_hint">Du brauchs dës Passphrase fir d\'Sécherung zréckzespillen. Si kann net erëmfonnt ginn — halt se sécher.</string>
+    <string name="backup_passphrase_field">Passphrase</string>
+    <string name="backup_passphrase_confirm">Passphrase bestätegen</string>
+    <string name="backup_passphrase_mismatch">D\'Passphrasen stëmmen net iwwereneen</string>
+    <string name="backup_passphrase_required">Gëff eng Passphrase an</string>
+    <string name="restore_passphrase_title">Gëff d\'Passphrase an</string>
+    <string name="restore_wrong_password">Falsch Passphrase. Probéier w.e.g. nach eemol.</string>
+
+    <!-- Automatesch (geplangte) Sécherungen -->
+    <string name="backup_schedule_action">Automatesch Sécherung</string>
+    <string name="backup_schedule_subtitle">No engem Zäitplang sécheren, verschlësselt</string>
+    <string name="backup_schedule_enable">Automatesch Sécherung</string>
+    <string name="backup_schedule_interval_label">Wéi dacks</string>
+    <string name="backup_schedule_interval_daily">Deeglech</string>
+    <string name="backup_schedule_interval_weekly">Wëchentlech</string>
+    <string name="backup_schedule_interval_monthly">Méintlech</string>
+    <string name="backup_schedule_time">Auerzäit</string>
+    <string name="backup_schedule_folder">Sécherungsdossier</string>
+    <string name="backup_schedule_folder_none">En Dossier auswielen</string>
+    <string name="backup_schedule_passphrase">Passphrase</string>
+    <string name="backup_schedule_passphrase_set">Eng Passphrase ass festgeluecht</string>
+    <string name="backup_schedule_overwrite_note">Iwwerschreift all Kéier déiselwecht Datei — eng komplett, verschlësselt Sécherung am gewielten Dossier.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Wiel en Dossier a lee eng Passphrase fest fir dëst z\'aktivéieren.</string>
+    <string name="backup_schedule_next_run">Nächst Sécherung: %1$s</string>
+
+
 
     <!-- Wëllkomm beim éischte Start -->
     <string name="onboarding_skip">Iwwersprangen</string>

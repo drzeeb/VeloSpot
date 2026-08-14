@@ -325,6 +325,34 @@
     <string name="restore_confirm_message">Hiermee worden alle huidige gegevens op dit apparaat (ritten, opgeslagen plaatsen, favorieten, routes, instellingen) vervangen door de inhoud van de back-up. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="restore_confirm_button">Herstellen</string>
 
+    <!-- Versleutelde back-ups: wachtwoordzin-prompts -->
+    <string name="backup_passphrase_title">Wachtwoordzin instellen</string>
+    <string name="backup_passphrase_hint">Je hebt deze wachtwoordzin nodig om de back-up te herstellen. Hij kan niet worden hersteld — bewaar hem veilig.</string>
+    <string name="backup_passphrase_field">Wachtwoordzin</string>
+    <string name="backup_passphrase_confirm">Wachtwoordzin bevestigen</string>
+    <string name="backup_passphrase_mismatch">De wachtwoordzinnen komen niet overeen</string>
+    <string name="backup_passphrase_required">Voer een wachtwoordzin in</string>
+    <string name="restore_passphrase_title">Voer de wachtwoordzin in</string>
+    <string name="restore_wrong_password">Onjuiste wachtwoordzin. Probeer het opnieuw.</string>
+
+    <!-- Automatische (geplande) back-ups -->
+    <string name="backup_schedule_action">Automatische back-up</string>
+    <string name="backup_schedule_subtitle">Volgens een schema back-uppen, versleuteld</string>
+    <string name="backup_schedule_enable">Automatische back-up</string>
+    <string name="backup_schedule_interval_label">Hoe vaak</string>
+    <string name="backup_schedule_interval_daily">Dagelijks</string>
+    <string name="backup_schedule_interval_weekly">Wekelijks</string>
+    <string name="backup_schedule_interval_monthly">Maandelijks</string>
+    <string name="backup_schedule_time">Tijd</string>
+    <string name="backup_schedule_folder">Back-upmap</string>
+    <string name="backup_schedule_folder_none">Kies een map</string>
+    <string name="backup_schedule_passphrase">Wachtwoordzin</string>
+    <string name="backup_schedule_passphrase_set">Er is een wachtwoordzin ingesteld</string>
+    <string name="backup_schedule_overwrite_note">Overschrijft elke keer hetzelfde bestand — een volledige, versleutelde back-up in de gekozen map.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Kies een map en stel een wachtwoordzin in om dit in te schakelen.</string>
+    <string name="backup_schedule_next_run">Volgende back-up: %1$s</string>
+
+
 
     <!-- Welkom bij eerste start -->
     <string name="onboarding_skip">Overslaan</string>

@@ -154,6 +154,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Re-enqueues the self-rescheduling automatic-backup worker after a reboot
+             or an app update (both clear WorkManager's pending one-shot). -->
+        <receiver
+            android:name=".feature.backup.scheduler.BackupBootReceiver"
+            android:exported="false"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- Fired by AlarmManager at the exact "VeloSpot Wrapped" schedule time;
              delivered via an explicit component intent, so no intent-filter is
              needed. Not exported: only this app arms the alarm. -->

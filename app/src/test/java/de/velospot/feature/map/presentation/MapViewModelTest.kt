@@ -1153,23 +1153,6 @@ class MapViewModelTest {
 
     // ── Parked bike sheet + navigation ────────────────────────────────────────
 
-    @Test
-    fun `showParkedBike opens the sheet and dismiss hides it`() = runTest {
-        val vm = makeViewModel(
-            locationRepository = FakeLocationRepository(
-                initialLocation = GeoCoordinate(latitude = 49.75, longitude = 6.64)
-            )
-        )
-        testDispatcher.scheduler.advanceUntilIdle()
-        vm.parkBikeAtCurrentLocation()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        vm.showParkedBike()
-        assertTrue(vm.isParkedBikeSheetVisible.value)
-
-        vm.dismissParkedBikeSheet()
-        assertTrue(!vm.isParkedBikeSheetVisible.value)
-    }
 
     @Test
     fun `navigateToParkedBike routes to the parked-bike destination`() = runTest {

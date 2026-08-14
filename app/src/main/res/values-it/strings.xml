@@ -327,6 +327,34 @@
     <string name="restore_confirm_message">Questa operazione sostituisce tutti i dati attuali su questo dispositivo (percorsi, luoghi salvati, preferiti, itinerari, impostazioni) con il contenuto del backup. L\'operazione non può essere annullata.</string>
     <string name="restore_confirm_button">Ripristina</string>
 
+    <!-- Backup cifrati: richieste di passphrase -->
+    <string name="backup_passphrase_title">Imposta una passphrase</string>
+    <string name="backup_passphrase_hint">Questa passphrase è necessaria per ripristinare il backup. Non può essere recuperata — conservala al sicuro.</string>
+    <string name="backup_passphrase_field">Passphrase</string>
+    <string name="backup_passphrase_confirm">Conferma passphrase</string>
+    <string name="backup_passphrase_mismatch">Le passphrase non corrispondono</string>
+    <string name="backup_passphrase_required">Inserisci una passphrase</string>
+    <string name="restore_passphrase_title">Inserisci la passphrase</string>
+    <string name="restore_wrong_password">Passphrase errata. Riprova.</string>
+
+    <!-- Backup automatici (pianificati) -->
+    <string name="backup_schedule_action">Backup automatico</string>
+    <string name="backup_schedule_subtitle">Backup pianificato, cifrato</string>
+    <string name="backup_schedule_enable">Backup automatico</string>
+    <string name="backup_schedule_interval_label">Con quale frequenza</string>
+    <string name="backup_schedule_interval_daily">Giornaliero</string>
+    <string name="backup_schedule_interval_weekly">Settimanale</string>
+    <string name="backup_schedule_interval_monthly">Mensile</string>
+    <string name="backup_schedule_time">Orario</string>
+    <string name="backup_schedule_folder">Cartella di backup</string>
+    <string name="backup_schedule_folder_none">Scegli una cartella</string>
+    <string name="backup_schedule_passphrase">Passphrase</string>
+    <string name="backup_schedule_passphrase_set">È impostata una passphrase</string>
+    <string name="backup_schedule_overwrite_note">Sovrascrive ogni volta lo stesso file — un backup completo e cifrato salvato nella cartella scelta.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Scegli una cartella e imposta una passphrase per abilitarlo.</string>
+    <string name="backup_schedule_next_run">Prossimo backup: %1$s</string>
+
+
 
     <!-- Introduzione al primo avvio -->
     <string name="onboarding_skip">Salta</string>

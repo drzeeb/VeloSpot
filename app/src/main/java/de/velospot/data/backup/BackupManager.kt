@@ -3,6 +3,7 @@ package de.velospot.data.backup
 import android.content.Context
 import android.net.Uri
 import de.velospot.core.backup.BackupCompatibility
+import de.velospot.core.backup.BackupCrypto
 import de.velospot.core.backup.BackupData
 import de.velospot.core.backup.BackupManifest
 import de.velospot.core.backup.BackupSchema
@@ -35,6 +36,9 @@ import de.velospot.feature.wrapped.data.local.WrappedReportDao
 import de.velospot.feature.wrapped.data.local.WrappedReportEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -85,58 +89,126 @@ class BackupManager @Inject constructor(
         TooNew,
         /** The file was not a readable VeloSpot backup (missing/corrupt manifest or data). */
         Corrupt,
+        /** The file is an encrypted backup and the supplied passphrase was wrong/missing. */
+        WrongPassword,
         /** An I/O or DB error occurred while restoring. */
         Failure
     }
 
     /**
-     * Reads every store and writes one `.vsbackup` ZIP to the SAF [uri].
-     * Returns [BackupOutcome.Failure] on any I/O error (nothing partial is left on
-     * a store — only the output file is written).
+     * Reads every store and writes one `.vsbackup` file to the SAF [uri].
+     *
+     * When [passphrase] is non-null and non-blank the ZIP payload is wrapped with
+     * [BackupCrypto] (AES-256-GCM); otherwise a plain, legacy-format ZIP is written.
+     * Returns [BackupOutcome.Failure] on any I/O error.
      */
-    suspend fun createBackup(uri: Uri): BackupOutcome = withContext(Dispatchers.IO) {
-        runCatching {
-            val data = collectBackupData()
-            val manifest = buildManifest()
-            context.contentResolver.openOutputStream(uri)?.use { raw ->
-                ZipOutputStream(raw.buffered()).use { zip ->
-                    zip.putNextEntry(ZipEntry(BackupSchema.MANIFEST_ENTRY))
-                    zip.write(serializer.encodeManifest(manifest).toByteArray(Charsets.UTF_8))
-                    zip.closeEntry()
-
-                    zip.putNextEntry(ZipEntry(BackupSchema.DATA_ENTRY))
-                    zip.write(serializer.encodeData(data).toByteArray(Charsets.UTF_8))
-                    zip.closeEntry()
-                }
-            } ?: return@runCatching BackupOutcome.Failure
-            BackupOutcome.Success
-        }.getOrDefault(BackupOutcome.Failure)
-    }
-
-    /**
-     * Reads the `.vsbackup` ZIP at the SAF [uri] and REPLACE-restores every store.
-     * Refuses a newer-schema backup and never crashes on a corrupt/foreign file.
-     */
-    suspend fun restoreBackup(uri: Uri): RestoreOutcome = withContext(Dispatchers.IO) {
-        val entries = runCatching { readZipEntries(uri) }.getOrNull()
-            ?: return@withContext RestoreOutcome.Corrupt
-
-        val manifest = serializer.decodeManifest(entries[BackupSchema.MANIFEST_ENTRY])
-        when (BackupCompatibility.check(manifest)) {
-            is BackupCompatibility.Result.Unreadable -> return@withContext RestoreOutcome.Corrupt
-            is BackupCompatibility.Result.TooNew     -> return@withContext RestoreOutcome.TooNew
-            is BackupCompatibility.Result.Compatible -> Unit // proceed with the restore
+    suspend fun createBackup(uri: Uri, passphrase: String? = null): BackupOutcome =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    writeBackup(out, passphrase)
+                } ?: BackupOutcome.Failure
+            }.getOrDefault(BackupOutcome.Failure)
         }
 
-        val data = serializer.decodeData(entries[BackupSchema.DATA_ENTRY])
-            ?: return@withContext RestoreOutcome.Corrupt
+    /**
+     * Builds the full dump and writes it (encrypted when [passphrase] is non-blank) to
+     * an already-open [out] stream — used by the scheduled automatic-backup worker
+     * targeting a SAF document it opened itself. Does **not** close [out]. Returns
+     * [BackupOutcome.Failure] on any error.
+     */
+    suspend fun writeBackup(out: OutputStream, passphrase: String? = null): BackupOutcome =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val zipBytes = buildZipBytes()
+                val payload = if (!passphrase.isNullOrBlank()) {
+                    BackupCrypto.encrypt(zipBytes, passphrase)
+                } else {
+                    zipBytes
+                }
+                out.write(payload)
+                out.flush()
+                BackupOutcome.Success
+            }.getOrDefault(BackupOutcome.Failure)
+        }
 
-        runCatching { applyRestore(data) }
-            .map { RestoreOutcome.Success }
-            .getOrDefault(RestoreOutcome.Failure)
+    /**
+     * Reads the `.vsbackup` at the SAF [uri] and REPLACE-restores every store.
+     *
+     * Transparently handles both formats: an encrypted container is decrypted with
+     * [passphrase] first (a wrong/missing passphrase ⇒ [RestoreOutcome.WrongPassword]);
+     * a legacy plain ZIP is read directly. Refuses a newer-schema backup and never
+     * crashes on a corrupt/foreign file.
+     */
+    suspend fun restoreBackup(uri: Uri, passphrase: String? = null): RestoreOutcome =
+        withContext(Dispatchers.IO) {
+            val rawBytes = runCatching { readAllBytes(uri) }.getOrNull()
+                ?: return@withContext RestoreOutcome.Corrupt
+
+            val zipBytes: ByteArray = if (BackupCrypto.isEncryptedContainer(rawBytes)) {
+                if (passphrase.isNullOrBlank()) return@withContext RestoreOutcome.WrongPassword
+                BackupCrypto.decrypt(rawBytes, passphrase)
+                    ?: return@withContext RestoreOutcome.WrongPassword
+            } else {
+                rawBytes
+            }
+
+            val entries = runCatching { readZipEntries(zipBytes) }.getOrNull()
+                ?: return@withContext RestoreOutcome.Corrupt
+
+            val manifest = serializer.decodeManifest(entries[BackupSchema.MANIFEST_ENTRY])
+            when (BackupCompatibility.check(manifest)) {
+                is BackupCompatibility.Result.Unreadable -> return@withContext RestoreOutcome.Corrupt
+                is BackupCompatibility.Result.TooNew     -> return@withContext RestoreOutcome.TooNew
+                is BackupCompatibility.Result.Compatible -> Unit // proceed with the restore
+            }
+
+            val data = serializer.decodeData(entries[BackupSchema.DATA_ENTRY])
+                ?: return@withContext RestoreOutcome.Corrupt
+
+            runCatching { applyRestore(data) }
+                .map { RestoreOutcome.Success }
+                .getOrDefault(RestoreOutcome.Failure)
+        }
+
+    /**
+     * Peeks the first bytes of the SAF [uri] to report whether it is an encrypted
+     * backup container (so the UI can decide whether to prompt for a passphrase).
+     * Never throws — returns `false` on any read error.
+     */
+    suspend fun isBackupEncrypted(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                val head = ByteArray(8)
+                var read = 0
+                while (read < head.size) {
+                    val n = input.read(head, read, head.size - read)
+                    if (n < 0) break
+                    read += n
+                }
+                BackupCrypto.isEncryptedContainer(head.copyOf(read))
+            } ?: false
+        }.getOrDefault(false)
     }
 
     // ── Export ────────────────────────────────────────────────────────────────
+
+    /** Builds the entire backup ZIP (manifest + data) in memory. */
+    private suspend fun buildZipBytes(): ByteArray {
+        val data = collectBackupData()
+        val manifest = buildManifest()
+        val buffer = ByteArrayOutputStream()
+        ZipOutputStream(buffer).use { zip ->
+            zip.putNextEntry(ZipEntry(BackupSchema.MANIFEST_ENTRY))
+            zip.write(serializer.encodeManifest(manifest).toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+
+            zip.putNextEntry(ZipEntry(BackupSchema.DATA_ENTRY))
+            zip.write(serializer.encodeData(data).toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+        }
+        return buffer.toByteArray()
+    }
 
     private suspend fun collectBackupData(): BackupData {
         val rides = recordedRideDao.getAllIds().mapNotNull { id ->
@@ -237,21 +309,24 @@ class BackupManager @Inject constructor(
 
     // ── ZIP reading ─────────────────────────────────────────────────────────────
 
-    /** Reads the ZIP at [uri] into a map of entry-name → UTF-8 text. */
-    private fun readZipEntries(uri: Uri): Map<String, String> {
+    /** Reads all bytes at [uri]. Throws on an unopenable/unreadable stream. */
+    private fun readAllBytes(uri: Uri): ByteArray =
+        context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: throw java.io.IOException("Cannot open backup uri")
+
+    /** Reads the in-memory ZIP [bytes] into a map of entry-name → UTF-8 text. */
+    private fun readZipEntries(bytes: ByteArray): Map<String, String> {
         val out = HashMap<String, String>()
-        context.contentResolver.openInputStream(uri)?.use { raw ->
-            ZipInputStream(raw.buffered()).use { zip ->
-                var entry: ZipEntry? = zip.nextEntry
-                while (entry != null) {
-                    if (!entry.isDirectory) {
-                        out[entry.name] = zip.readBytes().toString(Charsets.UTF_8)
-                    }
-                    zip.closeEntry()
-                    entry = zip.nextEntry
+        ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
+            var entry: ZipEntry? = zip.nextEntry
+            while (entry != null) {
+                if (!entry.isDirectory) {
+                    out[entry.name] = zip.readBytes().toString(Charsets.UTF_8)
                 }
+                zip.closeEntry()
+                entry = zip.nextEntry
             }
-        } ?: throw java.io.IOException("Cannot open backup uri")
+        }
         return out
     }
 
