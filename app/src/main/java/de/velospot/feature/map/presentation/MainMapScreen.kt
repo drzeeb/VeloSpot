@@ -63,6 +63,7 @@ import de.velospot.feature.map.presentation.markers.MIN_ZOOM_PARKING_VISIBLE
 import de.velospot.feature.map.presentation.markers.ClusterRenderStyle
 import de.velospot.feature.map.presentation.markers.MarkerRenderCache
 import de.velospot.feature.map.presentation.markers.RouteRenderData
+import de.velospot.feature.map.presentation.markers.SOURCE_ROUTE
 import de.velospot.feature.map.presentation.markers.createBikeMarkerIcon
 import de.velospot.feature.map.presentation.markers.createLocationMarkerIcon
 import de.velospot.feature.map.presentation.markers.createMutedMarkerIcon
@@ -574,6 +575,13 @@ fun MainMapScreen(
             userLocation?.let(navigationManager::onLocationUpdate)
         } else {
             navigationManager.stop()
+            // NavigationManager owned SOURCE_ROUTE while navigating (writing the
+            // travelled/remaining split behind the marker renderer's diff-gate cache).
+            // Invalidate that cache entry so the marker renderer becomes the single
+            // source of truth again and unconditionally redraws SOURCE_ROUTE from the
+            // current state (empty, or a legitimate preview/planning line) on its next
+            // pass — otherwise it would wrongly skip the redraw and leave a stale line.
+            markerRenderCache.invalidate(SOURCE_ROUTE)
         }
     }
 

@@ -10,6 +10,8 @@ import de.velospot.domain.model.ParkedBike
 import de.velospot.domain.model.RoutePoint
 import de.velospot.domain.model.SavedPlace
 import de.velospot.domain.model.AddressSearchResult
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.geojson.Feature
@@ -109,6 +111,17 @@ internal class MarkerRenderCache {
         return true
     }
 
+    /**
+     * Forgets a single source's cached key so its GeoJSON is rebuilt unconditionally
+     * on the next render. Use when another component wrote to that shared source
+     * behind this cache's back — e.g. `NavigationManager` owns [SOURCE_ROUTE] while
+     * navigating, so on navigation stop this cache would otherwise still believe the
+     * source holds whatever the renderer last drew and wrongly skip the redraw.
+     */
+    fun invalidate(sourceId: String) {
+        keys.remove(sourceId)
+    }
+
     /** Forget everything (new style detection + all keys). Mainly for tests. */
     fun reset() {
         keys.clear()
@@ -120,8 +133,14 @@ internal class MarkerRenderCache {
 
 /**
  * Syncs MapLibre GeoJSON sources / layers with the current app state.
+ *
+ * `suspend` so the heavy GeoJSON serialisation (the potentially huge bulk-parking
+ * collection, and large saved-places sets — e.g. right after a full-backup restore)
+ * runs off the main thread via [Dispatchers.Default]. Only the actual MapLibre
+ * source/layer mutations stay on the caller's (main) dispatcher, as MapLibre's
+ * sources are not thread-safe.
  */
-internal fun updateMarkers(
+internal suspend fun updateMarkers(
     map: MapLibreMap,
     spaces: List<BikeParkingSpace>,
     icons: MarkerIconSet,
@@ -202,11 +221,17 @@ internal fun updateMarkers(
         layerVisibility, minimalNavMode, parkedBike
     )
     if (cache.changed(SOURCE_PARKING, bulkKey)) {
-        val bulkFeatures = buildBulkParkingFeatures(
-            spaces, state.favoriteIds, state.activeNavigationSpaceId,
-            layerVisibility, minimalNavMode, parkedBike
-        )
-        upsertParkingSource(style, FeatureCollection.fromFeatures(bulkFeatures))
+        // Serialising the (potentially many-thousand-spot) bulk collection is the
+        // dominant per-pass cost; build it off the main thread, then apply on it.
+        val bulkCollection = withContext(Dispatchers.Default) {
+            FeatureCollection.fromFeatures(
+                buildBulkParkingFeatures(
+                    spaces, state.favoriteIds, state.activeNavigationSpaceId,
+                    layerVisibility, minimalNavMode, parkedBike
+                )
+            )
+        }
+        upsertParkingSource(style, bulkCollection)
     }
     ensureParkingLayer(style)
     ensureParkingClusterLayers(style, clusterStyle.circleColor, clusterStyle.textColor)
@@ -275,16 +300,19 @@ internal fun updateMarkers(
     }
     val savedKey = savedPlacesKey(savedPlaces, layerVisibility.showSavedPlaces)
     if (cache.changed(SOURCE_SAVED_PIN, savedKey)) {
-        val savedGeoJson = if (layerVisibility.showSavedPlaces) {
-            FeatureCollection.fromFeatures(
-                savedPlaces.map { place ->
-                    Feature.fromGeometry(Point.fromLngLat(place.longitude, place.latitude)).also {
-                        it.addStringProperty(PROP_SAVED_ID, place.id)
+        // Restored backups can carry many saved places; serialise them off-thread.
+        val savedGeoJson = withContext(Dispatchers.Default) {
+            if (layerVisibility.showSavedPlaces) {
+                FeatureCollection.fromFeatures(
+                    savedPlaces.map { place ->
+                        Feature.fromGeometry(Point.fromLngLat(place.longitude, place.latitude)).also {
+                            it.addStringProperty(PROP_SAVED_ID, place.id)
+                        }
                     }
-                }
-            )
-        } else {
-            FeatureCollection.fromFeatures(emptyList())
+                )
+            } else {
+                FeatureCollection.fromFeatures(emptyList())
+            }
         }
         upsertSource(style, SOURCE_SAVED_PIN, savedGeoJson)
     }
