@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -236,7 +237,33 @@ private fun WrappedRangePickerDialog(
             Column(modifier = Modifier.padding(top = 8.dp)) {
                 DateRangePicker(
                     state = state,
-                    modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.weight(1f, fill = false),
+                    // Custom compact headline: the default headlineLarge title
+                    // ("Startdatum – Enddatum") is too large and wraps on narrow
+                    // screens (especially with longer German labels). Keep it on a
+                    // single line with a smaller style and ellipsis.
+                    headline = {
+                        val fmt = remember {
+                            DateFormat.getDateInstance(DateFormat.MEDIUM).apply {
+                                timeZone = TimeZone.getTimeZone("UTC")
+                            }
+                        }
+                        val start = state.selectedStartDateMillis?.let { fmt.format(Date(it)) }
+                            ?: stringResource(R.string.wrapped_range_start)
+                        val end = state.selectedEndDateMillis?.let { fmt.format(Date(it)) }
+                            ?: stringResource(R.string.wrapped_range_end)
+                        Text(
+                            text = "$start – $end",
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(
+                                start = 24.dp,
+                                end = 12.dp,
+                                bottom = 12.dp
+                            )
+                        )
+                    }
                 )
                 Row(
                     modifier = Modifier

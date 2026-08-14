@@ -449,6 +449,8 @@
     <string name="wrapped_range_empty">Keng Faarten an deem Zäitraum.</string>
     <string name="wrapped_range_cancel">Ofbriechen</string>
     <string name="wrapped_range_confirm">Erstellen</string>
+    <string name="wrapped_range_start">Ufanksdatum</string>
+    <string name="wrapped_range_end">Enddatum</string>
     <string name="wrapped_intro_headline">Du bass gefuer</string>
     <string name="wrapped_record_kicker">Neie perséinleche Rekord!</string>
     <string name="wrapped_vs_previous_caption">%1$s am Verglach mam viregten Zäitraum</string>
