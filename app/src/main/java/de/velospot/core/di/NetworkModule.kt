@@ -374,11 +374,23 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideMapSettingsRepository(
+    fun provideMapSettingsDataStore(
         @ApplicationContext context: Context
-    ): MapSettingsRepository {
-        return MapSettingsDataStore(context)
+    ): de.velospot.data.settings.MapSettingsDataStore {
+        return de.velospot.data.settings.MapSettingsDataStore(context)
     }
+
+    @Provides
+    @Singleton
+    fun provideMapSettingsRepository(
+        dataStore: de.velospot.data.settings.MapSettingsDataStore
+    ): MapSettingsRepository = dataStore
+
+    @Provides
+    @Singleton
+    fun provideAppSettingsBackup(
+        dataStore: de.velospot.data.settings.MapSettingsDataStore
+    ): de.velospot.data.settings.AppSettingsBackup = dataStore
 
     @Provides
     @Singleton

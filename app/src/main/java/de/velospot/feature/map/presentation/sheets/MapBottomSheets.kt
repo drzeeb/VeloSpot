@@ -139,13 +139,50 @@ internal fun MapBottomSheets(
     }
 
     if (screenUiState.isAboutSheetVisible) {
+        // Local Backup & Restore SAF flows — a create-document picker writes the
+        // .vsbackup ZIP, an open-document picker reads it back (after a confirm).
+        var pendingRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
+        val backupCreateLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.CreateDocument(
+                de.velospot.core.backup.BackupSchema.MIME_TYPE
+            )
+        ) { uri -> if (uri != null) viewModel.createBackup(uri) }
+        val backupOpenLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+        ) { uri -> if (uri != null) pendingRestoreUri = uri }
+
         AboutSheet(
             onDismiss = screenUiState::closeAbout,
             onReplayOnboarding = {
                 screenUiState.closeAbout()
                 viewModel.replayOnboarding()
-            }
+            },
+            onCreateBackup = { backupCreateLauncher.launch(viewModel.suggestedBackupFileName()) },
+            // Accept any type so providers that report an unknown MIME for our custom
+            // extension still list the file; the manifest check rejects foreign files.
+            onRestoreBackup = { backupOpenLauncher.launch(arrayOf("*/*")) }
         )
+
+        // Replace-all confirmation before importing a picked backup.
+        pendingRestoreUri?.let { uri ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { pendingRestoreUri = null },
+                title = { androidx.compose.material3.Text(stringResource(R.string.restore_confirm_title)) },
+                text = { androidx.compose.material3.Text(stringResource(R.string.restore_confirm_message)) },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        pendingRestoreUri = null
+                        screenUiState.closeAbout()
+                        viewModel.restoreBackup(uri)
+                    }) { androidx.compose.material3.Text(stringResource(R.string.restore_confirm_button)) }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { pendingRestoreUri = null }) {
+                        androidx.compose.material3.Text(stringResource(R.string.common_cancel))
+                    }
+                }
+            )
+        }
     }
 
     // "My rides" timeline (list of recorded rides).

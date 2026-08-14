@@ -6,8 +6,15 @@ import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import de.velospot.core.backup.BackupSchema
+import de.velospot.core.backup.SettingBackup
+import de.velospot.core.backup.SettingType
 import de.velospot.core.map.LayerVisibility
 import de.velospot.core.map.MapLayerCategory
 import de.velospot.core.map.RideTracksLayerState
@@ -15,7 +22,9 @@ import de.velospot.core.map.RideTracksMode
 import de.velospot.core.map.RideViewOptions
 import de.velospot.domain.repository.MapSettingsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import org.json.JSONArray
 
 /**
  * DataStore file backing [MapSettingsDataStore]. Declared as a `Context`
@@ -43,7 +52,7 @@ private val Context.settingsDataStore: DataStore<Preferences> by preferencesData
  * writes are transactional `suspend` edits, replacing the previous main-thread
  * `SharedPreferences` accesses.
  */
-class MapSettingsDataStore(private val context: Context) : MapSettingsRepository {
+class MapSettingsDataStore(private val context: Context) : MapSettingsRepository, AppSettingsBackup {
 
     private val data: Flow<Preferences> get() = context.settingsDataStore.data
 
@@ -164,6 +173,95 @@ class MapSettingsDataStore(private val context: Context) : MapSettingsRepository
 
     private suspend fun put(key: Preferences.Key<Boolean>, value: Boolean) {
         context.settingsDataStore.edit { it[key] = value }
+    }
+
+    // ── Backup & Restore (AppSettingsBackup) ──────────────────────────────────
+
+    /** SharedPreferences file backing the offline-routing choices (see OfflineRoutingPreferences). */
+    private val offlineRoutingPrefs
+        get() = context.getSharedPreferences("velospot_offline_routing", Context.MODE_PRIVATE)
+
+    override suspend fun exportSettings(): List<SettingBackup> {
+        val out = mutableListOf<SettingBackup>()
+
+        // The map/app settings DataStore — every stored key, whatever its type.
+        val prefs = context.settingsDataStore.data.first()
+        prefs.asMap().forEach { (key, value) ->
+            encodeValue(value)?.let { (type, str) ->
+                out += SettingBackup(BackupSchema.SETTINGS_STORE_DATASTORE, key.name, type.name, str)
+            }
+        }
+
+        // The offline-routing SharedPreferences (profile, hilliness, on-demand, …).
+        offlineRoutingPrefs.all.forEach { (key, value) ->
+            if (value == null) return@forEach
+            encodeValue(value)?.let { (type, str) ->
+                out += SettingBackup(BackupSchema.SETTINGS_STORE_OFFLINE_ROUTING, key, type.name, str)
+            }
+        }
+        return out
+    }
+
+    override suspend fun importSettings(entries: List<SettingBackup>) {
+        // Replace-all: clear each covered store, then write the backed-up values.
+        context.settingsDataStore.edit { prefs ->
+            prefs.clear()
+            entries.filter { it.store == BackupSchema.SETTINGS_STORE_DATASTORE }
+                .forEach { entry -> writeDataStoreEntry(prefs, entry) }
+        }
+        offlineRoutingPrefs.edit().apply {
+            clear()
+            entries.filter { it.store == BackupSchema.SETTINGS_STORE_OFFLINE_ROUTING }
+                .forEach { entry -> writeSharedPrefEntry(this, entry) }
+            apply()
+        }
+    }
+
+    /** Maps a raw preference value to its [SettingType] + string form, or `null` if unsupported. */
+    private fun encodeValue(value: Any?): Pair<SettingType, String>? = when (value) {
+        is Boolean -> SettingType.BOOLEAN to value.toString()
+        is Int     -> SettingType.INT to value.toString()
+        is Long    -> SettingType.LONG to value.toString()
+        is Float   -> SettingType.FLOAT to value.toString()
+        is Double  -> SettingType.DOUBLE to value.toString()
+        is String  -> SettingType.STRING to value
+        is Set<*>  -> SettingType.STRING_SET to JSONArray(value.map { it.toString() }).toString()
+        else       -> null
+    }
+
+    private fun writeDataStoreEntry(prefs: androidx.datastore.preferences.core.MutablePreferences, entry: SettingBackup) {
+        val type = runCatching { SettingType.valueOf(entry.type) }.getOrNull() ?: return
+        runCatching {
+            when (type) {
+                SettingType.BOOLEAN -> prefs[booleanPreferencesKey(entry.key)] = entry.value.toBoolean()
+                SettingType.INT     -> prefs[intPreferencesKey(entry.key)] = entry.value.toInt()
+                SettingType.LONG    -> prefs[longPreferencesKey(entry.key)] = entry.value.toLong()
+                SettingType.FLOAT   -> prefs[floatPreferencesKey(entry.key)] = entry.value.toFloat()
+                SettingType.DOUBLE  -> prefs[androidx.datastore.preferences.core.doublePreferencesKey(entry.key)] = entry.value.toDouble()
+                SettingType.STRING  -> prefs[stringPreferencesKey(entry.key)] = entry.value
+                SettingType.STRING_SET -> prefs[stringSetPreferencesKey(entry.key)] = decodeStringSet(entry.value)
+            }
+        }
+    }
+
+    private fun writeSharedPrefEntry(editor: android.content.SharedPreferences.Editor, entry: SettingBackup) {
+        val type = runCatching { SettingType.valueOf(entry.type) }.getOrNull() ?: return
+        runCatching {
+            when (type) {
+                SettingType.BOOLEAN -> editor.putBoolean(entry.key, entry.value.toBoolean())
+                SettingType.INT     -> editor.putInt(entry.key, entry.value.toInt())
+                SettingType.LONG    -> editor.putLong(entry.key, entry.value.toLong())
+                SettingType.FLOAT   -> editor.putFloat(entry.key, entry.value.toFloat())
+                SettingType.DOUBLE  -> editor.putFloat(entry.key, entry.value.toFloat())
+                SettingType.STRING  -> editor.putString(entry.key, entry.value)
+                SettingType.STRING_SET -> editor.putStringSet(entry.key, decodeStringSet(entry.value))
+            }
+        }
+    }
+
+    private fun decodeStringSet(json: String): Set<String> {
+        val arr = JSONArray(json)
+        return buildSet { for (i in 0 until arr.length()) add(arr.getString(i)) }
     }
 
     private companion object {

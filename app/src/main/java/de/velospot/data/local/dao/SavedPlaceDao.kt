@@ -22,5 +22,12 @@ interface SavedPlaceDao {
 
     @Query("DELETE FROM saved_places WHERE id = :id")
     suspend fun delete(id: String)
-}
 
+    /** Every saved place (for the local backup export). */
+    @Query("SELECT * FROM saved_places")
+    suspend fun getAll(): List<SavedPlaceEntity>
+
+    /** Clears the whole table (a REPLACE-all restore wipes then re-inserts). */
+    @Query("DELETE FROM saved_places")
+    suspend fun deleteAll()
+}

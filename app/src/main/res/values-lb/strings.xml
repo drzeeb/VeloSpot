@@ -300,6 +300,25 @@
     <string name="about_replay_onboarding">App-Tour</string>
     <string name="about_replay_onboarding_subtitle">Aféierung nach eng Kéier weisen</string>
 
+    <!-- Local Backup & Restore (all data stays on the device, no cloud) -->
+    <string name="backup_section_title">Datesécherung</string>
+    <string name="backup_create_action">Sécherung erstellen</string>
+    <string name="backup_create_subtitle">All deng Donnéeën an eng Datei späicheren</string>
+    <string name="restore_action">Sécherung zréckspillen</string>
+    <string name="restore_subtitle">Donnéeën aus enger Sécherungsdatei importéieren</string>
+    <string name="backup_create_success">Sécherung gespäichert</string>
+    <string name="backup_working">W.e.g. waarden… d’App opgelooss loossen</string>
+    <string name="ride_loading">Streck gëtt gelueden…</string>
+    <string name="backup_create_failed">Sécherung konnt net erstallt ginn</string>
+    <string name="restore_success">Sécherung zréckgespillt</string>
+    <string name="restore_failed">Sécherung konnt net zréckgespillt ginn</string>
+    <string name="restore_too_new">Dës Sécherung gouf mat enger méi neier Versioun vu VeloSpot erstallt. Aktualiséier w.e.g. fir d\'éischt d\'App.</string>
+    <string name="restore_corrupt">Dës Datei ass keng gülteg VeloSpot-Sécherung</string>
+    <string name="restore_confirm_title">Sécherung zréckspillen?</string>
+    <string name="restore_confirm_message">Dëst ersetzt all aktuell Donnéeën op dësem Apparat (Fahrten, gespäichert Plazen, Favoritten, Routen, Astellungen) duerch den Inhalt vun der Sécherung. Dëst kann net réckgängeg gemaach ginn.</string>
+    <string name="restore_confirm_button">Zréckspillen</string>
+
+
     <!-- Wëllkomm beim éischte Start -->
     <string name="onboarding_skip">Iwwersprangen</string>
     <string name="onboarding_next">Weider</string>

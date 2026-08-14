@@ -38,6 +38,14 @@ interface RecentDestinationDao {
     @Query("DELETE FROM recent_destinations WHERE id = :id")
     suspend fun delete(id: String)
 
+    /** Every recent/pinned destination (for the local backup export). */
+    @Query("SELECT * FROM recent_destinations")
+    suspend fun getAll(): List<RecentDestinationEntity>
+
+    /** Clears the whole table (a REPLACE-all restore wipes then re-inserts). */
+    @Query("DELETE FROM recent_destinations")
+    suspend fun deleteAll()
+
     /** Trims the ordinary recents to the newest [keep], so the history can't grow unbounded. */
     @Query(
         """
@@ -52,4 +60,3 @@ interface RecentDestinationDao {
     )
     suspend fun trimRecents(keep: Int)
 }
-

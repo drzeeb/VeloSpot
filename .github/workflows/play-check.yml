@@ -28,7 +28,7 @@ jobs:
       - name: Set up Ruby (fastlane)
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4.10"
+          ruby-version: "4.0.6"
           bundler-cache: true
       - name: Validate Play service account
         env:
