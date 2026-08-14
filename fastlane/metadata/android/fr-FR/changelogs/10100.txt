@@ -1,6 +1,5 @@
-• Nouveau : sauvegarde et restauration entièrement locales — exportez toutes vos données (trajets, itinéraires, favoris, lieux, vélos, réglages) dans un seul fichier et importez-les sur n'importe quel appareil. Sans cloud, rien ne quitte votre téléphone
+• Nouveau : sauvegarde et restauration entièrement locales — exportez toutes vos données (trajets, itinéraires, favoris, lieux, vélos, réglages) dans un fichier. Sans cloud
 • Correction : le tracé de l'itinéraire ne reste plus affiché après l'arrêt de la navigation
-• Correction : un itinéraire enregistré suit désormais exactement son tracé mémorisé, pour des temps de classement comparables
-• Carte plus fluide après la restauration d'une sauvegarde (le travail lourd sur les marqueurs a été déplacé hors du thread principal)
-• Moteur cartographique MapLibre et dépendances mis à jour pour plus de stabilité
-
+• Correction : un itinéraire enregistré suit exactement son tracé — temps comparables
+• Carte plus fluide après la restauration d'une sauvegarde
+• Moteur MapLibre et dépendances mis à jour
