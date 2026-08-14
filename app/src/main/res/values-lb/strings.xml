@@ -520,9 +520,19 @@
     <string name="wrapped_schedule_day_of_month_hint">A kuerze Méint um leschten Dag.</string>
     <string name="wrapped_schedule_time_label">Auerzäit</string>
     <string name="wrapped_schedule_time_set">Festleeën</string>
+    <!-- VeloSpot Wrapped — Auswiel vun der ofgedeckter Period (ofhängeg vum Intervall) -->
+    <string name="wrapped_schedule_scope_label">Ofgedeckte Period</string>
+    <string name="wrapped_schedule_scope_today">Haut</string>
+    <string name="wrapped_schedule_scope_yesterday">Gëschter</string>
+    <string name="wrapped_schedule_scope_this_week">Dës Woch</string>
+    <string name="wrapped_schedule_scope_last_7_days">Lescht 7 Deeg</string>
+    <string name="wrapped_schedule_scope_this_month">Dëse Mount</string>
+    <string name="wrapped_schedule_scope_last_30_days">Lescht 30 Deeg</string>
     <string name="wrapped_schedule_next_fire">Nächst Wrapped: %1$s</string>
     <string name="wrapped_schedule_notifications_off_hint">Notifikatioune sinn aus – Réckbléck gi trotzdem erstallt, du gëss just net informéiert.</string>
-    <string name="wrapped_schedule_footer">Eidel Zäiträim ginn iwwersprongen. D\'Zäit ass ongeféier fir Batterie ze spueren.</string>
+    <string name="wrapped_schedule_notify_label">Bei der Erstellung mellen</string>
+    <string name="wrapped_schedule_notify_summary">Weist all Kéier eng Notifikatioun, wann e Wrapped erstallt gëtt.</string>
+    <string name="wrapped_schedule_footer">Eidel Zäiträim ginn iwwersprongen.</string>
     <string name="ride_recording">Tour gëtt opgeholl</string>
     <string name="ride_stop">Stop</string>
     <string name="ride_start">Tour ophuelen</string>

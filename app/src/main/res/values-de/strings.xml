@@ -526,9 +526,19 @@
     <string name="wrapped_schedule_day_of_month_hint">In kürzeren Monaten am letzten Tag.</string>
     <string name="wrapped_schedule_time_label">Uhrzeit</string>
     <string name="wrapped_schedule_time_set">Festlegen</string>
+    <!-- VeloSpot Wrapped — Auswahl des Zeitraums (abhängig vom Intervall) -->
+    <string name="wrapped_schedule_scope_label">Abgedeckter Zeitraum</string>
+    <string name="wrapped_schedule_scope_today">Heute</string>
+    <string name="wrapped_schedule_scope_yesterday">Gestern</string>
+    <string name="wrapped_schedule_scope_this_week">Diese Woche</string>
+    <string name="wrapped_schedule_scope_last_7_days">Letzte 7 Tage</string>
+    <string name="wrapped_schedule_scope_this_month">Dieser Monat</string>
+    <string name="wrapped_schedule_scope_last_30_days">Letzte 30 Tage</string>
     <string name="wrapped_schedule_next_fire">Nächstes Wrapped: %1$s</string>
     <string name="wrapped_schedule_notifications_off_hint">Benachrichtigungen sind aus – Rückblicke werden trotzdem erstellt, du wirst nur nicht benachrichtigt.</string>
-    <string name="wrapped_schedule_footer">Leere Zeiträume werden übersprungen. Der Zeitpunkt ist zum Akkusparen ungefähr.</string>
+    <string name="wrapped_schedule_notify_label">Bei Erstellung benachrichtigen</string>
+    <string name="wrapped_schedule_notify_summary">Zeigt jedes Mal eine Benachrichtigung, wenn ein Wrapped erstellt wird.</string>
+    <string name="wrapped_schedule_footer">Leere Zeiträume werden übersprungen.</string>
     <string name="ride_recording">Fahrt wird aufgezeichnet</string>
     <string name="ride_stop">Stopp</string>
     <string name="ride_start">Fahrt aufzeichnen</string>

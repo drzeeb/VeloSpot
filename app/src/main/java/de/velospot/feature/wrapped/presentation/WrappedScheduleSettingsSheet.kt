@@ -55,6 +55,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.velospot.R
 import de.velospot.feature.wrapped.domain.WrappedInterval
+import de.velospot.feature.wrapped.domain.WrappedPeriodMode
 import de.velospot.feature.wrapped.domain.WrappedSchedule
 import de.velospot.feature.wrapped.engine.WrappedScheduleFormat
 import de.velospot.feature.wrapped.engine.WrappedScheduleMath
@@ -101,7 +102,9 @@ internal fun WrappedScheduleSettingsSheet(
                 onSetInterval = viewModel::setInterval,
                 onSetDayOfWeek = viewModel::setDayOfWeek,
                 onSetDayOfMonth = viewModel::setDayOfMonth,
-                onSetTime = viewModel::setTime
+                onSetTime = viewModel::setTime,
+                onSetPeriodMode = viewModel::setPeriodMode,
+                onSetNotifyOnGenerate = viewModel::setNotifyOnGenerate
             )
             Spacer(Modifier.height(12.dp))
         }
@@ -115,7 +118,9 @@ private fun WrappedScheduleContent(
     onSetInterval: (WrappedInterval) -> Unit,
     onSetDayOfWeek: (Int) -> Unit,
     onSetDayOfMonth: (Int) -> Unit,
-    onSetTime: (Int, Int) -> Unit
+    onSetTime: (Int, Int) -> Unit,
+    onSetPeriodMode: (WrappedPeriodMode) -> Unit,
+    onSetNotifyOnGenerate: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -164,6 +169,29 @@ private fun WrappedScheduleContent(
                 NotificationsOffHint()
             }
 
+            // ── Notify-when-created switch ────────────────────────────────────
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.wrapped_schedule_notify_label),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.wrapped_schedule_notify_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = schedule.notifyOnGenerate,
+                    onCheckedChange = onSetNotifyOnGenerate
+                )
+            }
+
             Spacer(Modifier.height(16.dp))
 
             // ── Interval selector ─────────────────────────────────────────────
@@ -192,6 +220,15 @@ private fun WrappedScheduleContent(
                     }
                 }
             }
+
+            // ── Period-scope selector (interval-dependent) ────────────────────
+            Spacer(Modifier.height(16.dp))
+            SectionLabel(stringResource(R.string.wrapped_schedule_scope_label))
+            PeriodModeSelector(
+                interval = schedule.interval,
+                selected = schedule.periodMode,
+                onSelect = onSetPeriodMode
+            )
 
             // ── Time picker ───────────────────────────────────────────────────
             Spacer(Modifier.height(16.dp))
@@ -259,6 +296,50 @@ private fun IntervalSelector(
             SegmentedButton(
                 selected = selected == interval,
                 onClick = { onSelect(interval) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size)
+            ) {
+                Text(stringResource(labelRes))
+            }
+        }
+    }
+}
+
+/**
+ * The interval-dependent period-scope selector. Two chips whose meaning and labels
+ * depend on the [interval]:
+ * * DAILY — "Today" ([WrappedPeriodMode.CALENDAR_CURRENT]) / "Yesterday"
+ *   ([WrappedPeriodMode.CALENDAR_PREVIOUS]).
+ * * WEEKLY — "This week" ([WrappedPeriodMode.CALENDAR_CURRENT]) / "Last 7 days"
+ *   ([WrappedPeriodMode.ROLLING]).
+ * * MONTHLY — "This month" ([WrappedPeriodMode.CALENDAR_CURRENT]) / "Last 30 days"
+ *   ([WrappedPeriodMode.ROLLING]).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PeriodModeSelector(
+    interval: WrappedInterval,
+    selected: WrappedPeriodMode,
+    onSelect: (WrappedPeriodMode) -> Unit
+) {
+    val options: List<Pair<WrappedPeriodMode, Int>> = when (interval) {
+        WrappedInterval.DAILY -> listOf(
+            WrappedPeriodMode.CALENDAR_CURRENT to R.string.wrapped_schedule_scope_today,
+            WrappedPeriodMode.CALENDAR_PREVIOUS to R.string.wrapped_schedule_scope_yesterday
+        )
+        WrappedInterval.WEEKLY -> listOf(
+            WrappedPeriodMode.CALENDAR_CURRENT to R.string.wrapped_schedule_scope_this_week,
+            WrappedPeriodMode.ROLLING to R.string.wrapped_schedule_scope_last_7_days
+        )
+        WrappedInterval.MONTHLY -> listOf(
+            WrappedPeriodMode.CALENDAR_CURRENT to R.string.wrapped_schedule_scope_this_month,
+            WrappedPeriodMode.ROLLING to R.string.wrapped_schedule_scope_last_30_days
+        )
+    }
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (mode, labelRes) ->
+            SegmentedButton(
+                selected = selected == mode,
+                onClick = { onSelect(mode) },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size)
             ) {
                 Text(stringResource(labelRes))

@@ -128,5 +128,33 @@ class WrappedPeriodTest {
         assertEquals(from - length, prev.startInclusive)
         assertEquals(to - length, prev.endExclusive)
     }
+
+    @Test
+    fun `rollingDays covers exactly N whole days ending with today`() {
+        // Wednesday 2024-06-12 15:30 → last 7 days = Thu 06-06 .. Thu 06-13.
+        val p = WrappedPeriod.rollingDays(at(2024, 6, 12, 15, 30), 7)
+
+        assertEquals(WrappedPeriodType.CUSTOM, p.type)
+        assertEquals(at(2024, 6, 6), p.startInclusive)
+        assertEquals(at(2024, 6, 13), p.endExclusive)
+    }
+
+    @Test
+    fun `rollingDays coerces a non-positive length to one day`() {
+        val p = WrappedPeriod.rollingDays(at(2024, 6, 12, 15, 30), 0)
+
+        assertEquals(at(2024, 6, 12), p.startInclusive)
+        assertEquals(at(2024, 6, 13), p.endExclusive)
+    }
+
+    @Test
+    fun `rollingMonth uses the fire month's length`() {
+        // February 2024 has 29 days → 29 whole days ending Feb 28.
+        val p = WrappedPeriod.rollingMonth(at(2024, 2, 28, 12, 0))
+
+        assertEquals(WrappedPeriodType.CUSTOM, p.type)
+        assertEquals(at(2024, 1, 31), p.startInclusive)
+        assertEquals(at(2024, 2, 29), p.endExclusive)
+    }
 }
 

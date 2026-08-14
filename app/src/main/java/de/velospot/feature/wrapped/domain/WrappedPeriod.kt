@@ -77,6 +77,35 @@ internal data class WrappedPeriod(
             WrappedPeriod(WrappedPeriodType.CUSTOM, from, to)
 
         /**
+         * A rolling window of the last [days] whole calendar days ending with the
+         * day that contains [now] — i.e. `[startOfDay(now) − (days − 1), startOfDay(now) + 1 day)`.
+         *
+         * The bounds are snapped to local midnight so the window always covers
+         * exactly [days] full days (matching the day-stamped ride aggregation) and
+         * is computed via calendar fields so it stays correct across DST. Typed
+         * [WrappedPeriodType.CUSTOM]. [days] is coerced to at least 1.
+         */
+        fun rollingDays(now: Long, days: Int): WrappedPeriod {
+            val safeDays = days.coerceAtLeast(1)
+            val end = calendar(now).apply {
+                clearTime()
+                add(Calendar.DAY_OF_MONTH, 1)
+            }
+            val start = (end.clone() as Calendar).apply { add(Calendar.DAY_OF_MONTH, -safeDays) }
+            return WrappedPeriod(WrappedPeriodType.CUSTOM, start.timeInMillis, end.timeInMillis)
+        }
+
+        /**
+         * A rolling window sized to the length of the calendar month that contains
+         * [now] (28/29/30/31 days), ending with today. Backs the monthly
+         * "last 30/31/28 days" option — the window length tracks the fire month.
+         */
+        fun rollingMonth(now: Long): WrappedPeriod {
+            val monthLength = calendar(now).getActualMaximum(Calendar.DAY_OF_MONTH)
+            return rollingDays(now, monthLength)
+        }
+
+        /**
          * The immediately-preceding equal-length window before [period].
          *
          * For DAY/WEEK/MONTH/YEAR this is the natural previous calendar bucket

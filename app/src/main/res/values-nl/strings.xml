@@ -520,9 +520,19 @@
     <string name="wrapped_schedule_day_of_month_hint">In kortere maanden op de laatste dag.</string>
     <string name="wrapped_schedule_time_label">Tijd</string>
     <string name="wrapped_schedule_time_set">Instellen</string>
+    <!-- VeloSpot Wrapped — keuze van de gedekte periode (afhankelijk van het interval) -->
+    <string name="wrapped_schedule_scope_label">Gedekte periode</string>
+    <string name="wrapped_schedule_scope_today">Vandaag</string>
+    <string name="wrapped_schedule_scope_yesterday">Gisteren</string>
+    <string name="wrapped_schedule_scope_this_week">Deze week</string>
+    <string name="wrapped_schedule_scope_last_7_days">Afgelopen 7 dagen</string>
+    <string name="wrapped_schedule_scope_this_month">Deze maand</string>
+    <string name="wrapped_schedule_scope_last_30_days">Afgelopen 30 dagen</string>
     <string name="wrapped_schedule_next_fire">Volgende Wrapped: %1$s</string>
     <string name="wrapped_schedule_notifications_off_hint">Meldingen staan uit — samenvattingen worden nog steeds gemaakt, je krijgt alleen geen melding.</string>
-    <string name="wrapped_schedule_footer">Lege periodes worden overgeslagen. De tijd is bij benadering om de batterij te sparen.</string>
+    <string name="wrapped_schedule_notify_label">Melden bij aanmaken</string>
+    <string name="wrapped_schedule_notify_summary">Toont een melding telkens als er een Wrapped wordt gegenereerd.</string>
+    <string name="wrapped_schedule_footer">Lege periodes worden overgeslagen.</string>
     <string name="ride_recording">Rit wordt opgenomen</string>
     <string name="ride_stop">Stoppen</string>
     <string name="ride_start">Rit opnemen</string>

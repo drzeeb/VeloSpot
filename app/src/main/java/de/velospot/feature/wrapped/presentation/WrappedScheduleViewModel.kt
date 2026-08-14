@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import de.velospot.feature.wrapped.data.WrappedScheduleDataStore
 import de.velospot.feature.wrapped.data.WrappedScheduleMapping
 import de.velospot.feature.wrapped.domain.WrappedInterval
+import de.velospot.feature.wrapped.domain.WrappedPeriodMode
 import de.velospot.feature.wrapped.domain.WrappedSchedule
 import de.velospot.feature.wrapped.engine.WrappedScheduleEdits
 import de.velospot.feature.wrapped.scheduler.WrappedScheduler
@@ -56,6 +57,13 @@ internal class WrappedScheduleViewModel @Inject constructor(
 
     /** Sets the fire time. */
     fun setTime(hour: Int, minute: Int) = update { WrappedScheduleEdits.withTime(it, hour, minute) }
+
+    /** Sets which window the report summarises relative to the fire instant. */
+    fun setPeriodMode(mode: WrappedPeriodMode) = update { WrappedScheduleEdits.withPeriodMode(it, mode) }
+
+    /** Enables/disables the notification posted when a Wrapped is generated. */
+    fun setNotifyOnGenerate(enabled: Boolean) =
+        update { WrappedScheduleEdits.withNotifyOnGenerate(it, enabled) }
 
     /**
      * Reads the current schedule, applies [transform], persists it when it changed

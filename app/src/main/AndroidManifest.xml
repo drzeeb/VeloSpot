@@ -143,7 +143,7 @@
         </receiver>
 
         <!-- Re-enqueues the self-rescheduling "VeloSpot Wrapped" worker after a
-             reboot or an app update (both clear WorkManager's pending one-shot). -->
+             reboot or an app update (both clear a pending alarm). -->
         <receiver
             android:name=".feature.wrapped.scheduler.WrappedBootReceiver"
             android:exported="false"
@@ -165,6 +165,12 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!-- Fired by AlarmManager at the exact "VeloSpot Wrapped" schedule time;
+             delivered via an explicit component intent, so no intent-filter is
+             needed. Not exported: only this app arms the alarm. -->
+        <receiver
+            android:name=".feature.wrapped.scheduler.WrappedAlarmReceiver"
+            android:exported="false" />
 
         <!-- WorkManager on-demand initialisation: remove the default
              WorkManagerInitializer so the app's Hilt-aware Configuration.Provider

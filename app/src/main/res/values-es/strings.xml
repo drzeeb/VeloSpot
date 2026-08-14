@@ -522,9 +522,19 @@
     <string name="wrapped_schedule_day_of_month_hint">En los meses más cortos se genera el último día.</string>
     <string name="wrapped_schedule_time_label">Hora</string>
     <string name="wrapped_schedule_time_set">Aceptar</string>
+    <!-- VeloSpot Wrapped — selector de periodo cubierto (según el intervalo) -->
+    <string name="wrapped_schedule_scope_label">Periodo cubierto</string>
+    <string name="wrapped_schedule_scope_today">Hoy</string>
+    <string name="wrapped_schedule_scope_yesterday">Ayer</string>
+    <string name="wrapped_schedule_scope_this_week">Esta semana</string>
+    <string name="wrapped_schedule_scope_last_7_days">Últimos 7 días</string>
+    <string name="wrapped_schedule_scope_this_month">Este mes</string>
+    <string name="wrapped_schedule_scope_last_30_days">Últimos 30 días</string>
     <string name="wrapped_schedule_next_fire">Próximo Wrapped: %1$s</string>
     <string name="wrapped_schedule_notifications_off_hint">Las notificaciones están desactivadas: los resúmenes se crean igualmente, solo que no se te avisará.</string>
-    <string name="wrapped_schedule_footer">Los periodos vacíos se omiten. La hora es aproximada para ahorrar batería.</string>
+    <string name="wrapped_schedule_notify_label">Avisar al crearse</string>
+    <string name="wrapped_schedule_notify_summary">Muestra una notificación cada vez que se genera un Wrapped.</string>
+    <string name="wrapped_schedule_footer">Los periodos vacíos se omiten.</string>
     <string name="ride_recording">Grabando ruta</string>
     <string name="ride_stop">Detener</string>
     <string name="ride_start">Grabar trayecto</string>
