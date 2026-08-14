@@ -4,7 +4,6 @@ Erste Veröffentlichung von VeloSpot.
 • Interaktive Vektorkarte mit MapLibre (kein API-Key, kein Tracking)
 • Offline-Navigation mit BRouter (5 Fahrradprofile) und Online-Fallback via OSRM
 • Adresssuche mit Live-Vorschlägen (Nominatim)
-• Eigenen Kartenpin per Tipp setzen und direkt navigieren
+• Eigenen Kartenpin setzen und navigieren
 • Favoriten, Parkplatzfotos, Dunkelmodus, 8 Sprachen
-• Keine proprietären Google-Dienste, keine Werbung, kein Tracking
-
+• Keine Google-Dienste, keine Werbung, kein Tracking

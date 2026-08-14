@@ -1,6 +1,5 @@
-• New: fully local Backup & Restore — export all your data (rides, routes, favourites, places, bikes, settings) to one file and import it on any device. No cloud, nothing leaves your phone
+• New: fully local Backup & Restore — export all your data (rides, routes, favourites, places, bikes, settings) to one file and import it on any device. No cloud
 • Fix: the navigation route line no longer stays drawn after you stop navigating
-• Fix: riding a saved route now follows its stored line exactly, so leaderboard times are comparable
-• Smoother map after restoring a backup (heavy marker work moved off the main thread)
-• Updated MapLibre map engine and dependencies for better stability
-
+• Fix: a saved route now follows its stored line exactly, so leaderboard times are comparable
+• Smoother map after restoring a backup
+• Updated MapLibre engine and dependencies
