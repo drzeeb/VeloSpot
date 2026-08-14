@@ -130,8 +130,37 @@ class NavigationControllerCoverageTest {
     }
 
     @Test
-    fun `simulateTo without a location is a no-op`() = runTest {
+    fun `recording-only mock is engaged and can pause, resume and stop`() = runTest {
+        // A recording-only mock (simulateTo, no navigation) must be engaged so the
+        // ride controls can pause/resume/stop it: pausing stops the ticker but keeps
+        // it engaged (resumable); resuming ticks again from the saved position; and a
+        // full stop clears the engagement entirely.
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val c = controller(scope)
+
+        c.simulateTo(GeoCoordinate(49.76, 6.65))
+        // Let the simulator drive a little so travelledMeters is non-zero, then stop
+        // driving before it finishes (advancing a bounded amount, not until idle).
+        testScheduler.advanceTimeBy(1_500L)
+        assertTrue(c.isSimulating.value)
+        assertTrue(c.isSimulationEngaged)
+
+        c.pauseSimulationKeepingPosition()
+        assertEquals(false, c.isSimulating.value)
+        // Still engaged while paused so it can be resumed / stopped.
+        assertTrue(c.isSimulationEngaged)
+
+        c.resumeSimulation()
+        assertEquals(true, c.isSimulating.value)
+        assertTrue(c.isSimulationEngaged)
+
+        c.stopSimulation()
+        assertEquals(false, c.isSimulating.value)
+        assertEquals(false, c.isSimulationEngaged)
+    }
+
+    @Test
+    fun `simulateTo without a location is a no-op`() = runTest {        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
         val c = controller(scope, location = null)
 
         c.simulateTo(GeoCoordinate(49.76, 6.65))
