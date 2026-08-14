@@ -451,6 +451,8 @@
     <string name="wrapped_range_empty">No hay rutas en ese rango de fechas.</string>
     <string name="wrapped_range_cancel">Cancelar</string>
     <string name="wrapped_range_confirm">Crear</string>
+    <string name="wrapped_range_start">Fecha de inicio</string>
+    <string name="wrapped_range_end">Fecha de fin</string>
     <string name="wrapped_intro_headline">Has pedaleado</string>
     <string name="wrapped_record_kicker">¡Nuevo récord personal!</string>
     <string name="wrapped_vs_previous_caption">%1$s respecto al periodo anterior</string>

@@ -451,6 +451,8 @@
     <string name="wrapped_range_empty">Aucune sortie dans cette plage de dates.</string>
     <string name="wrapped_range_cancel">Annuler</string>
     <string name="wrapped_range_confirm">Créer</string>
+    <string name="wrapped_range_start">Date de début</string>
+    <string name="wrapped_range_end">Date de fin</string>
     <string name="wrapped_intro_headline">Vous avez roulé</string>
     <string name="wrapped_record_kicker">Nouveau record personnel !</string>
     <string name="wrapped_vs_previous_caption">%1$s par rapport à la période précédente</string>

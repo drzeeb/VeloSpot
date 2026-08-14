@@ -209,6 +209,8 @@
     <string name="wrapped_range_empty">No rides in that date range.</string>
     <string name="wrapped_range_cancel">Cancel</string>
     <string name="wrapped_range_confirm">Create</string>
+    <string name="wrapped_range_start">Start date</string>
+    <string name="wrapped_range_end">End date</string>
     <string name="wrapped_intro_headline">You rode</string>
     <string name="wrapped_record_kicker">New personal record!</string>
     <string name="wrapped_vs_previous_caption">%1$s vs the previous period</string>

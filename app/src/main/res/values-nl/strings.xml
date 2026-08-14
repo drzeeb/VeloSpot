@@ -449,6 +449,8 @@
     <string name="wrapped_range_empty">Geen ritten in dat datumbereik.</string>
     <string name="wrapped_range_cancel">Annuleren</string>
     <string name="wrapped_range_confirm">Maken</string>
+    <string name="wrapped_range_start">Startdatum</string>
+    <string name="wrapped_range_end">Einddatum</string>
     <string name="wrapped_intro_headline">Je reed</string>
     <string name="wrapped_record_kicker">Nieuw persoonlijk record!</string>
     <string name="wrapped_vs_previous_caption">%1$s ten opzichte van de vorige periode</string>
