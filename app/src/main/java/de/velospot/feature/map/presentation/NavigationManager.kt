@@ -719,9 +719,18 @@ class NavigationManager(private val context: Context) {
             // marker renderer) can take over again.
             (style.getSource(SOURCE_LOCATION) as? GeoJsonSource)
                 ?.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
-            // Clear the travelled-route overlay (the marker renderer will redraw
-            // SOURCE_ROUTE — empty, since navigation ended).
+            // Clear the travelled-route overlay.
             (style.getSource(SOURCE_ROUTE_TRAVELED) as? GeoJsonSource)
+                ?.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
+            // Clear the coloured "remaining" route line too. During navigation this
+            // manager owns SOURCE_ROUTE (see renderRouteSplit), writing to it behind
+            // the marker renderer's diff-gate cache. That cache therefore still
+            // believes SOURCE_ROUTE holds whatever it last drew (usually empty), so
+            // it skips the redraw when navigation ends — leaving our leftover
+            // remaining polyline on the map. Clearing it here removes it reliably;
+            // the marker renderer re-draws any legitimate preview/planning route on
+            // the next recomposition.
+            (style.getSource(SOURCE_ROUTE) as? GeoJsonSource)
                 ?.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
         }
         // Return to the preferred idle view: stay tilted in 3D, flatten in 2D.
