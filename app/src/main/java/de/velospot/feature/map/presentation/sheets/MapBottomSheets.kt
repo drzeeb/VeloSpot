@@ -142,11 +142,15 @@ internal fun MapBottomSheets(
         // Local Backup & Restore SAF flows — a create-document picker writes the
         // .vsbackup ZIP, an open-document picker reads it back (after a confirm).
         var pendingRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
+        // The picked create-backup destination, held until a passphrase is entered.
+        var pendingBackupUri by remember { mutableStateOf<android.net.Uri?>(null) }
+        // Toggles the automatic-backup schedule settings sheet.
+        var showBackupScheduleSheet by remember { mutableStateOf(false) }
         val backupCreateLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.CreateDocument(
                 de.velospot.core.backup.BackupSchema.MIME_TYPE
             )
-        ) { uri -> if (uri != null) viewModel.createBackup(uri) }
+        ) { uri -> if (uri != null) pendingBackupUri = uri }
         val backupOpenLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
         ) { uri -> if (uri != null) pendingRestoreUri = uri }
@@ -160,8 +164,20 @@ internal fun MapBottomSheets(
             onCreateBackup = { backupCreateLauncher.launch(viewModel.suggestedBackupFileName()) },
             // Accept any type so providers that report an unknown MIME for our custom
             // extension still list the file; the manifest check rejects foreign files.
-            onRestoreBackup = { backupOpenLauncher.launch(arrayOf("*/*")) }
+            onRestoreBackup = { backupOpenLauncher.launch(arrayOf("*/*")) },
+            onOpenBackupSchedule = { showBackupScheduleSheet = true }
         )
+
+        // Passphrase prompt for a new backup — encrypts the file on confirm.
+        pendingBackupUri?.let { uri ->
+            BackupPassphraseDialog(
+                onConfirm = { passphrase ->
+                    pendingBackupUri = null
+                    viewModel.createBackup(uri, passphrase)
+                },
+                onDismiss = { pendingBackupUri = null }
+            )
+        }
 
         // Replace-all confirmation before importing a picked backup.
         pendingRestoreUri?.let { uri ->
@@ -173,7 +189,8 @@ internal fun MapBottomSheets(
                     androidx.compose.material3.TextButton(onClick = {
                         pendingRestoreUri = null
                         screenUiState.closeAbout()
-                        viewModel.restoreBackup(uri)
+                        // Checks encryption: restores directly, or opens the passphrase prompt.
+                        viewModel.beginRestore(uri)
                     }) { androidx.compose.material3.Text(stringResource(R.string.restore_confirm_button)) }
                 },
                 dismissButton = {
@@ -183,7 +200,16 @@ internal fun MapBottomSheets(
                 }
             )
         }
+
+        if (showBackupScheduleSheet) {
+            BackupScheduleSettingsSheet(onDismiss = { showBackupScheduleSheet = false })
+        }
     }
+
+    // Passphrase prompt for restoring an encrypted backup. Hosted outside the About
+    // block so it survives the sheet closing on confirm; a wrong passphrase keeps
+    // the file pending so the user can retry without re-picking.
+    RestorePasswordPromptHost(viewModel)
 
     // "My rides" timeline (list of recorded rides).
     if (screenUiState.isRidesSheetVisible) {
@@ -472,5 +498,21 @@ internal fun MapBottomSheets(
                 .show()
         }
     )
+}
+
+/**
+ * Hosts the restore passphrase prompt for an encrypted backup. Collects the
+ * ViewModel's `restorePasswordPrompt` (the pending encrypted file) and shows the
+ * dialog while it is set; a wrong passphrase keeps it set so the user can retry.
+ */
+@Composable
+private fun RestorePasswordPromptHost(viewModel: MapViewModel) {
+    val restorePasswordPrompt by viewModel.restorePasswordPrompt.collectAsStateWithLifecycle()
+    restorePasswordPrompt?.let { uri ->
+        RestorePassphraseDialog(
+            onConfirm = { passphrase -> viewModel.restoreBackup(uri, passphrase) },
+            onDismiss = viewModel::cancelRestorePrompt
+        )
+    }
 }
 

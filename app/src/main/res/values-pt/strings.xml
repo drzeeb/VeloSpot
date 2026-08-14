@@ -325,6 +325,33 @@
     <string name="restore_confirm_message">Isto substitui todos os dados atuais neste dispositivo (percursos, locais guardados, favoritos, rotas, definições) pelo conteúdo da cópia de segurança. Esta ação não pode ser anulada.</string>
     <string name="restore_confirm_button">Restaurar</string>
 
+    <!-- Backups encriptados: pedidos de palavra-passe -->
+    <string name="backup_passphrase_title">Definir uma palavra-passe</string>
+    <string name="backup_passphrase_field">Palavra-passe</string>
+    <string name="backup_passphrase_confirm">Confirmar palavra-passe</string>
+    <string name="backup_passphrase_mismatch">As palavras-passe não coincidem</string>
+    <string name="backup_passphrase_required">Introduza uma palavra-passe</string>
+    <string name="restore_passphrase_title">Introduza a palavra-passe</string>
+    <string name="restore_wrong_password">Palavra-passe incorreta. Tente novamente.</string>
+
+    <!-- Backups automáticos (agendados) -->
+    <string name="backup_schedule_action">Backup automático</string>
+    <string name="backup_schedule_subtitle">Fazer backup por agendamento, encriptado</string>
+    <string name="backup_schedule_enable">Backup automático</string>
+    <string name="backup_schedule_interval_label">Com que frequência</string>
+    <string name="backup_schedule_interval_daily">Diário</string>
+    <string name="backup_schedule_interval_weekly">Semanal</string>
+    <string name="backup_schedule_interval_monthly">Mensal</string>
+    <string name="backup_schedule_time">Hora</string>
+    <string name="backup_schedule_folder">Pasta de backup</string>
+    <string name="backup_schedule_folder_none">Escolher uma pasta</string>
+    <string name="backup_schedule_passphrase">Palavra-passe</string>
+    <string name="backup_schedule_passphrase_set">Uma palavra-passe está definida</string>
+    <string name="backup_schedule_overwrite_note">Substitui o mesmo ficheiro de cada vez — uma cópia completa e encriptada guardada na pasta escolhida.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Escolha uma pasta e defina uma palavra-passe para ativar isto.</string>
+    <string name="backup_schedule_next_run">Próxima cópia de segurança: %1$s</string>
+
+
 
     <!-- Boas-vindas no primeiro arranque -->
     <string name="onboarding_skip">Ignorar</string>

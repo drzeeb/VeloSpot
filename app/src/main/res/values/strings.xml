@@ -475,6 +475,33 @@
     <string name="restore_confirm_message">This replaces all current data on this device (rides, saved places, favourites, routes, settings) with the contents of the backup. This cannot be undone.</string>
     <string name="restore_confirm_button">Restore</string>
 
+    <!-- Encrypted backups: passphrase prompts (manual create + restore) -->
+    <string name="backup_passphrase_title">Set a passphrase</string>
+    <string name="backup_passphrase_hint">You need this passphrase to restore the backup. It cannot be recovered — keep it safe.</string>
+    <string name="backup_passphrase_field">Passphrase</string>
+    <string name="backup_passphrase_confirm">Confirm passphrase</string>
+    <string name="backup_passphrase_mismatch">The passphrases do not match</string>
+    <string name="backup_passphrase_required">Enter a passphrase</string>
+    <string name="restore_passphrase_title">Enter the passphrase</string>
+    <string name="restore_wrong_password">Wrong passphrase. Please try again.</string>
+
+    <!-- Automatic (scheduled) backups -->
+    <string name="backup_schedule_action">Automatic backup</string>
+    <string name="backup_schedule_subtitle">Back up on a schedule, encrypted</string>
+    <string name="backup_schedule_enable">Automatic backup</string>
+    <string name="backup_schedule_interval_label">How often</string>
+    <string name="backup_schedule_interval_daily">Daily</string>
+    <string name="backup_schedule_interval_weekly">Weekly</string>
+    <string name="backup_schedule_interval_monthly">Monthly</string>
+    <string name="backup_schedule_time">Time</string>
+    <string name="backup_schedule_folder">Backup folder</string>
+    <string name="backup_schedule_folder_none">Choose a folder</string>
+    <string name="backup_schedule_passphrase">Passphrase</string>
+    <string name="backup_schedule_passphrase_set">A passphrase is set</string>
+    <string name="backup_schedule_overwrite_note">Overwrites the same file each time — a full, encrypted dump saved in the chosen folder.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Choose a folder and set a passphrase to enable this.</string>
+    <string name="backup_schedule_next_run">Next backup: %1$s</string>
+
     <!-- First-launch welcome onboarding -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>

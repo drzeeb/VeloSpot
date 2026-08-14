@@ -327,6 +327,34 @@
     <string name="restore_confirm_message">Cela remplace toutes les données actuelles de cet appareil (trajets, lieux enregistrés, favoris, itinéraires, réglages) par le contenu de la sauvegarde. Cette action est irréversible.</string>
     <string name="restore_confirm_button">Restaurer</string>
 
+    <!-- Sauvegardes chiffrées : invites de phrase secrète -->
+    <string name="backup_passphrase_title">Définir une phrase secrète</string>
+    <string name="backup_passphrase_hint">Vous aurez besoin de cette phrase secrète pour restaurer la sauvegarde. Elle ne peut pas être récupérée — conservez-la en lieu sûr.</string>
+    <string name="backup_passphrase_field">Phrase secrète</string>
+    <string name="backup_passphrase_confirm">Confirmer la phrase secrète</string>
+    <string name="backup_passphrase_mismatch">Les phrases secrètes ne correspondent pas</string>
+    <string name="backup_passphrase_required">Saisissez une phrase secrète</string>
+    <string name="restore_passphrase_title">Saisissez la phrase secrète</string>
+    <string name="restore_wrong_password">Phrase secrète incorrecte. Veuillez réessayer.</string>
+
+    <!-- Sauvegardes automatiques (planifiées) -->
+    <string name="backup_schedule_action">Sauvegarde automatique</string>
+    <string name="backup_schedule_subtitle">Sauvegarde planifiée et chiffrée</string>
+    <string name="backup_schedule_enable">Sauvegarde automatique</string>
+    <string name="backup_schedule_interval_label">Fréquence</string>
+    <string name="backup_schedule_interval_daily">Quotidienne</string>
+    <string name="backup_schedule_interval_weekly">Hebdomadaire</string>
+    <string name="backup_schedule_interval_monthly">Mensuelle</string>
+    <string name="backup_schedule_time">Heure</string>
+    <string name="backup_schedule_folder">Dossier de sauvegarde</string>
+    <string name="backup_schedule_folder_none">Choisir un dossier</string>
+    <string name="backup_schedule_passphrase">Phrase secrète</string>
+    <string name="backup_schedule_passphrase_set">Une phrase secrète est définie</string>
+    <string name="backup_schedule_overwrite_note">Écrase le même fichier à chaque fois — une sauvegarde complète et chiffrée dans le dossier choisi.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Choisissez un dossier et définissez une phrase secrète pour activer cette option.</string>
+    <string name="backup_schedule_next_run">Prochaine sauvegarde : %1$s</string>
+
+
 
     <!-- Accueil au premier lancement -->
     <string name="onboarding_skip">Passer</string>

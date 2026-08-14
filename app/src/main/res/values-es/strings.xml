@@ -283,6 +283,34 @@
     <string name="restore_confirm_message">Esto reemplaza todos los datos actuales de este dispositivo (rutas, lugares guardados, favoritos, itinerarios, ajustes) por el contenido de la copia. Esto no se puede deshacer.</string>
     <string name="restore_confirm_button">Restaurar</string>
 
+    <!-- Copias de seguridad cifradas: solicitudes de frase de contraseña -->
+    <string name="backup_passphrase_title">Establecer una frase de contraseña</string>
+    <string name="backup_passphrase_hint">Necesitas esta frase de contraseña para restaurar la copia de seguridad. No se puede recuperar: guárdala en un lugar seguro.</string>
+    <string name="backup_passphrase_field">Frase de contraseña</string>
+    <string name="backup_passphrase_confirm">Confirmar frase de contraseña</string>
+    <string name="backup_passphrase_mismatch">Las frases de contraseña no coinciden</string>
+    <string name="backup_passphrase_required">Introduce una frase de contraseña</string>
+    <string name="restore_passphrase_title">Introduce la frase de contraseña</string>
+    <string name="restore_wrong_password">Frase de contraseña incorrecta. Inténtalo de nuevo.</string>
+
+    <!-- Copias de seguridad automáticas (programadas) -->
+    <string name="backup_schedule_action">Copia de seguridad automática</string>
+    <string name="backup_schedule_subtitle">Copia de seguridad programada y cifrada</string>
+    <string name="backup_schedule_enable">Copia de seguridad automática</string>
+    <string name="backup_schedule_interval_label">Con qué frecuencia</string>
+    <string name="backup_schedule_interval_daily">Diaria</string>
+    <string name="backup_schedule_interval_weekly">Semanal</string>
+    <string name="backup_schedule_interval_monthly">Mensual</string>
+    <string name="backup_schedule_time">Hora</string>
+    <string name="backup_schedule_folder">Carpeta de copia de seguridad</string>
+    <string name="backup_schedule_folder_none">Elegir una carpeta</string>
+    <string name="backup_schedule_passphrase">Frase de contraseña</string>
+    <string name="backup_schedule_passphrase_set">Hay una frase de contraseña establecida</string>
+    <string name="backup_schedule_overwrite_note">Sobrescribe el mismo archivo cada vez: una copia completa y cifrada guardada en la carpeta elegida.</string>
+    <string name="backup_schedule_needs_folder_passphrase">Elige una carpeta y establece una frase de contraseña para activarlo.</string>
+    <string name="backup_schedule_next_run">Próxima copia: %1$s</string>
+
+
 
     <!-- Bienvenida en el primer inicio -->
     <string name="onboarding_skip">Omitir</string>

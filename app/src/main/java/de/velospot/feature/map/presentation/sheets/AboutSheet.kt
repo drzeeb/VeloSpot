@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.SaveAlt
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -65,7 +66,8 @@ internal fun AboutSheet(
     onDismiss: () -> Unit,
     onReplayOnboarding: () -> Unit = {},
     onCreateBackup: () -> Unit = {},
-    onRestoreBackup: () -> Unit = {}
+    onRestoreBackup: () -> Unit = {},
+    onOpenBackupSchedule: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
@@ -185,6 +187,12 @@ internal fun AboutSheet(
                 title = stringResource(id = R.string.restore_action),
                 subtitle = stringResource(id = R.string.restore_subtitle),
                 onClick = onRestoreBackup
+            )
+            AboutActionRow(
+                icon = Icons.Default.Schedule,
+                title = stringResource(id = R.string.backup_schedule_action),
+                subtitle = stringResource(id = R.string.backup_schedule_subtitle),
+                onClick = onOpenBackupSchedule
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
