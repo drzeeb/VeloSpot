@@ -61,5 +61,14 @@ class WrappedScheduleEditsTest {
         assertEquals(7, ok.hour)
         assertEquals(45, ok.minute)
     }
+
+    @Test
+    fun `withNotifyOnGenerate toggles the flag`() {
+        assertEquals(false, WrappedScheduleEdits.withNotifyOnGenerate(base, false).notifyOnGenerate)
+        assertEquals(
+            true,
+            WrappedScheduleEdits.withNotifyOnGenerate(base.copy(notifyOnGenerate = false), true).notifyOnGenerate
+        )
+    }
 }
 

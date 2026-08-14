@@ -61,9 +61,13 @@ internal class WrappedWorker @AssistedInject constructor(
                         hasReport = report != null
                     )
                 ) {
+                    // A fresh report was built ⇒ always save it; notify only when the
+                    // user left the "notify when created" toggle on.
                     WrappedWorkOutcome.SAVE_AND_NOTIFY -> {
                         wrappedRepository.saveReport(report!!)
-                        notifier.notifyNewReport(report)
+                        if (schedule.notifyOnGenerate) {
+                            notifier.notifyNewReport(report)
+                        }
                     }
                     // Empty period ⇒ skip: no report, no notification.
                     else -> Unit

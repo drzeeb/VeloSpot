@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Re-arms the "VeloSpot Wrapped" scheduler after events that clear WorkManager's
- * pending one-shot work: a device reboot (`ACTION_BOOT_COMPLETED`) and an app update
+ * Re-arms the "VeloSpot Wrapped" scheduler after events that clear the pending
+ * exact alarm: a device reboot (`ACTION_BOOT_COMPLETED`) and an app update
  * (`MY_PACKAGE_REPLACED`). Without this the self-rescheduling chain would be broken
  * by a reboot until the app is next opened.
  *

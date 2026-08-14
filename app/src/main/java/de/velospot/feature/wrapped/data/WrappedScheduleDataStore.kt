@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.velospot.feature.wrapped.domain.WrappedInterval
+import de.velospot.feature.wrapped.domain.WrappedPeriodMode
 import de.velospot.feature.wrapped.domain.WrappedSchedule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -78,7 +79,9 @@ internal object WrappedScheduleMapping {
         dayOfWeek = Calendar.SUNDAY,
         dayOfMonth = 1,
         hour = 20,
-        minute = 0
+        minute = 0,
+        periodMode = WrappedPeriodMode.CALENDAR_CURRENT,
+        notifyOnGenerate = true
     )
 
     private val KEY_ENABLED = booleanPreferencesKey("wrapped_schedule_enabled")
@@ -87,6 +90,8 @@ internal object WrappedScheduleMapping {
     private val KEY_DAY_OF_MONTH = intPreferencesKey("wrapped_schedule_day_of_month")
     private val KEY_HOUR = intPreferencesKey("wrapped_schedule_hour")
     private val KEY_MINUTE = intPreferencesKey("wrapped_schedule_minute")
+    private val KEY_PERIOD_MODE = stringPreferencesKey("wrapped_schedule_period_mode")
+    private val KEY_NOTIFY = booleanPreferencesKey("wrapped_schedule_notify")
 
     /** Reads a [WrappedSchedule], falling back to [DEFAULT] for any missing key. */
     fun fromPreferences(prefs: Preferences): WrappedSchedule = WrappedSchedule(
@@ -95,7 +100,9 @@ internal object WrappedScheduleMapping {
         dayOfWeek = prefs[KEY_DAY_OF_WEEK] ?: DEFAULT.dayOfWeek,
         dayOfMonth = prefs[KEY_DAY_OF_MONTH] ?: DEFAULT.dayOfMonth,
         hour = prefs[KEY_HOUR] ?: DEFAULT.hour,
-        minute = prefs[KEY_MINUTE] ?: DEFAULT.minute
+        minute = prefs[KEY_MINUTE] ?: DEFAULT.minute,
+        periodMode = prefs[KEY_PERIOD_MODE]?.let(::periodModeOrDefault) ?: DEFAULT.periodMode,
+        notifyOnGenerate = prefs[KEY_NOTIFY] ?: DEFAULT.notifyOnGenerate
     )
 
     /** Writes every field of [schedule] into a mutable [Preferences]. */
@@ -106,11 +113,17 @@ internal object WrappedScheduleMapping {
         prefs[KEY_DAY_OF_MONTH] = schedule.dayOfMonth
         prefs[KEY_HOUR] = schedule.hour
         prefs[KEY_MINUTE] = schedule.minute
+        prefs[KEY_PERIOD_MODE] = schedule.periodMode.name
+        prefs[KEY_NOTIFY] = schedule.notifyOnGenerate
     }
 
     /** Parses a stored interval name, tolerating an unknown/corrupt value. */
     private fun intervalOrDefault(name: String): WrappedInterval =
         WrappedInterval.entries.firstOrNull { it.name == name } ?: DEFAULT.interval
+
+    /** Parses a stored period-mode name, tolerating an unknown/corrupt value. */
+    private fun periodModeOrDefault(name: String): WrappedPeriodMode =
+        WrappedPeriodMode.entries.firstOrNull { it.name == name } ?: DEFAULT.periodMode
 }
 
 
