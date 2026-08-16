@@ -69,7 +69,8 @@ internal fun AddressSearchBar(
     onQueryChange: (String) -> Unit,
     onResultSelected: (AddressSearchResult) -> Unit,
     onRecentSelected: (RecentDestination) -> Unit = {},
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     val focusManager   = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -98,7 +99,10 @@ internal fun AddressSearchBar(
                 modifier      = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
-                    .onFocusChanged { isFocused = it.isFocused },
+                    .onFocusChanged {
+                        isFocused = it.isFocused
+                        onFocusChanged(it.isFocused)
+                    },
                 placeholder   = {
                     Text(
                         text  = stringResource(R.string.search_placeholder),

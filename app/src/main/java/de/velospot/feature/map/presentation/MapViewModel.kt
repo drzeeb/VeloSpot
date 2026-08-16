@@ -840,6 +840,16 @@ class MapViewModel @Inject constructor(
     }
 
     /**
+     * Dismisses the address search bar without discarding the rider's work: the
+     * results/recents dropdown is collapsed while the typed query and any selected
+     * search pin are kept intact. Called when the rider "taps away" (e.g. taps or
+     * pans the map) so the keyboard and suggestions disappear but nothing is lost.
+     */
+    fun onSearchDismissed() {
+        addressSearch.collapseResults()
+    }
+
+    /**
      * Called when the user taps on an empty map location.
      * Places a custom pin there and dismisses any open space/search-pin sheets.
      *
