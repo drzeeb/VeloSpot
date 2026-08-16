@@ -47,10 +47,13 @@ class BikePhotoStorage @Inject constructor(
     override suspend fun savePhoto(bikeId: String, sourceUri: Uri): String? = withContext(Dispatchers.IO) {
         runCatching {
             // 1) Read just the bounds to compute a cheap power-of-two pre-scale.
+            //    NOTE: in `inJustDecodeBounds` mode `decodeStream` *always* returns
+            //    null (it only fills `bounds`), so the null-check must be on the
+            //    stream — not on the decode result — or every save would bail here.
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            context.contentResolver.openInputStream(sourceUri)?.use {
-                BitmapFactory.decodeStream(it, null, bounds)
-            } ?: return@runCatching null
+            val opened = context.contentResolver.openInputStream(sourceUri)
+                ?: return@runCatching null
+            opened.use { BitmapFactory.decodeStream(it, null, bounds) }
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@runCatching null
 
             val decodeOptions = BitmapFactory.Options().apply {
