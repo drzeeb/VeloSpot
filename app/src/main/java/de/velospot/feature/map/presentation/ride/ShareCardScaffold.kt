@@ -40,6 +40,24 @@ internal const val SHARE_CARD_MARGIN = 80f
 internal const val SHARE_CARD_WHITE = 0xFFFFFFFF.toInt()
 internal const val SHARE_CARD_WHITE_70 = 0xB3FFFFFF.toInt()
 
+/** Distance (px) of the centred footer text baseline from the card's bottom edge. */
+internal const val SHARE_CARD_FOOTER_BASELINE_FROM_BOTTOM = 70f
+
+/** Text size (px) of the centred footer line. */
+internal const val SHARE_CARD_FOOTER_TEXT_SIZE = 30f
+
+/** The y (px) of the footer text baseline for a card of [height] px. */
+internal fun shareCardFooterBaseline(height: Int = SHARE_CARD_HEIGHT): Float =
+    height - SHARE_CARD_FOOTER_BASELINE_FROM_BOTTOM
+
+/**
+ * The approximate visual *top* (px) of the footer text — the baseline lifted by
+ * (about) one text-size worth of ascent. Card content drawn above this y with a
+ * little breathing room is guaranteed not to collide with the footer.
+ */
+internal fun shareCardFooterTop(height: Int = SHARE_CARD_HEIGHT): Float =
+    shareCardFooterBaseline(height) - SHARE_CARD_FOOTER_TEXT_SIZE
+
 /** Fill / border colours of the reusable "glass" panels. */
 private const val GLASS_FILL = 0x1FFFFFFF
 private const val GLASS_BORDER = 0x33FFFFFF
@@ -190,10 +208,10 @@ private fun drawFooter(canvas: Canvas, w: Int, h: Int, footer: String) {
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = SHARE_CARD_WHITE_70
         typeface = Typeface.SANS_SERIF
-        textSize = 30f
+        textSize = SHARE_CARD_FOOTER_TEXT_SIZE
         textAlign = Paint.Align.CENTER
         letterSpacing = 0.04f
     }
-    canvas.drawText(footer, w / 2f, h - 70f, paint)
+    canvas.drawText(footer, w / 2f, shareCardFooterBaseline(h), paint)
 }
 

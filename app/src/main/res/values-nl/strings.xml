@@ -478,6 +478,12 @@
     <string name="bike_photo_remove">Foto verwijderen</string>
     <string name="bike_photo_cd">Fietsfoto</string>
     <string name="bike_photo_placeholder_cd">Geen fietsfoto — tik om er een toe te voegen</string>
+    <string name="bike_photo_crop_title">Kader je foto uit</string>
+    <string name="bike_photo_crop_hint">Sleep om te verplaatsen en knijp om te zoomen, bevestig daarna het deel dat je wilt tonen.</string>
+    <string name="bike_photo_crop_confirm">Foto gebruiken</string>
+    <string name="bike_photo_crop_cancel">Annuleren</string>
+    <string name="bike_photo_crop_confirm_cd">De uitgekaderde foto gebruiken</string>
+    <string name="bike_photo_crop_cancel_cd">Bijsnijden annuleren</string>
     <!-- Bike Sharepic (shareable image) -->
     <string name="bike_share_action">Fiets delen</string>
     <string name="bike_share_cd">Fiets als afbeelding delen</string>

@@ -480,6 +480,12 @@
     <string name="bike_photo_remove">Supprimer la photo</string>
     <string name="bike_photo_cd">Photo du vélo</string>
     <string name="bike_photo_placeholder_cd">Aucune photo du vélo — appuyez pour en ajouter une</string>
+    <string name="bike_photo_crop_title">Cadrez votre photo</string>
+    <string name="bike_photo_crop_hint">Faites glisser pour déplacer et pincez pour zoomer, puis confirmez la partie à afficher.</string>
+    <string name="bike_photo_crop_confirm">Utiliser la photo</string>
+    <string name="bike_photo_crop_cancel">Annuler</string>
+    <string name="bike_photo_crop_confirm_cd">Utiliser la photo cadrée</string>
+    <string name="bike_photo_crop_cancel_cd">Annuler le recadrage</string>
     <!-- Bike Sharepic (shareable image) -->
     <string name="bike_share_action">Partager le vélo</string>
     <string name="bike_share_cd">Partager le vélo sous forme d\'image</string>

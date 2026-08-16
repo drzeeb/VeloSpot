@@ -8,7 +8,9 @@ import android.media.ExifInterface
 import android.graphics.Matrix
 import androidx.core.graphics.scale
 import dagger.hilt.android.qualifiers.ApplicationContext
+import de.velospot.core.photo.BikePhotoCrop
 import de.velospot.core.photo.BikePhotoScaling
+import de.velospot.core.photo.NormalizedCropRect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -44,7 +46,19 @@ class BikePhotoStorage @Inject constructor(
      * re-encoded as JPEG. Returns the absolute path of the stored file, or `null`
      * when the source could not be read / decoded.
      */
-    override suspend fun savePhoto(bikeId: String, sourceUri: Uri): String? = withContext(Dispatchers.IO) {
+    override suspend fun savePhoto(bikeId: String, sourceUri: Uri): String? =
+        savePhoto(bikeId, sourceUri, crop = null)
+
+    /**
+     * As [savePhoto], but first applies the rider-chosen framing [crop] (a
+     * normalized 0..1 rect in the EXIF-oriented source) so the stored JPEG is
+     * exactly the framed region before it is downscaled + encoded.
+     */
+    override suspend fun savePhoto(
+        bikeId: String,
+        sourceUri: Uri,
+        crop: NormalizedCropRect?
+    ): String? = withContext(Dispatchers.IO) {
         runCatching {
             // 1) Read just the bounds to compute a cheap power-of-two pre-scale.
             //    NOTE: in `inJustDecodeBounds` mode `decodeStream` *always* returns
@@ -66,20 +80,27 @@ class BikePhotoStorage @Inject constructor(
             // 2) Respect the photo's EXIF orientation so portrait shots aren't sideways.
             val oriented = applyExifOrientation(sourceUri, decoded)
 
-            // 3) Resize exactly to fit the cap, then re-encode as JPEG.
-            val (w, h) = BikePhotoScaling.targetDimensions(oriented.width, oriented.height)
-            val scaled = if (w != oriented.width || h != oriented.height) {
-                oriented.scale(w, h)
+            // 3) Apply the rider's framing crop (if any) to the oriented bitmap. The
+            //    normalized rect is relative to the EXIF-oriented image, exactly what
+            //    the crop UI displayed, so the framed region is honoured 1:1.
+            val cropped = applyCrop(oriented, crop)
+
+            // 4) Resize exactly to fit the cap, then re-encode as JPEG.
+            val (w, h) = BikePhotoScaling.targetDimensions(cropped.width, cropped.height)
+            val scaled = if (w != cropped.width || h != cropped.height) {
+                cropped.scale(w, h)
             } else {
-                oriented
+                cropped
             }
 
             val file = photoFile(bikeId)
             FileOutputStream(file).use { out ->
                 scaled.compress(Bitmap.CompressFormat.JPEG, BikePhotoScaling.JPEG_QUALITY, out)
             }
-            if (scaled !== decoded) scaled.recycle()
-            if (oriented !== decoded && oriented !== scaled) oriented.recycle()
+            // Recycle every intermediate we own (never the shared `decoded` twice).
+            if (scaled !== cropped) scaled.recycle()
+            if (cropped !== oriented && cropped !== scaled) cropped.recycle()
+            if (oriented !== decoded && oriented !== scaled && oriented !== cropped) oriented.recycle()
             decoded.recycle()
             file.absolutePath
         }.getOrNull()
@@ -91,6 +112,22 @@ class BikePhotoStorage @Inject constructor(
         Unit
     }
 
+
+    /**
+     * Crops [bitmap] to the rider-chosen framing [crop]. A `null` or full-image
+     * crop returns [bitmap] unchanged (so the caller's recycle bookkeeping still
+     * works via referential equality).
+     */
+    private fun applyCrop(bitmap: Bitmap, crop: NormalizedCropRect?): Bitmap {
+        if (crop == null || crop.isFull) return bitmap
+        val px = BikePhotoCrop.sourcePixels(bitmap.width, bitmap.height, crop)
+        // Guard against a degenerate rect (already clamped, but stay defensive).
+        if (px.width <= 0 || px.height <= 0) return bitmap
+        if (px.left == 0 && px.top == 0 && px.width == bitmap.width && px.height == bitmap.height) {
+            return bitmap
+        }
+        return Bitmap.createBitmap(bitmap, px.left, px.top, px.width, px.height)
+    }
 
     private fun applyExifOrientation(sourceUri: Uri, bitmap: Bitmap): Bitmap {
         val rotation = runCatching {

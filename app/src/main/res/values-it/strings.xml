@@ -480,6 +480,12 @@
     <string name="bike_photo_remove">Rimuovi foto</string>
     <string name="bike_photo_cd">Foto della bici</string>
     <string name="bike_photo_placeholder_cd">Nessuna foto della bici: tocca per aggiungerne una</string>
+    <string name="bike_photo_crop_title">Inquadra la tua foto</string>
+    <string name="bike_photo_crop_hint">Trascina per spostare e pizzica per ingrandire, poi conferma la parte da mostrare.</string>
+    <string name="bike_photo_crop_confirm">Usa foto</string>
+    <string name="bike_photo_crop_cancel">Annulla</string>
+    <string name="bike_photo_crop_confirm_cd">Usa la foto inquadrata</string>
+    <string name="bike_photo_crop_cancel_cd">Annulla il ritaglio</string>
     <!-- Bike Sharepic (shareable image) -->
     <string name="bike_share_action">Condividi bici</string>
     <string name="bike_share_cd">Condividi la bici come immagine</string>

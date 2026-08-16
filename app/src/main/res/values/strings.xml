@@ -210,6 +210,13 @@
     <string name="bike_photo_remove">Remove photo</string>
     <string name="bike_photo_cd">Bike photo</string>
     <string name="bike_photo_placeholder_cd">No bike photo — tap to add one</string>
+    <!-- Bike photo framing / crop step -->
+    <string name="bike_photo_crop_title">Frame your photo</string>
+    <string name="bike_photo_crop_hint">Drag to move and pinch to zoom, then confirm the part you want to show.</string>
+    <string name="bike_photo_crop_confirm">Use photo</string>
+    <string name="bike_photo_crop_cancel">Cancel</string>
+    <string name="bike_photo_crop_confirm_cd">Use the framed photo</string>
+    <string name="bike_photo_crop_cancel_cd">Cancel cropping</string>
     <!-- Bike Sharepic (shareable image) -->
     <string name="bike_share_action">Share bike</string>
     <string name="bike_share_cd">Share bike as image</string>

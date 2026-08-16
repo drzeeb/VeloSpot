@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.velospot.data.photo.BikePhotoStore
+import de.velospot.core.photo.NormalizedCropRect
 import de.velospot.domain.model.BikeProfile
 import de.velospot.domain.model.BikeType
 import de.velospot.domain.model.RecordedRideSummary
@@ -177,9 +178,11 @@ class BikeProfilesViewModel @Inject constructor(
         draft: BikeDraft,
         existingPath: String?
     ): String? = when {
-        // A new image was picked: copy/downscale it (overwrites any previous file).
+        // A new image was picked: copy/downscale it (overwrites any previous file),
+        // first applying the rider's chosen framing crop when they set one.
         draft.pendingPhotoUri != null ->
-            bikePhotoStorage.savePhoto(id, Uri.parse(draft.pendingPhotoUri)) ?: existingPath
+            bikePhotoStorage.savePhoto(id, Uri.parse(draft.pendingPhotoUri), draft.pendingPhotoCrop)
+                ?: existingPath
         // The rider removed the photo: drop the stored file and clear the path.
         existingPath != null && draft.photoPath == null -> {
             bikePhotoStorage.deletePhoto(id)
@@ -213,7 +216,12 @@ data class BikeDraft(
      * A freshly-picked gallery image (`content://` Uri as a String) not yet copied
      * into app storage. When set it takes precedence over [photoPath] on save.
      */
-    val pendingPhotoUri: String? = null
+    val pendingPhotoUri: String? = null,
+    /**
+     * The rider's chosen framing/crop for [pendingPhotoUri] (normalized 0..1 rect),
+     * or `null` for the whole image. Only meaningful while [pendingPhotoUri] is set.
+     */
+    val pendingPhotoCrop: NormalizedCropRect? = null
 ) {
     val isValid: Boolean get() = name.isNotBlank()
 

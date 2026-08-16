@@ -478,6 +478,12 @@
     <string name="bike_photo_remove">Foto ewechhuelen</string>
     <string name="bike_photo_cd">Vëlosfoto</string>
     <string name="bike_photo_placeholder_cd">Keng Vëlosfoto – tipp fir eng derbäizesetzen</string>
+    <string name="bike_photo_crop_title">Däi Foto zoumaachen</string>
+    <string name="bike_photo_crop_hint">Zéien fir ze réckelen a mat zwee Fanger fir ze zoomen, da bestäteg de sichtbaren Deel.</string>
+    <string name="bike_photo_crop_confirm">Foto benotzen</string>
+    <string name="bike_photo_crop_cancel">Ofbriechen</string>
+    <string name="bike_photo_crop_confirm_cd">De zougeschniddene Foto benotzen</string>
+    <string name="bike_photo_crop_cancel_cd">Zouschneiden ofbriechen</string>
     <!-- Bike Sharepic (shareable image) -->
     <string name="bike_share_action">Vëlo deelen</string>
     <string name="bike_share_cd">Vëlo als Bild deelen</string>

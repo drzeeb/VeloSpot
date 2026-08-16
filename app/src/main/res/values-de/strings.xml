@@ -484,6 +484,12 @@
     <string name="bike_photo_remove">Foto entfernen</string>
     <string name="bike_photo_cd">Fahrradfoto</string>
     <string name="bike_photo_placeholder_cd">Kein Fahrradfoto – zum Hinzufügen tippen</string>
+    <string name="bike_photo_crop_title">Foto zuschneiden</string>
+    <string name="bike_photo_crop_hint">Zum Verschieben ziehen und zum Zoomen aufziehen, dann den sichtbaren Bereich bestätigen.</string>
+    <string name="bike_photo_crop_confirm">Foto verwenden</string>
+    <string name="bike_photo_crop_cancel">Abbrechen</string>
+    <string name="bike_photo_crop_confirm_cd">Zugeschnittenes Foto verwenden</string>
+    <string name="bike_photo_crop_cancel_cd">Zuschneiden abbrechen</string>
     <!-- Bike Sharepic (shareable image) -->
     <string name="bike_share_action">Fahrrad teilen</string>
     <string name="bike_share_cd">Fahrrad als Bild teilen</string>

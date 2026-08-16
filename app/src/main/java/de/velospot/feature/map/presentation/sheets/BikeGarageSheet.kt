@@ -417,12 +417,16 @@ private fun BikeEditorSheet(
 
     var draft by remember { mutableStateOf(initial) }
 
-    // Android Photo Picker (image-only) — copies the picked image into app storage
-    // on save (handled in the ViewModel), so no storage permission is needed here.
+    // The just-picked image awaiting the framing/crop step (null = crop closed).
+    var cropUri by remember { mutableStateOf<String?>(null) }
+
+    // Android Photo Picker (image-only) — after a pick we open the in-app crop step;
+    // the picked image is only copied into app storage on save (in the ViewModel),
+    // so no storage permission is needed here.
     val photoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
-        if (uri != null) draft = draft.copy(pendingPhotoUri = uri.toString())
+        if (uri != null) cropUri = uri.toString()
     }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
@@ -479,7 +483,11 @@ private fun BikeEditorSheet(
                     }
                     if (draft.hasPhoto) {
                         TextButton(onClick = {
-                            draft = draft.copy(photoPath = null, pendingPhotoUri = null)
+                            draft = draft.copy(
+                                photoPath = null,
+                                pendingPhotoUri = null,
+                                pendingPhotoCrop = null
+                            )
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
@@ -636,6 +644,18 @@ private fun BikeEditorSheet(
             }
             Spacer(Modifier.height(12.dp))
         }
+    }
+
+    // Framing/crop step for a freshly-picked image (pick → crop → set on draft).
+    cropUri?.let { uri ->
+        BikePhotoCropDialog(
+            photoUri = uri,
+            onCancel = { cropUri = null },
+            onConfirm = { crop ->
+                draft = draft.copy(pendingPhotoUri = uri, pendingPhotoCrop = crop)
+                cropUri = null
+            }
+        )
     }
 }
 
