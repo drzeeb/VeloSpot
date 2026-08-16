@@ -378,6 +378,7 @@
     <!-- Ride tracking ("Mijn ritten") -->
     <string name="menu_my_rides">Mijn ritten</string>
     <string name="rides_title">Mijn ritten</string>
+    <string name="rides_more_actions">Meer opties</string>
     <string name="rides_count">%1$d ritten</string>
     <string name="rides_active_count">%1$d actieve ritten</string>
     <string name="rides_empty_title">Nog geen ritten</string>

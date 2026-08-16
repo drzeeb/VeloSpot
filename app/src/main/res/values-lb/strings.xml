@@ -378,6 +378,7 @@
     <!-- Ride tracking ("Meng Touren") -->
     <string name="menu_my_rides">Meng Touren</string>
     <string name="rides_title">Meng Touren</string>
+    <string name="rides_more_actions">Méi Optiounen</string>
     <string name="rides_count">%1$d Touren</string>
     <string name="rides_active_count">%1$d aktiv Touren</string>
     <string name="rides_empty_title">Nach keng Touren</string>

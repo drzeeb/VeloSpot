@@ -380,6 +380,7 @@
     <!-- Ride tracking ("Mis rutas") -->
     <string name="menu_my_rides">Mis rutas</string>
     <string name="rides_title">Mis rutas</string>
+    <string name="rides_more_actions">Más opciones</string>
     <string name="rides_count">%1$d rutas</string>
     <string name="rides_active_count">%1$d rutas activas</string>
     <string name="rides_empty_title">Aún no hay rutas</string>

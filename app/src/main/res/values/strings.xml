@@ -109,6 +109,8 @@
     <!-- Ride tracking ("My rides" timeline) -->
     <string name="menu_my_rides">My rides</string>
     <string name="rides_title">My rides</string>
+    <!-- Content description for the overflow (three-dots) menu that holds Import / Export / Merge -->
+    <string name="rides_more_actions">More actions</string>
     <string name="rides_count">%1$d rides</string>
     <string name="rides_active_count">%1$d active rides</string>
     <string name="rides_empty_title">No rides yet</string>

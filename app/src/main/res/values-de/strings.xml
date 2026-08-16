@@ -384,6 +384,7 @@
     <!-- Ride tracking ("Meine Fahrten") -->
     <string name="menu_my_rides">Meine Fahrten</string>
     <string name="rides_title">Meine Fahrten</string>
+    <string name="rides_more_actions">Weitere Optionen</string>
     <string name="rides_count">%1$d Fahrten</string>
     <string name="rides_active_count">%1$d aktive Fahrten</string>
     <string name="rides_empty_title">Noch keine Fahrten</string>

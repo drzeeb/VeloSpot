@@ -7,7 +7,9 @@ import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,13 +18,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMerge
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
@@ -30,22 +35,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,8 +57,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -90,8 +94,10 @@ internal fun RidesSheet(
     onImport: () -> Unit,
     onOpenWrapped: () -> Unit
 ) {
-    // Always open fully expanded (no half-height peek) so the whole list shows.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // A partially-expanded (peek) state lets riders keep an eye on the map behind
+    // the sheet, while a swipe-up reveals the full timeline. Selection/merge mode
+    // still works in either snap state.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val dateFormat = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT) }
     val statistics = remember(rides) { computeRideStatistics(rides) }
 
@@ -157,232 +163,305 @@ internal fun RidesSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .padding(bottom = 8.dp)
         ) {
-            // Header: title/subtitle on the left, the three utility actions
-            // (Import / Export / Merge) as compact tooltip icon buttons on the
-            // right. Icon buttons keep the actions on one line on any width, so
-            // the "Merge" label can no longer wrap awkwardly. They collapse while
-            // picking rides so the selection title has the full width.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SheetHeader(
-                    modifier = Modifier.weight(1f),
-                    title = when {
-                        mergeMode -> stringResource(R.string.ride_merge_select_hint)
-                        selectionMode -> stringResource(R.string.ride_export_select_hint)
-                        else -> stringResource(R.string.rides_title)
-                    },
-                    subtitle = when {
-                        mergeMode && selectedIds.size < 2 ->
-                            stringResource(R.string.ride_merge_min_selection)
-                        mergeMode ->
-                            stringResource(R.string.ride_merge_selected_count, selectedIds.size)
-                        selectionMode ->
-                            stringResource(R.string.ride_export_selected_count, selectedIds.size)
-                        rides.isEmpty() -> null
-                        // The stats card owns the authoritative "all rides" total,
-                        // so the header only counts the rides shown in the timeline
-                        // to avoid the two numbers appearing to contradict.
-                        else -> stringResource(R.string.rides_active_count, activeRides.size)
-                    }
-                )
-                if (!inSelection) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        RideHeaderAction(
-                            icon = Icons.Default.FileDownload,
-                            label = stringResource(R.string.ride_import),
-                            enabled = true,
-                            onClick = onImport
-                        )
-                        RideHeaderAction(
-                            icon = Icons.Default.Upload,
-                            label = stringResource(R.string.ride_export),
-                            enabled = rides.isNotEmpty(),
-                            onClick = { selectionMode = true }
-                        )
-                        RideHeaderAction(
-                            icon = Icons.AutoMirrored.Filled.CallMerge,
-                            label = stringResource(R.string.ride_merge),
-                            enabled = rides.size >= 2,
-                            onClick = { mergeMode = true }
-                        )
-                    }
-                }
-            }
+            // Top bar: title + overflow menu (Import / Export / Merge) in browse
+            // mode, or the selection title + close action while picking rides.
+            RidesTopBar(
+                title = when {
+                    mergeMode -> stringResource(R.string.ride_merge_select_hint)
+                    selectionMode -> stringResource(R.string.ride_export_select_hint)
+                    else -> stringResource(R.string.rides_title)
+                },
+                subtitle = when {
+                    mergeMode && selectedIds.size < 2 ->
+                        stringResource(R.string.ride_merge_min_selection)
+                    mergeMode ->
+                        stringResource(R.string.ride_merge_selected_count, selectedIds.size)
+                    selectionMode ->
+                        stringResource(R.string.ride_export_selected_count, selectedIds.size)
+                    rides.isEmpty() -> null
+                    // The stats card owns the authoritative "all rides" total, so the
+                    // header only counts the rides shown in the timeline to avoid the
+                    // two numbers appearing to contradict.
+                    else -> stringResource(R.string.rides_active_count, activeRides.size)
+                },
+                inSelection = inSelection,
+                canExport = rides.isNotEmpty(),
+                canMerge = rides.size >= 2,
+                onImport = onImport,
+                onStartExport = { selectionMode = true },
+                onStartMerge = { mergeMode = true },
+                onCloseSelection = { exitSelection() }
+            )
 
-            // "VeloSpot Wrapped" recap entry — the highlighted primary action of
-            // this sheet. A filled-tonal button gives it a clear emphasis above the
-            // outlined/utility controls. Hidden while picking rides.
-            if (!inSelection) {
-                Spacer(Modifier.height(14.dp))
-                FilledTonalButton(
-                    onClick = onOpenWrapped,
-                    enabled = rides.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        modifier = Modifier.width(20.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.wrapped_open_action),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                // "VeloSpot Wrapped" recap — an elegant accent banner rather than a
+                // full-width button. Hidden while picking rides.
+                if (!inSelection && rides.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    WrappedBanner(onClick = onOpenWrapped)
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
-
-            if (rides.isEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = stringResource(R.string.rides_empty_title),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            text = stringResource(R.string.rides_empty_text),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-            } else {
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 460.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    if (!inSelection) {
-                        item(key = "ride-statistics") {
-                            RideStatisticsSection(stats = statistics)
-                        }
-                    }
-                    // Active timeline (in selection mode every ride is selectable).
-                    val listRides = if (inSelection) rides else activeRides
-                    items(listRides, key = { it.id }) { ride ->
-                        RideListItem(
-                            ride = ride,
-                            dateLabel = dateFormat.format(Date(ride.startedAt)),
-                            selectable = inSelection,
-                            selected = ride.id in selectedIds,
-                            onClick = {
-                                if (inSelection) {
-                                    selectedIds =
-                                        if (ride.id in selectedIds) selectedIds - ride.id
-                                        else selectedIds + ride.id
-                                } else {
-                                    onSelectRide(ride)
-                                }
-                            }
-                        )
-                    }
-                    // Collapsible "Archived" section (hidden while selecting).
-                    if (!inSelection && archivedRides.isNotEmpty()) {
-                        item(key = "archived-toggle") {
-                            TextButton(
-                                onClick = { showArchived = !showArchived },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = if (showArchived)
-                                        stringResource(R.string.rides_archived_hide)
-                                    else
-                                        stringResource(R.string.rides_archived_show, archivedRides.size)
-                                )
-                            }
-                        }
-                        if (showArchived) {
-                            items(archivedRides, key = { "archived-" + it.id }) { ride ->
-                                RideListItem(
-                                    ride = ride,
-                                    dateLabel = dateFormat.format(Date(ride.startedAt)),
-                                    selectable = false,
-                                    selected = false,
-                                    onClick = { onSelectRide(ride) }
-                                )
-                            }
-                        }
-                    }
-                }
                 Spacer(Modifier.height(12.dp))
 
-                // Selection action bar.
-                if (inSelection) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton(
-                            onClick = { exitSelection() },
-                            modifier = Modifier.weight(1f)
-                        ) {
+                if (rides.isEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                stringResource(
-                                    if (mergeMode) R.string.ride_merge_cancel
-                                    else R.string.ride_export_cancel
-                                )
+                                text = stringResource(R.string.rides_empty_title),
+                                style = MaterialTheme.typography.titleMedium
                             )
-                        }
-                        if (mergeMode) {
-                            Button(
-                                onClick = {
-                                    if (selectedRides.size >= 2) showMergeDialog = true
-                                },
-                                enabled = selectedIds.size >= 2,
-                                modifier = Modifier.weight(1f)
-                            ) { Text(stringResource(R.string.ride_merge_confirm)) }
-                        } else {
-                            Button(
-                                onClick = {
-                                    if (selectedRides.isNotEmpty()) showDestinationDialog = true
-                                },
-                                enabled = selectedIds.isNotEmpty(),
-                                modifier = Modifier.weight(1f)
-                            ) { Text(stringResource(R.string.ride_export_confirm)) }
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                text = stringResource(R.string.rides_empty_text),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                     Spacer(Modifier.height(12.dp))
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 460.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (!inSelection) {
+                            item(key = "ride-statistics") {
+                                StatisticsHeader(stats = statistics)
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        }
+                        // Active timeline (in selection mode every ride is selectable).
+                        val listRides = if (inSelection) rides else activeRides
+                        items(listRides, key = { it.id }) { ride ->
+                            RideListItem(
+                                ride = ride,
+                                dateLabel = dateFormat.format(Date(ride.startedAt)),
+                                selectable = inSelection,
+                                selected = ride.id in selectedIds,
+                                onClick = {
+                                    if (inSelection) {
+                                        selectedIds =
+                                            if (ride.id in selectedIds) selectedIds - ride.id
+                                            else selectedIds + ride.id
+                                    } else {
+                                        onSelectRide(ride)
+                                    }
+                                }
+                            )
+                        }
+                        // Collapsible "Archived" section (hidden while selecting).
+                        if (!inSelection && archivedRides.isNotEmpty()) {
+                            item(key = "archived-toggle") {
+                                TextButton(
+                                    onClick = { showArchived = !showArchived },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = if (showArchived)
+                                            stringResource(R.string.rides_archived_hide)
+                                        else
+                                            stringResource(R.string.rides_archived_show, archivedRides.size)
+                                    )
+                                }
+                            }
+                            if (showArchived) {
+                                items(archivedRides, key = { "archived-" + it.id }) { ride ->
+                                    RideListItem(
+                                        ride = ride,
+                                        dateLabel = dateFormat.format(Date(ride.startedAt)),
+                                        selectable = false,
+                                        selected = false,
+                                        onClick = { onSelectRide(ride) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+
+                    // Selection action bar.
+                    if (inSelection) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            OutlinedButton(
+                                onClick = { exitSelection() },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    stringResource(
+                                        if (mergeMode) R.string.ride_merge_cancel
+                                        else R.string.ride_export_cancel
+                                    )
+                                )
+                            }
+                            if (mergeMode) {
+                                Button(
+                                    onClick = {
+                                        if (selectedRides.size >= 2) showMergeDialog = true
+                                    },
+                                    enabled = selectedIds.size >= 2,
+                                    modifier = Modifier.weight(1f)
+                                ) { Text(stringResource(R.string.ride_merge_confirm)) }
+                            } else {
+                                Button(
+                                    onClick = {
+                                        if (selectedRides.isNotEmpty()) showDestinationDialog = true
+                                    },
+                                    enabled = selectedIds.isNotEmpty(),
+                                    modifier = Modifier.weight(1f)
+                                ) { Text(stringResource(R.string.ride_export_confirm)) }
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
             }
         }
     }
 }
 
-
 /**
- * A compact header action rendered as a tooltip icon button. Using icon buttons
- * for Import / Export / Merge keeps all three on a single line regardless of the
- * screen width, so their labels can never wrap or truncate. The [label] doubles
- * as the accessibility content description and the long-press tooltip text.
+ * A `TopAppBar`-style header for the "My rides" sheet.
+ *
+ * In browse mode it shows the sheet title/subtitle and an overflow (three-dots)
+ * [IconButton] whose [DropdownMenu] carries the Import / Export / Merge actions —
+ * moving them out of the scrolling content reclaims vertical space. Export needs
+ * at least one ride ([canExport]) and Merge at least two ([canMerge]). While
+ * picking rides ([inSelection]) it swaps to the selection title plus a close
+ * action, mirroring the previous behaviour.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RideHeaderAction(
-    icon: ImageVector,
-    label: String,
-    enabled: Boolean,
-    onClick: () -> Unit
+private fun RidesTopBar(
+    title: String,
+    subtitle: String?,
+    inSelection: Boolean,
+    canExport: Boolean,
+    canMerge: Boolean,
+    onImport: () -> Unit,
+    onStartExport: () -> Unit,
+    onStartMerge: () -> Unit,
+    onCloseSelection: () -> Unit
 ) {
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-            TooltipAnchorPosition.Above
-        ),
-        tooltip = { PlainTooltip { Text(label) } },
-        state = rememberTooltipState()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        FilledTonalIconButton(onClick = onClick, enabled = enabled) {
-            Icon(imageVector = icon, contentDescription = label)
+        SheetHeader(
+            modifier = Modifier.weight(1f),
+            title = title,
+            subtitle = subtitle
+        )
+        if (inSelection) {
+            IconButton(onClick = onCloseSelection) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.common_close)
+                )
+            }
+        } else {
+            var menuExpanded by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.rides_more_actions)
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.ride_import)) },
+                        leadingIcon = {
+                            Icon(Icons.Default.FileDownload, contentDescription = null)
+                        },
+                        onClick = {
+                            menuExpanded = false
+                            onImport()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.ride_export)) },
+                        leadingIcon = {
+                            Icon(Icons.Default.Upload, contentDescription = null)
+                        },
+                        enabled = canExport,
+                        onClick = {
+                            menuExpanded = false
+                            onStartExport()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.ride_merge)) },
+                        leadingIcon = {
+                            Icon(Icons.AutoMirrored.Filled.CallMerge, contentDescription = null)
+                        },
+                        enabled = canMerge,
+                        onClick = {
+                            menuExpanded = false
+                            onStartMerge()
+                        }
+                    )
+                }
+            }
         }
     }
 }
+
+/**
+ * A compact, tappable accent banner for the "VeloSpot Wrapped" recap. Uses the
+ * primary-container colour pair, a sparkle icon, a short title and a trailing
+ * chevron — deliberately not a full-width button so it stays elegant.
+ */
+@Composable
+private fun WrappedBanner(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null)
+            Text(
+                text = stringResource(R.string.wrapped_open_action),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null
+            )
+        }
+    }
+}
+
+/**
+ * The statistics summary rendered as a compact elevated card. Delegates the
+ * expandable stats body (count • total km, share, expand/collapse) to
+ * [RideStatisticsSection].
+ */
+@Composable
+private fun StatisticsHeader(stats: de.velospot.core.stats.RideStatistics) {
+    RideStatisticsSection(stats = stats)
+}
+
 
 /** Dialog choosing the export destination: share via another app or save to a file. */
 @Composable
@@ -527,6 +606,14 @@ private fun MergePreviewRow(label: String, value: String) {
     }
 }
 
+/**
+ * A single ride row. A slim Material3 [ListItem] replaces the old per-ride card:
+ * the ride name/place is the headline ([titleMedium]-ish), the date + distance the
+ * supporting line ([bodySmall]) and the duration/speed sit right-aligned in the
+ * trailing slot ([labelLarge]). A route/sparkline icon leads in browse mode, a
+ * [Checkbox] in selection mode. Tapping the row opens the ride or toggles its
+ * selection; selected rows tint with the secondary-container colour.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RideListItem(
@@ -536,18 +623,17 @@ private fun RideListItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
+    val rideName = ride.name?.takeIf { it.isNotBlank() }
+    ListItem(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(
             containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer
-                             else MaterialTheme.colorScheme.surfaceContainerHighest
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+                             else Color.Transparent
+        ),
+        leadingContent = {
             if (selectable) {
                 Checkbox(checked = selected, onCheckedChange = { onClick() })
             } else {
@@ -557,15 +643,16 @@ private fun RideListItem(
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-            Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                val rideName = ride.name?.takeIf { it.isNotBlank() }
-                Text(
-                    text = rideName ?: formatRideDistance(ride.distanceMeters),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(Modifier.height(2.dp))
+        },
+        headlineContent = {
+            Text(
+                text = rideName ?: formatRideDistance(ride.distanceMeters),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
+        supportingContent = {
+            Column {
                 // Always show "date • distance" so named and unnamed rides read the
                 // same way; the distance is no longer dropped for unnamed recordings.
                 Text(
@@ -594,20 +681,23 @@ private fun RideListItem(
                     }
                 }
             }
+        },
+        trailingContent = {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = formatRideDuration(ride.elapsedSeconds),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = formatRideSpeed(ride.avgSpeedMps),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-    }
+    )
 }
 
 /**

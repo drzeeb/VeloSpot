@@ -380,6 +380,7 @@
     <!-- Ride tracking ("Mes trajets") -->
     <string name="menu_my_rides">Mes trajets</string>
     <string name="rides_title">Mes trajets</string>
+    <string name="rides_more_actions">Plus d\'options</string>
     <string name="rides_count">%1$d trajets</string>
     <string name="rides_active_count">%1$d trajets actifs</string>
     <string name="rides_empty_title">Aucun trajet</string>
