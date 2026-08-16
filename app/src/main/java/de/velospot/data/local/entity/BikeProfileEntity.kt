@@ -36,6 +36,8 @@ data class BikeProfileEntity(
     val color: String? = null,
     val modelYear: Int? = null,
     val notes: String? = null,
+    /** Absolute path to the uploaded bike photo in app storage, or `null`. */
+    val photoPath: String? = null,
     val isDefault: Boolean = false,
     val createdAt: Long,
     /** Km between shop services, or `null`/`0` when reminders are off. */

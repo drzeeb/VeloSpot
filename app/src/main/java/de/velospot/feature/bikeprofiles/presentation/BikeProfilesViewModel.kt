@@ -3,11 +3,14 @@ package de.velospot.feature.bikeprofiles.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.velospot.data.photo.BikePhotoStore
+import de.velospot.core.photo.NormalizedCropRect
 import de.velospot.domain.model.BikeProfile
 import de.velospot.domain.model.BikeType
 import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.repository.BikeProfilesRepository
 import de.velospot.domain.repository.RecordedRidesRepository
+import android.net.Uri
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,6 +26,12 @@ data class BikeProfileStats(
     val totalDistanceMeters: Double = 0.0,
     val totalMovingSeconds: Long = 0L,
     val totalElevationGainMeters: Double = 0.0,
+    /** Distance of the single longest ride with this bike, in metres. */
+    val longestRideMeters: Double = 0.0,
+    /** Fastest instantaneous speed ever recorded with this bike, in m/s. */
+    val topSpeedMps: Double = 0.0,
+    /** Start time of the earliest ride with this bike, or `null` when none. */
+    val firstRideAt: Long? = null,
     val lastRideAt: Long? = null
 )
 
@@ -72,7 +81,8 @@ data class BikeProfilesUiState(
 @HiltViewModel
 class BikeProfilesViewModel @Inject constructor(
     private val bikeProfilesRepository: BikeProfilesRepository,
-    private val recordedRidesRepository: RecordedRidesRepository
+    private val recordedRidesRepository: RecordedRidesRepository,
+    private val bikePhotoStorage: BikePhotoStore
 ) : ViewModel() {
 
     val uiState: StateFlow<BikeProfilesUiState> = combine(
@@ -107,10 +117,13 @@ class BikeProfilesViewModel @Inject constructor(
     /** Creates a new bike. The first bike created is made the default automatically. */
     fun addBike(draft: BikeDraft) {
         viewModelScope.launch {
+            val id = UUID.randomUUID().toString()
             val makeDefault = draft.isDefault || uiState.value.isEmpty
+            // Copy any freshly-picked gallery photo into app storage first.
+            val photoPath = resolvePhotoPath(id, draft, existingPath = null)
             bikeProfilesRepository.upsert(
-                draft.toProfile(id = UUID.randomUUID().toString(), createdAt = System.currentTimeMillis())
-                    .copy(isDefault = makeDefault)
+                draft.toProfile(id = id, createdAt = System.currentTimeMillis())
+                    .copy(isDefault = makeDefault, photoPath = photoPath)
             )
         }
     }
@@ -128,8 +141,10 @@ class BikeProfilesViewModel @Inject constructor(
             } else {
                 0
             }
+            val photoPath = resolvePhotoPath(id, draft, existingPath = existing?.photoPath)
             bikeProfilesRepository.upsert(
                 draft.toProfile(id = id, createdAt = createdAt, lastServiceNotifiedKm = lastNotified)
+                    .copy(photoPath = photoPath)
             )
         }
     }
@@ -147,15 +162,34 @@ class BikeProfilesViewModel @Inject constructor(
         viewModelScope.launch { bikeProfilesRepository.setActive(id) }
     }
 
-    private fun List<RecordedRideSummary>.toStats(): BikeProfileStats {
-        if (isEmpty()) return BikeProfileStats()
-        return BikeProfileStats(
-            rideCount = size,
-            totalDistanceMeters = sumOf { it.distanceMeters },
-            totalMovingSeconds = sumOf { it.movingSeconds },
-            totalElevationGainMeters = sumOf { it.elevationGainMeters },
-            lastRideAt = maxOf { it.startedAt }
-        )
+    private fun List<RecordedRideSummary>.toStats(): BikeProfileStats =
+        BikeStatsCalculator.aggregate(this)
+
+    /**
+     * Resolves the photo path to persist for a bike, applying the editor's photo
+     * intent: copy a freshly-picked gallery image into app storage, keep an
+     * unchanged existing photo, or delete a removed one. Runs the (off-main) file
+     * work inside [BikePhotoStorage].
+     *
+     * @param existingPath the currently-stored path (edit) or `null` (create).
+     */
+    private suspend fun resolvePhotoPath(
+        id: String,
+        draft: BikeDraft,
+        existingPath: String?
+    ): String? = when {
+        // A new image was picked: copy/downscale it (overwrites any previous file),
+        // first applying the rider's chosen framing crop when they set one.
+        draft.pendingPhotoUri != null ->
+            bikePhotoStorage.savePhoto(id, Uri.parse(draft.pendingPhotoUri), draft.pendingPhotoCrop)
+                ?: existingPath
+        // The rider removed the photo: drop the stored file and clear the path.
+        existingPath != null && draft.photoPath == null -> {
+            bikePhotoStorage.deletePhoto(id)
+            null
+        }
+        // Otherwise keep whatever the draft still references (unchanged).
+        else -> draft.photoPath
     }
 }
 
@@ -175,9 +209,24 @@ data class BikeDraft(
     val notes: String = "",
     val isDefault: Boolean = false,
     /** Service interval in km as free text; blank / 0 disables reminders. */
-    val serviceIntervalKm: String = ""
+    val serviceIntervalKm: String = "",
+    /** The already-persisted photo path (edit), or `null` when none / removed. */
+    val photoPath: String? = null,
+    /**
+     * A freshly-picked gallery image (`content://` Uri as a String) not yet copied
+     * into app storage. When set it takes precedence over [photoPath] on save.
+     */
+    val pendingPhotoUri: String? = null,
+    /**
+     * The rider's chosen framing/crop for [pendingPhotoUri] (normalized 0..1 rect),
+     * or `null` for the whole image. Only meaningful while [pendingPhotoUri] is set.
+     */
+    val pendingPhotoCrop: NormalizedCropRect? = null
 ) {
     val isValid: Boolean get() = name.isNotBlank()
+
+    /** Whether the draft currently has a photo to preview (picked or stored). */
+    val hasPhoto: Boolean get() = pendingPhotoUri != null || photoPath != null
 
     fun toProfile(id: String, createdAt: Long, lastServiceNotifiedKm: Int = 0) = BikeProfile(
         id = id,
@@ -208,7 +257,8 @@ data class BikeDraft(
             modelYear = profile.modelYear?.toString().orEmpty(),
             notes = profile.notes.orEmpty(),
             isDefault = profile.isDefault,
-            serviceIntervalKm = profile.serviceIntervalKm?.toString().orEmpty()
+            serviceIntervalKm = profile.serviceIntervalKm?.toString().orEmpty(),
+            photoPath = profile.photoPath
         )
     }
 }

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import de.velospot.data.local.dao.BikeProfileDao
 import de.velospot.data.local.entity.BikeProfileEntity
+import de.velospot.data.photo.BikePhotoStore
 import de.velospot.domain.model.BikeProfile
 import de.velospot.domain.model.BikeServiceReminder
 import de.velospot.domain.model.BikeType
@@ -37,7 +38,8 @@ private val Context.bikeProfileDataStore: DataStore<Preferences> by preferencesD
 class BikeProfilesRepositoryImpl @Inject constructor(
     private val context: Context,
     private val bikeProfileDao: BikeProfileDao,
-    private val recordedRidesRepository: RecordedRidesRepository
+    private val recordedRidesRepository: RecordedRidesRepository,
+    private val bikePhotoStorage: BikePhotoStore
 ) : BikeProfilesRepository {
 
     override fun bikeProfilesFlow(): Flow<List<BikeProfile>> =
@@ -55,6 +57,8 @@ class BikeProfilesRepositoryImpl @Inject constructor(
     override suspend fun delete(id: String) {
         recordedRidesRepository.clearBikeProfileFromRides(id)
         bikeProfileDao.delete(id)
+        // Remove the bike's uploaded photo from app storage so it doesn't leak.
+        bikePhotoStorage.deletePhoto(id)
         if (activeBikeProfileId.first() == id) setActive(null)
     }
 
@@ -99,6 +103,7 @@ class BikeProfilesRepositoryImpl @Inject constructor(
         color = color,
         modelYear = modelYear,
         notes = notes,
+        photoPath = photoPath,
         isDefault = isDefault,
         createdAt = createdAt,
         serviceIntervalKm = serviceIntervalKm,
@@ -116,6 +121,7 @@ class BikeProfilesRepositoryImpl @Inject constructor(
         color = color?.trim()?.takeIf { it.isNotBlank() },
         modelYear = modelYear,
         notes = notes?.trim()?.takeIf { it.isNotBlank() },
+        photoPath = photoPath,
         isDefault = isDefault,
         createdAt = createdAt,
         serviceIntervalKm = serviceIntervalKm?.takeIf { it > 0 },

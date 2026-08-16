@@ -20,7 +20,7 @@ import de.velospot.data.local.entity.BikeProfileEntity
  */
 @Database(
     entities = [RecordedRideEntity::class, BikeProfileEntity::class],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class RidesDatabase : RoomDatabase() {
@@ -128,13 +128,25 @@ abstract class RidesDatabase : RoomDatabase() {
         }
 
         /**
-         * The full ordered migration chain (v1 → v8). Exposed as a single source of
+         * v8 → v9: adds an optional rider-uploaded bike photo to the garage
+         * (`photoPath`), the absolute path of the downscaled image copied into
+         * app-internal storage (`filesDir/bike_photos/<id>.jpg`). Existing bikes
+         * stay `NULL` (no photo). Only the path is stored — the bytes live on disk.
+         */
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE bike_profiles ADD COLUMN photoPath TEXT")
+            }
+        }
+
+        /**
+         * The full ordered migration chain (v1 → v9). Exposed as a single source of
          * truth so the production builder and the instrumented `MigrationTestHelper`
          * test validate exactly the same set of migrations.
          */
         val ALL_MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
-            MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8
+            MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9
         )
 
         fun getInstance(context: Context): RidesDatabase {

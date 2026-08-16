@@ -1,5 +1,13 @@
 package de.velospot.feature.map.presentation.sheets
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -17,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -27,6 +37,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -50,13 +62,18 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -74,6 +91,9 @@ import de.velospot.feature.bikeprofiles.presentation.BikeProfileRow
 import de.velospot.feature.bikeprofiles.presentation.BikeProfilesViewModel
 import de.velospot.feature.map.presentation.SheetHeader
 import de.velospot.feature.map.presentation.headingSemantics
+import de.velospot.feature.map.presentation.ride.BikeShareDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The rider's **bike garage**: one profile per bike, each with its own ride
@@ -97,6 +117,7 @@ internal fun BikeGarageSheet(
     var editorDraft by remember { mutableStateOf<BikeDraft?>(null) }
     var editingRow by remember { mutableStateOf<BikeProfileRow?>(null) }
     var pendingDelete by remember { mutableStateOf<BikeProfileRow?>(null) }
+    var sharingRow by remember { mutableStateOf<BikeProfileRow?>(null) }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -160,6 +181,7 @@ internal fun BikeGarageSheet(
                             },
                             onSetActive = { viewModel.setActive(row.profile.id) },
                             onSetDefault = { viewModel.setDefault(row.profile.id) },
+                            onShare = { sharingRow = row },
                             onDelete = { pendingDelete = row }
                         )
                     }
@@ -219,6 +241,23 @@ internal fun BikeGarageSheet(
             }
         )
     }
+
+    // Bike Sharepic preview + system share.
+    sharingRow?.let { row ->
+        val profile = row.profile
+        val subtitle = listOfNotNull(
+            profile.brandModelLabel,
+            stringResource(bikeTypeLabelRes(profile.type))
+        ).joinToString(" • ")
+        BikeShareDialog(
+            bikeName = profile.name,
+            subtitle = subtitle,
+            photoPath = profile.photoPath,
+            typeLabel = stringResource(bikeTypeLabelRes(profile.type)),
+            stats = row.stats,
+            onDismiss = { sharingRow = null }
+        )
+    }
 }
 
 @Composable
@@ -227,6 +266,7 @@ private fun BikeCard(
     onEdit: () -> Unit,
     onSetActive: () -> Unit,
     onSetDefault: () -> Unit,
+    onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -240,10 +280,10 @@ private fun BikeCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                BikeAvatar(
+                    photoPath = profile.photoPath,
+                    type = profile.type,
+                    size = 48.dp
                 )
                 Spacer(Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -260,6 +300,12 @@ private fun BikeCard(
                         text = secondary,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onShare) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = stringResource(R.string.bike_share_cd)
                     )
                 }
                 Box {
@@ -371,6 +417,18 @@ private fun BikeEditorSheet(
 
     var draft by remember { mutableStateOf(initial) }
 
+    // The just-picked image awaiting the framing/crop step (null = crop closed).
+    var cropUri by remember { mutableStateOf<String?>(null) }
+
+    // Android Photo Picker (image-only) — after a pick we open the in-app crop step;
+    // the picked image is only copied into app storage on save (in the ViewModel),
+    // so no storage permission is needed here.
+    val photoPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) cropUri = uri.toString()
+    }
+
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier
@@ -389,6 +447,57 @@ private fun BikeEditorSheet(
                 modifier = Modifier.padding(vertical = 8.dp).headingSemantics()
             )
 
+            // ── Bike photo ────────────────────────────────────────────────────
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                BikeAvatar(
+                    photoUri = draft.pendingPhotoUri,
+                    photoPath = draft.photoPath,
+                    type = draft.type,
+                    size = 72.dp,
+                    contentDescription = if (draft.hasPhoto) {
+                        stringResource(R.string.bike_photo_cd)
+                    } else {
+                        stringResource(R.string.bike_photo_placeholder_cd)
+                    },
+                    modifier = Modifier.clickable {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    OutlinedButton(onClick = {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }) {
+                        Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(
+                                if (draft.hasPhoto) R.string.bike_photo_change
+                                else R.string.bike_photo_add
+                            )
+                        )
+                    }
+                    if (draft.hasPhoto) {
+                        TextButton(onClick = {
+                            draft = draft.copy(
+                                photoPath = null,
+                                pendingPhotoUri = null,
+                                pendingPhotoCrop = null
+                            )
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.bike_photo_remove))
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = draft.name,
                 onValueChange = { draft = draft.copy(name = it) },
@@ -536,6 +645,18 @@ private fun BikeEditorSheet(
             Spacer(Modifier.height(12.dp))
         }
     }
+
+    // Framing/crop step for a freshly-picked image (pick → crop → set on draft).
+    cropUri?.let { uri ->
+        BikePhotoCropDialog(
+            photoUri = uri,
+            onCancel = { cropUri = null },
+            onConfirm = { crop ->
+                draft = draft.copy(pendingPhotoUri = uri, pendingPhotoCrop = crop)
+                cropUri = null
+            }
+        )
+    }
 }
 
 @Composable
@@ -552,6 +673,70 @@ private fun BikeBadge(text: String, container: Color, content: Color) {
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
         )
     }
+}
+
+/**
+ * A rounded bike avatar: shows the uploaded photo (freshly-picked [photoUri] takes
+ * precedence over the stored [photoPath]) when available, otherwise a themed
+ * placeholder with the bike-type icon. Decodes the image off the main thread.
+ */
+@Composable
+private fun BikeAvatar(
+    type: BikeType,
+    size: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier,
+    photoUri: String? = null,
+    photoPath: String? = null,
+    contentDescription: String? = null
+) {
+    val bitmap = rememberBikePhotoBitmap(photoUri, photoPath)
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        val bmp = bitmap
+        if (bmp != null) {
+            Image(
+                bitmap = bmp,
+                contentDescription = contentDescription ?: stringResource(R.string.bike_photo_cd),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                contentDescription = contentDescription,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(size * 0.5f)
+            )
+        }
+    }
+}
+
+/**
+ * Loads a bike photo into an [ImageBitmap] off the main thread. A freshly-picked
+ * [uri] (a `content://` Uri) takes precedence over a stored file [path]; returns
+ * `null` (→ placeholder) while loading or when neither resolves to a valid image.
+ */
+@Composable
+private fun rememberBikePhotoBitmap(uri: String?, path: String?): ImageBitmap? {
+    val context = LocalContext.current
+    val bitmap by produceState<Bitmap?>(initialValue = null, uri, path) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                when {
+                    uri != null -> context.contentResolver.openInputStream(Uri.parse(uri))
+                        ?.use { BitmapFactory.decodeStream(it) }
+                    path != null -> BitmapFactory.decodeFile(path)
+                    else -> null
+                }
+            }.getOrNull()
+        }
+    }
+    return bitmap?.asImageBitmap()
 }
 
 /** Maps a [BikeType] to its localised label string resource. */

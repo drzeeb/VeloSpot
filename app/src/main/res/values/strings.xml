@@ -203,6 +203,34 @@
     <string name="bike_service_notification_text">%1$s has reached %2$d km — time for a service check.</string>
     <string name="bike_service_channel_name">Bike service reminders</string>
     <string name="bike_service_channel_description">Reminds you when a bike is due for a service based on distance ridden.</string>
+    <!-- Bike photo (garage) -->
+    <string name="bike_photo_label">Photo</string>
+    <string name="bike_photo_add">Add photo</string>
+    <string name="bike_photo_change">Change photo</string>
+    <string name="bike_photo_remove">Remove photo</string>
+    <string name="bike_photo_cd">Bike photo</string>
+    <string name="bike_photo_placeholder_cd">No bike photo — tap to add one</string>
+    <!-- Bike photo framing / crop step -->
+    <string name="bike_photo_crop_title">Frame your photo</string>
+    <string name="bike_photo_crop_hint">Drag to move and pinch to zoom, then confirm the part you want to show.</string>
+    <string name="bike_photo_crop_confirm">Use photo</string>
+    <string name="bike_photo_crop_cancel">Cancel</string>
+    <string name="bike_photo_crop_confirm_cd">Use the framed photo</string>
+    <string name="bike_photo_crop_cancel_cd">Cancel cropping</string>
+    <!-- Bike Sharepic (shareable image) -->
+    <string name="bike_share_action">Share bike</string>
+    <string name="bike_share_cd">Share bike as image</string>
+    <string name="bike_share_dialog_title">Share this bike</string>
+    <string name="bike_share_dialog_subtitle">A card with your bike and its ride stats — perfect for stories.</string>
+    <string name="bike_share_chooser_title">Share bike</string>
+    <string name="bike_share_no_rides">Record a ride with this bike to unlock its Sharepic stats.</string>
+    <string name="bike_share_period_since">Since %1$s</string>
+    <string name="bike_share_stat_distance">Total distance</string>
+    <string name="bike_share_stat_rides">Rides</string>
+    <string name="bike_share_stat_elevation">Elevation gain</string>
+    <string name="bike_share_stat_moving_time">Moving time</string>
+    <string name="bike_share_stat_longest">Longest ride</string>
+    <string name="bike_share_stat_top_speed">Top speed</string>
     <!-- VeloSpot Wrapped scheduled report notification -->
     <string name="wrapped_notification_title">Your VeloSpot Wrapped is ready</string>
     <string name="wrapped_notification_text">A fresh recap of your rides is waiting. Tap to take a look.</string>
