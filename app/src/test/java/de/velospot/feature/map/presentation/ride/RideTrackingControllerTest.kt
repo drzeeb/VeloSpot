@@ -109,6 +109,66 @@ class RideTrackingControllerTest {
         assertNull(controller.selectedRide.value)
     }
 
+    @Test
+    fun `mergeRides saves the merged ride, archives the sources and opens it`() = runTest {
+        val a = simpleRide("a", startedAt = 100L, endedAt = 200L, distance = 1000.0)
+        val b = simpleRide("b", startedAt = 300L, endedAt = 400L, distance = 2000.0)
+        val repo = FakeRepo(listOf(a, b))
+        val controller = controller(repo)
+
+        controller.mergeRides(listOf("a", "b"), name = "Combined")
+
+        val stored = repo.snapshot()
+        val merged = stored.firstOrNull { it.id !in setOf("a", "b") }
+        assertEquals("Combined", merged?.name)
+        assertEquals(3000.0, merged?.distanceMeters)
+        // Sources are archived (reversible), not deleted.
+        assertNull(merged?.archivedAt)
+        assertEquals(1L, stored.first { it.id == "a" }.archivedAt)
+        assertEquals(1L, stored.first { it.id == "b" }.archivedAt)
+        // The merged ride's detail sheet is opened.
+        assertEquals(merged?.id, controller.selectedRide.value?.id)
+        // An Undo is offered referencing the sources.
+        assertEquals(setOf("a", "b"), controller.mergeUndo.value?.sourceIds?.toSet())
+    }
+
+    @Test
+    fun `undoMerge restores the sources and deletes the merged ride`() = runTest {
+        val a = simpleRide("a", startedAt = 100L, endedAt = 200L, distance = 1000.0)
+        val b = simpleRide("b", startedAt = 300L, endedAt = 400L, distance = 2000.0)
+        val repo = FakeRepo(listOf(a, b))
+        val controller = controller(repo)
+
+        controller.mergeRides(listOf("a", "b"), name = "Combined")
+        val mergedId = controller.mergeUndo.value?.mergedRideId
+        controller.undoMerge()
+
+        val stored = repo.snapshot()
+        assertNull(stored.firstOrNull { it.id == mergedId })
+        assertNull(stored.first { it.id == "a" }.archivedAt)
+        assertNull(stored.first { it.id == "b" }.archivedAt)
+        assertNull(controller.mergeUndo.value)
+    }
+
+    private fun simpleRide(
+        id: String,
+        startedAt: Long,
+        endedAt: Long,
+        distance: Double
+    ) = RecordedRide(
+        id = id,
+        startedAt = startedAt,
+        endedAt = endedAt,
+        distanceMeters = distance,
+        elapsedSeconds = 10L,
+        movingSeconds = 10L,
+        avgSpeedMps = distance / 10.0,
+        maxSpeedMps = 5.0,
+        elevationGainMeters = 0.0,
+        elevationLossMeters = 0.0,
+        points = emptyList(),
+    )
+
     private fun RecordedRide.toSummary() = RecordedRideSummary(
         id = id,
         startedAt = startedAt,
@@ -124,6 +184,8 @@ class RideTrackingControllerTest {
 
     private class FakeRepo(initial: List<RecordedRide>) : RecordedRidesRepository {
         private val rides = MutableStateFlow(initial)
+
+        fun snapshot(): List<RecordedRide> = rides.value
 
         override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> =
             rides.map { list ->
@@ -167,6 +229,19 @@ class RideTrackingControllerTest {
             rides.value = rides.value.map {
                 if (it.id == id) it.copy(archivedAt = if (archived) 1L else null) else it
             }
+        }
+
+        override suspend fun mergeRides(
+            ids: List<String>,
+            newId: String,
+            name: String?
+        ): RecordedRide? {
+            val sources = getRides(ids)
+            if (!de.velospot.core.analysis.RideMerger.canMerge(sources)) return null
+            val merged = de.velospot.core.analysis.RideMerger.merge(sources, newId, name)
+            saveRide(merged)
+            sources.forEach { setRideArchived(it.id, true) }
+            return merged
         }
 
         override suspend fun clearAll() { rides.value = emptyList() }

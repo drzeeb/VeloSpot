@@ -679,6 +679,27 @@
     <string name="ride_gpx_help_action">So lädst du deine Fahrt zu Strava &amp; Co. hoch</string>
     <string name="ride_gpx_help_title">Fahrt zu Strava &amp; Co. hochladen</string>
     <string name="ride_gpx_help_body">1. Exportiere diese Fahrt mit dem Button oben als GPX.\n\n2. Speichere die GPX-Datei oder sende sie direkt an eine andere App (Drive, Dateien, E-Mail, …).\n\n3. Melde dich auf der Website des Anbieters an (Strava, Komoot, Garmin Connect oder RideWithGPS) und wähle die GPX-Datei unter \u201eAktivität hochladen\u201c / \u201eImportieren\u201c aus.\n\nHinweis: Die Strava- und Komoot-Apps können GPX oft nicht direkt importieren – der Upload über die Website ist der zuverlässige Weg.</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Zusammenführen</string>
+    <string name="ride_merge_select_hint">Fahrten zum Zusammenführen auswählen</string>
+    <string name="ride_merge_selected_count">%1$d ausgewählt</string>
+    <string name="ride_merge_confirm">Zusammenführen</string>
+    <string name="ride_merge_cancel">Abbrechen</string>
+    <string name="ride_merge_min_selection">Wähle mindestens 2 Fahrten zum Zusammenführen aus</string>
+    <string name="ride_merge_dialog_title">Fahrten zusammenführen?</string>
+    <string name="ride_merge_dialog_text">Die ausgewählten Fahrten werden zu einer zusammengeführt. Die Originale werden archiviert und können wiederhergestellt werden.</string>
+    <string name="ride_merge_name_label">Name</string>
+    <string name="ride_merge_preview_title">Zusammengeführte Fahrt</string>
+    <string name="ride_merge_preview_distance">Distanz</string>
+    <string name="ride_merge_preview_duration">Dauer</string>
+    <string name="ride_merge_preview_elevation">Höhenmeter</string>
+    <string name="ride_merge_preview_timespan">Zeitraum</string>
+    <string name="ride_merge_preview_segments">Segmente</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Verschiedene Fahrräder ausgewählt — die zusammengeführte Fahrt behält kein Fahrradprofil.</string>
+    <string name="ride_merge_done">Fahrten zusammengeführt</string>
+    <string name="ride_merge_undo">Rückgängig</string>
+    <string name="ride_merge_incompatible">Diese Fahrten können nicht zusammengeführt werden</string>
     <string name="ride_save_as_route">Als Route speichern</string>
     <string name="ride_saved_as_route">Fahrt als Route gespeichert</string>
     <string name="ride_route_default_name">Aufgezeichnete Route</string>

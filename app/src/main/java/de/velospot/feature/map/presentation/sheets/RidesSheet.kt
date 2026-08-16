@@ -3,6 +3,7 @@ package de.velospot.feature.map.presentation.sheets
 import de.velospot.feature.map.presentation.*
 import de.velospot.core.format.formatRideDistance
 import de.velospot.core.format.formatRideDuration
+import de.velospot.core.format.formatRideElevation
 import de.velospot.core.format.formatRideSpeed
 
 import androidx.activity.compose.BackHandler
@@ -31,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -73,6 +75,7 @@ internal fun RidesSheet(
     onDismiss: () -> Unit,
     onSelectRide: (RecordedRideSummary) -> Unit,
     onExportRides: (rides: List<RecordedRideSummary>, combine: Boolean, save: Boolean) -> Unit,
+    onMergeRides: (ids: List<String>, name: String) -> Unit,
     onImport: () -> Unit,
     onOpenWrapped: () -> Unit
 ) {
@@ -87,19 +90,25 @@ internal fun RidesSheet(
     val archivedRides = remember(rides) { rides.filter { it.isArchived } }
     var showArchived by remember { mutableStateOf(false) }
 
+    // Two mutually-exclusive multi-select purposes reuse the same checkbox list:
+    // exporting to GPX and merging into one ride.
     var selectionMode by remember { mutableStateOf(false) }
+    var mergeMode by remember { mutableStateOf(false) }
+    val inSelection = selectionMode || mergeMode
     var selectedIds by remember { mutableStateOf(emptySet<String>()) }
     var showDestinationDialog by remember { mutableStateOf(false) }
+    var showMergeDialog by remember { mutableStateOf(false) }
 
     val selectedRides = remember(rides, selectedIds) { rides.filter { it.id in selectedIds } }
 
     fun exitSelection() {
         selectionMode = false
+        mergeMode = false
         selectedIds = emptySet()
     }
 
     // Back exits the selection first (rather than closing the whole sheet).
-    BackHandler(enabled = selectionMode) { exitSelection() }
+    BackHandler(enabled = inSelection) { exitSelection() }
 
     if (showDestinationDialog) {
         ExportDestinationDialog(
@@ -120,6 +129,18 @@ internal fun RidesSheet(
         )
     }
 
+    if (showMergeDialog && selectedRides.size >= 2) {
+        MergeRidesDialog(
+            rides = selectedRides,
+            onConfirm = { name ->
+                showMergeDialog = false
+                onMergeRides(selectedRides.sortedBy { it.startedAt }.map { it.id }, name)
+                exitSelection()
+            },
+            onDismiss = { showMergeDialog = false }
+        )
+    }
+
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier
@@ -128,17 +149,25 @@ internal fun RidesSheet(
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
             SheetHeader(
-                title = if (selectionMode) stringResource(R.string.ride_export_select_hint)
-                        else stringResource(R.string.rides_title),
+                title = when {
+                    mergeMode -> stringResource(R.string.ride_merge_select_hint)
+                    selectionMode -> stringResource(R.string.ride_export_select_hint)
+                    else -> stringResource(R.string.rides_title)
+                },
                 subtitle = when {
-                    selectionMode -> stringResource(R.string.ride_export_selected_count, selectedIds.size)
+                    mergeMode && selectedIds.size < 2 ->
+                        stringResource(R.string.ride_merge_min_selection)
+                    mergeMode ->
+                        stringResource(R.string.ride_merge_selected_count, selectedIds.size)
+                    selectionMode ->
+                        stringResource(R.string.ride_export_selected_count, selectedIds.size)
                     rides.isEmpty() -> null
                     else -> stringResource(R.string.rides_count, activeRides.size)
                 }
             )
 
-            // Import / Export actions (hidden while picking rides to export).
-            if (!selectionMode) {
+            // Import / Export / Merge actions (hidden while picking rides).
+            if (!inSelection) {
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(
@@ -150,6 +179,11 @@ internal fun RidesSheet(
                         enabled = rides.isNotEmpty(),
                         modifier = Modifier.weight(1f)
                     ) { Text(stringResource(R.string.ride_export)) }
+                    OutlinedButton(
+                        onClick = { mergeMode = true },
+                        enabled = rides.size >= 2,
+                        modifier = Modifier.weight(1f)
+                    ) { Text(stringResource(R.string.ride_merge)) }
                 }
                 // "VeloSpot Wrapped" recap entry — opens the auto-advancing Story
                 // history / date-range generator. Unobtrusive, below Import/Export.
@@ -199,21 +233,21 @@ internal fun RidesSheet(
                     modifier = Modifier.heightIn(max = 460.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    if (!selectionMode) {
+                    if (!inSelection) {
                         item(key = "ride-statistics") {
                             RideStatisticsSection(stats = statistics)
                         }
                     }
-                    // Active timeline (in export mode every ride is selectable).
-                    val listRides = if (selectionMode) rides else activeRides
+                    // Active timeline (in selection mode every ride is selectable).
+                    val listRides = if (inSelection) rides else activeRides
                     items(listRides, key = { it.id }) { ride ->
                         RideListItem(
                             ride = ride,
                             dateLabel = dateFormat.format(Date(ride.startedAt)),
-                            selectable = selectionMode,
+                            selectable = inSelection,
                             selected = ride.id in selectedIds,
                             onClick = {
-                                if (selectionMode) {
+                                if (inSelection) {
                                     selectedIds =
                                         if (ride.id in selectedIds) selectedIds - ride.id
                                         else selectedIds + ride.id
@@ -223,8 +257,8 @@ internal fun RidesSheet(
                             }
                         )
                     }
-                    // Collapsible "Archived" section (hidden while exporting).
-                    if (!selectionMode && archivedRides.isNotEmpty()) {
+                    // Collapsible "Archived" section (hidden while selecting).
+                    if (!inSelection && archivedRides.isNotEmpty()) {
                         item(key = "archived-toggle") {
                             TextButton(
                                 onClick = { showArchived = !showArchived },
@@ -254,19 +288,36 @@ internal fun RidesSheet(
                 Spacer(Modifier.height(12.dp))
 
                 // Selection action bar.
-                if (selectionMode) {
+                if (inSelection) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
                             onClick = { exitSelection() },
                             modifier = Modifier.weight(1f)
-                        ) { Text(stringResource(R.string.ride_export_cancel)) }
-                        Button(
-                            onClick = {
-                                if (selectedRides.isNotEmpty()) showDestinationDialog = true
-                            },
-                            enabled = selectedIds.isNotEmpty(),
-                            modifier = Modifier.weight(1f)
-                        ) { Text(stringResource(R.string.ride_export_confirm)) }
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (mergeMode) R.string.ride_merge_cancel
+                                    else R.string.ride_export_cancel
+                                )
+                            )
+                        }
+                        if (mergeMode) {
+                            Button(
+                                onClick = {
+                                    if (selectedRides.size >= 2) showMergeDialog = true
+                                },
+                                enabled = selectedIds.size >= 2,
+                                modifier = Modifier.weight(1f)
+                            ) { Text(stringResource(R.string.ride_merge_confirm)) }
+                        } else {
+                            Button(
+                                onClick = {
+                                    if (selectedRides.isNotEmpty()) showDestinationDialog = true
+                                },
+                                enabled = selectedIds.isNotEmpty(),
+                                modifier = Modifier.weight(1f)
+                            ) { Text(stringResource(R.string.ride_export_confirm)) }
+                        }
                     }
                     Spacer(Modifier.height(12.dp))
                 }
@@ -303,6 +354,120 @@ private fun ExportDestinationDialog(
             }
         }
     )
+}
+
+/**
+ * Confirmation dialog for merging the selected [rides] into one. Lets the rider
+ * name the merged ride (pre-filled with the earliest ride's name), previews the
+ * combined totals (distance, duration, elevation, time span, segment count) and —
+ * when the sources were recorded with different bikes — warns that the merged ride
+ * keeps no bike profile. Preview figures are summed from the track-free summaries;
+ * the persisted ride's elevation is recomputed by `RideMerger` on confirm.
+ */
+@Composable
+private fun MergeRidesDialog(
+    rides: List<RecordedRideSummary>,
+    onConfirm: (name: String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sorted = remember(rides) { rides.sortedBy { it.startedAt } }
+    var name by remember(rides) {
+        mutableStateOf(sorted.firstOrNull()?.name?.takeIf { it.isNotBlank() } ?: "")
+    }
+
+    val distanceMeters = remember(rides) { rides.sumOf { it.distanceMeters } }
+    val durationSeconds = remember(rides) { rides.sumOf { it.elapsedSeconds } }
+    val elevationGain = remember(rides) { rides.sumOf { it.elevationGainMeters } }
+    val timeSpanSeconds = remember(rides) {
+        ((rides.maxOf { it.endedAt } - rides.minOf { it.startedAt }).coerceAtLeast(0L)) / 1000L
+    }
+    // "Shares one profile" also holds when every source is untagged (all null).
+    val sharesSingleProfile = remember(rides) {
+        rides.map { it.bikeProfileId }.distinct().size == 1
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ride_merge_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.ride_merge_dialog_text),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.ride_merge_name_label)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = stringResource(R.string.ride_merge_preview_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                MergePreviewRow(
+                    label = stringResource(R.string.ride_merge_preview_distance),
+                    value = formatRideDistance(distanceMeters)
+                )
+                MergePreviewRow(
+                    label = stringResource(R.string.ride_merge_preview_duration),
+                    value = formatRideDuration(durationSeconds)
+                )
+                MergePreviewRow(
+                    label = stringResource(R.string.ride_merge_preview_elevation),
+                    value = formatRideElevation(elevationGain)
+                )
+                MergePreviewRow(
+                    label = stringResource(R.string.ride_merge_preview_timespan),
+                    value = formatRideDuration(timeSpanSeconds)
+                )
+                MergePreviewRow(
+                    label = stringResource(R.string.ride_merge_preview_segments),
+                    value = rides.size.toString()
+                )
+                if (!sharesSingleProfile) {
+                    RideBadge(
+                        text = stringResource(R.string.ride_merge_different_profiles),
+                        container = MaterialTheme.colorScheme.tertiaryContainer,
+                        content = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm(name.trim()) }) {
+                Text(stringResource(R.string.ride_merge_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ride_merge_cancel))
+            }
+        }
+    )
+}
+
+/** A single "label … value" row inside the merge preview. */
+@Composable
+private fun MergePreviewRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

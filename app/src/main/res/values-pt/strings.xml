@@ -674,6 +674,27 @@
     <string name="ride_gpx_help_action">Como enviar o teu percurso para o Strava e afins</string>
     <string name="ride_gpx_help_title">Enviar o teu percurso para o Strava e afins</string>
     <string name="ride_gpx_help_body">1. Exporta este percurso como GPX com o botão acima.\n\n2. Guarda o ficheiro GPX ou envia-o diretamente para outra app (Drive, Ficheiros, e-mail, …).\n\n3. Inicia sessão no site do fornecedor (Strava, Komoot, Garmin Connect ou RideWithGPS) e escolhe o ficheiro GPX em \u201cCarregar atividade\u201d / \u201cImportar\u201d.\n\nNota: as apps móveis do Strava e do Komoot muitas vezes não conseguem importar GPX diretamente, por isso o carregamento pelo site é a via fiável.</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Combinar</string>
+    <string name="ride_merge_select_hint">Seleciona os percursos a combinar</string>
+    <string name="ride_merge_selected_count">%1$d selecionados</string>
+    <string name="ride_merge_confirm">Combinar</string>
+    <string name="ride_merge_cancel">Cancelar</string>
+    <string name="ride_merge_min_selection">Seleciona pelo menos 2 percursos para combinar</string>
+    <string name="ride_merge_dialog_title">Combinar percursos?</string>
+    <string name="ride_merge_dialog_text">Os percursos selecionados são combinados num só. Os originais são arquivados e podem ser restaurados.</string>
+    <string name="ride_merge_name_label">Nome</string>
+    <string name="ride_merge_preview_title">Percurso combinado</string>
+    <string name="ride_merge_preview_distance">Distância</string>
+    <string name="ride_merge_preview_duration">Duração</string>
+    <string name="ride_merge_preview_elevation">Desnível</string>
+    <string name="ride_merge_preview_timespan">Intervalo de tempo</string>
+    <string name="ride_merge_preview_segments">Segmentos</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Bicicletas diferentes selecionadas — o percurso combinado não mantém nenhum perfil de bicicleta.</string>
+    <string name="ride_merge_done">Percursos combinados</string>
+    <string name="ride_merge_undo">Anular</string>
+    <string name="ride_merge_incompatible">Estes percursos não podem ser combinados</string>
     <string name="ride_save_as_route">Guardar como rota</string>
     <string name="ride_saved_as_route">Percurso guardado como rota</string>
     <string name="ride_route_default_name">Rota gravada</string>

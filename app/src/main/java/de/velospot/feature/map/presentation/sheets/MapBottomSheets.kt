@@ -261,6 +261,10 @@ internal fun MapBottomSheets(
                     viewModel.exportRidesAsGpx(selected, combine)
                 }
             },
+            onMergeRides = { ids, name ->
+                screenUiState.closeRides()
+                viewModel.mergeRecordedRides(ids, name.takeIf { it.isNotBlank() })
+            },
             onImport = {
                 // GPX has no widely-registered MIME type, so allow any document and
                 // let the parser validate; common GPX/XML types are offered as hints.

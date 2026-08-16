@@ -675,6 +675,27 @@
     <string name="ride_gpx_help_action">Cómo subir tu ruta a Strava y compañía</string>
     <string name="ride_gpx_help_title">Sube tu ruta a Strava y compañía</string>
     <string name="ride_gpx_help_body">1. Exporta esta ruta como GPX con el botón de arriba.\n\n2. Guarda el archivo GPX o envíalo directamente a otra app (Drive, Archivos, correo, …).\n\n3. Inicia sesión en la web del proveedor (Strava, Komoot, Garmin Connect o RideWithGPS) y elige el archivo GPX en \u201cSubir actividad\u201d / \u201cImportar\u201d.\n\nNota: las apps móviles de Strava y Komoot a menudo no pueden importar GPX directamente, así que subirlo desde la web es la vía fiable.</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Combinar</string>
+    <string name="ride_merge_select_hint">Selecciona los recorridos que quieres combinar</string>
+    <string name="ride_merge_selected_count">%1$d seleccionados</string>
+    <string name="ride_merge_confirm">Combinar</string>
+    <string name="ride_merge_cancel">Cancelar</string>
+    <string name="ride_merge_min_selection">Selecciona al menos 2 recorridos para combinar</string>
+    <string name="ride_merge_dialog_title">¿Combinar recorridos?</string>
+    <string name="ride_merge_dialog_text">Los recorridos seleccionados se combinan en uno solo. Los originales se archivan y se pueden restaurar.</string>
+    <string name="ride_merge_name_label">Nombre</string>
+    <string name="ride_merge_preview_title">Recorrido combinado</string>
+    <string name="ride_merge_preview_distance">Distancia</string>
+    <string name="ride_merge_preview_duration">Duración</string>
+    <string name="ride_merge_preview_elevation">Desnivel</string>
+    <string name="ride_merge_preview_timespan">Periodo</string>
+    <string name="ride_merge_preview_segments">Segmentos</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Se han seleccionado bicis diferentes — el recorrido combinado no conserva ningún perfil de bici.</string>
+    <string name="ride_merge_done">Recorridos combinados</string>
+    <string name="ride_merge_undo">Deshacer</string>
+    <string name="ride_merge_incompatible">Estos recorridos no se pueden combinar</string>
     <string name="ride_save_as_route">Guardar como ruta</string>
     <string name="ride_saved_as_route">Recorrido guardado como ruta</string>
     <string name="ride_route_default_name">Ruta grabada</string>

@@ -675,6 +675,27 @@
     <string name="ride_gpx_help_action">Comment envoyer votre sortie vers Strava et cie</string>
     <string name="ride_gpx_help_title">Envoyer votre sortie vers Strava et cie</string>
     <string name="ride_gpx_help_body">1. Exportez cette sortie en GPX avec le bouton ci-dessus.\n\n2. Enregistrez le fichier GPX ou envoyez-le directement vers une autre app (Drive, Fichiers, e-mail, …).\n\n3. Connectez-vous sur le site du fournisseur (Strava, Komoot, Garmin Connect ou RideWithGPS) et choisissez le fichier GPX sous \u00ab Importer une activité \u00bb / \u00ab Import \u00bb.\n\nRemarque : les applis mobiles Strava et Komoot ne peuvent souvent pas importer de GPX directement ; le téléversement via le site web est la méthode fiable.</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Fusionner</string>
+    <string name="ride_merge_select_hint">Sélectionnez les trajets à fusionner</string>
+    <string name="ride_merge_selected_count">%1$d sélectionné(s)</string>
+    <string name="ride_merge_confirm">Fusionner</string>
+    <string name="ride_merge_cancel">Annuler</string>
+    <string name="ride_merge_min_selection">Sélectionnez au moins 2 trajets à fusionner</string>
+    <string name="ride_merge_dialog_title">Fusionner les trajets ?</string>
+    <string name="ride_merge_dialog_text">Les trajets sélectionnés sont combinés en un seul. Les originaux sont archivés et peuvent être restaurés.</string>
+    <string name="ride_merge_name_label">Nom</string>
+    <string name="ride_merge_preview_title">Trajet fusionné</string>
+    <string name="ride_merge_preview_distance">Distance</string>
+    <string name="ride_merge_preview_duration">Durée</string>
+    <string name="ride_merge_preview_elevation">Dénivelé</string>
+    <string name="ride_merge_preview_timespan">Période</string>
+    <string name="ride_merge_preview_segments">Segments</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Vélos différents sélectionnés — le trajet fusionné ne conserve aucun profil de vélo.</string>
+    <string name="ride_merge_done">Trajets fusionnés</string>
+    <string name="ride_merge_undo">Annuler</string>
+    <string name="ride_merge_incompatible">Ces trajets ne peuvent pas être fusionnés</string>
     <string name="ride_save_as_route">Enregistrer comme itinéraire</string>
     <string name="ride_saved_as_route">Trajet enregistré comme itinéraire</string>
     <string name="ride_route_default_name">Itinéraire enregistré</string>
