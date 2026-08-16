@@ -55,6 +55,11 @@ internal const val DEFAULT_ZOOM = 14.0
  * @param currentSpaces       provider for the parking spots currently loaded (for click hit-testing)
  * @param currentSavedPlaces  provider for the saved places currently shown (for click hit-testing)
  * @param onZoomBucketChanged invoked with the rounded zoom level whenever the camera moves
+ * @param onMapInteraction    invoked whenever the rider taps or pans the map  used to
+ *                            dismiss the address search bar's focus / keyboard / dropdown.
+ *                            Returns `true` when it actually dismissed an active search
+ *                            bar, signalling the tap was consumed for dismissal only (so
+ *                            the map click handler must NOT also drop a custom pin).
  * @param onMapReady          invoked once the [MapLibreMap] is available
  */
 internal fun MapView.initVeloSpotMap(
@@ -62,6 +67,7 @@ internal fun MapView.initVeloSpotMap(
     currentSpaces: () -> List<BikeParkingSpace>,
     currentSavedPlaces: () -> List<SavedPlace>,
     onZoomBucketChanged: (Int) -> Unit,
+    onMapInteraction: () -> Boolean = { false },
     onMapReady: (MapLibreMap) -> Unit
 ) {
     getMapAsync { map ->
@@ -104,6 +110,9 @@ internal fun MapView.initVeloSpotMap(
         // the rider can freely explore the map. A re-centre button then re-locks it.
         map.addOnCameraMoveStartedListener { reason ->
             if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
+                // A pan/zoom gesture means the rider is interacting with the map, so
+                // dismiss the address search bar (clear focus / hide keyboard + dropdown).
+                onMapInteraction()
                 viewModel.onMapPannedByUser()
             }
         }
@@ -112,6 +121,13 @@ internal fun MapView.initVeloSpotMap(
         // parking spot, then cluster (zoom in), then saved place; otherwise drop
         // a custom pin.
         map.addOnMapClickListener { latLng ->
+            // A tap while the address search bar is active only "taps away" out of it
+            // (clears focus, closes keyboard + dropdown) and is consumed here, so it
+            // does NOT also drop a custom pin. Pins are reserved for an explicit result
+            // selection — a pure focus loss must never place a marker on the map.
+            if (onMapInteraction()) {
+                return@addOnMapClickListener true
+            }
             val screenPoint = map.projection.toScreenLocation(latLng)
 
             // Parked bike takes priority so it stays tappable even when it overlaps

@@ -43,6 +43,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
@@ -250,6 +251,16 @@ fun MainMapScreen(
     val mapView       = rememberMapViewWithLifecycle(enabled = mapMounted)
     val screenUiState = rememberMapScreenUiState()
     val markerStyleConfig = remember(isDarkTheme) { defaultMarkerStyleConfig(isDarkTheme) }
+
+    // Clears the address search bar's focus (and thus closes the keyboard and its
+    // suggestions dropdown) when the rider taps or pans the map. See the map click /
+    // camera-move listeners wired in [initVeloSpotMap] below.
+    val focusManager  = LocalFocusManager.current
+
+    // Tracks whether the address search field currently holds focus, so a map tap can
+    // tell an "active" search bar (keyboard / dropdown open) apart from an idle one and
+    // only consume the tap for dismissal in the former case.
+    var isSearchBarFocused by remember { mutableStateOf(false) }
 
     // Drives the live 3D navigation camera + heading arrow. Owned by the screen,
     // bound to the MapLibreMap once a style is ready (see effects below).
@@ -715,6 +726,31 @@ fun MainMapScreen(
             currentSpaces      = { (uiStateRef.value as? MapUiState.Success)?.spaces.orEmpty() },
             currentSavedPlaces = { savedPlacesRef.value },
             onZoomBucketChanged = { next -> if (next != zoomBucket) zoomBucket = next },
+            // Tapping / panning the map dismisses the address search bar so the
+            // keyboard closes and the suggestions/expanded state collapse. The typed
+            // query and any selected search pin are preserved (see onSearchDismissed).
+            //
+            // Only a search bar the rider is *currently* engaged with consumes the
+            // interaction (returns true): the field is focused (keyboard up) or the
+            // results dropdown is on screen (live results or a lookup in flight).
+            // Consuming keeps a "tap away" gesture from also dropping a custom pin.
+            //
+            // The retained query TEXT alone must NOT count as active: after picking a
+            // result the query is kept for display but focus + results are cleared, so
+            // the rider can immediately drop custom pins again. Including the stale text
+            // here previously latched the bar "active" forever and swallowed every map
+            // tap until the field was cleared or the app restarted.
+            // FocusManager is stable across recompositions, so capturing it once is safe.
+            onMapInteraction   = {
+                val searchBarActive = isSearchBarFocused ||
+                    searchResults.isNotEmpty() ||
+                    isSearching
+                if (searchBarActive) {
+                    focusManager.clearFocus()
+                    viewModel.onSearchDismissed()
+                }
+                searchBarActive
+            },
             onMapReady         = { maplibreMap = it }
         )
         onDispose { maplibreMap = null }
@@ -977,7 +1013,8 @@ fun MainMapScreen(
                 onQueryChange    = viewModel::onSearchQueryChanged,
                 onResultSelected = viewModel::onSearchResultSelected,
                 onRecentSelected = viewModel::navigateToRecentDestination,
-                onClear          = viewModel::onSearchCleared
+                onClear          = viewModel::onSearchCleared,
+                onFocusChanged   = { focused -> isSearchBarFocused = focused }
             )
             Spacer(Modifier.width(8.dp))
             MapMenuCard(state = menuState, actions = menuActions)
