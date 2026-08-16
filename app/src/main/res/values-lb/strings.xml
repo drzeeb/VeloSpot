@@ -379,6 +379,7 @@
     <string name="menu_my_rides">Meng Touren</string>
     <string name="rides_title">Meng Touren</string>
     <string name="rides_count">%1$d Touren</string>
+    <string name="rides_active_count">%1$d aktiv Touren</string>
     <string name="rides_empty_title">Nach keng Touren</string>
     <string name="rides_empty_text">Tipp op de roude Knäppche op der Kaart fir eng Tour opzehuelen. Si erschéngt hei mat Distanz, Dauer a Vitesse.</string>
     <!-- Statistik-Dashboard (uewen an „Meng Touren“) -->

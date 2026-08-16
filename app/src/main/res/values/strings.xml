@@ -110,6 +110,7 @@
     <string name="menu_my_rides">My rides</string>
     <string name="rides_title">My rides</string>
     <string name="rides_count">%1$d rides</string>
+    <string name="rides_active_count">%1$d active rides</string>
     <string name="rides_empty_title">No rides yet</string>
     <string name="rides_empty_text">Tap the red record button on the map to track a ride. It will appear here with distance, duration and speed.</string>
     <!-- Ride statistics dashboard (top of "My rides") -->

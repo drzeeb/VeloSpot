@@ -385,6 +385,7 @@
     <string name="menu_my_rides">Meine Fahrten</string>
     <string name="rides_title">Meine Fahrten</string>
     <string name="rides_count">%1$d Fahrten</string>
+    <string name="rides_active_count">%1$d aktive Fahrten</string>
     <string name="rides_empty_title">Noch keine Fahrten</string>
     <string name="rides_empty_text">Tippe auf den roten Aufnahme-Button auf der Karte, um eine Fahrt aufzuzeichnen. Sie erscheint hier mit Distanz, Dauer und Geschwindigkeit.</string>
     <!-- Statistik-Dashboard (oben in „Meine Fahrten“) -->

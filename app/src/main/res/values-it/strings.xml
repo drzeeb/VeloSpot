@@ -381,6 +381,7 @@
     <string name="menu_my_rides">I miei percorsi</string>
     <string name="rides_title">I miei percorsi</string>
     <string name="rides_count">%1$d percorsi</string>
+    <string name="rides_active_count">%1$d percorsi attivi</string>
     <string name="rides_empty_title">Ancora nessun percorso</string>
     <string name="rides_empty_text">Tocca il pulsante rosso di registrazione sulla mappa per registrare un percorso. Apparirà qui con distanza, durata e velocità.</string>
     <!-- Dashboard statistiche (in cima a "I miei percorsi") -->

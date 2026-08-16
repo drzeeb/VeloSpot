@@ -379,6 +379,7 @@
     <string name="menu_my_rides">Mijn ritten</string>
     <string name="rides_title">Mijn ritten</string>
     <string name="rides_count">%1$d ritten</string>
+    <string name="rides_active_count">%1$d actieve ritten</string>
     <string name="rides_empty_title">Nog geen ritten</string>
     <string name="rides_empty_text">Tik op de rode opnameknop op de kaart om een rit vast te leggen. Hij verschijnt hier met afstand, duur en snelheid.</string>
     <!-- Statistiekdashboard (boven in "Mijn ritten") -->

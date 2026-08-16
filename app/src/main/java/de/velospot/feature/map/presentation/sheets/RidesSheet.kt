@@ -20,22 +20,32 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.CallMerge
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -148,47 +159,66 @@ internal fun RidesSheet(
                 .navigationBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            SheetHeader(
-                title = when {
-                    mergeMode -> stringResource(R.string.ride_merge_select_hint)
-                    selectionMode -> stringResource(R.string.ride_export_select_hint)
-                    else -> stringResource(R.string.rides_title)
-                },
-                subtitle = when {
-                    mergeMode && selectedIds.size < 2 ->
-                        stringResource(R.string.ride_merge_min_selection)
-                    mergeMode ->
-                        stringResource(R.string.ride_merge_selected_count, selectedIds.size)
-                    selectionMode ->
-                        stringResource(R.string.ride_export_selected_count, selectedIds.size)
-                    rides.isEmpty() -> null
-                    else -> stringResource(R.string.rides_count, activeRides.size)
+            // Header: title/subtitle on the left, the three utility actions
+            // (Import / Export / Merge) as compact tooltip icon buttons on the
+            // right. Icon buttons keep the actions on one line on any width, so
+            // the "Merge" label can no longer wrap awkwardly. They collapse while
+            // picking rides so the selection title has the full width.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SheetHeader(
+                    modifier = Modifier.weight(1f),
+                    title = when {
+                        mergeMode -> stringResource(R.string.ride_merge_select_hint)
+                        selectionMode -> stringResource(R.string.ride_export_select_hint)
+                        else -> stringResource(R.string.rides_title)
+                    },
+                    subtitle = when {
+                        mergeMode && selectedIds.size < 2 ->
+                            stringResource(R.string.ride_merge_min_selection)
+                        mergeMode ->
+                            stringResource(R.string.ride_merge_selected_count, selectedIds.size)
+                        selectionMode ->
+                            stringResource(R.string.ride_export_selected_count, selectedIds.size)
+                        rides.isEmpty() -> null
+                        // The stats card owns the authoritative "all rides" total,
+                        // so the header only counts the rides shown in the timeline
+                        // to avoid the two numbers appearing to contradict.
+                        else -> stringResource(R.string.rides_active_count, activeRides.size)
+                    }
+                )
+                if (!inSelection) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        RideHeaderAction(
+                            icon = Icons.Default.FileDownload,
+                            label = stringResource(R.string.ride_import),
+                            enabled = true,
+                            onClick = onImport
+                        )
+                        RideHeaderAction(
+                            icon = Icons.Default.Upload,
+                            label = stringResource(R.string.ride_export),
+                            enabled = rides.isNotEmpty(),
+                            onClick = { selectionMode = true }
+                        )
+                        RideHeaderAction(
+                            icon = Icons.AutoMirrored.Filled.CallMerge,
+                            label = stringResource(R.string.ride_merge),
+                            enabled = rides.size >= 2,
+                            onClick = { mergeMode = true }
+                        )
+                    }
                 }
-            )
+            }
 
-            // Import / Export / Merge actions (hidden while picking rides).
+            // "VeloSpot Wrapped" recap entry — the highlighted primary action of
+            // this sheet. A filled-tonal button gives it a clear emphasis above the
+            // outlined/utility controls. Hidden while picking rides.
             if (!inSelection) {
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(
-                        onClick = onImport,
-                        modifier = Modifier.weight(1f)
-                    ) { Text(stringResource(R.string.ride_import)) }
-                    OutlinedButton(
-                        onClick = { selectionMode = true },
-                        enabled = rides.isNotEmpty(),
-                        modifier = Modifier.weight(1f)
-                    ) { Text(stringResource(R.string.ride_export)) }
-                    OutlinedButton(
-                        onClick = { mergeMode = true },
-                        enabled = rides.size >= 2,
-                        modifier = Modifier.weight(1f)
-                    ) { Text(stringResource(R.string.ride_merge)) }
-                }
-                // "VeloSpot Wrapped" recap entry — opens the auto-advancing Story
-                // history / date-range generator. Unobtrusive, below Import/Export.
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(
+                Spacer(Modifier.height(14.dp))
+                FilledTonalButton(
                     onClick = onOpenWrapped,
                     enabled = rides.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth()
@@ -326,6 +356,33 @@ internal fun RidesSheet(
     }
 }
 
+
+/**
+ * A compact header action rendered as a tooltip icon button. Using icon buttons
+ * for Import / Export / Merge keeps all three on a single line regardless of the
+ * screen width, so their labels can never wrap or truncate. The [label] doubles
+ * as the accessibility content description and the long-press tooltip text.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RideHeaderAction(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            TooltipAnchorPosition.Above
+        ),
+        tooltip = { PlainTooltip { Text(label) } },
+        state = rememberTooltipState()
+    ) {
+        FilledTonalIconButton(onClick = onClick, enabled = enabled) {
+            Icon(imageVector = icon, contentDescription = label)
+        }
+    }
+}
 
 /** Dialog choosing the export destination: share via another app or save to a file. */
 @Composable

@@ -379,6 +379,7 @@
     <string name="menu_my_rides">Meus percursos</string>
     <string name="rides_title">Meus percursos</string>
     <string name="rides_count">%1$d percursos</string>
+    <string name="rides_active_count">%1$d percursos ativos</string>
     <string name="rides_empty_title">Ainda sem percursos</string>
     <string name="rides_empty_text">Toque no botão vermelho de gravação no mapa para registar um percurso. Ele aparecerá aqui com distância, duração e velocidade.</string>
     <!-- Painel de estatísticas (topo de "Os meus percursos") -->
