@@ -221,9 +221,11 @@ internal fun BikePhotoCropDialog(
  */
 private fun loadOrientedBitmap(context: Context, uri: Uri, maxDim: Int = 1600): Bitmap? {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    context.contentResolver.openInputStream(uri)?.use {
-        BitmapFactory.decodeStream(it, null, bounds)
-    } ?: return null
+    // In `inJustDecodeBounds` mode `decodeStream` always returns null (it only fills
+    // `bounds`), so the null-check must be on the stream — not the decode result —
+    // or this would bail every time and the crop dialog would never load the image.
+    val opened = context.contentResolver.openInputStream(uri) ?: return null
+    opened.use { BitmapFactory.decodeStream(it, null, bounds) }
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
     val opts = BitmapFactory.Options().apply {

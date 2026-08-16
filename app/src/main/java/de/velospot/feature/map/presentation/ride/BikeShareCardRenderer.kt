@@ -148,17 +148,17 @@ private fun drawBikeGrid(scaffold: ShareCardCanvas, cells: List<BikeShareCell>) 
 
     val emojiPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.SANS_SERIF
-        textSize = 46f
+        textSize = 40f
     }
     val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = BIKE_WHITE
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        textSize = 48f
+        textSize = 44f
     }
     val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = BIKE_WHITE_70
         typeface = Typeface.SANS_SERIF
-        textSize = 26f
+        textSize = 24f
     }
 
     cells.forEachIndexed { i, cell ->
@@ -169,15 +169,18 @@ private fun drawBikeGrid(scaffold: ShareCardCanvas, cells: List<BikeShareCell>) 
         val rect = RectF(left, top, left + cellWidth, top + BIKE_CELL_HEIGHT)
         scaffold.glassPanel(rect, radius)
 
+        // Three stacked baselines with clear separation so the big value touches
+        // neither the emoji above it nor the caption below it (emoji ≈ top+42,
+        // value ≈ top+90, label ≈ top+122 inside a 132-tall cell).
         val padX = 30f
-        canvas.drawText(cell.emoji, left + padX, top + 52f, emojiPaint)
-        valuePaint.textSize = 48f
+        canvas.drawText(cell.emoji, left + padX, top + 42f, emojiPaint)
+        valuePaint.textSize = 44f
         val maxValueWidth = cellWidth - padX * 2f
-        while (valuePaint.textSize > 28f && valuePaint.measureText(cell.value) > maxValueWidth) {
+        while (valuePaint.textSize > 26f && valuePaint.measureText(cell.value) > maxValueWidth) {
             valuePaint.textSize -= 3f
         }
-        canvas.drawText(cell.value, left + padX, top + 92f, valuePaint)
-        canvas.drawText(cell.label, left + padX, top + 114f, labelPaint)
+        canvas.drawText(cell.value, left + padX, top + 90f, valuePaint)
+        canvas.drawText(cell.label, left + padX, top + 122f, labelPaint)
     }
 }
 
@@ -229,13 +232,13 @@ private const val BIKE_PANEL_RIGHT = SHARE_CARD_WIDTH - BIKE_MARGIN
 private const val BIKE_PANEL_BOTTOM = 640f
 
 // ── Stat-grid geometry ────────────────────────────────────────────────────────
-// The grid is 2 columns × up to 3 rows. It is deliberately lifted and shortened
-// (vs. the original 812 top / 140 cell / 18 gap) so that even the tallest 6-cell
-// (3-row) grid ends well above the shared footer — with 6 cells the last row now
-// bottoms out at 800 + 3*120 + 2*16 = 1192 px, comfortably above the footer's
-// visual top (~1250 px), instead of the previous 1268 px which overlapped it.
+// The grid is 2 columns × up to 3 rows. Each cell is tall enough to stack the emoji,
+// the big value and the caption without them overlapping, while the tallest 6-cell
+// (3-row) grid still ends with ≥40 px clearance above the shared footer: with 6 cells
+// the last row bottoms out at 792 + 3*132 + 2*10 = 1208 px, i.e. 42 px above the
+// footer's visual top (~1250 px = 1350 − 70 − 30).
 private const val BIKE_GRID_COLUMNS = 2
-private const val BIKE_GRID_TOP = 800f
-private const val BIKE_CELL_HEIGHT = 120f
-private const val BIKE_GRID_VGAP = 16f
+private const val BIKE_GRID_TOP = 792f
+private const val BIKE_CELL_HEIGHT = 132f
+private const val BIKE_GRID_VGAP = 10f
 
