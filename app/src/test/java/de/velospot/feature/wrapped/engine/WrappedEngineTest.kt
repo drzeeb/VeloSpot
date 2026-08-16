@@ -35,7 +35,8 @@ class WrappedEngineTest {
         maxSpeedMps: Double = 8.0,
         gain: Double = 50.0,
         loss: Double = 40.0,
-        isMock: Boolean = false
+        isMock: Boolean = false,
+        archivedAt: Long? = null
     ) = RecordedRideSummary(
         id = id,
         startedAt = startedAt,
@@ -47,7 +48,8 @@ class WrappedEngineTest {
         maxSpeedMps = maxSpeedMps,
         elevationGainMeters = gain,
         elevationLossMeters = loss,
-        isMock = isMock
+        isMock = isMock,
+        archivedAt = archivedAt
     )
 
     // Current window: the Mon 2024-06-10 .. Mon 2024-06-17 week.
@@ -83,6 +85,32 @@ class WrappedEngineTest {
         assertNotNull(report)
         assertEquals(1, report!!.stats.rideCount)
         assertEquals(2_000.0, report.stats.totalDistanceMeters, 0.0)
+    }
+
+    @Test
+    fun `archived rides are excluded`() {
+        val report = WrappedEngine.build(
+            rides = listOf(
+                ride("real", at(2024, 6, 11), distanceMeters = 2_000.0),
+                // e.g. an original ride retired (archived) by a merge — must not count.
+                ride("archived", at(2024, 6, 12), distanceMeters = 9_000.0, archivedAt = 1L)
+            ),
+            period = week,
+            now = now
+        )
+        assertNotNull(report)
+        assertEquals(1, report!!.stats.rideCount)
+        assertEquals(2_000.0, report.stats.totalDistanceMeters, 0.0)
+    }
+
+    @Test
+    fun `only-archived period returns null`() {
+        val report = WrappedEngine.build(
+            rides = listOf(ride("a", at(2024, 6, 11), archivedAt = 1L)),
+            period = week,
+            now = now
+        )
+        assertNull(report)
     }
 
     @Test

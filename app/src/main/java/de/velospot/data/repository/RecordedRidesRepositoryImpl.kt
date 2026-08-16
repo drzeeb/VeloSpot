@@ -2,6 +2,7 @@ package de.velospot.data.repository
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import de.velospot.core.analysis.RideMerger
 import de.velospot.core.tracking.AltitudeSample
 import de.velospot.core.tracking.ElevationAccumulator
 import de.velospot.core.tracking.RideTracker
@@ -105,6 +106,25 @@ class RecordedRidesRepositoryImpl @Inject constructor(
 
     override suspend fun clearAll() =
         recordedRideDao.deleteAll()
+
+    override suspend fun mergeRides(
+        ids: List<String>,
+        newId: String,
+        name: String?
+    ): RecordedRide? = withContext(Dispatchers.Default) {
+        // Chunked load (never `SELECT *` on the heavy pointsJson) then stitch with
+        // the pure merger off the main thread. Bail out on an unmergeable selection.
+        val sources = getRides(ids)
+        if (!RideMerger.canMerge(sources)) return@withContext null
+        val merged = RideMerger.merge(sources, newId = newId, name = name)
+        // Save the new ride first, then archive the originals so the result exists
+        // before its sources leave the active timeline. Room-insert has no
+        // CursorWindow limit on the (potentially large) merged pointsJson.
+        recordedRideDao.upsert(merged.toEntity())
+        val now = System.currentTimeMillis()
+        sources.forEach { recordedRideDao.updateArchivedAt(it.id, now) }
+        merged
+    }
 
     override suspend fun updateRideName(id: String, name: String?) =
         recordedRideDao.updateName(id, name?.trim()?.takeIf { it.isNotBlank() })

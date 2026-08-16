@@ -102,6 +102,14 @@ class RideTrackingController(
     val isLoadingRide: StateFlow<Boolean> = _isLoadingRide.asStateFlow()
 
     /**
+     * A just-completed merge that can still be undone (source rides were archived,
+     * not deleted), or `null` when there's nothing to undo. Drives the timeline's
+     * Undo snackbar; cleared on undo, dismiss, or when it is consumed.
+     */
+    private val _mergeUndo = MutableStateFlow<MergeUndo?>(null)
+    val mergeUndo: StateFlow<MergeUndo?> = _mergeUndo.asStateFlow()
+
+    /**
      * The full set of rides parsed from the previewed GPX (a multi-`<trk>` file
      * yields several). The first is shown in the sheet; importing the preview
      * persists them all. Empty when no preview is open.
@@ -301,4 +309,61 @@ class RideTrackingController(
         _selectedRide.update { if (it?.id == id) it.copy(archivedAt = if (archived) System.currentTimeMillis() else null) else it }
         scope.launch { repository.setRideArchived(id, archived) }
     }
+
+    /**
+     * Merges the rides in [ids] into a single new ride named [name] (or the earliest
+     * source's name when blank), archiving the originals. Runs the (off-main) merge
+     * in the repository, then opens the new ride's detail sheet — mirroring
+     * [importRidesAndShowFirst] — and surfaces a [MergeUndo] so the timeline can
+     * offer a one-tap Undo (restore the originals, delete the merged ride). Emits an
+     * "incompatible" message when the selection can't be merged.
+     */
+    fun mergeRides(ids: List<String>, name: String?) {
+        if (ids.size < 2) return
+        scope.launch {
+            val merged = repository.mergeRides(
+                ids = ids,
+                newId = java.util.UUID.randomUUID().toString(),
+                name = name
+            )
+            if (merged == null) {
+                onUserMessage(de.velospot.R.string.ride_merge_incompatible)
+                return@launch
+            }
+            showRide(merged)
+            // The "rides merged" confirmation is surfaced by the Undo snackbar (it
+            // carries an action), so no separate toast is emitted here.
+            _mergeUndo.value = MergeUndo(mergedRideId = merged.id, sourceIds = ids)
+        }
+    }
+
+    /**
+     * Reverts the most recent merge held in [mergeUndo]: restores (un-archives) the
+     * source rides and deletes the merged ride, closing its detail sheet if open.
+     */
+    fun undoMerge() {
+        val undo = _mergeUndo.value ?: return
+        _mergeUndo.value = null
+        if (_selectedRide.value?.id == undo.mergedRideId) dismissSelectedRide()
+        scope.launch {
+            repository.removeRide(undo.mergedRideId)
+            undo.sourceIds.forEach { repository.setRideArchived(it, false) }
+        }
+    }
+
+    /** Dismisses the pending merge-undo affordance without reverting. */
+    fun dismissMergeUndo() {
+        _mergeUndo.value = null
+    }
 }
+
+/**
+ * A just-completed merge that can still be undone: the id of the newly created
+ * merged ride and the ids of the source rides that were archived.
+ */
+data class MergeUndo(
+    val mergedRideId: String,
+    val sourceIds: List<String>
+)
+
+

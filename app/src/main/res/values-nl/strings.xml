@@ -378,7 +378,9 @@
     <!-- Ride tracking ("Mijn ritten") -->
     <string name="menu_my_rides">Mijn ritten</string>
     <string name="rides_title">Mijn ritten</string>
+    <string name="rides_more_actions">Meer opties</string>
     <string name="rides_count">%1$d ritten</string>
+    <string name="rides_active_count">%1$d actieve ritten</string>
     <string name="rides_empty_title">Nog geen ritten</string>
     <string name="rides_empty_text">Tik op de rode opnameknop op de kaart om een rit vast te leggen. Hij verschijnt hier met afstand, duur en snelheid.</string>
     <!-- Statistiekdashboard (boven in "Mijn ritten") -->
@@ -674,6 +676,27 @@
     <string name="ride_gpx_help_action">Zo upload je je rit naar Strava en co.</string>
     <string name="ride_gpx_help_title">Upload je rit naar Strava en co.</string>
     <string name="ride_gpx_help_body">1. Exporteer deze rit als GPX met de knop hierboven.\n\n2. Sla het GPX-bestand op of stuur het direct naar een andere app (Drive, Bestanden, e-mail, …).\n\n3. Log in op de website van de aanbieder (Strava, Komoot, Garmin Connect of RideWithGPS) en kies het GPX-bestand onder \u201cActiviteit uploaden\u201d / \u201cImporteren\u201d.\n\nLet op: de mobiele apps van Strava en Komoot kunnen GPX vaak niet rechtstreeks importeren, dus uploaden via de website is de betrouwbare route.</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Samenvoegen</string>
+    <string name="ride_merge_select_hint">Selecteer ritten om samen te voegen</string>
+    <string name="ride_merge_selected_count">%1$d geselecteerd</string>
+    <string name="ride_merge_confirm">Samenvoegen</string>
+    <string name="ride_merge_cancel">Annuleren</string>
+    <string name="ride_merge_min_selection">Selecteer minstens 2 ritten om samen te voegen</string>
+    <string name="ride_merge_dialog_title">Ritten samenvoegen?</string>
+    <string name="ride_merge_dialog_text">De geselecteerde ritten worden samengevoegd tot één. De originelen worden gearchiveerd en kunnen worden hersteld.</string>
+    <string name="ride_merge_name_label">Naam</string>
+    <string name="ride_merge_preview_title">Samengevoegde rit</string>
+    <string name="ride_merge_preview_distance">Afstand</string>
+    <string name="ride_merge_preview_duration">Duur</string>
+    <string name="ride_merge_preview_elevation">Hoogtemeters</string>
+    <string name="ride_merge_preview_timespan">Tijdspanne</string>
+    <string name="ride_merge_preview_segments">Segmenten</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Verschillende fietsen geselecteerd — de samengevoegde rit houdt geen fietsprofiel.</string>
+    <string name="ride_merge_done">Ritten samengevoegd</string>
+    <string name="ride_merge_undo">Ongedaan maken</string>
+    <string name="ride_merge_incompatible">Deze ritten kunnen niet worden samengevoegd</string>
     <string name="ride_save_as_route">Opslaan als route</string>
     <string name="ride_saved_as_route">Rit opgeslagen als route</string>
     <string name="ride_route_default_name">Opgenomen route</string>

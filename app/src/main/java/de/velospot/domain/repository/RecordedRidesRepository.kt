@@ -82,6 +82,19 @@ interface RecordedRidesRepository {
     suspend fun removeRide(id: String)
 
     /**
+     * Merges the rides identified by [ids] into a single new ride (id [newId], name
+     * [name] or the earliest source's name when blank) and persists it, then
+     * **archives** the source rides (reversible) rather than deleting them. Sources
+     * are loaded through the chunked [getRides] read path (never `SELECT *` on the
+     * heavy `pointsJson`) and stitched by the pure `RideMerger` off the main thread.
+     *
+     * Returns the saved merged ride, or `null` when the selection can't be merged
+     * (fewer than two rides, or a mock/real mix). Default is a no-op returning
+     * `null` so in-memory test fakes needn't override it.
+     */
+    suspend fun mergeRides(ids: List<String>, newId: String, name: String?): RecordedRide? = null
+
+    /**
      * One-off maintenance pass that recomputes each stored ride's cumulative
      * gain/loss from its raw GPS track (with the shared elevation integrator) and
      * writes the corrected aggregate columns back. Fixes historical rides whose

@@ -109,7 +109,10 @@
     <!-- Ride tracking ("My rides" timeline) -->
     <string name="menu_my_rides">My rides</string>
     <string name="rides_title">My rides</string>
+    <!-- Content description for the overflow (three-dots) menu that holds Import / Export / Merge -->
+    <string name="rides_more_actions">More actions</string>
     <string name="rides_count">%1$d rides</string>
+    <string name="rides_active_count">%1$d active rides</string>
     <string name="rides_empty_title">No rides yet</string>
     <string name="rides_empty_text">Tap the red record button on the map to track a ride. It will appear here with distance, duration and speed.</string>
     <!-- Ride statistics dashboard (top of "My rides") -->
@@ -409,6 +412,27 @@
     <string name="ride_export_saved">Rides saved</string>
     <string name="ride_export_save_failed">Couldn\'t save the file</string>
     <string name="ride_export_invalid">Couldn\'t create a valid GPX file</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Merge</string>
+    <string name="ride_merge_select_hint">Select rides to merge</string>
+    <string name="ride_merge_selected_count">%1$d selected</string>
+    <string name="ride_merge_confirm">Merge</string>
+    <string name="ride_merge_cancel">Cancel</string>
+    <string name="ride_merge_min_selection">Select at least 2 rides to merge</string>
+    <string name="ride_merge_dialog_title">Merge rides?</string>
+    <string name="ride_merge_dialog_text">The selected rides are combined into one. The originals are archived and can be restored.</string>
+    <string name="ride_merge_name_label">Name</string>
+    <string name="ride_merge_preview_title">Merged ride</string>
+    <string name="ride_merge_preview_distance">Distance</string>
+    <string name="ride_merge_preview_duration">Duration</string>
+    <string name="ride_merge_preview_elevation">Elevation</string>
+    <string name="ride_merge_preview_timespan">Time span</string>
+    <string name="ride_merge_preview_segments">Segments</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Different bikes selected — the merged ride keeps no bike profile.</string>
+    <string name="ride_merge_done">Rides merged</string>
+    <string name="ride_merge_undo">Undo</string>
+    <string name="ride_merge_incompatible">These rides can\'t be merged</string>
     <string name="ride_save_as_route">Save as route</string>
     <string name="ride_saved_as_route">Ride saved as a route</string>
     <string name="ride_route_default_name">Recorded route</string>

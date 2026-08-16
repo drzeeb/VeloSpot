@@ -1344,6 +1344,25 @@ class MapViewModel @Inject constructor(
         rideTracking.setRideArchived(id, archived)
 
     /**
+     * Merges the recorded rides in [ids] into a single new ride named [name],
+     * archiving the originals (reversible via [undoMerge]). Delegates to the ride
+     * tracking controller, which stitches off the main thread and opens the merged
+     * ride's detail sheet.
+     */
+    fun mergeRecordedRides(ids: List<String>, name: String?) =
+        rideTracking.mergeRides(ids, name)
+
+    /** The pending "rides merged" Undo affordance, or `null` when there's none. */
+    val mergeUndo: StateFlow<de.velospot.feature.map.presentation.ride.MergeUndo?> =
+        rideTracking.mergeUndo
+
+    /** Reverts the last merge: restores the sources and deletes the merged ride. */
+    fun undoMerge() = rideTracking.undoMerge()
+
+    /** Dismisses the pending merge-undo without reverting. */
+    fun dismissMergeUndo() = rideTracking.dismissMergeUndo()
+
+    /**
      * Saves a recorded [ride] — a recording, a navigated ride or a round trip — as
      * a re-rideable route in *My routes*, seeding its leaderboard with the ride's
      * own time. Reuses the ride's name (falling back to a default), closes the ride

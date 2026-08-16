@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -234,6 +235,27 @@ fun MainMapScreen(
         userMessageText?.let { text ->
             Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
             viewModel.consumeUserMessage()
+        }
+    }
+
+    // "Rides merged" Undo affordance: a snackbar with a one-tap Undo that restores
+    // the archived originals and deletes the merged ride. Surfaced here (not as a
+    // Toast) because it carries an action.
+    val mergeSnackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+    val mergeUndo by viewModel.mergeUndo.collectAsStateWithLifecycle()
+    val mergeDoneText = stringResource(R.string.ride_merge_done)
+    val mergeUndoText = stringResource(R.string.ride_merge_undo)
+    LaunchedEffect(mergeUndo) {
+        if (mergeUndo == null) return@LaunchedEffect
+        val result = mergeSnackbarHostState.showSnackbar(
+            message = mergeDoneText,
+            actionLabel = mergeUndoText,
+            duration = androidx.compose.material3.SnackbarDuration.Long
+        )
+        if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+            viewModel.undoMerge()
+        } else {
+            viewModel.dismissMergeUndo()
         }
     }
 
@@ -1430,6 +1452,14 @@ fun MainMapScreen(
                 }
             }
         }
+
+        // Merge Undo snackbar host — kept last in the root Box so it draws on top.
+        androidx.compose.material3.SnackbarHost(
+            hostState = mergeSnackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        )
     }
 
     // ── First-launch welcome onboarding ───────────────────────────────────────

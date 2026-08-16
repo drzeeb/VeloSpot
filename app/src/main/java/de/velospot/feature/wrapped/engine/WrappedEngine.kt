@@ -15,21 +15,27 @@ import de.velospot.feature.wrapped.domain.WrappedReport
  *
  * No Android, no I/O and no side effects — every input needed to reproduce the
  * output is passed in (including `now`), so this is fully JVM-unit-testable. Mock
- * rides are excluded everywhere so synthetic rides never appear in a Wrapped story.
+ * rides **and archived rides** are excluded everywhere so neither synthetic rides
+ * nor rides the user has archived (e.g. the originals left behind after a merge)
+ * ever appear in — or skew — a Wrapped story.
  */
 internal object WrappedEngine {
 
     /**
      * Builds the report for [period], or `null` when the period contains no
-     * (non-mock) rides — this backs the product rule "empty period ⇒ skip; no
-     * report, no notification".
+     * eligible (non-mock, non-archived) rides — this backs the product rule
+     * "empty period ⇒ skip; no report, no notification".
      */
     fun build(
         rides: List<RecordedRideSummary>,
         period: WrappedPeriod,
         now: Long = System.currentTimeMillis()
     ): WrappedReport? {
-        val real = rides.filterNot { it.isMock }
+        // Exclude both synthetic (mock) rides and archived rides. Archiving is how a
+        // merge retires the original segments; counting them would double-count the
+        // ride that replaced them (and any manually archived ride is intentionally
+        // hidden from stats too).
+        val real = rides.filterNot { it.isMock || it.archivedAt != null }
 
         val inPeriod = real.filter {
             it.startedAt >= period.startInclusive && it.startedAt < period.endExclusive

@@ -378,7 +378,9 @@
     <!-- Ride tracking ("Meng Touren") -->
     <string name="menu_my_rides">Meng Touren</string>
     <string name="rides_title">Meng Touren</string>
+    <string name="rides_more_actions">Méi Optiounen</string>
     <string name="rides_count">%1$d Touren</string>
+    <string name="rides_active_count">%1$d aktiv Touren</string>
     <string name="rides_empty_title">Nach keng Touren</string>
     <string name="rides_empty_text">Tipp op de roude Knäppche op der Kaart fir eng Tour opzehuelen. Si erschéngt hei mat Distanz, Dauer a Vitesse.</string>
     <!-- Statistik-Dashboard (uewen an „Meng Touren“) -->
@@ -674,6 +676,27 @@
     <string name="ride_gpx_help_action">Wéi s du deng Tour op Strava &amp; Co. luets</string>
     <string name="ride_gpx_help_title">Deng Tour op Strava &amp; Co. lueden</string>
     <string name="ride_gpx_help_body">1. Exportéier dës Tour mam Knäppche uewen als GPX.\n\n2. Späicher d\u2019GPX-Datei oder schéck se direkt un eng aner App (Drive, Dateien, E-Mail, …).\n\n3. Mell dech op der Websäit vum Ubidder un (Strava, Komoot, Garmin Connect oder RideWithGPS) a wiel d\u2019GPX-Datei ënner \u201eAktivitéit lueden\u201c / \u201eImportéieren\u201c aus.\n\nBemierkung: D\u2019Strava- an d\u2019Komoot-Apps kënne GPX dacks net direkt importéieren – den Upload iwwer d\u2019Websäit ass de sécheren Wee.</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Zesummeleeën</string>
+    <string name="ride_merge_select_hint">Tourën zum Zesummeleeë auswielen</string>
+    <string name="ride_merge_selected_count">%1$d ausgewielt</string>
+    <string name="ride_merge_confirm">Zesummeleeën</string>
+    <string name="ride_merge_cancel">Ofbriechen</string>
+    <string name="ride_merge_min_selection">Wiel mindestens 2 Tourën fir se zesummenzeleeën aus</string>
+    <string name="ride_merge_dialog_title">Tourën zesummeleeën?</string>
+    <string name="ride_merge_dialog_text">Déi ausgewielten Tourë ginn zu enger zesummegefaasst. D\u2019Originaler ginn archivéiert a kënne restauréiert ginn.</string>
+    <string name="ride_merge_name_label">Numm</string>
+    <string name="ride_merge_preview_title">Zesummegefaasst Tour</string>
+    <string name="ride_merge_preview_distance">Distanz</string>
+    <string name="ride_merge_preview_duration">Dauer</string>
+    <string name="ride_merge_preview_elevation">Héichtemeter</string>
+    <string name="ride_merge_preview_timespan">Zäitraum</string>
+    <string name="ride_merge_preview_segments">Segmenter</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Verschidde Vëloe ausgewielt — déi zesummegefaasst Tour behält kee Vëlosprofil.</string>
+    <string name="ride_merge_done">Tourën zesummegefaasst</string>
+    <string name="ride_merge_undo">Réckgängeg</string>
+    <string name="ride_merge_incompatible">Dës Tourë kënnen net zesummegefaasst ginn</string>
     <string name="ride_save_as_route">Als Streck späicheren</string>
     <string name="ride_saved_as_route">Fahrt als Streck gespäichert</string>
     <string name="ride_route_default_name">Opgezeechent Streck</string>

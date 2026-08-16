@@ -380,7 +380,9 @@
     <!-- Ride tracking ("I miei percorsi") -->
     <string name="menu_my_rides">I miei percorsi</string>
     <string name="rides_title">I miei percorsi</string>
+    <string name="rides_more_actions">Altre opzioni</string>
     <string name="rides_count">%1$d percorsi</string>
+    <string name="rides_active_count">%1$d percorsi attivi</string>
     <string name="rides_empty_title">Ancora nessun percorso</string>
     <string name="rides_empty_text">Tocca il pulsante rosso di registrazione sulla mappa per registrare un percorso. Apparirà qui con distanza, durata e velocità.</string>
     <!-- Dashboard statistiche (in cima a "I miei percorsi") -->
@@ -676,6 +678,27 @@
     <string name="ride_gpx_help_action">Come caricare il percorso su Strava e simili</string>
     <string name="ride_gpx_help_title">Carica il percorso su Strava e simili</string>
     <string name="ride_gpx_help_body">1. Esporta questo percorso come GPX con il pulsante qui sopra.\n\n2. Salva il file GPX o invialo direttamente a un\u2019altra app (Drive, File, e-mail, …).\n\n3. Accedi al sito del fornitore (Strava, Komoot, Garmin Connect o RideWithGPS) e scegli il file GPX in \u201cCarica attività\u201d / \u201cImporta\u201d.\n\nNota: le app mobili di Strava e Komoot spesso non importano i GPX direttamente, quindi il caricamento dal sito web è la via affidabile.</string>
+    <!-- Merge rides: stitch several recorded rides back into one -->
+    <string name="ride_merge">Unisci</string>
+    <string name="ride_merge_select_hint">Seleziona le corse da unire</string>
+    <string name="ride_merge_selected_count">%1$d selezionate</string>
+    <string name="ride_merge_confirm">Unisci</string>
+    <string name="ride_merge_cancel">Annulla</string>
+    <string name="ride_merge_min_selection">Seleziona almeno 2 corse da unire</string>
+    <string name="ride_merge_dialog_title">Unire le corse?</string>
+    <string name="ride_merge_dialog_text">Le corse selezionate vengono combinate in una sola. Gli originali vengono archiviati e possono essere ripristinati.</string>
+    <string name="ride_merge_name_label">Nome</string>
+    <string name="ride_merge_preview_title">Corsa unita</string>
+    <string name="ride_merge_preview_distance">Distanza</string>
+    <string name="ride_merge_preview_duration">Durata</string>
+    <string name="ride_merge_preview_elevation">Dislivello</string>
+    <string name="ride_merge_preview_timespan">Intervallo di tempo</string>
+    <string name="ride_merge_preview_segments">Segmenti</string>
+    <!-- Shown when the selected rides were recorded with different bikes -->
+    <string name="ride_merge_different_profiles">Bici diverse selezionate — la corsa unita non mantiene alcun profilo bici.</string>
+    <string name="ride_merge_done">Corse unite</string>
+    <string name="ride_merge_undo">Annulla</string>
+    <string name="ride_merge_incompatible">Queste corse non possono essere unite</string>
     <string name="ride_save_as_route">Salva come percorso</string>
     <string name="ride_saved_as_route">Corsa salvata come percorso</string>
     <string name="ride_route_default_name">Percorso registrato</string>
