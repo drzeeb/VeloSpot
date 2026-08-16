@@ -425,12 +425,21 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideBikePhotoStore(
+        @ApplicationContext context: Context
+    ): de.velospot.data.photo.BikePhotoStore {
+        return de.velospot.data.photo.BikePhotoStorage(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideBikeProfilesRepository(
         @ApplicationContext context: Context,
         bikeProfileDao: BikeProfileDao,
-        recordedRidesRepository: RecordedRidesRepository
+        recordedRidesRepository: RecordedRidesRepository,
+        bikePhotoStore: de.velospot.data.photo.BikePhotoStore
     ): BikeProfilesRepository {
-        return BikeProfilesRepositoryImpl(context, bikeProfileDao, recordedRidesRepository)
+        return BikeProfilesRepositoryImpl(context, bikeProfileDao, recordedRidesRepository, bikePhotoStore)
     }
 
     // ── Planned routes + leaderboards ─────────────────────────────────────────

@@ -477,6 +477,27 @@
     <string name="bike_service_notification_text">%1$s hat %2$d km erreicht – Zeit für einen Service-Check.</string>
     <string name="bike_service_channel_name">Fahrrad-Service-Erinnerungen</string>
     <string name="bike_service_channel_description">Erinnert dich anhand der gefahrenen Distanz, wann ein Fahrrad einen Service braucht.</string>
+    <!-- Bike photo (garage) -->
+    <string name="bike_photo_label">Foto</string>
+    <string name="bike_photo_add">Foto hinzufügen</string>
+    <string name="bike_photo_change">Foto ändern</string>
+    <string name="bike_photo_remove">Foto entfernen</string>
+    <string name="bike_photo_cd">Fahrradfoto</string>
+    <string name="bike_photo_placeholder_cd">Kein Fahrradfoto – zum Hinzufügen tippen</string>
+    <!-- Bike Sharepic (shareable image) -->
+    <string name="bike_share_action">Fahrrad teilen</string>
+    <string name="bike_share_cd">Fahrrad als Bild teilen</string>
+    <string name="bike_share_dialog_title">Dieses Fahrrad teilen</string>
+    <string name="bike_share_dialog_subtitle">Eine Karte mit deinem Fahrrad und seinen Fahrtstatistiken – perfekt für Stories.</string>
+    <string name="bike_share_chooser_title">Fahrrad teilen</string>
+    <string name="bike_share_no_rides">Zeichne eine Fahrt mit diesem Fahrrad auf, um die Sharepic-Statistiken freizuschalten.</string>
+    <string name="bike_share_period_since">Seit %1$s</string>
+    <string name="bike_share_stat_distance">Gesamtstrecke</string>
+    <string name="bike_share_stat_rides">Fahrten</string>
+    <string name="bike_share_stat_elevation">Höhenmeter</string>
+    <string name="bike_share_stat_moving_time">Zeit im Sattel</string>
+    <string name="bike_share_stat_longest">Längste Fahrt</string>
+    <string name="bike_share_stat_top_speed">Höchstgeschwindigkeit</string>
     <string name="wrapped_notification_title">Dein VeloSpot Wrapped ist fertig</string>
     <string name="wrapped_notification_text">Ein frischer Rückblick auf deine Fahrten wartet. Zum Ansehen tippen.</string>
     <string name="wrapped_channel_name">VeloSpot Wrapped</string>

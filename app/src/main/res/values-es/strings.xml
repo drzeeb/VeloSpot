@@ -473,6 +473,27 @@
     <string name="bike_service_notification_text">%1$s ha alcanzado %2$d km: es hora de una revisión.</string>
     <string name="bike_service_channel_name">Recordatorios de mantenimiento de la bicicleta</string>
     <string name="bike_service_channel_description">Te avisa cuándo una bicicleta necesita mantenimiento según la distancia recorrida.</string>
+    <!-- Bike photo (garage) -->
+    <string name="bike_photo_label">Foto</string>
+    <string name="bike_photo_add">Añadir foto</string>
+    <string name="bike_photo_change">Cambiar foto</string>
+    <string name="bike_photo_remove">Quitar foto</string>
+    <string name="bike_photo_cd">Foto de la bici</string>
+    <string name="bike_photo_placeholder_cd">Sin foto de la bici: toca para añadir una</string>
+    <!-- Bike Sharepic (shareable image) -->
+    <string name="bike_share_action">Compartir bici</string>
+    <string name="bike_share_cd">Compartir la bici como imagen</string>
+    <string name="bike_share_dialog_title">Compartir esta bici</string>
+    <string name="bike_share_dialog_subtitle">Una tarjeta con tu bici y sus estadísticas de rutas, perfecta para historias.</string>
+    <string name="bike_share_chooser_title">Compartir bici</string>
+    <string name="bike_share_no_rides">Registra una ruta con esta bici para desbloquear sus estadísticas de Sharepic.</string>
+    <string name="bike_share_period_since">Desde %1$s</string>
+    <string name="bike_share_stat_distance">Distancia total</string>
+    <string name="bike_share_stat_rides">Rutas</string>
+    <string name="bike_share_stat_elevation">Desnivel acumulado</string>
+    <string name="bike_share_stat_moving_time">Tiempo sobre la bici</string>
+    <string name="bike_share_stat_longest">Ruta más larga</string>
+    <string name="bike_share_stat_top_speed">Velocidad máxima</string>
     <string name="wrapped_notification_title">Tu VeloSpot Wrapped está listo</string>
     <string name="wrapped_notification_text">Te espera un nuevo resumen de tus rutas. Toca para verlo.</string>
     <string name="wrapped_channel_name">VeloSpot Wrapped</string>

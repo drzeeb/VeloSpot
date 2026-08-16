@@ -471,6 +471,27 @@
     <string name="bike_service_notification_text">%1$s huet %2$d km erreecht – Zäit fir e Service-Check.</string>
     <string name="bike_service_channel_name">Vëlos-Service-Erënnerungen</string>
     <string name="bike_service_channel_description">Erënnert dech op Basis vun der gefuerener Distanz, wéini e Vëlo e Service brauch.</string>
+    <!-- Bike photo (garage) -->
+    <string name="bike_photo_label">Foto</string>
+    <string name="bike_photo_add">Foto derbäisetzen</string>
+    <string name="bike_photo_change">Foto änneren</string>
+    <string name="bike_photo_remove">Foto ewechhuelen</string>
+    <string name="bike_photo_cd">Vëlosfoto</string>
+    <string name="bike_photo_placeholder_cd">Keng Vëlosfoto – tipp fir eng derbäizesetzen</string>
+    <!-- Bike Sharepic (shareable image) -->
+    <string name="bike_share_action">Vëlo deelen</string>
+    <string name="bike_share_cd">Vëlo als Bild deelen</string>
+    <string name="bike_share_dialog_title">Dëse Vëlo deelen</string>
+    <string name="bike_share_dialog_subtitle">Eng Kaart mat dengem Vëlo a senge Faartstatistiken – perfekt fir Stories.</string>
+    <string name="bike_share_chooser_title">Vëlo deelen</string>
+    <string name="bike_share_no_rides">Zeechent eng Faart mat dësem Vëlo op, fir seng Sharepic-Statistiken fräizeschalten.</string>
+    <string name="bike_share_period_since">Zënter %1$s</string>
+    <string name="bike_share_stat_distance">Gesamtstreck</string>
+    <string name="bike_share_stat_rides">Faarten</string>
+    <string name="bike_share_stat_elevation">Héichtemeter</string>
+    <string name="bike_share_stat_moving_time">Zäit um Vëlo</string>
+    <string name="bike_share_stat_longest">Längste Faart</string>
+    <string name="bike_share_stat_top_speed">Maximal Vitesse</string>
     <string name="wrapped_notification_title">Däi VeloSpot Wrapped ass prett</string>
     <string name="wrapped_notification_text">E frësche Réckbléck op deng Faarten waart op dech. Tipp fir e kucken.</string>
     <string name="wrapped_channel_name">VeloSpot Wrapped</string>

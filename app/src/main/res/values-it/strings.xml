@@ -473,6 +473,27 @@
     <string name="bike_service_notification_text">%1$s ha raggiunto %2$d km — è ora di un controllo.</string>
     <string name="bike_service_channel_name">Promemoria di manutenzione della bici</string>
     <string name="bike_service_channel_description">Ti avvisa quando una bici necessita di manutenzione in base alla distanza percorsa.</string>
+    <!-- Bike photo (garage) -->
+    <string name="bike_photo_label">Foto</string>
+    <string name="bike_photo_add">Aggiungi foto</string>
+    <string name="bike_photo_change">Cambia foto</string>
+    <string name="bike_photo_remove">Rimuovi foto</string>
+    <string name="bike_photo_cd">Foto della bici</string>
+    <string name="bike_photo_placeholder_cd">Nessuna foto della bici: tocca per aggiungerne una</string>
+    <!-- Bike Sharepic (shareable image) -->
+    <string name="bike_share_action">Condividi bici</string>
+    <string name="bike_share_cd">Condividi la bici come immagine</string>
+    <string name="bike_share_dialog_title">Condividi questa bici</string>
+    <string name="bike_share_dialog_subtitle">Una scheda con la tua bici e le sue statistiche delle uscite, perfetta per le storie.</string>
+    <string name="bike_share_chooser_title">Condividi bici</string>
+    <string name="bike_share_no_rides">Registra un\'uscita con questa bici per sbloccare le statistiche del suo Sharepic.</string>
+    <string name="bike_share_period_since">Dal %1$s</string>
+    <string name="bike_share_stat_distance">Distanza totale</string>
+    <string name="bike_share_stat_rides">Uscite</string>
+    <string name="bike_share_stat_elevation">Dislivello positivo</string>
+    <string name="bike_share_stat_moving_time">Tempo in sella</string>
+    <string name="bike_share_stat_longest">Uscita più lunga</string>
+    <string name="bike_share_stat_top_speed">Velocità massima</string>
     <string name="wrapped_notification_title">Il tuo VeloSpot Wrapped è pronto</string>
     <string name="wrapped_notification_text">Un nuovo riepilogo delle tue uscite ti aspetta. Tocca per dare un\'occhiata.</string>
     <string name="wrapped_channel_name">VeloSpot Wrapped</string>

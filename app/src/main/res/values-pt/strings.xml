@@ -471,6 +471,27 @@
     <string name="bike_service_notification_text">%1$s atingiu %2$d km — está na hora de uma revisão.</string>
     <string name="bike_service_channel_name">Lembretes de manutenção da bicicleta</string>
     <string name="bike_service_channel_description">Avisa-te quando uma bicicleta precisa de manutenção com base na distância percorrida.</string>
+    <!-- Bike photo (garage) -->
+    <string name="bike_photo_label">Foto</string>
+    <string name="bike_photo_add">Adicionar foto</string>
+    <string name="bike_photo_change">Alterar foto</string>
+    <string name="bike_photo_remove">Remover foto</string>
+    <string name="bike_photo_cd">Foto da bicicleta</string>
+    <string name="bike_photo_placeholder_cd">Sem foto da bicicleta — toca para adicionar uma</string>
+    <!-- Bike Sharepic (shareable image) -->
+    <string name="bike_share_action">Partilhar bicicleta</string>
+    <string name="bike_share_cd">Partilhar a bicicleta como imagem</string>
+    <string name="bike_share_dialog_title">Partilhar esta bicicleta</string>
+    <string name="bike_share_dialog_subtitle">Um cartão com a tua bicicleta e as suas estatísticas de percursos — perfeito para stories.</string>
+    <string name="bike_share_chooser_title">Partilhar bicicleta</string>
+    <string name="bike_share_no_rides">Regista um percurso com esta bicicleta para desbloquear as estatísticas do seu Sharepic.</string>
+    <string name="bike_share_period_since">Desde %1$s</string>
+    <string name="bike_share_stat_distance">Distância total</string>
+    <string name="bike_share_stat_rides">Percursos</string>
+    <string name="bike_share_stat_elevation">Desnível acumulado</string>
+    <string name="bike_share_stat_moving_time">Tempo em cima da bicicleta</string>
+    <string name="bike_share_stat_longest">Percurso mais longo</string>
+    <string name="bike_share_stat_top_speed">Velocidade máxima</string>
     <string name="wrapped_notification_title">O teu VeloSpot Wrapped está pronto</string>
     <string name="wrapped_notification_text">Um novo resumo dos teus percursos está à espera. Toca para veres.</string>
     <string name="wrapped_channel_name">VeloSpot Wrapped</string>

@@ -471,6 +471,27 @@
     <string name="bike_service_notification_text">%1$s heeft %2$d km bereikt — tijd voor een onderhoudsbeurt.</string>
     <string name="bike_service_channel_name">Onderhoudsherinneringen fiets</string>
     <string name="bike_service_channel_description">Herinnert je op basis van de gereden afstand wanneer een fiets onderhoud nodig heeft.</string>
+    <!-- Bike photo (garage) -->
+    <string name="bike_photo_label">Foto</string>
+    <string name="bike_photo_add">Foto toevoegen</string>
+    <string name="bike_photo_change">Foto wijzigen</string>
+    <string name="bike_photo_remove">Foto verwijderen</string>
+    <string name="bike_photo_cd">Fietsfoto</string>
+    <string name="bike_photo_placeholder_cd">Geen fietsfoto — tik om er een toe te voegen</string>
+    <!-- Bike Sharepic (shareable image) -->
+    <string name="bike_share_action">Fiets delen</string>
+    <string name="bike_share_cd">Fiets als afbeelding delen</string>
+    <string name="bike_share_dialog_title">Deze fiets delen</string>
+    <string name="bike_share_dialog_subtitle">Een kaart met je fiets en de ritstatistieken — perfect voor stories.</string>
+    <string name="bike_share_chooser_title">Fiets delen</string>
+    <string name="bike_share_no_rides">Leg een rit met deze fiets vast om de Sharepic-statistieken te ontgrendelen.</string>
+    <string name="bike_share_period_since">Sinds %1$s</string>
+    <string name="bike_share_stat_distance">Totale afstand</string>
+    <string name="bike_share_stat_rides">Ritten</string>
+    <string name="bike_share_stat_elevation">Hoogtemeters</string>
+    <string name="bike_share_stat_moving_time">Tijd in het zadel</string>
+    <string name="bike_share_stat_longest">Langste rit</string>
+    <string name="bike_share_stat_top_speed">Topsnelheid</string>
     <string name="wrapped_notification_title">Je VeloSpot Wrapped is klaar</string>
     <string name="wrapped_notification_text">Een nieuw overzicht van je ritten wacht op je. Tik om te bekijken.</string>
     <string name="wrapped_channel_name">VeloSpot Wrapped</string>
