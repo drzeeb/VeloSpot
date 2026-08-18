@@ -91,3 +91,13 @@
 # ---------------------------------------------------------------------------
 -keep class de.velospot.domain.model.** { *; }
 -keep class de.velospot.domain.repository.** { *; }
+
+# The app builds Moshi with KotlinJsonAdapterFactory (reflection, no @JsonClass
+# codegen), so every reflectively (de)serialised model must retain its members
+# AND its @kotlin.Metadata — otherwise R8 strips the metadata, Moshi no longer
+# recognises the Kotlin class, falls back to the reflective ClassJsonAdapter and
+# throws IllegalArgumentException while building the adapter (a startup crash in
+# release builds). domain.model is kept above; keep the other JSON-model packages.
+-keep class de.velospot.core.backup.** { *; }
+-keep class de.velospot.feature.wrapped.domain.** { *; }
+
