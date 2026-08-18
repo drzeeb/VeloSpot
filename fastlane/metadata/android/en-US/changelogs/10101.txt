@@ -1,0 +1,7 @@
+• New: add a photo to each bike and share a "Sharepic" card
+• New: recorded rides can now be merged into one
+• New: bike parking shows far more detail (covered, lit, guarded, free/paid, e-bike charging, hours…)
+• New: "Park bike" — park here or navigate to the nearest VeloSpot parking
+• New: encrypted, scheduled backups; Wrapped can pick its period
+• Fixes: startup crash on some devices; close address search by tapping the map; Wrapped on time under Doze
+
