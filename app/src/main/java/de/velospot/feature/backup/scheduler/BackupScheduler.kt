@@ -1,6 +1,7 @@
 package de.velospot.feature.backup.scheduler
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -31,7 +32,15 @@ class BackupScheduler @Inject constructor(
     private val scheduleDataStore: BackupScheduleDataStore
 ) {
 
-    private val workManager: WorkManager get() = WorkManager.getInstance(context)
+    private val workManager: WorkManager get() = workManagerProvider(context)
+
+    /**
+     * How the [WorkManager] instance is obtained. Defaults to the process singleton;
+     * overridable in JVM unit tests to supply a mock without a static `getInstance`
+     * (a testability seam only — production always uses the default).
+     */
+    @VisibleForTesting
+    internal var workManagerProvider: (Context) -> WorkManager = { WorkManager.getInstance(it) }
 
     /**
      * (Re)computes and enqueues the next run from the currently-stored schedule.
