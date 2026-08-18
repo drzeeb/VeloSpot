@@ -208,6 +208,14 @@ kover {
                     "de.velospot.feature.wrapped.scheduler.WrappedWorker*",
                     "de.velospot.feature.wrapped.scheduler.WrappedNotifier*",
                     "de.velospot.feature.wrapped.scheduler.WrappedBootReceiver*",
+                    // Automatic-backup scheduling glue that likewise needs an
+                    // instrumented environment: the SAF-writing worker (ContentResolver +
+                    // DocumentsContract) and the reboot/app-update BroadcastReceiver. Their
+                    // pure logic — the schedule mapping, next-fire/initial-delay maths, the
+                    // WorkManager enqueue/cancel glue and the worker decision table — is
+                    // JVM-unit-tested separately (see the backup `scheduler` tests).
+                    "de.velospot.feature.backup.scheduler.BackupWorker*",
+                    "de.velospot.feature.backup.scheduler.BackupBootReceiver*",
                     // System location provider glue (FusedLocationProvider callbacks —
                     // needs an instrumented environment / Play services).
                     "de.velospot.data.location.LocationRepositoryImpl*",
