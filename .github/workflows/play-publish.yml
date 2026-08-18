@@ -14,6 +14,19 @@ name: Play Publish
 # release.yml already produced for the chosen tag, so no keystore is needed.
 #
 # Requires the PLAY_SERVICE_ACCOUNT_JSON secret (Google Play service-account key).
+#
+# ── Troubleshooting ──────────────────────────────────────────────────────────
+# "Google Api Error: Invalid request - To proceed with this release, all keys
+#  should be registered to meet the Android Developer Verification requirements."
+#   → This is a Google Play ACCOUNT-side gate, NOT a bug in this workflow or the
+#     Fastfile. The upload authenticates fine but Play refuses to create/commit
+#     the release until Android Developer Verification is satisfied. Fix it in
+#     the Google Play Console (no code change makes it pass):
+#       1. Complete the developer IDENTITY/ORGANISATION verification
+#          (Play Console → Account details / the pending verification prompt).
+#       2. Register the app SIGNING KEY(S) under Play App Signing so every key
+#          used for this app is enrolled for the verification requirement.
+#     Re-run this workflow once the Console shows verification/keys as complete.
 
 on:
   workflow_dispatch:
