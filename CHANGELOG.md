@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-08-18
+
+### Changed
+- **Re-released 1.1.1 under a new version code (`10102`)** — the `10101` version code from 1.1.1 was permanently consumed by a discarded Google Play draft (Play never lets an uploaded code be reused, even after discarding), so this release ships the exact same app under a fresh code. No functional changes versus 1.1.1.
+
 ## [1.1.1] - 2026-08-18
 
 ### Added

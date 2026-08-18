@@ -1,0 +1,7 @@
+• Nouveau : ajoutez une photo à chaque vélo et partagez un « Sharepic »
+• Nouveau : fusionnez plusieurs trajets en un seul
+• Nouveau : stationnements vélo bien plus détaillés (couvert, éclairé, gardé, payant, recharge e-bike, horaires…)
+• Nouveau : « Garer le vélo » – ici ou vers le VeloSpot le plus proche
+• Nouveau : sauvegardes chiffrées et planifiées ; période Wrapped au choix
+• Corrections : plantage au démarrage ; recherche d'adresse fermée d'un toucher ; Wrapped à l'heure (Doze)
+
