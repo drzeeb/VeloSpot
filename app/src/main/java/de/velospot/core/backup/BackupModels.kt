@@ -46,6 +46,8 @@ data class BikeProfileBackup(
     val color: String? = null,
     val modelYear: Int? = null,
     val notes: String? = null,
+    /** Absolute app-storage path of the uploaded photo; only the path travels. */
+    val photoPath: String? = null,
     val isDefault: Boolean = false,
     val createdAt: Long,
     val serviceIntervalKm: Int? = null,

@@ -74,6 +74,12 @@ class BikeProfilesViewModelTest {
         override suspend fun clearAll() = Unit
     }
 
+    /** No-op photo store: the ViewModel tests don't exercise photo copy/delete. */
+    private class FakeBikePhotoStore : de.velospot.data.photo.BikePhotoStore {
+        override suspend fun savePhoto(bikeId: String, sourceUri: android.net.Uri): String? = null
+        override suspend fun deletePhoto(bikeId: String) = Unit
+    }
+
     private fun bike(id: String, isDefault: Boolean = false, interval: Int? = null) = BikeProfile(
         id = id, name = "Bike $id", type = BikeType.ROAD, isDefault = isDefault,
         createdAt = 0L, serviceIntervalKm = interval,
@@ -115,7 +121,7 @@ class BikeProfilesViewModelTest {
                 summary("s4", "b1", mock = true), // excluded
             )
         )
-        val vm = BikeProfilesViewModel(bikesRepo, ridesRepo)
+        val vm = BikeProfilesViewModel(bikesRepo, ridesRepo, FakeBikePhotoStore())
         startVm(vm)
 
         val state = vm.uiState.value
@@ -141,7 +147,7 @@ class BikeProfilesViewModelTest {
             bikes = listOf(bike("b1"), bike("b2", isDefault = true)),
             activeId = null,
         )
-        val vm = BikeProfilesViewModel(bikesRepo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(bikesRepo, FakeRidesRepository(), FakeBikePhotoStore())
         startVm(vm)
 
         assertTrue(vm.uiState.value.bikes.first { it.profile.id == "b2" }.isActive)
@@ -153,7 +159,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `addBike makes the very first bike the default automatically`() = runTest {
         val repo = FakeBikeProfilesRepository()
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.addBike(BikeDraft(name = "First", isDefault = false))
         dispatcher.scheduler.advanceUntilIdle()
@@ -165,7 +171,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `addBike does not force default when a bike already exists`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1", isDefault = true)))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
         startVm(vm) // uiState must reflect the existing bike (isEmpty == false)
 
         vm.addBike(BikeDraft(name = "Second", isDefault = false))
@@ -179,7 +185,7 @@ class BikeProfilesViewModelTest {
     fun `updateBike keeps service progress when the interval is unchanged`() = runTest {
         val existing = bike("b1", interval = 500).copy(lastServiceNotifiedKm = 1_000)
         val repo = FakeBikeProfilesRepository(bikes = listOf(existing))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.updateBike("b1", createdAt = 0L, draft = BikeDraft(name = "b1", serviceIntervalKm = "500"))
         dispatcher.scheduler.advanceUntilIdle()
@@ -191,7 +197,7 @@ class BikeProfilesViewModelTest {
     fun `updateBike resets service progress when the interval changes`() = runTest {
         val existing = bike("b1", interval = 500).copy(lastServiceNotifiedKm = 1_000)
         val repo = FakeBikeProfilesRepository(bikes = listOf(existing))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.updateBike("b1", createdAt = 0L, draft = BikeDraft(name = "b1", serviceIntervalKm = "800"))
         dispatcher.scheduler.advanceUntilIdle()
@@ -204,7 +210,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `deleteBike removes the bike`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1"), bike("b2")))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.deleteBike("b1")
         dispatcher.scheduler.advanceUntilIdle()
@@ -215,7 +221,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `setDefault flips the default flag to the chosen bike`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1", isDefault = true), bike("b2")))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.setDefault("b2")
         dispatcher.scheduler.advanceUntilIdle()
@@ -227,7 +233,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `setActive persists the chosen active bike`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1"), bike("b2")))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository())
+        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.setActive("b2")
         dispatcher.scheduler.advanceUntilIdle()

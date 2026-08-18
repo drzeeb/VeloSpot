@@ -91,7 +91,14 @@ class BikeProfilesRepositoryImplTest {
         dao: BikeProfileDao = FakeBikeProfileDao(),
         rides: RecordedRidesRepository = mock(),
         context: Context = newContext(),
-    ) = BikeProfilesRepositoryImpl(context, dao, rides)
+        photos: de.velospot.data.photo.BikePhotoStore = NoopBikePhotoStore(),
+    ) = BikeProfilesRepositoryImpl(context, dao, rides, photos)
+
+    /** No-op photo store: these repository tests don't exercise photo storage. */
+    private class NoopBikePhotoStore : de.velospot.data.photo.BikePhotoStore {
+        override suspend fun savePhoto(bikeId: String, sourceUri: android.net.Uri): String? = null
+        override suspend fun deletePhoto(bikeId: String) = Unit
+    }
 
     @Before
     fun resetActive() = runBlocking { repo().setActive(null) }

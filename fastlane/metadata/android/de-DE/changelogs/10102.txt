@@ -1,0 +1,7 @@
+• Neu: Foto pro Fahrrad hinzufügen und als „Sharepic" teilen
+• Neu: aufgezeichnete Fahrten zu einer zusammenführen
+• Neu: Fahrrad-Parkplätze mit viel mehr Details (überdacht, beleuchtet, bewacht, kostenpflichtig, E-Bike-Laden, Zeiten…)
+• Neu: „Fahrrad parken" – hier parken oder zum nächsten VeloSpot navigieren
+• Neu: verschlüsselte, geplante Backups; Wrapped-Zeitraum wählbar
+• Fixes: Startabsturz auf einigen Geräten; Adresssuche per Tipp schließen; Wrapped pünktlich unter Doze
+

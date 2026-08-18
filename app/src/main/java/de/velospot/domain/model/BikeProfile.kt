@@ -42,6 +42,9 @@ enum class BikeType {
  * @property color Frame colour / Farbe, or `null` when unset.
  * @property modelYear Model / purchase year, or `null` when unset.
  * @property notes Free-form notes (components, service history, …).
+ * @property photoPath Absolute path to the rider's uploaded bike photo in
+ *   app-internal storage (`filesDir/bike_photos/<id>.jpg`), or `null` when none was
+ *   set. Only the path is persisted; the image bytes live in app storage.
  * @property isDefault Whether this is the rider's default bike (at most one).
  * @property createdAt Wall-clock time the profile was created (stable ordering).
  * @property serviceIntervalKm Distance in **kilometres** between shop services, or
@@ -64,6 +67,7 @@ data class BikeProfile(
     val color: String? = null,
     val modelYear: Int? = null,
     val notes: String? = null,
+    val photoPath: String? = null,
     val isDefault: Boolean = false,
     val createdAt: Long,
     val serviceIntervalKm: Int? = null,

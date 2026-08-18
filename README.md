@@ -460,5 +460,5 @@ Navigate with confidence and never miss a parking spot again — across Germany,
 
 ---
 
-**Last Updated**: 2026-06-28  
+**Last Updated**: 2026-08-18  
 **Status**: Active Development

@@ -1,6 +1,7 @@
 package de.velospot.feature.map.presentation.ride
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -43,6 +44,30 @@ class ShareCardScaffoldTest {
         assertEquals(32f, statsTrailing.textSize)
         assertEquals(true, statsTrailing.bold)
         assertEquals(0.14f, statsTrailing.letterSpacing)
+    }
+
+    @Test
+    fun `footer sits below the card body near the bottom edge`() {
+        // Baseline 70px above the bottom, visual top one text-size up from that.
+        assertEquals(SHARE_CARD_HEIGHT - 70f, shareCardFooterBaseline(), 1e-4f)
+        assertEquals(shareCardFooterBaseline() - SHARE_CARD_FOOTER_TEXT_SIZE, shareCardFooterTop(), 1e-4f)
+    }
+
+    @Test
+    fun `bike stat grid never overlaps the footer even at its tallest`() {
+        // The tallest grid is 6 cells → 3 rows. It must end with comfortable
+        // clearance above the footer's visual top so the two never collide.
+        val tallestBottom = bikeGridBottom(cellCount = 6)
+        val clearance = shareCardFooterTop() - tallestBottom
+        assertTrue(
+            "grid bottom $tallestBottom should clear the footer top ${shareCardFooterTop()}",
+            clearance >= 40f
+        )
+        // Fewer cells are shorter, so they clear by even more.
+        assertTrue(bikeGridBottom(4) < tallestBottom)
+        assertTrue(bikeGridBottom(2) < bikeGridBottom(4))
+        // No cells → nothing drawn below the grid origin.
+        assertEquals(bikeGridBottom(0), bikeGridBottom(0), 0f)
     }
 }
 

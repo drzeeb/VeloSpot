@@ -335,7 +335,7 @@ class BackupManager @Inject constructor(
         const val CHUNK = 256 * 1024
 
         // Current @Database versions (informational, recorded in the manifest).
-        const val DB_VERSION_RIDES = 8
+        const val DB_VERSION_RIDES = 9
         const val DB_VERSION_SAVED_PLACES = 1
         const val DB_VERSION_FAVORITES = 1
         const val DB_VERSION_PLANNED_ROUTES = 1
@@ -348,12 +348,12 @@ class BackupManager @Inject constructor(
 
 private fun BikeProfileEntity.toBackup() = BikeProfileBackup(
     id, name, brand, model, type, tireSize, weightKg, color, modelYear, notes,
-    isDefault, createdAt, serviceIntervalKm, lastServiceNotifiedKm
+    photoPath, isDefault, createdAt, serviceIntervalKm, lastServiceNotifiedKm
 )
 
 private fun BikeProfileBackup.toEntity() = BikeProfileEntity(
     id, name, brand, model, type, tireSize, weightKg, color, modelYear, notes,
-    isDefault, createdAt, serviceIntervalKm, lastServiceNotifiedKm
+    photoPath, isDefault, createdAt, serviceIntervalKm, lastServiceNotifiedKm
 )
 
 private fun SavedPlaceEntity.toBackup() =

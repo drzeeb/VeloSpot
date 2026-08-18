@@ -49,15 +49,6 @@ class RecordedRidesRepositoryImpl @Inject constructor(
 
     private val weatherAdapter = moshi.adapter(WeatherSnapshot::class.java)
 
-    /**
-     * Geometry-only track adapter: parses just the `latitude`/`longitude` of each
-     * stored point (Moshi silently ignores the speed/altitude/accuracy/timestamp
-     * keys), so the overlays never pay to deserialise or hold fields they never
-     * draw.
-     */
-    private val geometryAdapter = moshi.adapter<List<LatLonPoint>>(
-        Types.newParameterizedType(List::class.java, LatLonPoint::class.java)
-    )
 
     override fun getRideSummariesFlow(): Flow<List<RecordedRideSummary>> =
         recordedRideDao.getSummariesFlow().map { rows -> rows.map { it.toDomain() } }
@@ -215,12 +206,17 @@ class RecordedRidesRepositoryImpl @Inject constructor(
     private suspend fun readTrackGeometry(id: String): List<TrackPoint> {
         val json = readPointsJson(id)
         if (json.isEmpty()) return emptyList()
-        val raw = runCatching { geometryAdapter.fromJson(json) }.getOrNull().orEmpty()
+        // Reuse the full-point [pointsAdapter] and keep only the drawn coordinates.
+        // A previous geometry-only `LatLonPoint` model had no reflectively-usable
+        // Kotlin metadata after R8 stripped this tiny private class, so Moshi's
+        // KotlinJsonAdapterFactory fell back to the reflective ClassJsonAdapter and
+        // threw IllegalArgumentException while building its adapter — crashing the
+        // app at startup in minified release builds. `TrackPoint` is a retained
+        // top-level model whose adapter is already built above, so this is R8-safe.
+        val raw = runCatching { pointsAdapter.fromJson(json) }.getOrNull().orEmpty()
         return raw.map { TrackPoint(latitude = it.latitude, longitude = it.longitude, timestamp = 0L) }
     }
 
-    /** Minimal JSON view of a stored track point: only the drawn coordinates. */
-    private class LatLonPoint(val latitude: Double, val longitude: Double)
 
     private fun RecordedRideSummaryRow.toDomain() = RecordedRideSummary(
         id = id,
