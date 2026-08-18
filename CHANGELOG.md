@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-08-18
+
+### Fixed
+- **The app no longer crashes on startup in release builds (the real fix for the 1.1.0 startup crash)** — `RecordedRidesRepositoryImpl` built a Moshi adapter for a tiny **`private` geometry-only `LatLonPoint`** model. Because the app configures Moshi with **`KotlinJsonAdapterFactory` (reflection, no `@JsonClass` codegen)**, every serialised model must keep its `@kotlin.Metadata` at runtime; R8 stripped it from this small strippable private class (it isn't in the already-kept `domain.model` package), so `KotlinJsonAdapterFactory` no longer recognised it, Moshi fell back to the reflective `ClassJsonAdapter` and threw `IllegalArgumentException` **while building the adapter in the repository's constructor**. Since the repository is a startup `@Singleton` created when the map screen's view-model is first resolved, this crashed the app immediately after launch in minified Play builds (it never reproduced in debug, where nothing is minified). The crashing `LatLonPoint`/geometry adapter is removed and the geometry read now **reuses the already-working, retained `List<TrackPoint>` adapter** (keeping only the drawn coordinates); ProGuard additionally now keeps the `@Metadata` + members of the other reflectively-serialised model packages (`core.backup`, `feature.wrapped.domain`) so this class of R8-stripping crash cannot recur. Note: this — not the precautionary MapLibre pin from 1.1.1/1.1.2 — is the actual root cause of the reported startup crash.
+
 ## [1.1.2] - 2026-08-18
 
 ### Changed

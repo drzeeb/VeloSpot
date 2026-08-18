@@ -69,8 +69,8 @@ android {
         // Static version literals. The release workflow greps these to verify they
         // match the pushed Git tag before building, so keep them as plain literals.
         // WARNING: Do NOT replace these literals with dynamic expressions.
-        versionCode = 10102
-        versionName = "1.1.2"
+        versionCode = 10103
+        versionName = "1.1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
