@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.ComponentName
 import android.os.Build
 import android.service.quicksettings.TileService
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.ContextCompat
 import de.velospot.core.location.LocationController
 import de.velospot.core.navigation.GeoMath
@@ -249,6 +250,16 @@ class RideRecordingManager(
     private var tickerJob: Job? = null
     private var locationJob: Job? = null
 
+    /**
+     * Wall-clock time of the most recent GPS fix delivered to the recorder. Fed by
+     * [observeLocation] on every real fix and used by the no-fix watchdog
+     * ([startFixWatchdog]) to detect a stalled GPS while recording in the background.
+     */
+    @Volatile
+    private var lastFixAtMillis = 0L
+    /** Periodic watchdog that re-arms a stalled/idled GPS during a background recording. */
+    private var fixWatchdogJob: Job? = null
+
     // ── Recording lifecycle ───────────────────────────────────────────────────
 
     /**
@@ -267,6 +278,7 @@ class RideRecordingManager(
         lastStationaryApplied = false
         val startedAt = System.currentTimeMillis()
         recordingStartedAt = startedAt
+        lastFixAtMillis = startedAt
         tracker.start(startedAt)
         _liveTrackPoints.value = emptyList()
         _liveTrackSegments.value = emptyList()
@@ -276,6 +288,7 @@ class RideRecordingManager(
         seedLocation?.let { feed(it) }
         startTicker()
         observeLocation()
+        startFixWatchdog()
         // Declare the recording's location need to the single GPS owner: it keeps the
         // radio at high accuracy and (with the foreground service) alive in the
         // background, regardless of whether a map ViewModel is around.
@@ -301,6 +314,7 @@ class RideRecordingManager(
     fun stop() {
         if (!tracker.isRecording) return
         locationJob?.cancel(); locationJob = null
+        fixWatchdogJob?.cancel(); fixWatchdogJob = null
         stopTicker()
         val ride = tracker.stop(System.currentTimeMillis())
             ?.copy(
@@ -367,6 +381,7 @@ class RideRecordingManager(
     fun discard() {
         if (!tracker.isRecording) return
         locationJob?.cancel(); locationJob = null
+        fixWatchdogJob?.cancel(); fixWatchdogJob = null
         stopTicker()
         tracker.discard()
         isAutoStartedByNavigation = false
@@ -487,9 +502,66 @@ class RideRecordingManager(
         locationJob = scope.launch {
             locationController.locationFlow().collect { location ->
                 if (location == null || suppressRealFixes) return@collect
+                // Stamp every real fix so the no-fix watchdog can tell a live GPS from
+                // a stalled one (idled for a standstill and then frozen by Doze).
+                lastFixAtMillis = System.currentTimeMillis()
                 if (tracker.isRecording) feed(location)
             }
         }
+    }
+
+    /**
+     * No-fix watchdog for a **background recording**. While recording, the
+     * [StandstillDetector] drops the GNSS to the power-saving `IDLE_RECORDING`
+     * profile after a sustained standstill. That profile uses
+     * `PRIORITY_BALANCED_POWER_ACCURACY`, whose delivery the OS **suspends entirely**
+     * while the screen is off and the device is dozing (e.g. the phone locked in a
+     * pocket, where degraded GPS also makes a *moving* rider look stationary). Because
+     * leaving the standstill requires an *incoming* fix above the speed threshold, no
+     * fixes means the recorder can never re-arm high accuracy on its own — the GPS
+     * stays idle and the track silently freezes mid-ride.
+     *
+     * This watchdog breaks that deadlock: if no fix has arrived for
+     * [FIX_WATCHDOG_SILENCE_MILLIS] while actively recording, it force-restores the
+     * high-accuracy moving profile so the GNSS re-engages and fixes resume. During a
+     * normal (screen-on) café/traffic-light stop the idle profile still delivers a fix
+     * every ~12 s, so the watchdog never trips and the battery win is preserved; it
+     * only ever fires when delivery has genuinely stalled.
+     */
+    private fun startFixWatchdog() {
+        fixWatchdogJob?.cancel()
+        fixWatchdogJob = scope.launch {
+            while (isActive && tracker.isRecording) {
+                delay(FIX_WATCHDOG_POLL_MILLIS)
+                if (!tracker.isRecording) break
+                reArmGpsIfStuck(System.currentTimeMillis())
+            }
+        }
+    }
+
+    /**
+     * Re-arms a stalled GPS during an active recording. Returns `true` when it had to
+     * intervene. A no-op unless recording, not paused, and no fix has arrived for
+     * [FIX_WATCHDOG_SILENCE_MILLIS]. When the radio was idled for a standstill it
+     * resets the detector and forces the high-accuracy moving profile (the only way
+     * out of the fix-starved idle state); otherwise it re-issues the current request
+     * to nudge a provider stalled by Doze. Package-visible for a deterministic unit
+     * test of the deadlock-recovery contract (the real watchdog is time-driven).
+     */
+    @VisibleForTesting
+    internal fun reArmGpsIfStuck(now: Long): Boolean {
+        if (!tracker.isRecording || tracker.isPaused) return false
+        if (now - lastFixAtMillis < FIX_WATCHDOG_SILENCE_MILLIS) return false
+        if (lastStationaryApplied) {
+            standstillDetector.reset()
+            lastStationaryApplied = false
+            locationController.setRecordingStationary(false)
+        } else {
+            locationController.refresh()
+        }
+        // Give the re-armed request a fresh grace window before the next check.
+        lastFixAtMillis = now
+        return true
     }
 
     private fun feed(location: GeoCoordinate) {
@@ -662,6 +734,7 @@ class RideRecordingManager(
      */
     private fun rollBackFailedStart() {
         locationJob?.cancel(); locationJob = null
+        fixWatchdogJob?.cancel(); fixWatchdogJob = null
         stopTicker()
         tracker.discard()
         isAutoStartedByNavigation = false
@@ -704,6 +777,18 @@ class RideRecordingManager(
     companion object {
         /** Max distance (m) from the active route at which its terrain elevation is trusted. */
         private const val ROUTE_ELEVATION_MATCH_METERS = 50.0
+
+        /** How often the no-fix watchdog checks the time since the last GPS fix. */
+        private const val FIX_WATCHDOG_POLL_MILLIS = 15_000L
+
+        /**
+         * How long the GPS may stay silent during an active (non-paused) recording
+         * before the watchdog force-re-arms high accuracy. Comfortably above the
+         * ~12 s idle-profile cadence (so a normal screen-on stop never trips it), yet
+         * short enough to recover a Doze-stalled / pocketed GPS long before the track
+         * visibly freezes.
+         */
+        private const val FIX_WATCHDOG_SILENCE_MILLIS = 30_000L
 
         /**
          * Pure decision for a saved ride's final name:
