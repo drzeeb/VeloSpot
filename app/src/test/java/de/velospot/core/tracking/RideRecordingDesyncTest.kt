@@ -276,6 +276,86 @@ class RideRecordingDesyncTest {
         )
     }
 
+    // ── (d) No-fix watchdog: recover a Doze-stalled / pocketed GPS ───────────────
+
+    /**
+     * Regression for the "recording freezes ~5 min after locking the phone in a
+     * pocket" bug. The standstill GPS backoff idles the radio to the balanced-power
+     * `IDLE_RECORDING` profile, whose delivery Doze suspends with the screen off; since
+     * leaving the standstill needs an *incoming* fix, the recorder would otherwise stay
+     * idle forever and the track would freeze. `reArmGpsIfStuck` breaks that deadlock:
+     * after a long fix silence it must reset the standstill and force the high-accuracy
+     * moving profile so the GNSS re-engages.
+     */
+    @Test
+    fun `no-fix watchdog re-arms high accuracy from a stalled idle GPS`() {
+        val locationRepo = mock<LocationRepository>()
+        val controller = locationController(locationRepo)
+        val manager = RideRecordingManager(
+            context = context(),
+            locationController = controller,
+            recordedRidesRepository = mock(),
+            scope = newScope(),
+        )
+
+        manager.start()                                   // moving → high accuracy
+        // Simulate the standstill having idled the GPS (as the detector would after a
+        // sustained low-speed dwell), matching the manager's internal bookkeeping.
+        manager.javaClass.getDeclaredField("lastStationaryApplied").apply {
+            isAccessible = true
+            setBoolean(manager, true)
+        }
+        controller.setRecordingStationary(true)           // → IDLE_RECORDING
+
+        // A short silence must NOT trip the watchdog (a normal screen-on stop still
+        // gets an idle fix every ~12 s).
+        assertFalse(
+            "a brief silence must not force a re-arm",
+            manager.reArmGpsIfStuck(System.currentTimeMillis() + 10_000L)
+        )
+
+        // A long silence (Doze suspended balanced-power delivery) must re-arm.
+        assertTrue(
+            "a long fix silence re-arms high accuracy",
+            manager.reArmGpsIfStuck(System.currentTimeMillis() + 40_000L)
+        )
+
+        // Ordered profiles: start(high) → stationary(idle) → watchdog(high again).
+        verify(locationRepo).startLocationUpdates(LocationPowerProfile.IDLE_RECORDING)
+        verify(locationRepo, org.mockito.kotlin.times(2))
+            .startLocationUpdates(LocationPowerProfile.NAVIGATION_OR_MOVING)
+    }
+
+    /**
+     * The watchdog must stay out of the way of a **deliberate pause** (train/ferry
+     * leg), which intentionally idles the GPS and discards fixes — re-arming there
+     * would fight the pause and waste battery.
+     */
+    @Test
+    fun `no-fix watchdog does not re-arm while paused`() {
+        val locationRepo = mock<LocationRepository>()
+        val manager = RideRecordingManager(
+            context = context(),
+            locationController = locationController(locationRepo),
+            recordedRidesRepository = mock(),
+            scope = newScope(),
+        )
+
+        manager.start()
+        manager.pause()
+
+        assertFalse(
+            "a paused recording is never force-re-armed",
+            manager.reArmGpsIfStuck(System.currentTimeMillis() + 60_000L)
+        )
+    }
+
+
+
+
+
+
+
     // ── Unsafe helpers (JVM-stub workarounds; see class note) ────────────────────
 
     private fun unsafe(): sun.misc.Unsafe {
