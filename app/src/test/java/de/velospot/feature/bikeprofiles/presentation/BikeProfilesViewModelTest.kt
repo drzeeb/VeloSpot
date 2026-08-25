@@ -6,31 +6,62 @@ import de.velospot.domain.model.RecordedRide
 import de.velospot.domain.model.RecordedRideSummary
 import de.velospot.domain.repository.BikeProfilesRepository
 import de.velospot.domain.repository.RecordedRidesRepository
-import kotlinx.coroutines.Dispatchers
+import androidx.lifecycle.ViewModel
+import de.velospot.testsupport.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BikeProfilesViewModelTest {
 
-    private val dispatcher = StandardTestDispatcher()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
-    @Before fun setUp() = Dispatchers.setMain(dispatcher)
-    @After fun tearDown() = Dispatchers.resetMain()
+    private val dispatcher get() = mainDispatcherRule.dispatcher
+
+    /**
+     * View-models created via [newVm]. Their `viewModelScope` collectors (the
+     * `WhileSubscribed` `uiState`) outlive each test; left running they later
+     * dispatch onto `Dispatchers.Main` *after* it is reset, throwing
+     * "Module with the Main dispatcher had failed to initialize" (Looper is
+     * unavailable on the JVM) — an error that surfaces against the *next* test
+     * (e.g. `MapViewModelTest`). We cancel every scope here, while the test
+     * dispatcher is still Main (the rule resets Main only in its post-`@After`
+     * `finished` hook), then drain the scheduler so no late continuation leaks.
+     */
+    private val createdViewModels = mutableListOf<BikeProfilesViewModel>()
+
+    @After
+    fun tearDown() {
+        createdViewModels.forEach { vm ->
+            runCatching {
+                ViewModel::class.java
+                    .getDeclaredMethod("clear")
+                    .apply { isAccessible = true }
+                    .invoke(vm)
+            }
+        }
+        createdViewModels.clear()
+        dispatcher.scheduler.advanceUntilIdle()
+    }
+
+    private fun newVm(
+        bikes: BikeProfilesRepository,
+        rides: RecordedRidesRepository,
+        photo: de.velospot.data.photo.BikePhotoStore = FakeBikePhotoStore(),
+    ): BikeProfilesViewModel =
+        BikeProfilesViewModel(bikes, rides, photo).also { createdViewModels.add(it) }
 
     // ── Fakes ────────────────────────────────────────────────────────────────
 
@@ -121,7 +152,7 @@ class BikeProfilesViewModelTest {
                 summary("s4", "b1", mock = true), // excluded
             )
         )
-        val vm = BikeProfilesViewModel(bikesRepo, ridesRepo, FakeBikePhotoStore())
+        val vm = newVm(bikesRepo, ridesRepo, FakeBikePhotoStore())
         startVm(vm)
 
         val state = vm.uiState.value
@@ -147,7 +178,7 @@ class BikeProfilesViewModelTest {
             bikes = listOf(bike("b1"), bike("b2", isDefault = true)),
             activeId = null,
         )
-        val vm = BikeProfilesViewModel(bikesRepo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(bikesRepo, FakeRidesRepository(), FakeBikePhotoStore())
         startVm(vm)
 
         assertTrue(vm.uiState.value.bikes.first { it.profile.id == "b2" }.isActive)
@@ -159,7 +190,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `addBike makes the very first bike the default automatically`() = runTest {
         val repo = FakeBikeProfilesRepository()
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.addBike(BikeDraft(name = "First", isDefault = false))
         dispatcher.scheduler.advanceUntilIdle()
@@ -171,7 +202,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `addBike does not force default when a bike already exists`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1", isDefault = true)))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(repo, FakeRidesRepository(), FakeBikePhotoStore())
         startVm(vm) // uiState must reflect the existing bike (isEmpty == false)
 
         vm.addBike(BikeDraft(name = "Second", isDefault = false))
@@ -185,7 +216,7 @@ class BikeProfilesViewModelTest {
     fun `updateBike keeps service progress when the interval is unchanged`() = runTest {
         val existing = bike("b1", interval = 500).copy(lastServiceNotifiedKm = 1_000)
         val repo = FakeBikeProfilesRepository(bikes = listOf(existing))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.updateBike("b1", createdAt = 0L, draft = BikeDraft(name = "b1", serviceIntervalKm = "500"))
         dispatcher.scheduler.advanceUntilIdle()
@@ -197,7 +228,7 @@ class BikeProfilesViewModelTest {
     fun `updateBike resets service progress when the interval changes`() = runTest {
         val existing = bike("b1", interval = 500).copy(lastServiceNotifiedKm = 1_000)
         val repo = FakeBikeProfilesRepository(bikes = listOf(existing))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.updateBike("b1", createdAt = 0L, draft = BikeDraft(name = "b1", serviceIntervalKm = "800"))
         dispatcher.scheduler.advanceUntilIdle()
@@ -210,7 +241,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `deleteBike removes the bike`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1"), bike("b2")))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.deleteBike("b1")
         dispatcher.scheduler.advanceUntilIdle()
@@ -221,7 +252,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `setDefault flips the default flag to the chosen bike`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1", isDefault = true), bike("b2")))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.setDefault("b2")
         dispatcher.scheduler.advanceUntilIdle()
@@ -233,7 +264,7 @@ class BikeProfilesViewModelTest {
     @Test
     fun `setActive persists the chosen active bike`() = runTest {
         val repo = FakeBikeProfilesRepository(bikes = listOf(bike("b1"), bike("b2")))
-        val vm = BikeProfilesViewModel(repo, FakeRidesRepository(), FakeBikePhotoStore())
+        val vm = newVm(repo, FakeRidesRepository(), FakeBikePhotoStore())
 
         vm.setActive("b2")
         dispatcher.scheduler.advanceUntilIdle()
