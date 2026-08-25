@@ -1,0 +1,3 @@
+• Correction : l'enregistrement du trajet ne s'arrête plus quelques minutes après le verrouillage de l'écran (téléphone dans la poche) — une surveillance maintient le GPS actif pour ne pas couper votre trace
+• En coulisses : outils de build et bibliothèques mis à jour (AGP, Gradle, MapLibre, OkHttp), plus des améliorations de stabilité et de tests
+

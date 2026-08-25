@@ -1,0 +1,3 @@
+• Fix: Die Fahrtaufzeichnung stoppt nicht mehr wenige Minuten nach dem Sperren des Bildschirms (Handy in der Tasche) — ein Watchdog hält das GPS aktiv, damit deine Aufzeichnung nicht abbricht
+• Unter der Haube: aktualisierte Build-Tools und Bibliotheken (AGP, Gradle, MapLibre, OkHttp) sowie Stabilitäts- und Testverbesserungen
+
