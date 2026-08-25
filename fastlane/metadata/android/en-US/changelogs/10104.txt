@@ -1,0 +1,3 @@
+• Fix: ride recording no longer stops a few minutes after the screen is locked (phone in a pocket) — a no-fix watchdog keeps GPS alive so your track isn't cut short
+• Under the hood: updated build tooling and libraries (AGP, Gradle, MapLibre, OkHttp) plus stability and test-coverage improvements
+

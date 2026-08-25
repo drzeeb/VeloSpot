@@ -6,8 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-08-25
+
 ### Fixed
 - **Ride recording no longer stops a few minutes after the screen is locked (e.g. the phone in a pocket)** — a moving rider whose phone was locked could have their recording silently freeze after ~5 minutes, saving a truncated ride. The cause was a fix-starvation deadlock in the GPS power-saving path, not a missing wake lock or foreground-service misconfiguration (both were already correct: a `PARTIAL_WAKE_LOCK` is held for the whole recording and the service runs `foregroundServiceType="location"`). With the phone in a pocket, degraded GPS reports near-zero speed, so `StandstillDetector` misclassifies a genuinely moving rider as stopped after ~60 s and drops location to the battery-saving `BALANCED_POWER` profile; with the screen off / device dozing the OS then suspends that low-power delivery entirely, and because leaving the standstill requires an *incoming* fix that never arrives, the recorder stays idle forever and the track freezes. `RideRecordingManager` now runs a bounded **no-fix watchdog**: it stamps the time of every real fix and, if the recording is active and not paused yet no fix has arrived for 30 s, it resets `StandstillDetector` and forces `LocationController` back to the high-accuracy moving profile (calling `refresh()` to re-issue a Doze-stalled request), guaranteeing the GNSS always recovers. The battery-saving standstill feature is preserved — during a normal screen-on stop a fix still arrives every ~12 s so the watchdog never trips, and a deliberate pause is exempt. Covered by new JVM tests in `RideRecordingDesyncTest`. No DB/schema change and no new user-facing strings.
+
+### Dependencies
+- **Android Gradle Plugin 9.3.1 → 9.3.2** (#298).
+- **Gradle 9.7.0 → 9.7.1** (#299).
+- **MapLibre Android SDK 13.4.1 → 13.5.1** (#292).
+- **OkHttp `logging-interceptor` 5.5.0** (#290).
+- **`github/codeql-action` digest bump** (#289) in CI.
 
 ## [1.1.3] - 2026-08-18
 
